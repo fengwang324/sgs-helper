@@ -1,19 +1,29 @@
-# 模板：武将。只引用 skill_id，不写技能文本。
+# 模板：武将。**只有 name 是必填的**，其余都可以先留空，以后再补。
+# 复制到 data/generals/ 下并改 id 即可（或者直接用本地管理页 /new/general 录入）。
+#
+# skills 是「技能关系」列表，顺序就是卡面上的技能顺序：
+#   skill_id   必填，指向 data/skills/ 里的 SkillDefinition
+#   version_id 可空。为空 => 详情页按 mode + 生效区间自动推导当前有效版本；
+#              不为空 => 必须属于同一个 skill_id，表示“这张卡印的就是这一版”。
+# 想更新技能文本时**新增** SkillVersion，不要改旧版本。
 id: general_change_me
 name: 武将名
-mode: guozhan
-faction: 群
-hp: 1.5                 # 支持 0.5 步进（国战常见 1.5 / 2.5）
-gender: male            # male/female/unknown
-product_id: product_change_me
-package: standard
-skill_ids:
-  - skill_change_me
+title: ""               # 称号，例如“独眼的罗刹”
+general_number: null    # 实体卡上的编号，例如 WEI001 / shu-01（可空；不是内部 id）
+mode: guozhan           # common/guozhan/identity/ol/mobile/other；允许留空
+faction: 群              # 势力：自由文本（魏/蜀/吴/群/晋…）
+hp: 1.5                 # 勾玉=体力，支持 0.5 步进；允许留空
+gender: male            # male/female/unknown；允许留空
+product_id: product_change_me   # 所属产品，可空
+general_set: 九变篇      # 武将牌系列 / 武将牌组（可空）
+skills:
+  - skill_id: skill_change_me
+    version_id: null
 aliases: []
 source:
   type: physical_card
   title: 本人实体卡
   reference: ""
   notes: ""
-verification_status: physical_verified
+verification_status: unverified
 notes: ""

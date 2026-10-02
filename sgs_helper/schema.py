@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Annotated
 
@@ -32,6 +33,8 @@ Id = Annotated[str, Field(pattern=ID_PATTERN, min_length=2, max_length=120)]
 Name = Annotated[str, Field(min_length=1, max_length=200)]
 #: 规则文本：不允许为空
 RuleText = Annotated[str, Field(min_length=1)]
+#: 实体卡上的编号（**不是**内部 id）：允许大小写字母、数字、``-``、``_``
+NUMBER_PATTERN = r"^[A-Za-z0-9_-]+$"
 
 
 class StrictModel(BaseModel):
@@ -57,17 +60,31 @@ class Source(StrictModel):
 
 
 class Product(StrictModel):
-    """真实发行的某个线下产品（国战产品 / 扩展盒 / 身份局产品 / 补充包…）。"""
+    """真实发行的某个线下产品（国战产品 / 扩展盒 / 身份局产品 / 补充包…）。
+
+    日常录入只关心：名称 / 发行年份 / 模式 / 武将牌系列 / 游戏牌牌堆。
+    其余字段（出版方、版次、来源…）仍然保留，但**允许为空**，不阻塞录入。
+
+    ``general_sets`` 与 ``card_sets`` 是两件不同的事，必须分开：
+
+    - ``general_sets``：这个产品里的**武将牌系列 / 武将牌组名称**（国战标准、势备篇…）；
+    - ``card_sets``：这个产品里的**游戏牌牌堆 / 牌堆系列名称**（标准牌堆、九变牌堆…）。
+
+    旧字段 ``included_sets`` 把两者混在一起，已废弃。
+    """
 
     id: Id
     name: Name
     series: str = ""
-    mode: Mode
+    mode: Mode | None = None
     publisher: str = ""
     release_year: int | None = Field(default=None, ge=1990, le=2100)
     release_date: date | None = None
     edition: str = ""
-    included_sets: list[str] = Field(default_factory=list)
+    #: 武将牌系列 / 武将牌组名称（可以有多个）
+    general_sets: list[str] = Field(default_factory=list)
+    #: 游戏牌牌堆 / 牌堆系列名称（可以有多个）
+    card_sets: list[str] = Field(default_factory=list)
     source: Source | None = None
     verification_status: VerificationStatus = VerificationStatus.unverified
     notes: str = ""
@@ -88,22 +105,64 @@ class Product(StrictModel):
 # ---------------------------------------------------------------- 武将
 
 
+class GeneralSkillRef(StrictModel):
+    """武将 → 技能的关系（以及这个武将**具体用哪一版**技能文本）。
+
+    为什么不用 ``skill_ids: [...]`` 两个平行数组：平行数组一旦顺序错位就会静默张冠李戴，
+    而且表达不了“实体武将卡上印的到底是哪一版”。
+
+    - ``skill_id``：必填，指向 SkillDefinition；
+    - ``version_id``：可以为空。为空表示“还没确认具体版本”，详情页按
+      mode + effective_from/effective_to 自动推导当前有效版本作为 fallback；
+      不为空时必须属于同一个 ``skill_id``（校验器强制）。
+    """
+
+    skill_id: Id
+    version_id: Id | None = None
+
+
 class General(StrictModel):
-    """武将。只引用技能 id，不把技能规则文本写死。"""
+    """武将。只引用技能（以及可选的具体版本），不把技能规则文本写死。
+
+    **只有 ``name`` 是必须填的**：这个库要允许“先录手头已有的信息、以后再补全”，
+    不能因为缺一个字段就整条保存不了。
+    """
 
     id: Id
     name: Name
-    mode: Mode
+    #: 称号（武将卡上的称号，例如“独眼的罗刹”）
+    title: str = ""
+    #: 实体卡上的编号（例如 WEI001 / shu-01）。**不是**内部 id，允许大小写字母/数字/-/_。
+    general_number: str | None = None
+    mode: Mode | None = None
     faction: str = ""
-    hp: float = Field(gt=0, le=10)
+    #: 勾玉（体力）。允许为空：先录入名字、以后再补体力。
+    hp: float | None = Field(default=None, gt=0, le=10)
     gender: Gender = Gender.unknown
     product_id: Id | None = None
-    package: str | None = None
-    skill_ids: list[Id] = Field(default_factory=list)
+    #: 武将牌系列 / 武将牌组（替代旧的、含义不清的 ``package``）
+    general_set: str | None = None
+    #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
+    skills: list[GeneralSkillRef] = Field(default_factory=list)
     aliases: list[str] = Field(default_factory=list)
     source: Source | None = None
     verification_status: VerificationStatus = VerificationStatus.unverified
     notes: str = ""
+
+    @field_validator("general_number", mode="before")
+    @classmethod
+    def _normalize_number(cls, value):
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        if not re.fullmatch(NUMBER_PATTERN, text):
+            raise ValueError(
+                "编号只能包含字母、数字、- 和 _（例如 WEI001、shu-01）；"
+                "内部 id 是另一回事，会自动生成"
+            )
+        return text
 
 
 # ---------------------------------------------------------------- 技能

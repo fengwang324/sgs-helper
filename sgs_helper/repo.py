@@ -403,6 +403,18 @@ def skill_report(
     }
 
 
+def general_skill_refs(conn: sqlite3.Connection, general_id: str) -> list[dict]:
+    """读武将的技能关系（含可选的具体版本绑定），顺序即卡面上的技能顺序。"""
+    rows = conn.execute(
+        "SELECT skill_id, version_id, position FROM general_skills "
+        "WHERE general_id = ? ORDER BY position",
+        (general_id,),
+    ).fetchall()
+    return [
+        {"skill_id": row[0], "version_id": row[1], "position": row[2]} for row in rows
+    ]
+
+
 def general_report(
     conn: sqlite3.Connection, query: str, as_of: dt.date | None = None
 ) -> dict | None:
@@ -413,25 +425,42 @@ def general_report(
     as_of_iso = as_of.isoformat()
 
     product = fetch(conn, "product", entity.get("product_id"))
+    mode = entity.get("mode")
+
     skills = []
-    for skill_id in entity["skill_ids"]:
+    for ref in general_skill_refs(conn, entity["id"]):
+        skill_id = ref["skill_id"]
+        pinned_id = ref["version_id"]
         skill = fetch(conn, "skill", skill_id)
-        versions = _fetch_all(
+        all_versions = _fetch_all(
             conn,
             "skill_version",
-            "SELECT * FROM skill_versions WHERE skill_id = ? AND mode IN (?, 'common') "
+            "SELECT * FROM skill_versions WHERE skill_id = ? "
             "ORDER BY mode, COALESCE(effective_from, '0001-01-01'), id",
-            (skill_id, entity["mode"]),
+            (skill_id,),
         )
-        for version in versions:
+        for version in all_versions:
             version["status"] = _status(version, as_of_iso)
-        current, ambiguous = pick_current(versions, entity["mode"], as_of_iso)
+
+        candidates = [v for v in all_versions if v["mode"] in (mode, "common")]
+        pinned = next((v for v in all_versions if v["id"] == pinned_id), None)
+        derived, ambiguous = (
+            pick_current(candidates, mode, as_of_iso) if candidates else (None, [])
+        )
         skills.append(
             {
                 "skill_id": skill_id,
-                "skill": skill,
-                "versions": versions,
-                "current": current,
+                #: 武将上显式绑定的版本 id（可能为空）
+                "version_id": pinned_id,
+                #: 显式绑定的版本；没有就给 None
+                "pinned": pinned,
+                #: 该模式下的候选版本
+                "versions": candidates,
+                #: 该技能的全部版本
+                "all_versions": all_versions,
+                #: 真正应该显示的版本：显式指定优先，否则用推导出来的当前有效版本
+                "current": pinned or derived,
+                "derived": derived,
                 "ambiguous_ids": [v["id"] for v in ambiguous],
             }
         )

@@ -42,13 +42,17 @@ FIELD_LABELS: dict[str, str] = {
     "release_year": "发行年份",
     "release_date": "发行日期",
     "edition": "版本/版次",
-    "included_sets": "包含牌堆/系列",
+    "general_sets": "武将牌系列",
+    "card_sets": "游戏牌牌堆",
     "faction": "势力",
-    "hp": "体力",
+    "hp": "勾玉（体力）",
     "gender": "性别",
     "product_id": "所属产品",
+    "general_set": "武将牌系列",
     "package": "包/分包",
-    "skill_ids": "关联技能",
+    "title": "称号",
+    "general_number": "编号",
+    "skills": "技能",
     "skill_id": "所属技能",
     "text": "规则文本",
     "version_label": "版本标签",
@@ -101,6 +105,13 @@ FIELD_HELP: dict[str, str] = {
     "source.reference": "如果是 URL，页面上可以直接点击打开。",
     "previous_version_id": "指向被本版本取代的旧版本；旧版本保持原样。",
     "product_id": "填 null 或不填表示不绑定具体产品。",
+    "general_set": "武将牌系列 / 武将牌组名称（可搜索已有值，也可以直接输入新值）。",
+    "general_sets": "一行一项：这个产品里的武将牌系列（国战标准、势备篇…）。",
+    "card_sets": "一行一项：这个产品里的游戏牌牌堆（标准牌堆、九变牌堆…）。",
+    "title": "武将卡上的称号，例如“独眼的罗刹”。",
+    "general_number": "实体卡上的编号，例如 WEI001 / shu-01；和内部 ID 是两回事。",
+    "hp": "勾玉数量，支持 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5；允许留空以后再补。",
+    "skills": "武将的技能关系（含可选的具体版本绑定）；日常录入请用“武将录入页”。",
 }
 
 #: 需要多行输入的字段
@@ -273,8 +284,19 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
             spec.widget = "select"
             spec.choices = [(str(v), labels.get(str(v), str(v))) for v in enum_values]
         elif type_name == "array":
-            spec.widget = "list"
-            spec.help = spec.help or "一行一项；留空表示没有。"
+            item = resolved.get("items") or {}
+            item_type = item.get("type") or ("object" if "$ref" in item else "")
+            if item_type == "object":
+                # 数组里的内嵌对象（例如武将的 skills 关系列表）：generic 表单渲染不了，
+                # 交给武将专用录入页；generic 页面直接跳过这个字段。
+                spec.widget = "object"
+            else:
+                spec.widget = "list"
+                spec.help = spec.help or "一行一项；留空表示没有。"
+        elif type_name == "object":
+            # 内嵌对象（例如武将的 skills 关系列表）：由专用录入页负责，
+            # generic 表单既渲染不了也不该瞎猜，直接跳过。
+            spec.widget = "object"
         elif type_name == "integer":
             spec.widget = "number"
             spec.step = STEP_FIELDS.get(name, "1")
@@ -321,6 +343,8 @@ def spec_map(kind: str, *, include_id: bool = True) -> dict[str, FieldSpec]:
 
 def value_to_text(spec: FieldSpec, value: Any) -> str:
     if value is None:
+        return ""
+    if spec.widget in {"object", "source"}:
         return ""
     if spec.widget == "list":
         return "\n".join(str(item) for item in value)
@@ -409,8 +433,8 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
         if spec.name.startswith("source."):
             source[spec.name.split(".", 1)[1]] = raw
             continue
-        if spec.name == "source":
-            continue  # 内嵌对象由 source.* 子字段处理
+        if spec.name in {"source", "skills"} or spec.widget in {"source", "object"}:
+            continue  # 内嵌结构由专用录入页 / source.* 子字段处理
         if spec.widget == "list":
             # 一行一项。**不做逗号切分**：别名里完全可能带逗号。
             items = [line.strip() for line in raw.splitlines()]

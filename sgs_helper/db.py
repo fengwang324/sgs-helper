@@ -36,11 +36,11 @@ SCHEMA_VERSION = "1"
 COLUMNS: dict[str, tuple[str, ...]] = {
     "product": (
         "name", "series", "mode", "publisher", "release_year", "release_date",
-        "edition", "included_sets", "notes", "verification_status",
+        "edition", "general_sets", "card_sets", "notes", "verification_status",
     ),
     "general": (
-        "name", "mode", "faction", "hp", "gender", "product_id", "package",
-        "skill_ids", "aliases", "notes", "verification_status",
+        "name", "title", "general_number", "mode", "faction", "hp", "gender",
+        "product_id", "general_set", "aliases", "notes", "verification_status",
     ),
     "skill": ("name", "aliases", "notes"),
     "skill_version": (
@@ -73,7 +73,7 @@ COLUMNS: dict[str, tuple[str, ...]] = {
 #: 以 JSON 文本落库的多值列
 JSON_COLUMNS: frozenset[str] = frozenset(
     {
-        "included_sets", "skill_ids", "aliases", "related_keywords",
+        "general_sets", "card_sets", "aliases", "related_keywords",
         "related_timing_ids", "related_general_ids", "related_skill_ids",
         "related_card_ids", "related_keyword_ids", "previous_ids", "next_ids",
         "related_faq_ids",
@@ -229,6 +229,7 @@ def _create_schema(conn: sqlite3.Connection, with_fts: bool) -> bool:
         "CREATE TABLE general_skills (\n"
         "  general_id TEXT NOT NULL,\n"
         "  skill_id TEXT NOT NULL,\n"
+        "  version_id TEXT,\n"
         "  position INTEGER NOT NULL,\n"
         "  PRIMARY KEY (general_id, skill_id)\n"
         ")"
@@ -289,12 +290,17 @@ def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, s
 
     if kind == "product":
         parts += [entity.series, entity.publisher, entity.edition, entity.notes]
-        parts += list(entity.included_sets)
-        parts.append(MODE_LABELS.get(entity.mode, entity.mode))
+        parts += list(entity.general_sets)
+        parts += list(entity.card_sets)
+        parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
+        parts.append("武将牌 " + " ".join(entity.general_sets))
+        parts.append("游戏牌 " + " ".join(entity.card_sets))
     elif kind == "general":
-        parts += [entity.faction, entity.package or "", entity.notes]
-        parts.append(MODE_LABELS.get(entity.mode, entity.mode))
-        parts.append(_names_of(bundle, "skill", entity.skill_ids))
+        parts += [entity.title, entity.faction, entity.general_set or "", entity.notes]
+        parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
+        if entity.general_number:
+            parts.append(entity.general_number)
+        parts.append(_names_of(bundle, "skill", [ref.skill_id for ref in entity.skills]))
     elif kind == "skill":
         parts.append(entity.notes)
         for version in bundle.all("skill_version").values():
@@ -394,10 +400,11 @@ def _insert_sources(conn: sqlite3.Connection, bundle: DataBundle) -> int:
 def _insert_relations(conn: sqlite3.Connection, bundle: DataBundle) -> None:
     rows = []
     for general_id, general in sorted(bundle.all("general").items()):
-        for position, skill_id in enumerate(general.skill_ids):
-            rows.append((general_id, skill_id, position))
+        for position, ref in enumerate(general.skills):
+            rows.append((general_id, ref.skill_id, ref.version_id, position))
     conn.executemany(
-        "INSERT OR IGNORE INTO general_skills (general_id, skill_id, position) VALUES (?, ?, ?)",
+        "INSERT OR IGNORE INTO general_skills "
+        "(general_id, skill_id, version_id, position) VALUES (?, ?, ?, ?)",
         rows,
     )
 

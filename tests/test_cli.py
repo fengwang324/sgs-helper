@@ -41,8 +41,8 @@ def test_validate_script_reports_error(tmp_path: Path, data_dir: Path) -> None:
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
     replace_in(
-        broken / "generals" / "kongrong_sample_guozhan.yaml", "- skill_lirang",
-        "- skill_not_exist",
+        broken / "generals" / "kongrong_sample_guozhan.yaml", "skill_id: skill_lirang",
+        "skill_id: skill_not_exist",
     )
     result = run_script("scripts/validate_data.py", "--data-dir", str(broken))
     assert result.returncode == 1
@@ -94,7 +94,7 @@ def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> No
         ("faq", "伤害"),
         ("keyword", "濒死"),
         ("timing", "伤害结算"),
-        ("product", "国战"),
+        ("product", "国战示例"),
         ("search", "集智"),
     ],
 )

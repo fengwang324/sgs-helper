@@ -87,8 +87,8 @@ def test_same_card_in_different_products_does_not_overwrite(synth_conn) -> None:
 def test_general_references_skills_by_id(synth_conn) -> None:
     report = general_report(synth_conn, "general_demo_alpha")
     assert report is not None
-    assert report["general"]["skill_ids"] == ["skill_demo"]
     assert report["skills"][0]["skill_id"] == "skill_demo"
+    assert report["skills"][0]["version_id"] is None  # 没有显式绑定 -> 详情页自动推导
     assert report["product"]["id"] == "product_demo_a"
 
 

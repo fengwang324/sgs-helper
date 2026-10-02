@@ -43,8 +43,10 @@ mode: guozhan
 publisher: 演示
 release_year: 2024
 edition: 初版
-included_sets:
-  - base
+general_sets:
+  - 演示武将牌系列
+card_sets:
+  - 演示牌堆
 {SOURCE_YAML}verification_status: unverified
 """,
     "products/demo_b.yaml": f"""id: product_demo_b
@@ -60,8 +62,9 @@ faction: 群
 hp: 1.5
 gender: male
 product_id: product_demo_a
-skill_ids:
-  - skill_demo
+general_set: 演示武将牌系列
+skills:
+  - skill_id: skill_demo
 aliases:
   - 演示甲
 {SOURCE_YAML}verification_status: unverified
@@ -73,8 +76,8 @@ faction: 蜀
 hp: 3
 gender: female
 product_id: product_demo_b
-skill_ids:
-  - skill_demo
+skills:
+  - skill_id: skill_demo
 {SOURCE_YAML}verification_status: unverified
 """,
     "skills/demo.yaml": f"""id: skill_demo

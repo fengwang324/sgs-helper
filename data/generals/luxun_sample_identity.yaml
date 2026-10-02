@@ -3,21 +3,25 @@
 # ============================================================
 id: general_luxun_sample_identity
 name: 【SAMPLE】陆逊
+title: ''
+general_number: null
 mode: identity
 faction: 吴
-hp: 3
+hp: 3.0
 gender: male
 product_id: product_identity_sample_2025
-package: sample_standard
-skill_ids:
-  - skill_qianxun
-  - skill_lianying
+general_set: sample_standard
+skills:
+  - skill_id: skill_qianxun
+    version_id: null
+  - skill_id: skill_lianying
+    version_id: null
 aliases:
   - 陆逊
 source:
   type: community_db
   title: 【SAMPLE】占位资料来源
-  reference: ""
+  reference: ''
   notes: 仅用于验证数据结构
 verification_status: unverified
 notes: 【SAMPLE】占位数据。

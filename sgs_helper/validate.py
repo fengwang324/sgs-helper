@@ -23,9 +23,18 @@ from .loader import DataBundle, Issue, RawEntity, load_data_dir
 from .schema import MODEL_BY_KIND
 
 #: 交叉引用声明表：(来源 kind, 字段, 目标 kind, 是否列表)
+#:
+#: 字段支持两种写法：
+#:
+#: - ``product_id``               普通标量字段；
+#: - ``related_keyword_ids``      普通列表字段；
+#: - ``skills[].skill_id``        嵌套结构里的字段（``[]`` 表示“逐项展开列表”）。
+#:
+#: 这张表同时驱动校验器的引用检查与本地管理页的删除保护，只声明一次。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("general", "product_id", "product", False),
-    ("general", "skill_ids", "skill", True),
+    ("general", "skills[].skill_id", "skill", True),
+    ("general", "skills[].version_id", "skill_version", True),
     ("skill_version", "skill_id", "skill", False),
     ("skill_version", "product_id", "product", False),
     ("skill_version", "previous_version_id", "skill_version", False),
@@ -48,6 +57,62 @@ REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("timing", "related_skill_ids", "skill", True),
     ("timing", "related_faq_ids", "faq", True),
 )
+
+
+@dataclass(frozen=True)
+class ReferenceValue:
+    """一条具体的引用值。"""
+
+    #: 可读字段路径，例如 ``skills[0].version_id`` 或 ``related_skill_ids[2]``
+    path: str
+    value: Any
+    #: 这个值所属的列表路径（标量字段为 None）；用于“列表内重复引用”检查
+    list_path: str | None = None
+
+
+def iter_reference_values(entity: Any, field: str) -> list[ReferenceValue]:
+    """按声明表枚举实体上的引用值，支持 ``a.b`` 与 ``a[].b`` 两种路径。
+
+    这样“武将 → 技能关系（``skills[].skill_id`` / ``skills[].version_id``）”
+    这类嵌套结构不需要在校验器里写特例，声明一次即可同时服务于：
+    引用存在性检查、空引用检查、重复引用检查、删除保护。
+    """
+    parts = field.split(".")
+    found: list[ReferenceValue] = []
+
+    def walk(current: Any, index: int, prefix: str, list_path: str | None) -> None:
+        part = parts[index]
+        expand = part.endswith("[]")
+        name = part[:-2] if expand else part
+        value = getattr(current, name, None)
+        if value is None:
+            return
+        path = f"{prefix}.{name}" if prefix else name
+
+        if expand:
+            if not isinstance(value, (list, tuple)):
+                return
+            for position, item in enumerate(value):
+                item_path = f"{path}[{position}]"
+                if index == len(parts) - 1:
+                    found.append(ReferenceValue(item_path, item, path))
+                else:
+                    # 记住这一层的列表路径：同一个列表里的重复引用要能被发现
+                    walk(item, index + 1, item_path, path)
+            return
+
+        if index == len(parts) - 1:
+            if isinstance(value, (list, tuple)):
+                for position, item in enumerate(value):
+                    found.append(ReferenceValue(f"{path}[{position}]", item, path))
+            else:
+                found.append(ReferenceValue(path, value, list_path))
+            return
+
+        walk(value, index + 1, path, list_path)
+
+    walk(entity, 0, "", None)
+    return found
 
 #: source 允许为空的 kind（其余 kind 的 source 由模型层强制必填）
 SOURCE_OPTIONAL_KINDS = ("product", "general", "skill")
@@ -237,158 +302,179 @@ def _describe_missing(bundle: DataBundle, target_kind: str, ref: str) -> str:
 
 
 def _check_references(bundle: DataBundle, result: ValidationResult) -> None:
-    for kind, field_name, target_kind, is_list in REFERENCE_FIELDS:
+    for kind, field_name, target_kind, _is_list in REFERENCE_FIELDS:
         for entity_id, entity in bundle.all(kind).items():
             origin = bundle.origin_of(kind, entity_id)
-            value = getattr(entity, field_name, None)
+            seen_lists: dict[str, set[str]] = {}
 
-            if is_list:
-                if not value:
-                    continue
-                seen: set[str] = set()
-                for index, ref in enumerate(value):
-                    field_path = f"{field_name}[{index}]"
-                    if not isinstance(ref, str) or not ref.strip():
-                        result.errors.append(
-                            Issue(
-                                "error",
-                                origin.path,
-                                field_path,
-                                "空引用：列表里出现空字符串，请删除该元素或填写有效 id",
-                                line=origin.line,
-                                entity_id=entity_id,
-                            )
+            for ref in iter_reference_values(entity, field_name):
+                value = ref.value
+                field_path = ref.path
+
+                if ref.list_path is not None:
+                    seen = seen_lists.setdefault(ref.list_path, set())
+
+                if not isinstance(value, str) or not value.strip():
+                    result.errors.append(
+                        Issue(
+                            "error",
+                            origin.path,
+                            field_path,
+                            "空引用：这里出现空字符串，请删除该元素或填写有效 id",
+                            line=origin.line,
+                            entity_id=entity_id,
                         )
-                        continue
-                    if ref in seen:
+                    )
+                    continue
+
+                if ref.list_path is not None:
+                    if value in seen:
                         result.warnings.append(
                             Issue(
                                 "warning",
                                 origin.path,
                                 field_path,
-                                f'列表内重复引用 "{ref}"',
+                                f'列表内重复引用 "{value}"',
                                 line=origin.line,
                                 entity_id=entity_id,
                             )
                         )
                         continue
-                    seen.add(ref)
-                    if target_kind == kind and ref == entity_id:
-                        result.errors.append(
-                            Issue(
-                                "error",
-                                origin.path,
-                                field_path,
-                                f"自引用：{KIND_BY_NAME[kind].label} 不能引用自己",
-                                line=origin.line,
-                                entity_id=entity_id,
-                            )
-                        )
-                        continue
-                    if ref not in bundle.ids(target_kind):
-                        result.errors.append(
-                            Issue(
-                                "error",
-                                origin.path,
-                                field_path,
-                                _describe_missing(bundle, target_kind, ref),
-                                line=origin.line,
-                                entity_id=entity_id,
-                            )
-                        )
-                continue
+                    seen.add(value)
 
-            if value is None:
-                continue
-            if not isinstance(value, str) or not value.strip():
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        field_name,
-                        "空引用：该字段不能是空字符串，请填写有效 id 或改为 null",
-                        line=origin.line,
-                        entity_id=entity_id,
+                if target_kind == kind and value == entity_id:
+                    result.errors.append(
+                        Issue(
+                            "error",
+                            origin.path,
+                            field_path,
+                            f"自引用：{KIND_BY_NAME[kind].label} 不能引用自己",
+                            line=origin.line,
+                            entity_id=entity_id,
+                        )
                     )
-                )
-                continue
-            if target_kind == kind and value == entity_id:
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        field_name,
-                        f"自引用：{KIND_BY_NAME[kind].label} 不能引用自己",
-                        line=origin.line,
-                        entity_id=entity_id,
+                    continue
+
+                if value not in bundle.ids(target_kind):
+                    result.errors.append(
+                        Issue(
+                            "error",
+                            origin.path,
+                            field_path,
+                            _describe_missing(bundle, target_kind, value),
+                            line=origin.line,
+                            entity_id=entity_id,
+                        )
                     )
-                )
-                continue
-            if value not in bundle.ids(target_kind):
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        field_name,
-                        _describe_missing(bundle, target_kind, value),
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
 
 
 # ---------------------------------------------------------------- 一致性
 
 
+def _mode_label(mode: Any) -> str:
+    """模式的中文标签；未填模式时给一个可读的占位（Product/General 的 mode 允许为空）。"""
+    if not mode:
+        return "（未填模式）"
+    return MODE_LABELS.get(mode, str(mode))
+
+
 def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> None:
     products = bundle.all("product")
 
-    # 武将：体力步进 / 产品模式一致 / 技能在对应模式下必须有版本
+    # 武将：体力步进 / 产品模式一致 / 技能关系（含显式版本绑定）
     for entity_id, general in bundle.all("general").items():
         origin = bundle.origin_of("general", entity_id)
-        if abs(general.hp * 2 - round(general.hp * 2)) > 1e-9:
+        if general.hp is not None and abs(general.hp * 2 - round(general.hp * 2)) > 1e-9:
             result.warnings.append(
                 Issue(
                     "warning",
                     origin.path,
                     "hp",
-                    f"体力 {general.hp} 不是 0.5 的整数倍；国战/身份局体力通常按 0.5 步进，请确认",
+                    f"勾玉（体力）{general.hp} 不是 0.5 的整数倍；国战/身份局体力通常按 0.5 步进，请确认",
                     line=origin.line,
                     entity_id=entity_id,
                 )
             )
         if general.product_id and general.product_id in products:
             product = products[general.product_id]
-            if product.mode != general.mode:
+            if product.mode is not None and general.mode is not None and product.mode != general.mode:
                 result.warnings.append(
                     Issue(
                         "warning",
                         origin.path,
                         "mode",
-                        f"武将模式 {MODE_LABELS.get(general.mode, general.mode)} 与所属产品 "
-                        f"{product.id} 的模式 {MODE_LABELS.get(product.mode, product.mode)} 不一致",
+                        f"武将模式 {_mode_label(general.mode)} 与所属产品 "
+                        f"{product.id} 的模式 {_mode_label(product.mode)} 不一致",
                         line=origin.line,
                         entity_id=entity_id,
                     )
                 )
+            if product.general_sets and general.general_set:
+                if general.general_set not in product.general_sets:
+                    result.warnings.append(
+                        Issue(
+                            "warning",
+                            origin.path,
+                            "general_set",
+                            f'武将牌系列 "{general.general_set}" 不在所属产品 {product.id} 的 '
+                            f"general_sets（{'、'.join(product.general_sets)}）里，请确认是不是录错了产品",
+                            line=origin.line,
+                            entity_id=entity_id,
+                        )
+                    )
+
         versions = bundle.all("skill_version")
-        for skill_id in general.skill_ids:
-            skill = bundle.get("skill", skill_id)
+        seen_skills: dict[str, int] = {}
+        for position, ref in enumerate(general.skills):
+            field_path = f"skills[{position}].skill_id"
+            if ref.skill_id in seen_skills:
+                result.warnings.append(
+                    Issue(
+                        "warning",
+                        origin.path,
+                        field_path,
+                        f"同一武将重复引用技能 {ref.skill_id}"
+                        f"（已在 skills[{seen_skills[ref.skill_id]}] 出现）",
+                        line=origin.line,
+                        entity_id=entity_id,
+                    )
+                )
+            else:
+                seen_skills[ref.skill_id] = position
+
+            skill = bundle.get("skill", ref.skill_id)
             if skill is None:
                 continue  # 引用不存在已在引用检查里报错
+
+            # 显式绑定的版本必须属于同一个技能
+            if ref.version_id:
+                version = bundle.get("skill_version", ref.version_id)
+                if version is not None and version.skill_id != ref.skill_id:
+                    result.errors.append(
+                        Issue(
+                            "error",
+                            origin.path,
+                            f"skills[{position}].version_id",
+                            f"绑定的技能版本 {ref.version_id} 属于技能 {version.skill_id}，"
+                            f"与这里的技能 {ref.skill_id} 不一致",
+                            line=origin.line,
+                            entity_id=entity_id,
+                        )
+                    )
+
             hit = [
                 sv
                 for sv in versions.values()
-                if sv.skill_id == skill_id and sv.mode in (general.mode, "common")
+                if sv.skill_id == ref.skill_id and sv.mode in (general.mode, "common")
             ]
             if not hit:
                 result.warnings.append(
                     Issue(
                         "warning",
                         origin.path,
-                        "skill_ids",
-                        f'技能 "{skill.name}"({skill_id}) 在模式 '
-                        f"{MODE_LABELS.get(general.mode, general.mode)} 下没有任何 SkillVersion，"
+                        field_path,
+                        f'技能 "{skill.name}"({ref.skill_id}) 在模式 '
+                        f"{_mode_label(general.mode)} 下没有任何 SkillVersion，"
                         "查询时拿不到技能文本",
                         line=origin.line,
                         entity_id=entity_id,
@@ -408,7 +494,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                         origin.path,
                         "mode",
                         f"实体卡模式 {MODE_LABELS.get(printing.mode, printing.mode)} 与所属产品 "
-                        f"{product.id} 的模式 {MODE_LABELS.get(product.mode, product.mode)} 不一致",
+                        f"{product.id} 的模式 {_mode_label(product.mode)} 不一致",
                         line=origin.line,
                         entity_id=entity_id,
                     )
@@ -477,7 +563,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                         origin.path,
                         "related_general_ids",
                         f"FAQ 模式 {MODE_LABELS.get(faq.mode, faq.mode)} 与关联武将 "
-                        f"{general_id} 的模式 {MODE_LABELS.get(general.mode, general.mode)} 不一致",
+                        f"{general_id} 的模式 {_mode_label(general.mode)} 不一致",
                         line=origin.line,
                         entity_id=entity_id,
                     )

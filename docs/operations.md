@@ -2,10 +2,14 @@
 
 ## 0. 标准流程
 
+两条等价的路：**浏览器里用本地管理页录**（推荐，见 [admin.md](admin.md)），
+或者直接在 YAML 里改。页面做的事和下面的命令完全一样，只是帮你把 YAML 写好。
+
 ```bash
 cd /data/wf/1002/sgs-helper
 
 # ① 改 YAML（新增文件 / 修改文件都行；data/ 是唯一权威源）
+#    或者： python scripts/admin.py --port 8000  → 浏览器里录，保存即自动 validate + build
 # ② 校验
 python scripts/validate_data.py
 # ③ 重建数据库
@@ -17,6 +21,19 @@ git add -A && git commit -m "data: ..." && git push
 ```
 
 任何时候都**不要**直接改 `build/sgs.db`：它是生成物，下次构建就被覆盖。
+
+## 0.1 录一张实体武将牌（推荐路径）
+
+1. 先有产品：`/new/product` —— 名称 / 发行年份 / 模式 / **武将牌系列**（`general_sets`）/
+   **游戏牌牌堆**（`card_sets`）。
+2. 再录武将：`/new/general` —— **只有名字必填**。
+   - 「编号」是卡面编号（`general_number`，如 `WEI001`），内部 ID 留空会自动生成；
+   - 技能行里搜索已有技能 → 选择这个武将用的**版本**（不选则自动推导）；
+   - 没有的技能点 `+ 新建技能「xxx」`，填名称（只建技能本体）或再加描述（同时建技能版本）；
+   - 需要改技能文本时用「+ 为这个技能新增版本」，旧版本永远保留。
+3. 同一盒卡连续录：用「保存并新增下一位武将」（可继承产品信息），
+   或详情页的「以此武将为模板新增」。
+4. 录完随时看 `/review`，把 `unverified` / `community` / `conflict` 的记录逐条核验掉。
 
 ## 1. 把 SAMPLE 数据换成真实数据
 

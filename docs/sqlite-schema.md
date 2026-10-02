@@ -129,10 +129,13 @@ CREATE TABLE 'fts_search_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHO
 
 ### `general_skills`
 
+武将 → 技能的关系表（由 ``General.skills`` 生成；``version_id`` 是武将显式绑定的技能版本，可为 NULL）。
+
 ```sql
 CREATE TABLE general_skills (
   general_id TEXT NOT NULL,
   skill_id TEXT NOT NULL,
+  version_id TEXT,
   position INTEGER NOT NULL,
   PRIMARY KEY (general_id, skill_id)
 );
@@ -144,13 +147,14 @@ CREATE TABLE general_skills (
 CREATE TABLE generals (
   id TEXT PRIMARY KEY,
   name TEXT,
+  title TEXT,
+  general_number TEXT,
   mode TEXT,
   faction TEXT,
   hp REAL,
   gender TEXT,
   product_id TEXT,
-  package TEXT,
-  skill_ids TEXT,
+  general_set TEXT,
   aliases TEXT,
   notes TEXT,
   verification_status TEXT,
@@ -197,7 +201,8 @@ CREATE TABLE products (
   release_year INTEGER,
   release_date TEXT,
   edition TEXT,
-  included_sets TEXT,
+  general_sets TEXT,
+  card_sets TEXT,
   notes TEXT,
   verification_status TEXT,
   source_key TEXT,

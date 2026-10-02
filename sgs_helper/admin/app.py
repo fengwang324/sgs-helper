@@ -38,7 +38,7 @@ from ..constants import (
     VERIFICATION_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
-from . import forms
+from . import editors, forms
 from .store import (
     REVIEW_STATUSES,
     AdminStore,
@@ -345,11 +345,405 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             raise HTTPException(status_code=404, detail="记录不存在")
         return PlainTextResponse(live.file_text(kind, entity_id), media_type="text/plain; charset=utf-8")
 
-    # ------------------------------------------------------------ 新增
+    # ------------------------------------------------------------ 专用录入页：实体产品
+
+    def _editor_ctx(request: Request, kind: str, **extra: Any) -> dict:
+        """产品 / 武将录入页共用的上下文（含下拉候选与高级字段选项）。"""
+        live: AdminStore = request.app.state.store
+        payload = ctx(request, current_kind=kind, kind=kind, spec=KIND_BY_NAME[kind], **extra)
+        payload.update(
+            {
+                "error_map": {},
+                "issue_list": [],
+                "outcome_error": "",
+                "info": [],
+                "base_sha": "",
+                "mode_choices": editors.mode_choices(),
+                "gender_choices": editors.gender_choices(),
+                "hp_choices": editors.HP_CHOICES,
+                "verification_choices": editors.verification_choices(),
+                "source_type_choices": editors.source_type_choices(),
+                "csrf": request.app.state.csrf,
+            }
+        )
+        payload.update(extra)
+        return payload
+
+    def _editor_failure(
+        request: Request,
+        template: str,
+        kind: str,
+        result: editors.EditorResult,
+        action: str,
+        editor_mode: str,
+        *,
+        target_id: str = "",
+        outcome: SaveOutcome | None = None,
+        extra: dict | None = None,
+    ) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        error_map: dict[str, list[str]] = {}
+        for error in result.errors:
+            error_map.setdefault(error.field, []).append(error.message)
+
+        # 额外跑一次“只校验不写盘”，把 文件 / 字段 / 原因 也展示出来
+        issues: list = list(outcome.issues) if outcome is not None else []
+        if outcome is None and result.changes:
+            try:
+                probe = live.validate_changes(result.changes)
+                issues = list(probe.errors)
+            except Exception:  # pragma: no cover - 展示用，失败不影响主流程
+                issues = []
+        for issue in issues:
+            error_map.setdefault(issue_field(issue.field), []).append(issue.message)
+
+        response = render(
+            request,
+            template,
+            **_editor_ctx(
+                request,
+                kind,
+                title=f"{'新增' if editor_mode == 'create' else '编辑'}{KIND_BY_NAME[kind].label}",
+                values=result.values,
+                rows=result.rows,
+                mode=editor_mode,
+                target_id=target_id,
+                action=action,
+                error_map=error_map,
+                issue_list=issues,
+                outcome_error=outcome.error if outcome else "",
+                info=result.info,
+                **(extra or {}),
+            ),
+        )
+        response.status_code = 400
+        return response
+
+    def _product_editor_extra(request: Request) -> dict:
+        live: AdminStore = request.app.state.store
+        return {
+            "all_general_sets": live.suggest_values("general_set", limit=60),
+            "all_card_sets": sorted(
+                {
+                    value
+                    for product in live.bundle.all("product").values()
+                    for value in (product.card_sets or [])
+                }
+            ),
+            "products": [
+                {"id": pid, "name": product.name}
+                for pid, product in live.entries("product")
+            ],
+        }
+
+    @app.get("/new/product", response_class=HTMLResponse)
+    def new_product(request: Request) -> HTMLResponse:
+        require_kind("product")
+        return render(
+            request,
+            "product_edit.html",
+            **_editor_ctx(
+                request,
+                "product",
+                title="新增实体产品",
+                values={},
+                mode="create",
+                target_id="",
+                action="/new/product",
+                product=None,
+                **_product_editor_extra(request),
+            ),
+        )
+
+    @app.post("/new/product", response_class=HTMLResponse)
+    async def create_product(request: Request) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_product_form(form, store=live)
+        if result.errors:
+            return _editor_failure(
+                request, "product_edit.html", "product", result, "/new/product", "create",
+                extra=_product_editor_extra(request),
+            )
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "product_edit.html", "product", result, "/new/product", "create",
+                outcome=outcome, extra=_product_editor_extra(request),
+            )
+        return RedirectResponse(
+            f"/view/product/{result.record_id}?created=1&warn={len(outcome.warnings)}",
+            status_code=303,
+        )
+
+    @app.get("/edit/product/{entity_id}", response_class=HTMLResponse)
+    def edit_product(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        product = live.entity("product", entity_id)
+        if product is None:
+            raise HTTPException(status_code=404, detail="产品不存在")
+        return render(
+            request,
+            "product_edit.html",
+            **_editor_ctx(
+                request,
+                "product",
+                title=f"编辑实体产品：{product.name}",
+                values=editors.product_values(live, product),
+                mode="edit",
+                target_id=entity_id,
+                action=f"/edit/product/{entity_id}",
+                product=product,
+                base_sha=live.entity_sha("product", entity_id),
+                references=live.reverse_refs("product", entity_id),
+                **_product_editor_extra(request),
+            ),
+        )
+
+    @app.post("/edit/product/{entity_id}", response_class=HTMLResponse)
+    async def update_product(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        product = live.entity("product", entity_id)
+        if product is None:
+            raise HTTPException(status_code=404, detail="产品不存在")
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_product_form(form, store=live, existing=product)
+        if result.errors:
+            return _editor_failure(
+                request, "product_edit.html", "product", result,
+                f"/edit/product/{entity_id}", "edit", target_id=entity_id,
+                extra=_product_editor_extra(request),
+            )
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "product_edit.html", "product", result,
+                f"/edit/product/{entity_id}", "edit", target_id=entity_id,
+                outcome=outcome, extra=_product_editor_extra(request),
+            )
+        return RedirectResponse(
+            f"/view/product/{result.record_id}?saved=1&warn={len(outcome.warnings)}",
+            status_code=303,
+        )
+
+    # ------------------------------------------------------------ 专用录入页：武将
+
+    def _general_editor_extra(request: Request) -> dict:
+        live: AdminStore = request.app.state.store
+        return {
+            "faction_suggestions": live.suggest_values("faction", limit=40),
+            "general_set_suggestions": live.suggest_values("general_set", limit=60),
+        }
+
+    @app.get("/new/general", response_class=HTMLResponse)
+    def new_general(request: Request) -> HTMLResponse:
+        require_kind("general")
+        live: AdminStore = request.app.state.store
+        params = {
+            key: value
+            for key, value in request.query_params.items()
+            if key
+            in {
+                "name", "title", "general_number", "mode", "faction", "hp", "gender",
+                "product_id", "general_set", "id", "notes",
+            }
+        }
+        values = editors.general_values(live, None, params=params)
+
+        rows: list[dict] = []
+        template_source = None
+        inherit_source = None
+        source_id = request.query_params.get("from", "")
+        copy_attrs = request.query_params.get("copy") == "attrs"
+        if source_id:
+            entity = live.entity("general", source_id)
+            if entity is not None:
+                # 无论哪种入口：产品 / 模式 / 武将牌系列都带入
+                values["product_id"] = values.get("product_id") or (entity.product_id or "")
+                values["mode"] = values.get("mode") or (entity.mode or "")
+                values["general_set"] = values.get("general_set") or (entity.general_set or "")
+                if copy_attrs:
+                    # 「以此武将为模板新增」：势力 / 勾玉 / 性别可选择复制（默认带上）
+                    template_source = entity
+                    for field_name in ("faction", "hp", "gender"):
+                        value = getattr(entity, field_name, None)
+                        if value not in (None, ""):
+                            values.setdefault(field_name, "" if value is None else str(value))
+                else:
+                    # 「保存并新增下一位」：只继承产品信息
+                    inherit_source = entity
+        return render(
+            request,
+            "general_edit.html",
+            **_editor_ctx(
+                request,
+                "general",
+                title="新增武将",
+                values=values,
+                rows=rows,
+                mode="create",
+                target_id="",
+                action="/new/general",
+                general=None,
+                template_source=template_source,
+                inherit_source=inherit_source,
+                skill_rows_from=template_source,
+                **_general_editor_extra(request),
+            ),
+        )
+
+    @app.post("/new/general", response_class=HTMLResponse)
+    async def create_general(request: Request) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_general_form(form, store=live)
+        if result.errors:
+            return _editor_failure(
+                request, "general_edit.html", "general", result, "/new/general", "create",
+                extra=_general_editor_extra(request),
+            )
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "general_edit.html", "general", result, "/new/general", "create",
+                outcome=outcome, extra=_general_editor_extra(request),
+            )
+        action = str(form.get("_action", "save"))
+        if action == "save_next":
+            inherit = str(form.get("_inherit", "")) == "1"
+            target = (
+                f"/new/general?from={result.record_id}&created=1"
+                if inherit
+                else "/new/general?created=1"
+            )
+            return RedirectResponse(target, status_code=303)
+        return RedirectResponse(
+            f"/view/general/{result.record_id}?created=1&warn={len(outcome.warnings)}"
+            f"&info={len(result.info)}",
+            status_code=303,
+        )
+
+    @app.get("/edit/general/{entity_id}", response_class=HTMLResponse)
+    def edit_general(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        general = live.entity("general", entity_id)
+        if general is None:
+            raise HTTPException(status_code=404, detail="武将不存在")
+        return render(
+            request,
+            "general_edit.html",
+            **_editor_ctx(
+                request,
+                "general",
+                title=f"编辑武将：{general.name}",
+                values=editors.general_values(live, general),
+                rows=editors.rows_from_general(live, general),
+                mode="edit",
+                target_id=entity_id,
+                action=f"/edit/general/{entity_id}",
+                general=general,
+                base_sha=live.entity_sha("general", entity_id),
+                references=live.reverse_refs("general", entity_id),
+                template_source=None,
+                **_general_editor_extra(request),
+            ),
+        )
+
+    @app.post("/edit/general/{entity_id}", response_class=HTMLResponse)
+    async def update_general(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        general = live.entity("general", entity_id)
+        if general is None:
+            raise HTTPException(status_code=404, detail="武将不存在")
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_general_form(form, store=live, existing=general)
+        if result.errors:
+            return _editor_failure(
+                request, "general_edit.html", "general", result,
+                f"/edit/general/{entity_id}", "edit", target_id=entity_id,
+                extra=_general_editor_extra(request),
+            )
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "general_edit.html", "general", result,
+                f"/edit/general/{entity_id}", "edit", target_id=entity_id,
+                outcome=outcome, extra=_general_editor_extra(request),
+            )
+        action = str(form.get("_action", "save"))
+        if action == "save_next":
+            return RedirectResponse(
+                f"/new/general?from={result.record_id}&saved=1", status_code=303
+            )
+        return RedirectResponse(
+            f"/view/general/{result.record_id}?saved=1&warn={len(outcome.warnings)}"
+            f"&info={len(result.info)}",
+            status_code=303,
+        )
+
+    # ------------------------------------------------------------ 录入辅助 JSON API
+
+    @app.get("/api/skills")
+    def api_skills(request: Request, q: str = "", limit: int = 20) -> list[dict]:
+        live: AdminStore = request.app.state.store
+        return live.skill_search(q, limit=max(1, min(limit, 50)))
+
+    @app.get("/api/skills/{skill_id}/versions")
+    def api_skill_versions(
+        request: Request, skill_id: str, mode: str = "", product_id: str = ""
+    ) -> dict:
+        live: AdminStore = request.app.state.store
+        return {
+            "skill_id": skill_id,
+            "skill_name": live.name_of("skill", skill_id),
+            "versions": live.skill_version_options(
+                skill_id, mode=mode or None, product_id=product_id or None
+            ),
+        }
+
+    @app.get("/api/products")
+    def api_products(request: Request, q: str = "", limit: int = 20) -> list[dict]:
+        live: AdminStore = request.app.state.store
+        return live.product_search(q, limit=max(1, min(limit, 50)))
+
+    @app.get("/api/suggest")
+    def api_suggest(request: Request, field: str = "faction", q: str = "", limit: int = 40) -> list[dict]:
+        if field not in {"faction", "general_set"}:
+            raise HTTPException(status_code=400, detail="field 只支持 faction / general_set")
+        live: AdminStore = request.app.state.store
+        return live.suggest_values(field, q, limit=max(1, min(limit, 100)))
+
+    @app.get("/api/generals")
+    def api_generals(request: Request, name: str = "", limit: int = 8) -> list[dict]:
+        live: AdminStore = request.app.state.store
+        return live.generals_named(name, limit=max(1, min(limit, 20)))
+
+    @app.get("/api/version-exists")
+    def api_version_exists(
+        request: Request, skill_id: str, mode: str = "", product_id: str = "", text: str = ""
+    ) -> dict:
+        live: AdminStore = request.app.state.store
+        found = live.version_by_content(skill_id, mode or None, product_id or None, text)
+        return {"exists": found is not None, "version": found}
+
+    # ------------------------------------------------------------ 新增（generic：低频实体）
 
     @app.get("/new/{kind}", response_class=HTMLResponse)
     def new_page(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
+        if kind in {"product", "general"}:
+            # 产品 / 武将走专用录入页
+            raise HTTPException(
+                status_code=404, detail=f"{KIND_BY_NAME[kind].label}请使用专用录入页 /new/{kind}"
+            )
         live: AdminStore = request.app.state.store
         values = forms.values_from_defaults(kind)
         params = {key: value for key, value in request.query_params.items() if key in values}
@@ -395,6 +789,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/new/{kind}", response_class=HTMLResponse)
     async def create_entity(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
+        if kind in {"product", "general"}:
+            raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)
         candidate, errors = forms.parse_form(kind, form)
@@ -424,6 +820,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.get("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     def edit_page(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
+        if kind in {"product", "general"}:
+            raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         entity = live.entity(kind, entity_id)
         if entity is None:
@@ -456,6 +854,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     async def update_entity(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
+        if kind in {"product", "general"}:
+            raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)
         candidate, errors = forms.parse_form(kind, form)
@@ -652,6 +1052,13 @@ def _flash_from_query(request: Request) -> list[dict]:
         flashes.append({"level": "ok", "text": "已删除：YAML 已更新，并已由 YAML 重建 SQLite。"})
     if query.get("rebuilt"):
         flashes.append({"level": "ok", "text": "已按当前 YAML 全量重建 SQLite。"})
+    if query.get("info") and query.get("info") != "0":
+        flashes.append(
+            {
+                "level": "warn",
+                "text": f"有 {query.get('info')} 条录入提示（例如复用了内容完全相同的技能版本、或新建了同名技能），详见下方技能区块。",
+            }
+        )
     if query.get("warn") and query.get("warn") != "0":
         flashes.append(
             {
@@ -728,12 +1135,12 @@ def _form_error(
 
 
 def _detail_fields(live: AdminStore, kind: str, entity: Any) -> list[dict]:
-    """详情页的字段表：引用字段渲染成可点击链接。"""
+    """详情页的字段表：引用字段渲染成可点击链接；嵌套对象由专门区块展示。"""
     outgoing = live.outgoing_refs(kind, entity)
     out: list[dict] = []
     for spec in forms.form_specs(kind):
-        if spec.name.startswith("source."):
-            continue
+        if spec.name.startswith("source.") or spec.widget in {"source", "object"}:
+            continue  # source 单独一个区块；skills 之类由品类专属区块展示
         value = getattr(entity, spec.name, None)
         if spec.widget == "list":
             text = "\n".join(forms.value_to_text(spec, item) for item in (value or []))

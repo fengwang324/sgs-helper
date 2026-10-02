@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import sqlite3
 import threading
 from dataclasses import dataclass, field
@@ -46,7 +47,13 @@ from ..loader import (
 )
 from ..repo import _score, pick_current, _status
 from ..schema import MODEL_BY_KIND
-from ..validate import REFERENCE_FIELDS, ValidationResult, validate_data_dir, validate_entities
+from ..validate import (
+    REFERENCE_FIELDS,
+    ValidationResult,
+    iter_reference_values,
+    validate_data_dir,
+    validate_entities,
+)
 from . import yaml_writer
 from .yaml_writer import BlockStr  # noqa: F401  （供模板/其它模块引用）
 
@@ -84,6 +91,24 @@ def truncate(text: str, limit: int = 60) -> str:
 
 
 @dataclass
+class Change:
+    """批量保存里的一项改动。
+
+    ``old_id`` 为 ``None`` 表示**新增**；否则表示这一项是在改（或改名）``old_id`` 那条记录。
+    ``expected_sha`` 是该记录的内容哈希（并发保护），``None`` 表示不做检查（仅程序化调用用）。
+    """
+
+    kind: str
+    candidate: dict
+    old_id: str | None = None
+    expected_sha: str | None = None
+
+    @property
+    def entity_id(self) -> str:
+        return str(self.candidate.get("id") or "")
+
+
+@dataclass
 class SaveOutcome:
     """一次写操作的完整结果，供页面直接渲染。"""
 
@@ -99,9 +124,21 @@ class SaveOutcome:
     conflict: bool = False
     references: list[dict] = field(default_factory=list)
     rolled_back: bool = False
+    #: 本次真正写入/删除的 YAML 文件
+    written: list[str] = field(default_factory=list)
+    #: 校验错误按实体分组：{"skill_xxx": [Issue, ...]}，页面按技能/字段定位问题
+    issues_by_entity: dict[str, list[Issue]] = field(default_factory=dict)
+    #: 非错误的提示（例如“复用了内容完全相同的已有技能版本”）
+    info: list[str] = field(default_factory=list)
 
     def format_issues(self) -> str:
         return "\n".join(issue.format() for issue in self.issues)
+
+    def group_issues(self) -> dict[str, list[Issue]]:
+        grouped: dict[str, list[Issue]] = {}
+        for issue in self.issues:
+            grouped.setdefault(issue.entity_id or "", []).append(issue)
+        return grouped
 
 
 # ---------------------------------------------------------------- 事务备份
@@ -245,21 +282,21 @@ class AdminStore:
         bundle = self.bundle
         if kind == "product":
             bits = [
-                getattr(entity, "series", ""),
-                getattr(entity, "publisher", ""),
                 str(getattr(entity, "release_year", "") or ""),
-                getattr(entity, "edition", ""),
+                f"武将牌：{'、'.join(entity.general_sets)}" if entity.general_sets else "",
+                f"游戏牌：{'、'.join(entity.card_sets)}" if entity.card_sets else "",
+                getattr(entity, "publisher", ""),
             ]
             return " · ".join(b for b in bits if b)
         if kind == "general":
             bits = [
                 getattr(entity, "faction", "") or "",
-                f"{getattr(entity, 'hp', '')} 体力",
-                f"包：{entity.package}" if getattr(entity, "package", None) else "",
+                f"{getattr(entity, 'hp', '')} 勾玉" if getattr(entity, "hp", None) is not None else "",
+                f"系列：{entity.general_set}" if getattr(entity, "general_set", None) else "",
             ]
             skills = [
-                self.display_name("skill", bundle.get("skill", sid))
-                for sid in getattr(entity, "skill_ids", [])
+                self.display_name("skill", bundle.get("skill", ref.skill_id))
+                for ref in getattr(entity, "skills", [])
             ]
             text = " · ".join(b for b in bits if b)
             if skills:
@@ -310,6 +347,11 @@ class AdminStore:
             "id": entity.id,
             "name": self.display_name(kind, entity),
             "subtitle": self.subtitle(kind, entity),
+            "title": getattr(entity, "title", "") or "",
+            "general_number": getattr(entity, "general_number", None),
+            "general_set": getattr(entity, "general_set", None),
+            "general_sets": list(getattr(entity, "general_sets", []) or []),
+            "card_sets": list(getattr(entity, "card_sets", []) or []),
             "mode": mode,
             "mode_label": MODE_LABELS.get(mode, mode) if mode else "",
             "verification_status": status,
@@ -391,7 +433,11 @@ class AdminStore:
         product: str = "",
         package: str = "",
     ) -> list[dict]:
-        """列表页筛选：q / mode / verification_status / product_id / package。"""
+        """列表页筛选：q / mode / verification_status / product_id / general_set（package）。
+
+        ``package`` 现在只对武将表示「武将牌系列」（``general_set``）；
+        card_printing / skill_version 仍然用它们自己的 ``package`` 字段。
+        """
         bundle = self.bundle
         hits: dict[str, int] = {}
         if q.strip():
@@ -408,8 +454,12 @@ class AdminStore:
                 continue
             if product and getattr(entity, "product_id", None) != product:
                 continue
-            if package and getattr(entity, "package", None) != package:
-                continue
+            if package:
+                if kind == "general":
+                    if getattr(entity, "general_set", None) != package:
+                        continue
+                elif getattr(entity, "package", None) != package:
+                    continue
             rows.append(self.describe(kind, entity))
 
         if kind == "skill_version":
@@ -436,9 +486,12 @@ class AdminStore:
             product = getattr(entity, "product_id", None)
             if product:
                 products[product] = products.get(product, 0) + 1
-            package = getattr(entity, "package", None)
-            if package:
-                packages[package] = packages.get(package, 0) + 1
+            if kind == "general":
+                value = getattr(entity, "general_set", None)
+            else:
+                value = getattr(entity, "package", None)
+            if value:
+                packages[value] = packages.get(value, 0) + 1
 
         def options(mapping: dict[str, int], label_of=lambda k: k) -> list[dict]:
             return [
@@ -451,6 +504,7 @@ class AdminStore:
             "statuses": options(statuses, lambda k: VERIFICATION_LABELS.get(k, k)),
             "products": options(products, lambda k: self.name_of("product", k)),
             "packages": options(packages, lambda k: k),
+            "package_label": "武将牌系列" if kind == "general" else "包/牌堆",
         }
 
     def review_groups(self) -> list[dict]:
@@ -474,54 +528,236 @@ class AdminStore:
             )
         return groups
 
+    # ------------------------------------------------------------ 录入辅助（给前端 JSON API）
+
+    def skill_search(self, query: str, limit: int = 20) -> list[dict]:
+        """技能搜索式组合框：按 名称 / aliases / id 匹配，名称命中优先。"""
+        text = (query or "").strip()
+        bundle = self.bundle
+        lowered = text.lower()
+        scored: list[tuple] = []
+        for skill_id, skill in bundle.all("skill").items():
+            name = skill.name or ""
+            aliases = list(skill.aliases or [])
+            version_count = sum(
+                1 for v in bundle.all("skill_version").values() if v.skill_id == skill_id
+            )
+            if not text:
+                score = (5, 0)
+            elif name == text:
+                score = (0, 0)
+            elif text in aliases:
+                score = (1, 0)
+            elif name.startswith(text):
+                score = (2, 0)
+            elif lowered in skill_id.lower():
+                score = (3, 0)
+            elif text in name:
+                score = (4, 0)
+            else:
+                hit = next((a for a in aliases if text in a), None)
+                if hit is None:
+                    continue
+                score = (5, 0)
+            scored.append((score[0], name, skill_id, name, aliases, version_count))
+        scored.sort(key=lambda item: (item[0], item[1], item[2]))
+        return [
+            {
+                "id": skill_id,
+                "name": name,
+                "aliases": aliases,
+                "version_count": version_count,
+                "exact": bool(text) and name == text,
+            }
+            for _score, _n, skill_id, name, aliases, version_count in scored[:limit]
+        ]
+
+    def skill_version_options(
+        self, skill_id: str, *, mode: str | None = None, product_id: str | None = None
+    ) -> list[dict]:
+        """某技能的可选版本，按“产品匹配 > 模式匹配 > common > 其它”排序。
+
+        每项带上足够人判断的信息（版本标签/模式/产品/生效时间/文本摘要/文本哈希），
+        前端不仅能显示得像人话，还能据此判断“是不是已经有完全相同的版本”。
+        """
+        bundle = self.bundle
+        rows: list[dict] = []
+        for version in bundle.all("skill_version").values():
+            if version.skill_id != skill_id:
+                continue
+            if product_id and version.product_id == product_id:
+                rank = 0
+            elif mode and version.mode == mode:
+                rank = 1
+            elif version.mode == "common":
+                rank = 2
+            else:
+                rank = 3
+            text = version.text or ""
+            rows.append(
+                {
+                    "id": version.id,
+                    "version_label": version.version_label or "",
+                    "mode": version.mode,
+                    "mode_label": MODE_LABELS.get(version.mode, version.mode),
+                    "product_id": version.product_id,
+                    "product_name": self.name_of("product", version.product_id),
+                    "effective_from": version.effective_from.isoformat() if version.effective_from else "",
+                    "effective_to": version.effective_to.isoformat() if version.effective_to else "",
+                    "previous_version_id": version.previous_version_id,
+                    "verification_status": version.verification_status,
+                    "text": text,
+                    "text_excerpt": truncate(text, 60),
+                    "text_sha": hashlib.sha1(text.strip().encode("utf-8")).hexdigest(),
+                    "rank": rank,
+                    "same_product": bool(product_id and version.product_id == product_id),
+                    "same_mode": bool(mode and version.mode == mode),
+                }
+            )
+        rows.sort(key=lambda r: (r["rank"], r["effective_from"] or "", r["id"]))
+        return rows
+
+    def version_by_content(
+        self, skill_id: str, mode: str | None, product_id: str | None, text: str
+    ) -> dict | None:
+        """找一条内容完全相同的技能版本（避免重复录入的设备）。"""
+        target = (text or "").strip()
+        if not target:
+            return None
+        for version in self.bundle.all("skill_version").values():
+            if version.skill_id != skill_id:
+                continue
+            if version.mode != (mode or "common"):
+                continue
+            if (version.product_id or None) != (product_id or None):
+                continue
+            if (version.text or "").strip() == target:
+                return {"id": version.id, "version_label": version.version_label or ""}
+        return None
+
+    def product_search(self, query: str, limit: int = 20) -> list[dict]:
+        """产品搜索式下拉：支持 名称 / ID / 年份。"""
+        text = (query or "").strip()
+        lowered = text.lower()
+        rows: list[dict] = []
+        for product_id, product in self.bundle.all("product").items():
+            name = product.name or ""
+            year = product.release_year
+            haystack = f"{name} {product_id} {year or ''}".lower()
+            if text and lowered not in haystack:
+                continue
+            score = (
+                0 if name == text else
+                1 if name.startswith(text) else
+                2 if lowered in product_id.lower() else
+                3 if text and text == str(year or "") else
+                4 if text else
+                5
+            )
+            rows.append(
+                {
+                    "id": product_id,
+                    "name": name,
+                    "release_year": year,
+                    "mode": product.mode,
+                    "mode_label": MODE_LABELS.get(product.mode or "", product.mode or ""),
+                    "general_sets": list(product.general_sets or []),
+                    "card_sets": list(product.card_sets or []),
+                    "score": score,
+                }
+            )
+        rows.sort(key=lambda r: (r["score"], r["name"], r["id"]))
+        return rows[:limit]
+
+    def suggest_values(self, field_name: str, query: str = "", limit: int = 40) -> list[dict]:
+        """势力 / 武将牌系列这类“自由文本但希望复用已有值”的字段的候选值。"""
+        text = (query or "").strip()
+        counter: dict[str, int] = {}
+        for general in self.bundle.all("general").values():
+            value = (
+                getattr(general, "faction", "") if field_name == "faction"
+                else getattr(general, "general_set", None) if field_name == "general_set"
+                else None
+            )
+            if not value:
+                continue
+            if text and text not in str(value):
+                continue
+            counter[str(value)] = counter.get(str(value), 0) + 1
+        return [
+            {"value": value, "count": counter[value]}
+            for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]
+        ]
+
+    def generals_named(self, name: str, limit: int = 8) -> list[dict]:
+        """同名武将提醒（同名在不同产品/版本下是合法的，所以只提醒、不阻止）。"""
+        text = (name or "").strip()
+        if not text:
+            return []
+        rows = []
+        for general_id, general in self.bundle.all("general").items():
+            if general.name != text and text not in general.name:
+                continue
+            rows.append(
+                {
+                    "id": general_id,
+                    "name": general.name,
+                    "mode": general.mode,
+                    "mode_label": MODE_LABELS.get(general.mode or "", general.mode or ""),
+                    "product_id": general.product_id,
+                    "product_name": self.name_of("product", general.product_id),
+                    "general_set": general.general_set or "",
+                    "general_number": general.general_number or "",
+                    "exact": general.name == text,
+                }
+            )
+        rows.sort(key=lambda r: (not r["exact"], r["name"], r["id"]))
+        return rows[:limit]
+
     # ------------------------------------------------------------ 反向引用
 
     def reverse_refs(self, kind: str, entity_id: str) -> list[dict]:
-        """谁在引用这条记录？（删除前的安全检查）"""
+        """谁在引用这条记录？（删除前的安全检查）
+
+        用与校验器同一张声明表 + 同一个路径展开器，所以 ``skills[0].version_id``
+        这种嵌套引用也会被准确列出（字段名就是那个路径）。
+        """
         bundle = self.bundle
         out: list[dict] = []
-        for src_kind, field_name, target_kind, is_list in REFERENCE_FIELDS:
+        for src_kind, field_name, target_kind, _is_list in REFERENCE_FIELDS:
             if target_kind != kind:
                 continue
             for src_id, src_entity in bundle.all(src_kind).items():
-                value = getattr(src_entity, field_name, None)
-                hit = False
-                if is_list:
-                    hit = bool(value) and entity_id in value
-                else:
-                    hit = value == entity_id
-                if hit:
-                    out.append(
-                        {
-                            "kind": src_kind,
-                            "kind_label": KIND_BY_NAME[src_kind].label,
-                            "id": src_id,
-                            "name": self.display_name(src_kind, src_entity),
-                            "field": field_name,
-                        }
-                    )
+                for ref in iter_reference_values(src_entity, field_name):
+                    if ref.value == entity_id:
+                        out.append(
+                            {
+                                "kind": src_kind,
+                                "kind_label": KIND_BY_NAME[src_kind].label,
+                                "id": src_id,
+                                "name": self.display_name(src_kind, src_entity),
+                                "field": ref.path,
+                            }
+                        )
         out.sort(key=lambda r: (r["kind"], r["id"], r["field"]))
         return out
 
     def outgoing_refs(self, kind: str, entity: Any) -> dict[str, list[dict]]:
         """这条记录自己引用了谁（详情页把字段渲染成可点击链接）。"""
         out: dict[str, list[dict]] = {}
-        for src_kind, field_name, target_kind, is_list in REFERENCE_FIELDS:
+        for src_kind, field_name, target_kind, _is_list in REFERENCE_FIELDS:
             if src_kind != kind:
                 continue
-            value = getattr(entity, field_name, None)
-            items = list(value) if (is_list and value) else ([] if is_list else ([value] if value else []))
-            if not items:
-                continue
-            out[field_name] = [
-                {
-                    "kind": target_kind,
-                    "id": ref,
-                    "name": self.name_of(target_kind, ref),
-                    "exists": self.entity(target_kind, ref) is not None,
-                }
-                for ref in items
-            ]
+            for ref in iter_reference_values(entity, field_name):
+                out.setdefault(field_name, []).append(
+                    {
+                        "kind": target_kind,
+                        "id": ref.value,
+                        "path": ref.path,
+                        "name": self.name_of(target_kind, ref.value),
+                        "exists": self.entity(target_kind, ref.value) is not None,
+                    }
+                )
         return out
 
     def delete_impact(self, kind: str, entity_id: str) -> dict:
@@ -678,32 +914,41 @@ class AdminStore:
             return None
         bundle = self.bundle
         as_of = date.today().isoformat()
+        mode = entity.mode
+
         skills = []
-        for skill_id in entity.skill_ids:
-            skill = bundle.get("skill", skill_id)
+        for position, ref in enumerate(entity.skills):
+            skill = bundle.get("skill", ref.skill_id)
             versions = [
-                v
-                for v in bundle.all("skill_version").values()
-                if v.skill_id == skill_id and v.mode in (entity.mode, "common")
+                v for v in bundle.all("skill_version").values() if v.skill_id == ref.skill_id
             ]
-            versions.sort(key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id))
-            payloads = [v.model_dump(mode="json") for v in versions]
-            for payload in payloads:
+            versions.sort(
+                key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id)
+            )
+            payloads = {v.id: v.model_dump(mode="json") for v in versions}
+            for payload in payloads.values():
                 payload["status"] = _status(payload, as_of)
-            current, ambiguous = pick_current(payloads, entity.mode, as_of)
+
+            candidates = [p for p in payloads.values() if p["mode"] in (mode, "common")]
+            pinned = payloads.get(ref.version_id) if ref.version_id else None
+            derived, ambiguous = (
+                pick_current(candidates, mode, as_of) if candidates else (None, [])
+            )
             skills.append(
                 {
-                    "skill_id": skill_id,
+                    "position": position,
+                    "skill_id": ref.skill_id,
                     "skill": skill,
-                    "versions": [
-                        {"entity": v, "status": _status(v.model_dump(mode="json"), as_of)}
-                        for v in versions
-                    ],
-                    "current": current,
-                    "current_entity": next(
-                        (v for v in versions if current and v.id == current["id"]), None
+                    "version_id": ref.version_id,
+                    "pinned": pinned,
+                    "derived": derived,
+                    "current": pinned or derived,
+                    "pinned_missing": bool(ref.version_id and pinned is None),
+                    "all_versions": [payloads[v.id] for v in versions],
+                    "ambiguous_ids": [p["id"] for p in ambiguous],
+                    "edit_url": (
+                        f"/edit/general/{general_id}#skill-{position}"
                     ),
-                    "ambiguous_ids": [v["id"] for v in ambiguous],
                 }
             )
         return {
@@ -791,14 +1036,47 @@ class AdminStore:
         )
         return validate_entities(self.data_dir, kept, load_issues)
 
+    def validate_changes(self, changes: list[Change]) -> ValidationResult:
+        """只把一批候选改动合进内存跑校验，**不写盘**。
+
+        失败页用它把“文件 / 字段 / 原因”也显示出来（字段级错误之外再给一次完整校验说明）。
+        """
+        with self._lock:
+            raws, load_issues = load_data_dir(self.data_dir)
+            removed = {
+                (change.kind, change.old_id)
+                for change in changes
+                if change.old_id is not None
+            }
+            kept = [raw for raw in raws if (raw.kind, raw.data.get("id")) not in removed]
+            for change in changes:
+                kept.append(
+                    RawEntity(
+                        kind=change.kind,
+                        data=change.candidate,
+                        origin=self._candidate_origin(
+                            change.kind, change.entity_id, change.old_id
+                        ),
+                    )
+                )
+            return validate_entities(self.data_dir, kept, load_issues)
+
     def _resolve_target_file(
         self, kind: str, entity_id: str, old_id: str | None
     ) -> tuple[Path, Path | None]:
-        """返回 (写入目标文件, 需要清理的旧文件)。"""
-        if old_id and old_id != entity_id:
+        """返回 (写入目标文件, 需要清理的旧文件)。
+
+        - **新增**（``old_id is None``）永远落 ``data/<目录>/<id>.yaml``：
+          即使这个 id 已经被别的文件占用，也交给校验器报“id 重复”，
+          而不是让并发检查在这里变出一个莫名其妙的“文件被改动过”。
+        - **修改**沿用原文件；改了 id 则写到新文件并删掉旧文件里的那一条。
+        """
+        if old_id is None:
+            return yaml_writer.entity_file_path(self.data_dir, kind, entity_id), None
+        if old_id != entity_id:
             old_path = self.file_path(kind, old_id)
             return yaml_writer.entity_file_path(self.data_dir, kind, entity_id), old_path
-        origin = self.origin(kind, old_id or entity_id)
+        origin = self.origin(kind, old_id)
         if origin is not None:
             return self.data_dir / origin.path, None
         return yaml_writer.entity_file_path(self.data_dir, kind, entity_id), None
@@ -831,43 +1109,113 @@ class AdminStore:
         old_id: str | None = None,
         expected_sha: str | None = None,
     ) -> SaveOutcome:
-        """校验 → 写 YAML → 重建 SQLite。任何一步失败都不会留下半成品。"""
-        entity_id = str(candidate.get("id") or "")
+        """单条保存（``save_batch`` 的薄包装）。"""
+        return self.save_batch(
+            [Change(kind=kind, candidate=candidate, old_id=old_id, expected_sha=expected_sha)]
+        )
+
+    def save_batch(self, changes: list[Change]) -> SaveOutcome:
+        """**一次事务**保存多条改动（武将录入页会同时产生 General + Skill + SkillVersion）。
+
+        流程（与单条保存完全一致，只是把“一条”换成“一批”）：
+
+        1. 并发检查（``_base_sha``）与目标文件解析；
+        2. 把**全部**候选变化合进内存里的 DataBundle，跑一次完整 ``validate_entities``；
+           任何一条不合法 → 一个文件都不写；
+        3. 备份所有要改的文件，全部写入（临时文件 + fsync + os.replace）；
+        4. **只 rebuild 一次** SQLite；
+        5. 任何一步失败 → 回滚全部文件（被外部改动过的文件跳过回滚），旧数据库保持可用。
+        """
         with self._lock:
-            pre = self.validate_candidate(kind, candidate, old_id=old_id)
+            changes = [change for change in changes if change.candidate is not None]
+            if not changes:
+                return SaveOutcome(ok=True, kind="", entity_id="")
+
+            primary = changes[0]
+            entity_id = primary.entity_id
+            kind = primary.kind if len(changes) == 1 else ""
+
+            # 0. 批内不能有两条改动命中同一条记录（否则合并语义不明确）
+            seen_keys: set[tuple[str, str]] = set()
+            for change in changes:
+                key = (change.kind, change.old_id or change.entity_id)
+                if key in seen_keys:
+                    return SaveOutcome(
+                        ok=False, kind=kind, entity_id=entity_id,
+                        error=(
+                            "同一批改动里出现了重复目标："
+                            f"{change.kind} {change.old_id or change.entity_id}"
+                        ),
+                    )
+                seen_keys.add(key)
+
+            # 1. 并发检查 + 目标文件解析
+            targets: list[tuple[Change, Path, Path | None]] = []
+            for change in changes:
+                target, stale_path = self._resolve_target_file(
+                    change.kind, change.entity_id, change.old_id
+                )
+                check_path = (
+                    stale_path if (stale_path is not None and stale_path != target) else target
+                )
+                check_id = change.old_id or change.entity_id
+                conflict = self._concurrency_check(
+                    change.kind, check_path, check_id, change.expected_sha
+                )
+                if conflict:
+                    return SaveOutcome(
+                        ok=False, kind=kind, entity_id=entity_id, conflict=True, error=conflict
+                    )
+                targets.append((change, target, stale_path))
+
+            # 2. 一次性合并进内存候选集合并完整校验
+            raws, load_issues = load_data_dir(self.data_dir)
+            removed = {
+                (change.kind, change.old_id)
+                for change in changes
+                if change.old_id is not None
+            }
+            kept = [
+                raw for raw in raws if (raw.kind, raw.data.get("id")) not in removed
+            ]
+            for change in changes:
+                kept.append(
+                    RawEntity(
+                        kind=change.kind,
+                        data=change.candidate,
+                        origin=self._candidate_origin(
+                            change.kind, change.entity_id, change.old_id
+                        ),
+                    )
+                )
+            pre = validate_entities(self.data_dir, kept, load_issues)
             if not pre.ok:
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id, issues=pre.errors,
+                    issues_by_entity=_group_issues(pre.errors),
                     error="校验未通过：没有写入任何文件，数据库也没有变化",
                 )
 
-            entity = pre.bundle.get(kind, entity_id)
-            if entity is None:  # pragma: no cover - 预校验通过时不可能发生
-                return SaveOutcome(
-                    ok=False, kind=kind, entity_id=entity_id,
-                    error="内部错误：候选实体没有被校验器接受",
-                )
-
-            target, stale_path = self._resolve_target_file(kind, entity_id, old_id)
-            check_path = stale_path if (stale_path is not None and stale_path != target) else target
-            check_id = old_id or entity_id
-            conflict = self._concurrency_check(kind, check_path, check_id, expected_sha)
-            if conflict:
-                return SaveOutcome(
-                    ok=False, kind=kind, entity_id=entity_id, conflict=True, error=conflict
-                )
-
+            # 3. 备份 + 全部写盘
             backup = FileBackup()
-            backup.stash(target)
-            if stale_path is not None and stale_path != target:
-                backup.stash(stale_path)
-
+            written: list[str] = []
             try:
-                yaml_writer.upsert_entity(target, kind, entity, old_id=old_id)
-                backup.note_written(target)
-                if stale_path is not None and stale_path != target:
-                    yaml_writer.remove_entity(stale_path, old_id or "")
-                    backup.note_written(stale_path)
+                for change, target, stale_path in targets:
+                    entity = pre.bundle.get(change.kind, change.entity_id)
+                    if entity is None:  # pragma: no cover - 预校验通过时不可能发生
+                        raise ValueError(
+                            f"内部错误：候选实体 {change.kind} {change.entity_id} 没被校验器接受"
+                        )
+                    backup.stash(target)
+                    yaml_writer.upsert_entity(
+                        target, change.kind, entity, old_id=change.old_id
+                    )
+                    backup.note_written(target)
+                    written.append(str(target))
+                    if stale_path is not None and stale_path != target:
+                        backup.stash(stale_path)
+                        yaml_writer.remove_entity(stale_path, change.old_id or "")
+                        backup.note_written(stale_path)
             except (OSError, ValueError) as exc:
                 backup.rollback()
                 self.invalidate()
@@ -876,6 +1224,7 @@ class AdminStore:
                     error=f"写入 YAML 失败：{exc}", rolled_back=True,
                 )
 
+            # 4. 只 rebuild 一次
             self.invalidate()
             try:
                 build = self._build_atomic()
@@ -884,6 +1233,7 @@ class AdminStore:
                 self.invalidate()
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id, issues=exc.result.errors,
+                    issues_by_entity=_group_issues(exc.result.errors),
                     error=_rollback_note("写盘后校验仍然失败，已回滚 YAML 文件", skipped),
                     rolled_back=True,
                 )
@@ -897,9 +1247,10 @@ class AdminStore:
                 )
 
             return SaveOutcome(
-                ok=True, kind=kind, entity_id=entity_id, path=str(target),
-                build=build, warnings=list(build.warnings),
-                issues=[],
+                ok=True, kind=kind, entity_id=entity_id,
+                path=str(targets[0][1]) if targets else "",
+                build=build, warnings=list(build.warnings), issues=[],
+                written=written,
             )
 
     def delete(
@@ -1034,6 +1385,55 @@ class AdminStore:
         if path is None or not path.exists():
             return ""
         return path.read_text(encoding="utf-8")
+
+
+def _group_issues(issues: list[Issue]) -> dict[str, list[Issue]]:
+    grouped: dict[str, list[Issue]] = {}
+    for issue in issues:
+        grouped.setdefault(issue.entity_id or "", []).append(issue)
+    return grouped
+
+
+# ---------------------------------------------------------------- 内部 ID 生成
+
+
+def _slug_token(name: str) -> str:
+    """把名称变成一个合法的 id 片段：ASCII 取字母数字，中文等用稳定短哈希。
+
+    ``ascii_part`` 必须**至少 2 个字符且含字母**才算有意义：像「群狼环鼎 2026」
+    这种名字转写出来只剩 ``2026``，用它当 id 反而比哈希更难认。
+    """
+    ascii_part = re.sub(r"[^a-z0-9]+", "_", (name or "").strip().lower()).strip("_")
+    if len(ascii_part) >= 2 and re.search(r"[a-z]", ascii_part):
+        return ascii_part[:40]
+    digest = hashlib.sha1((name or "").strip().encode("utf-8")).hexdigest()[:8]
+    return f"n{digest}"
+
+
+def make_entity_id(prefix: str, name: str, existing: set[str]) -> str:
+    """由名称生成**唯一合法**内部 id（普通录入者不需要关心 id）。
+
+    中文名没法直接音译，就退回“稳定短哈希”，保证同样的名字总得到同样的 id 片段，
+    冲突时再追加 ``_2`` / ``_3`` …。
+    """
+    token = _slug_token(name)
+    candidate = f"{prefix}{token}"
+    if len(candidate) < 2:  # pragma: no cover - 前缀保证了长度
+        candidate = f"{prefix}n"
+    index = 2
+    while candidate in existing:
+        candidate = f"{prefix}{token}_{index}"
+        index += 1
+    return candidate
+
+
+def make_version_id(skill_id: str, mode: str | None, existing: set[str]) -> str:
+    """生成 SkillVersion 的 id：``<skill_id>_<mode>_vN``，N 取第一个没被占用的序号。"""
+    base = f"{skill_id}_{mode or 'common'}"
+    index = 1
+    while f"{base}_v{index}" in existing:
+        index += 1
+    return f"{base}_v{index}"
 
 
 def _rollback_note(message: str, skipped: list[Path]) -> str:

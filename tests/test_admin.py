@@ -229,6 +229,59 @@ def test_manual_rebuild_endpoint(client: TestClient, app, workdir: Path) -> None
 # ---------------------------------------------------------------- 4. 非法修改被拦截且不落盘
 
 
+def general_payload(app, **overrides) -> dict:
+    """构造一份“武将专用录入页会提交什么”的表单数据。"""
+    payload = {
+        "_csrf": app.state.csrf,
+        "_base_sha": "",
+        "_action": "save",
+        "skill_count": "0",
+        "name": "",
+        "title": "",
+        "general_number": "",
+        "mode": "",
+        "faction": "",
+        "hp": "",
+        "gender": "unknown",
+        "product_id": "",
+        "general_set": "",
+        "aliases": "",
+        "source.type": "",
+        "source.title": "",
+        "source.reference": "",
+        "source.notes": "",
+        "verification_status": "unverified",
+        "notes": "",
+    }
+    payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
+def product_payload(app, **overrides) -> dict:
+    payload = {
+        "_csrf": app.state.csrf,
+        "_base_sha": "",
+        "name": "",
+        "release_year": "",
+        "mode": "",
+        "general_sets": "",
+        "card_sets": "",
+        "id": "",
+        "series": "",
+        "publisher": "",
+        "edition": "",
+        "release_date": "",
+        "source.type": "",
+        "source.title": "",
+        "source.reference": "",
+        "source.notes": "",
+        "verification_status": "unverified",
+        "notes": "",
+    }
+    payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
 def test_invalid_edit_is_blocked_and_nothing_written(
     client: TestClient, app, workdir: Path
 ) -> None:
@@ -238,8 +291,13 @@ def test_invalid_edit_is_blocked_and_nothing_written(
     build_database(workdir / "data", db_path)
     db_before = db_path.read_bytes()
 
-    payload = form_payload(
-        app, "general", "general_kongrong_sample_guozhan", skill_ids="skill_does_not_exist"
+    payload = general_payload(
+        app,
+        name="【SAMPLE】孔融",
+        mode="guozhan",
+        skill_count="1",
+        skill_0_skill_id="skill_does_not_exist",
+        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
     )
     response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
 
@@ -247,7 +305,7 @@ def test_invalid_edit_is_blocked_and_nothing_written(
     assert "skill_does_not_exist" in response.text
     # 具体文件 / 字段 / 原因
     assert "data/generals/" in response.text
-    assert "skill_ids" in response.text
+    assert "skills[0].skill_id" in response.text
     assert "不存在" in response.text
     # 一个字都没写，数据库也没变
     assert path.read_text(encoding="utf-8") == before
@@ -255,16 +313,24 @@ def test_invalid_edit_is_blocked_and_nothing_written(
 
 
 def test_invalid_model_field_is_blocked(client: TestClient, app, workdir: Path) -> None:
-    payload = form_payload(app, "general", "general_kongrong_sample_guozhan", hp="abc")
-    payload["hp"] = "abc"
+    payload = general_payload(
+        app,
+        name="【SAMPLE】孔融",
+        hp="abc",
+        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
+    )
     response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
     assert response.status_code == 400
-    assert "必须是数字" in response.text
+    assert "勾玉要写数字" in response.text
 
 
 def test_unknown_field_cannot_be_injected(client: TestClient, app, workdir: Path) -> None:
-    """extra="forbid"：模型外的字段进不来（表单不会渲染它，也不会被写进 YAML）。"""
-    payload = form_payload(app, "general", "general_kongrong_sample_guozhan")
+    """表单之外的字段进不来（专用录入页只读自己认识的字段）。"""
+    payload = general_payload(
+        app,
+        name="【SAMPLE】孔融",
+        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
+    )
     payload["totally_bogus"] = "1"
     response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
     assert response.status_code == 303
@@ -623,18 +689,31 @@ def test_remove_only_entity_deletes_file(tmp_path: Path) -> None:
 def test_reference_fields_cover_every_id_field() -> None:
     """任何 ``*_id`` / ``*_ids`` 模型字段都必须在 REFERENCE_FIELDS 里声明。
 
-    新增引用字段却忘了更新声明表时，删除保护会静默失效 —— 这条测试就是为了
+    包括嵌在关系结构里的字段（例如 ``General.skills[].skill_id``）。
+    新增引用字段却忘了更新声明表时，删除保护与引用校验会静默失效 —— 这条测试就是为了
     让那种情况在 CI 里立刻炸出来。
     """
+    from sgs_helper.schema import GeneralSkillRef, StrictModel
+
     declared = {(kind, field) for kind, field, _target, _is_list in REFERENCE_FIELDS}
-    missing = []
+    missing: list[tuple[str, str]] = []
     for kind, model in MODEL_BY_KIND.items():
-        for name in model.model_fields:
+        for name, info in model.model_fields.items():
             if name == "id":
                 continue
             if name.endswith("_id") or name.endswith("_ids"):
                 if (kind, name) not in declared:
                     missing.append((kind, name))
+            # 嵌套关系模型（例如 GeneralSkillRef）
+            annotation = str(info.annotation)
+            for nested in (GeneralSkillRef,):
+                if nested.__name__ in annotation:
+                    for sub_name in nested.model_fields:
+                        if sub_name == "id":
+                            continue
+                        if sub_name.endswith("_id") or sub_name.endswith("_ids"):
+                            if (kind, f"{name}[].{sub_name}") not in declared:
+                                missing.append((kind, f"{name}[].{sub_name}"))
     assert missing == [], f"这些引用字段没有在 REFERENCE_FIELDS 里声明：{missing}"
 
 
@@ -672,26 +751,25 @@ def test_review_page_groups_by_verification_status(app, client: TestClient) -> N
 
 
 def test_create_general_from_form(client: TestClient, app, workdir: Path) -> None:
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "id": "general_test_new",
-        "name": "【测试】新武将",
-        "mode": "guozhan",
-        "faction": "群",
-        "hp": "2.5",
-        "gender": "male",
-        "product_id": "product_guozhan_sample_2024",
-        "package": "test",
-        "skill_ids": "skill_jizhi",
-        "aliases": "测试别名\n另一个别名",
-        "source.type": "physical_card",
-        "source.title": "本人实体卡",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "physical_verified",
-        "notes": "",
-    }
+    payload = general_payload(
+        app,
+        id="general_test_new",
+        name="【测试】新武将",
+        title="测试称号",
+        general_number="qq-001",
+        mode="guozhan",
+        faction="群",
+        hp="2.5",
+        gender="male",
+        product_id="product_guozhan_sample_2024",
+        general_set="sample_jiubian",
+        skill_count="1",
+        skill_0_skill_id="skill_jizhi",
+        skill_0_version_id="skill_jizhi_guozhan_v1",
+        aliases="测试别名\n另一个别名",
+        **{"source.type": "physical_card", "source.title": "本人实体卡"},
+        verification_status="physical_verified",
+    )
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
 
@@ -699,7 +777,11 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     reloaded = yaml.safe_load(text)
     assert reloaded["hp"] == 2.5
     assert reloaded["aliases"] == ["测试别名", "另一个别名"]
-    assert reloaded["skill_ids"] == ["skill_jizhi"]
+    assert reloaded["general_number"] == "qq-001"
+    assert reloaded["general_set"] == "sample_jiubian"
+    assert reloaded["skills"] == [
+        {"skill_id": "skill_jizhi", "version_id": "skill_jizhi_guozhan_v1"}
+    ]
     assert reloaded["verification_status"] == "physical_verified"
 
     db_path = workdir / "build" / "sgs.db"
@@ -710,35 +792,20 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert report["general"]["hp"] == 2.5
     assert report["general"]["aliases"] == ["测试别名", "另一个别名"]
     assert report["product"]["id"] == "product_guozhan_sample_2024"
+    assert report["skills"][0]["version_id"] == "skill_jizhi_guozhan_v1"
+    assert report["skills"][0]["pinned"]["id"] == "skill_jizhi_guozhan_v1"
 
 
 def test_create_general_without_source_uses_model_default(client: TestClient, app, workdir: Path) -> None:
     """source 可选的实体：全部留空就写 null，而不是空结构。"""
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "id": "general_test_nosource",
-        "name": "【测试】无来源武将",
-        "mode": "identity",
-        "faction": "",
-        "hp": "3",
-        "gender": "unknown",
-        "product_id": "",
-        "package": "",
-        "skill_ids": "",
-        "aliases": "",
-        "source.type": "",
-        "source.title": "",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "unverified",
-        "notes": "",
-    }
+    payload = general_payload(app, id="general_test_nosource", name="【测试】无来源武将", hp="3")
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
     reloaded = yaml.safe_load(yaml_of(workdir, "general", "general_test_nosource").read_text(encoding="utf-8"))
     assert reloaded["source"] is None
-    assert reloaded["skill_ids"] == []
+    assert reloaded["skills"] == []
+    assert reloaded["mode"] is None
+    assert reloaded["general_number"] is None
 
 
 def test_source_required_entity_needs_source(client: TestClient, app, workdir: Path) -> None:

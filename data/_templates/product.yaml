@@ -1,15 +1,24 @@
 # 模板文件：目录名以 _ 开头，不会被校验/建库读取。
-# 复制到 data/products/ 下并改 id 即可。
+# 复制到 data/products/ 下并改 id 即可（或者直接用本地管理页 /new/product 录入）。
+#
+# 日常录入只需要：name / release_year / mode / general_sets / card_sets。
+# general_sets 与 card_sets 是两件不同的事，不要混：
+#   general_sets = 这个产品里的**武将牌系列 / 武将牌组名称**（国战标准、势备篇、九变篇…）
+#   card_sets    = 这个产品里的**游戏牌牌堆 / 牌堆系列名称**（标准牌堆、九变牌堆、君主游戏牌…）
 id: product_change_me
 name: 产品名称
-series: 三国杀国战
-mode: guozhan           # common/guozhan/identity/ol/mobile/other
-publisher: 游卡
 release_year: 2024
-release_date: 2024-08-01 # 可省略；填了就必须与 release_year 同年
-edition: 初版
-included_sets:
-  - standard
+mode: guozhan           # common/guozhan/identity/ol/mobile/other；允许留空（写 null）
+general_sets:
+  - 国战标准
+  - 势备篇
+card_sets:
+  - 标准牌堆
+# ---- 以下为“高级信息”，日常可以留空 ----
+series: ""
+publisher: ""
+release_date: null      # 可省略；填了就必须与 release_year 同年
+edition: ""
 source:
   type: physical_card   # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
   title: 本人实体产品

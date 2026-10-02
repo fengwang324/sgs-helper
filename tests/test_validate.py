@@ -35,12 +35,12 @@ def test_duplicate_id_is_detected(synth: Path) -> None:
 
 
 def test_missing_skill_reference_is_detected(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "- skill_demo", "- skill_missing")
+    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
     result = validate_data_dir(synth)
     assert not result.ok
     text = error_text(result)
     assert "skill_missing" in text
-    assert "skill_ids[0]" in text
+    assert "skills[0].skill_id" in text
     assert "data/skills/" in text
 
 
@@ -66,10 +66,10 @@ def test_wrong_kind_reference_gives_hint(synth: Path) -> None:
 
 
 def test_empty_reference_element_is_detected(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "- skill_demo\n", '- ""\n')
+    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", 'skill_id: ""')
     result = validate_data_dir(synth)
     assert not result.ok
-    assert "skill_ids[0]" in error_text(result)
+    assert "skills[0].skill_id" in error_text(result)
 
 
 def test_self_reference_is_detected(synth: Path) -> None:
@@ -123,8 +123,8 @@ def test_timing_parent_cycle_is_detected(synth: Path) -> None:
 
 def test_duplicate_reference_in_list_is_warned(synth: Path) -> None:
     replace_in(
-        synth / "generals" / "demo_alpha.yaml", "skill_ids:\n  - skill_demo\n",
-        "skill_ids:\n  - skill_demo\n  - skill_demo\n",
+        synth / "generals" / "demo_alpha.yaml", "skills:\n  - skill_id: skill_demo\n",
+        "skills:\n  - skill_id: skill_demo\n  - skill_id: skill_demo\n",
     )
     result = validate_data_dir(synth)
     assert result.ok
@@ -207,10 +207,10 @@ def test_skill_without_version_in_general_mode_is_warned(synth: Path) -> None:
 
 
 def test_report_format_has_path_field_reason(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "- skill_demo", "- skill_missing")
+    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
     report = validate_data_dir(synth).format_report()
     assert "data/generals/demo_alpha.yaml" in report
-    assert "skill_ids[0]" in report
+    assert "skills[0].skill_id" in report
     assert "skill_missing" in report
     assert "校验失败" in report
 

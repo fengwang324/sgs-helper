@@ -7,14 +7,15 @@ series: 三国杀身份局
 mode: identity
 publisher: 【SAMPLE】示例出版社
 release_year: 2025
-release_date: 2025-03-01
+release_date: '2025-03-01'
 edition: 示例初版
-included_sets:
+general_sets:
   - sample_standard
+card_sets: []
 source:
   type: community_db
   title: 【SAMPLE】占位资料来源
-  reference: ""
+  reference: ''
   notes: 仅用于验证数据结构
 verification_status: unverified
 notes: 【SAMPLE】占位数据。

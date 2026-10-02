@@ -237,16 +237,21 @@ def render_general(report: dict) -> str:
     general = report["general"]
     product = report.get("product") or {}
     lines = ["=" * 72, f"武将：{general['name']}    （id：{general['id']}）"]
+    if general.get("title"):
+        lines.append(f"  称号：{general['title']}")
+    if general.get("general_number"):
+        lines.append(f"  编号：{general['general_number']}")
     lines.append(
-        f"  模式：{mode_label(general['mode'])}    势力：{general.get('faction') or '未填'}    "
-        f"体力：{general['hp']}    性别：{gender_label(general.get('gender'))}"
+        f"  模式：{mode_label(general.get('mode'))}    势力：{general.get('faction') or '未填'}    "
+        f"勾玉：{general['hp'] if general.get('hp') is not None else '未填'}    "
+        f"性别：{gender_label(general.get('gender'))}"
     )
     lines.append(
         f"  所属产品：{general.get('product_id') or '（未填）'}"
         + (f" / {product.get('name')}" if product else "")
     )
-    if general.get("package"):
-        lines.append(f"  武将包：{general['package']}")
+    if general.get("general_set"):
+        lines.append(f"  武将牌系列：{general['general_set']}")
     if general.get("aliases"):
         lines.append(f"  别名：{'、'.join(general['aliases'])}")
     lines.append(f"  来源：{fmt_source(general.get('source'))}")
@@ -256,19 +261,24 @@ def render_general(report: dict) -> str:
         lines.append(f"  备注：{general['notes']}")
 
     lines.append("")
-    lines.append(_section(f"技能（按模式 {mode_label(general['mode'])} 取当前有效版本）"))
+    lines.append(_section(f"技能（模式 {mode_label(general.get('mode'))}；显式绑定的版本优先）"))
     if not report["skills"]:
         lines.append("  （该武将未关联任何技能）")
     for entry in report["skills"]:
         skill = entry.get("skill") or {}
         lines.append(f"  ● {skill.get('name', entry['skill_id'])}    （{entry['skill_id']}）")
+        if entry.get("version_id"):
+            lines.append(f"      武将上显式绑定的版本：{entry['version_id']}")
+        if entry.get("pinned") is None and entry.get("version_id"):
+            lines.append("      ⚠ 绑定的版本不存在（可能被删掉了），下面显示推导出的版本")
         if not entry["versions"]:
             lines.append("      ⚠ 该技能没有任何 SkillVersion，拿不到技能文本")
             continue
         current = entry.get("current")
         if current is not None:
+            how = "显式绑定" if entry.get("pinned") else "按模式+生效区间推导"
             lines.append(
-                f"      当前有效版本：{current['id']}"
+                f"      当前显示版本（{how}）：{current['id']}"
                 + (f"  [{current['version_label']}]" if current.get("version_label") else "")
                 + f"    {fmt_range(current)}"
             )
@@ -442,8 +452,10 @@ def render_product(report: dict) -> str:
         f"{product.get('release_date') or product.get('release_year') or '未填'}    "
         f"版本：{product.get('edition') or '未填'}"
     )
-    if product.get("included_sets"):
-        lines.append(f"  包含牌堆/子集：{'、'.join(product['included_sets'])}")
+    if product.get("general_sets"):
+        lines.append(f"  武将牌系列：{'、'.join(product['general_sets'])}")
+    if product.get("card_sets"):
+        lines.append(f"  游戏牌牌堆：{'、'.join(product['card_sets'])}")
     lines.append(f"  来源：{fmt_source(product.get('source'))}")
     lines.append(f"  校验状态：{verification_label(product.get('verification_status'))}")
     lines.append(f"  源文件：{fmt_location(product)}")

@@ -82,14 +82,14 @@ def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
 
 
 def test_build_refuses_invalid_data(synth: Path, tmp_path: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "- skill_demo", "- skill_missing")
+    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
     with pytest.raises(DataValidationError) as excinfo:
         build_database(synth, tmp_path / "sgs.db")
     assert "skill_missing" in excinfo.value.result.format_report()
 
 
 def test_build_can_force_invalid_data(synth: Path, tmp_path: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "- skill_demo", "- skill_missing")
+    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path, allow_invalid=True)
     conn = sqlite3.connect(db_path)
@@ -130,13 +130,14 @@ def test_general_skills_join_table(synth_db: Path) -> None:
     conn = sqlite3.connect(synth_db)
     try:
         rows = conn.execute(
-            "SELECT general_id, skill_id, position FROM general_skills ORDER BY general_id"
+            "SELECT general_id, skill_id, version_id, position FROM general_skills "
+            "ORDER BY general_id"
         ).fetchall()
     finally:
         conn.close()
     assert rows == [
-        ("general_demo_alpha", "skill_demo", 0),
-        ("general_demo_beta", "skill_demo", 0),
+        ("general_demo_alpha", "skill_demo", None, 0),
+        ("general_demo_beta", "skill_demo", None, 0),
     ]
 
 

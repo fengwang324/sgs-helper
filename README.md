@@ -76,7 +76,8 @@ sgs-helper/
 │   └── admin/                # ★ 本地资料管理网页（FastAPI + Jinja2，可选依赖）
 │       ├── app.py            #   路由与页面装配
 │       ├── store.py          #   读 YAML（快照 + 内存检索）、安全写 YAML、重建 SQLite
-│       ├── forms.py          #   由 Pydantic 模型生成表单、把提交值转回实体
+│       ├── forms.py          #   低频实体的 generic 表单（由 Pydantic 模型生成）
+│       ├── editors.py        #   产品 / 武将专用录入页的解析与批量改动构造
 │       ├── yaml_writer.py    #   可读 YAML 读写（保留注释头/块状标量/原子落盘）
 │       ├── templates/        #   Jinja2 模板
 │       └── static/           #   一个 CSS + 一个很小的 JS
@@ -102,7 +103,7 @@ sgs-helper/
 | kind | 目录 | SQLite 表 | 说明 |
 | --- | --- | --- | --- |
 | product | `data/products/` | `products` | 真实发行的线下产品 |
-| general | `data/generals/` | `generals` | 武将（只引用 skill_id） |
+| general | `data/generals/` | `generals` | 武将（`skills` 关系里引用 skill_id + 可选 version_id） |
 | skill | `data/skills/` | `skills` | **SkillDefinition**：技能本体 |
 | skill_version | `data/skill_versions/` | `skill_versions` | **SkillVersion**：某模式/产品/时期的文本 |
 | card | `data/cards/` | `cards` | **CardDefinition**：规则意义上的卡牌 |
@@ -114,13 +115,19 @@ sgs-helper/
 公共约定：
 
 - `id`：`^[a-z][a-z0-9_]*$`，带业务前缀（`product_` / `general_` / `skill_` / `card_` / `faq_` / `keyword_` / `timing_`）。
+  它是**内部主键**（YAML 文件名 / URL / 外键），管理页会自动生成；实体卡上的编号放 `general_number`（自由字符串）。
 - 一个 YAML 文件可以放**一条**记录（推荐）、**一个列表**，或 `items: [ ... ]` 包装。
 - 文件放在哪个目录决定它是什么类型；目录名以 `_` 开头的文件/目录会被跳过。
 - **写错字段名会直接报错**（模型 `extra="forbid"`），不会静默丢弃。
-- `mode`：`common`（通用）/ `guozhan`（国战）/ `identity`（身份局）/ `ol` / `mobile` / `other`。
+- `mode`：`common`（通用）/ `guozhan`（国战）/ `identity`（身份局）/ `ol` / `mobile` / `other`；
+  **产品与武将的 mode 允许为空**（先录入，以后再补）。
+- `Product.general_sets`（武将牌系列）与 `Product.card_sets`（游戏牌牌堆）是两件事，不要混。
+- `General.hp`（勾玉）允许为空；`General.skills` 是关系列表：
+  `[{skill_id, version_id}]`，`version_id` 为空表示“按模式+生效区间自动推导”。
 - `verification_status`：`unverified` / `community` / `official` / `physical_verified` / `conflict`。
 - `source.type`：`physical_card`（本人实体卡）/ `official_rule` / `official_faq` / `official_online` / `community_db` / `wiki` / `discussion`。
-- `aliases` 用于别名检索；`source` 在武将、技能版本、实体卡、FAQ、关键词、时点是**必填**。
+- `aliases` 用于别名检索；`source` 在技能版本、实体卡、FAQ、关键词、时点是**必填**，
+  产品 / 武将 / 技能本体允许为空（缺来源只会告警，不阻塞录入）。
 
 完整 SQLite 表结构见 [docs/sqlite-schema.md](docs/sqlite-schema.md)。
 
@@ -167,25 +174,38 @@ card_sha（“杀”这个概念 · data/cards/sha.yaml）
 
 ## 日常操作手册
 
-> 所有新增都遵循同一流程：**复制模板 → 改内容 → validate → build_db → pytest → commit**。
-> 模板在 `data/_templates/` 下。
+> 有两条等价的路：**浏览器里用本地管理页录**（推荐，见 [docs/admin.md](docs/admin.md)），
+> 或者**复制模板 → 改内容 → validate → build_db → pytest → commit**（模板在 `data/_templates/` 下）。
+> 无论走哪条，最终都只改 `data/` 下的 YAML。
 
 ### 新增一个实体产品
 
-1. `cp data/_templates/product.yaml data/products/my_product_2026.yaml`
-2. 改 `id`（唯一）、`name`、`mode`、`publisher`、`release_year`、`edition`、`included_sets`；
-3. `source` 写清依据（实体产品用 `type: physical_card`），`verification_status` 按是否核验填写。
+1. 打开 `/new/product`（或 `cp data/_templates/product.yaml data/products/my_product_2026.yaml`）
+2. 日常只需要 5 个字段：`name`、`release_year`、`mode`、`general_sets`、`card_sets`；
+   - `general_sets`：该产品包含的**武将牌系列**（国战标准、势备篇、九变篇…）；
+   - `card_sets`：该产品包含的**游戏牌牌堆**（标准牌堆、君主游戏牌…）。
+   两者是两件事，**不要混**（旧字段 `included_sets` 已删除）。
+3. `publisher` / `edition` / `source` / `verification_status` 等属于“高级信息”，可以留空。
 
 ### 新增一个武将
 
-1. `cp data/_templates/general.yaml data/generals/kongrong_guozhan.yaml`
-2. 关键字段：`mode`（国战还是身份局）、`faction`、`hp`（支持 1.5 这类 0.5 步进）、
-   `gender`、`product_id`（来自哪个产品）、`skill_ids`；
-3. **不要在这里写技能文本**，只写 `skill_ids`；技能文本由 SkillVersion 提供；
-4. 校验会告警“某技能在该模式下没有任何 SkillVersion”，提醒你补技能版本。
+1. 打开 `/new/general`（或 `cp data/_templates/general.yaml data/generals/kongrong_guozhan.yaml`）
+2. **只有 `name` 是必填的**，其余先留空也可以保存：
+   `title`（称号）、`general_number`（卡面编号，如 `WEI001`）、`mode`、`faction`、`hp`（勾玉）、
+   `gender`、`product_id`、`general_set`（武将牌系列）、`skills`；
+3. **不要在这里写技能文本**：`skills` 只写关系，技能文本由 SkillVersion 提供：
+
+   ```yaml
+   skills:
+     - skill_id: skill_mingshi
+       version_id: skill_mingshi_guozhan_v1   # 这张卡印的就是这一版；留空则自动推导
+   ```
+
+4. 在管理页里可以直接搜索已有技能、内联新建技能与技能版本，一次提交完成；
+5. 校验会告警“某技能在该模式下没有任何 SkillVersion”，提醒你补技能版本。
 
 同名武将在不同产品/版本下会互相覆盖吗？——不会：`id` 唯一即可并存，
-约定命名如 `general_kongrong_guozhan_2024` / `general_kongrong_guozhan_2026`。
+管理页会自动生成内部 `id`，卡面编号放在 `general_number` 里。
 
 ### 新增一个技能
 
@@ -268,12 +288,12 @@ python scripts/validate_data.py --strict   # 有警告也算失败
 
 ```text
 ✗ data/generals/kongrong_sample_guozhan.yaml:20
-    general_kongrong_sample_guozhan.skill_ids[1]
+    general_kongrong_sample_guozhan.skills[1].skill_id
     引用的 技能(skill_not_exist) 不存在：data/skills/ 下没有该 id
 ```
 
 检查项包括：YAML 语法与顶层结构、必填字段、未知字段、id 格式与**重复 id**、
-`General.skill_ids` / `SkillVersion.skill_id` / `previous_version_id` /
+`General.skills[].skill_id` / `skills[].version_id` / `SkillVersion.skill_id` / `previous_version_id` /
 `CardPrinting.card_id` / `product_id` / FAQ 全部 `related_*` / Keyword / Timing 引用是否存在、
 空引用与自引用、`previous_version_id` 是否同技能/是否成环/时间是否倒退、
 同一技能同一模式生效区间是否重叠、时点 parent 链是否成环、prev/next 是否双向一致、
@@ -323,15 +343,22 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 打开 <http://127.0.0.1:8000>：
 
 - `/` 统一搜索框（9 类实体）+ 数据量与核验状态分布 + 当前校验错误；
-- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `package` 筛选；
+- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `general_set` 筛选；
 - `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 当前版本 → 历史版本链`，
   卡牌显示 `CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）`，
-  武将显示关联技能及其 `SkillVersion`；
-- `/new/{kind}`、`/edit/{kind}/{id}` 表单（字段由 Pydantic 模型生成）；
+  武将显示 `General → 技能（显式绑定的版本优先，否则自动推导）→ SkillVersion`；
+- **`/new/product`、`/new/general`：产品 / 武将专用录入页** ——
+  产品只要 名称/年份/模式/武将牌/游戏牌；武将**只有名字必填**，
+  技能行支持搜索已有技能、内联新建技能、内联新增版本、指定版本、排序；
+- `/new/{kind}`、`/edit/{kind}/{id}`：其余低频实体的 generic 表单（字段由 Pydantic 模型生成）；
+- 武将页支持「保存并新增下一位」（可继承上一位的产品信息）、「以此武将为模板新增」、
+  Ctrl/⌘+S 保存、搜索框 ↑↓/Enter/Esc、sessionStorage 草稿恢复、同名武将与重复版本提醒；
 - `/review` 汇总 `unverified` / `community` / `conflict`，方便拿实体卡逐条核验；
-- 技能详情页的「新增技能版本」会预填 `skill_id` / `previous_version_id` / `mode` / `product_id`，
-  **旧版本永不覆盖**；
-- 删除前检查引用关系，被引用就拒绝删除并列出引用方。
+- 删除前检查引用关系（含 `skills[].version_id` 这种嵌套引用），被引用就拒绝删除并列出引用方。
+
+武将录入页一次提交可能同时产生 `1 个 General + N 个 Skill + N 个 SkillVersion`，
+它们由 `AdminStore.save_batch()` 当**一个事务**处理：全部合进内存 → 完整校验 →
+全部写盘 → **只 rebuild 一次 SQLite**；任何一步失败则全部回滚、旧数据库保持不变。
 
 页面**不会**直接改 SQLite。保存流程固定为：
 
@@ -352,7 +379,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 ## 测试
 
 ```bash
-python -m pytest -q          # 145 个测试
+python -m pytest -q          # 183 个测试
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、
@@ -360,7 +387,10 @@ python -m pytest -q          # 145 个测试
 两层关联（技能本体↔版本、卡牌定义↔印刷、同名不覆盖）、
 查询（当前有效版本按日期推导、模式分组、历史链、检索、FAQ 关联）、CLI 端到端、
 本地管理网页（页面可启动、搜索可用、编辑 YAML 后重建数据库、非法修改被 validate 拦截且不落盘、
-新增 SkillVersion 不覆盖旧版本、被引用实体不能删除、YAML 往返无损、CSRF 与并发保护）。
+新增 SkillVersion 不覆盖旧版本、被引用实体不能删除、YAML 往返无损、CSRF 与并发保护），
+以及产品/武将专用录入页（只填名字也能建、自动生成内部 ID、编号格式、general_sets/card_sets、
+隐藏字段不丢、技能搜索与绑定、显式绑定版本、批量保存只 rebuild 一次、批量失败一个文件都不写、
+rebuild 失败全部回滚）。
 
 管理网页的测试全部在 `tmp_path` 的副本上跑，不会碰仓库里真实的 `data/`。
 

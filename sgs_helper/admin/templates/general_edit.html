@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% from "_macros.html" import issue_table, reference_list with context %}
+
+{# ------------------------------------------------------------------
+   一行技能。服务端为已存在的技能渲染，`__i__` 版本给 JS 克隆用。
+   ------------------------------------------------------------------ #}
+{% macro skill_row(row, idx) %}
+  {% set index = idx if idx is defined else row.index %}
+  <div class="skill-row" data-index="{{ index }}">
+    <div class="skill-row-head">
+      <span class="skill-no">技能</span>
+      <div class="skill-row-tools">
+        <button type="button" class="icon-btn row-up" title="上移">↑</button>
+        <button type="button" class="icon-btn row-down" title="下移">↓</button>
+        <button type="button" class="link-btn row-remove">删除此技能</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="f-skill-{{ index }}-combo">技能</label>
+      <div class="combo" data-combo="skill">
+        <input id="f-skill-{{ index }}-combo" class="combo-input" autocomplete="off"
+               placeholder="搜索技能名称 / 别名 / id，或输入新技能名"
+               value="{{ row.skill_name if row.skill_id else row.new_name }}">
+        <input type="hidden" class="combo-value" name="skill_{{ index }}_skill_id" value="{{ row.skill_id }}">
+        <input type="hidden" class="combo-new-name" name="skill_{{ index }}_new_name" value="{{ row.new_name }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help combo-help">
+        {% if row.skill_id %}
+          已选中 {{ row.skill_id }}{% if row.version_label %}，绑定版本 {{ row.version_label }}{% endif %}
+        {% else %}
+          输入后从下拉里选择已有技能；没有匹配时可以“+ 新建技能”。
+        {% endif %}
+      </p>
+      {% for message in error_map.get('skill_' ~ index ~ '_skill_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+      {% for message in error_map.get('skill_' ~ index ~ '_new_name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+      {% for message in error_map.get('skill_' ~ index ~ '_new_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field version-field" {{ 'hidden' if not row.skill_id else '' }}>
+      <label for="f-skill-{{ index }}-version">版本</label>
+      <select id="f-skill-{{ index }}-version" name="skill_{{ index }}_version_id" class="version-select">
+        <option value="">（不指定：按模式+生效区间自动推导当前有效版本）</option>
+        {% for option in row.version_options or [] %}
+          <option value="{{ option.id }}"
+                  {{ 'selected' if row.version_id == option.id else '' }}
+                  data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }} · {{ option.effective_from or '不限' }} ~ {{ option.effective_to or '至今' }}
+{{ option.text_excerpt }}">{{ option.version_label or option.id }} · {{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
+        {% endfor %}
+      </select>
+      <div class="version-preview"></div>
+      {% for message in error_map.get('skill_' ~ index ~ '_version_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field add-version-field" {{ 'hidden' if not row.skill_id else '' }}>
+      <button type="button" class="link-btn toggle-add-version">+ 为这个技能新增版本</button>
+      <div class="add-version-box" hidden>
+        <label for="f-skill-{{ index }}-add-label">新版本名称（可空，例如 2026 调整 / 界限突破）</label>
+        <input id="f-skill-{{ index }}-add-label" name="skill_{{ index }}_add_version_label"
+               value="{{ row.add_version_label }}">
+        <label for="f-skill-{{ index }}-add-text">新版本技能描述</label>
+        <textarea id="f-skill-{{ index }}-add-text" name="skill_{{ index }}_add_version_text"
+                  rows="4" placeholder="直接把卡面文字复制进来">{{ row.add_version_text }}</textarea>
+        <input type="hidden" name="skill_{{ index }}_add_version_from" value="{{ row.add_version_from }}">
+        <p class="help">
+          保存时会作为**新的** SkillVersion 写入，旧版本原样保留。
+          <button type="button" class="mini-btn from-current">基于当前版本新增</button>
+          （复制当前版本的文本并把当前版本设为前一版本）
+        </p>
+        {% for message in error_map.get('skill_' ~ index ~ '_add_version_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="field new-skill-field" {{ 'hidden' if row.skill_id else '' }}>
+      <label for="f-skill-{{ index }}-new-text">技能描述（新建技能时填）</label>
+      <textarea id="f-skill-{{ index }}-new-text" name="skill_{{ index }}_new_text" rows="5"
+                placeholder="卡面技能原文；只填技能名称、不填描述也可以保存">{{ row.new_text }}</textarea>
+      {% for message in error_map.get('skill_' ~ index ~ '_new_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+      <div class="field-grid">
+        <div>
+          <label for="f-skill-{{ index }}-new-label">技能版本（可空）</label>
+          <input id="f-skill-{{ index }}-new-label" name="skill_{{ index }}_new_version_label"
+                 value="{{ row.new_version_label }}" placeholder="初版 / 国战版 / 2026 调整">
+        </div>
+        <div>
+          <label for="f-skill-{{ index }}-new-id">内部 ID（可空）</label>
+          <input id="f-skill-{{ index }}-new-id" name="skill_{{ index }}_new_id"
+                 value="{{ row.new_id }}" placeholder="留空自动生成">
+        </div>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{% if mode == 'create' %}新增武将{% else %}编辑武将：{{ values.get('name') or target_id }}{% endif %}</h1>
+  <div class="actions">
+    {% if target_id %}
+      <a class="btn ghost" href="/view/general/{{ target_id }}">返回详情</a>
+      <a class="btn" href="/new/general?from={{ target_id }}&copy=attrs">以此武将为模板新增</a>
+    {% endif %}
+    <a class="btn ghost" href="/list/general">返回列表</a>
+  </div>
+</div>
+
+{% if outcome_error %}<div class="banner error">{{ outcome_error }}</div>{% endif %}
+{% if info %}
+  <div class="banner warn">
+    <ul class="tight">{% for line in info %}<li>{{ line }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+{% if issue_list %}
+  <section>
+    <h2>校验详情（文件 / 字段 / 原因）</h2>
+    {{ issue_table(issue_list) }}
+  </section>
+{% endif %}
+
+{% if template_source %}
+  <div class="banner warn copy-panel"
+       data-source-values='{{ {"faction": template_source.faction or "", "hp": (template_source.hp | string) if template_source.hp is not none else "", "gender": template_source.gender or "unknown"} | tojson }}'>
+    以「{{ template_source.name }}」为模板：<strong>产品 / 模式 / 武将牌系列</strong>已带入
+    （<strong>不会</strong>复制名字、编号、称号、内部 ID、技能）。
+    勾选决定是否复制：
+    <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="faction" checked> 势力</label>
+    <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="hp" checked> 勾玉</label>
+    <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="gender" checked> 性别</label>
+  </div>
+{% elif inherit_source %}
+  <div class="banner warn">
+    已继承上一位武将「{{ inherit_source.name }}」的<strong>产品信息</strong>：
+    产品 / 模式 / 武将牌系列已带入（名字、编号、称号、势力、勾玉、技能都不继承）。
+  </div>
+{% endif %}
+
+<section class="hint">
+  <p>
+    <strong>只有名字是必填的</strong>：其余都可以先留空（包括模式、势力、勾玉、系列、产品、技能），
+    先把手头有的信息录进来，以后再补。
+    保存 = 写回 YAML → 完整校验 → 重建 SQLite；这一页一次提交最多同时创建
+    1 个武将 + N 个技能 + N 个技能版本，**只重建一次数据库**，任何一条不合法则全都不落盘。
+  </p>
+</section>
+
+<form method="post" action="{{ action }}" class="entity-form editor-form" data-editor="general" autocomplete="off">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-general_number">编号</label>
+      <input id="f-general_number" name="general_number" value="{{ values.get('general_number', '') }}"
+             placeholder="WEI001 / shu-01">
+      <p class="help">实体卡上的编号；和内部 ID 无关。</p>
+      {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="f-title">称号</label>
+      <input id="f-title" name="title" value="{{ values.get('title', '') }}" placeholder="例如 独眼的罗刹">
+    </div>
+    <div class="field {{ 'has-error' if error_map.get('name') else '' }}">
+      <label for="f-name">名字 <span class="req">*</span></label>
+      <input id="f-name" name="name" value="{{ values.get('name', '') }}" autofocus>
+      <div id="duplicate-panel" class="duplicate-panel" hidden></div>
+      {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-mode">模式</label>
+      <select id="f-mode" name="mode">
+        <option value="">（未填）</option>
+        {% for value, label in mode_choices %}
+          <option value="{{ value }}" {{ 'selected' if values.get('mode') == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-faction-combo">势力</label>
+      <div class="combo" data-combo="faction">
+        <input id="f-faction-combo" class="combo-input" autocomplete="off" placeholder="搜索或输入，例如 魏"
+               value="{{ values.get('faction', '') }}">
+        <input type="hidden" class="combo-value" name="faction" value="{{ values.get('faction', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">已有值可以直接选，没有的可以自己输。</p>
+    </div>
+    <div class="field">
+      <label for="f-hp">勾玉</label>
+      <select id="f-hp" name="hp">
+        <option value="">（未填）</option>
+        {% for option in hp_choices %}
+          <option value="{{ option }}" {{ 'selected' if values.get('hp') == option else '' }}>{{ option }}</option>
+        {% endfor %}
+        {% if values.get('hp') and values.get('hp') not in hp_choices %}
+          <option value="{{ values.get('hp') }}" selected>{{ values.get('hp') }}</option>
+        {% endif %}
+      </select>
+      {% for message in error_map.get('hp', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="f-gender">性别</label>
+      <select id="f-gender" name="gender">
+        {% for value, label in gender_choices %}
+          <option value="{{ value }}" {{ 'selected' if values.get('gender', 'unknown') == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-general_set-combo">武将牌系列</label>
+      <div class="combo" data-combo="general_set">
+        <input id="f-general_set-combo" class="combo-input" autocomplete="off"
+               placeholder="搜索或输入，例如 九变篇" value="{{ values.get('general_set', '') }}">
+        <input type="hidden" class="combo-value" name="general_set" value="{{ values.get('general_set', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">选择产品后会优先给该产品的 general_sets；也可以直接输入别的值。</p>
+    </div>
+    <div class="field {{ 'has-error' if error_map.get('product_id') else '' }}">
+      <label for="f-product-combo">产品</label>
+      <div class="combo" data-combo="product">
+        <input id="f-product-combo" class="combo-input" autocomplete="off"
+               placeholder="搜索产品名称 / ID / 年份" value="{{ name_of('product', values.get('product_id')) if values.get('product_id') else '' }}">
+        <input type="hidden" class="combo-value" name="product_id" value="{{ values.get('product_id', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">选好产品后，只为空着的字段带入模式与武将牌系列，不会覆盖你已经填的内容。</p>
+      {% for message in error_map.get('product_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <h2 class="section-title">技能</h2>
+  <div id="skill-rows" class="skill-rows">
+    {% for row in rows %}{{ skill_row(row) }}{% endfor %}
+  </div>
+  <input type="hidden" name="skill_count" id="skill-count" value="{{ rows | length }}">
+  <p>
+    <button type="button" class="btn" id="add-skill-row">+ 添加技能</button>
+    <span class="muted">技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行技能。</span>
+  </p>
+
+  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') or error_map.get('aliases') else '' }}>
+    <summary>高级信息（内部 ID / 别名 / 来源 / 备注）</summary>
+    <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
+      <label for="f-id">内部 ID</label>
+      <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按名字自动生成">
+      <p class="help">YAML 文件名 / URL / 外键都用它；已存在的武将不会被重新生成 ID。</p>
+      {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="f-aliases">别名（一行一个）</label>
+      <textarea id="f-aliases" name="aliases" rows="2">{{ values.get('aliases', '') }}</textarea>
+    </div>
+
+    <fieldset class="source-group">
+      <legend>资料来源 source</legend>
+      <p class="help">可以留空（默认 unverified，会进入待核验页面）；也可以现在就填。</p>
+      <div class="field">
+        <label for="f-source-type">来源类型</label>
+        <select id="f-source-type" name="source.type">
+          <option value="">（不记录来源）</option>
+          {% for value, label in source_type_choices %}
+            <option value="{{ value }}" {{ 'selected' if values.get('source.type') == value else '' }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-source-title">来源标题</label>
+        <input id="f-source-title" name="source.title" value="{{ values.get('source.title', '') }}">
+      </div>
+      <div class="field">
+        <label for="f-source-reference">来源引用（URL / 页码）</label>
+        <input id="f-source-reference" name="source.reference" value="{{ values.get('source.reference', '') }}">
+      </div>
+      <div class="field">
+        <label for="f-source-notes">来源备注</label>
+        <textarea id="f-source-notes" name="source.notes" rows="2">{{ values.get('source.notes', '') }}</textarea>
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <label for="f-verification">核验状态</label>
+      <select id="f-verification" name="verification_status">
+        {% for value, label in verification_choices %}
+          <option value="{{ value }}" {{ 'selected' if values.get('verification_status', 'unverified') == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-notes">备注</label>
+      <textarea id="f-notes" name="notes" rows="2">{{ values.get('notes', '') }}</textarea>
+    </div>
+  </details>
+
+  <div class="form-actions">
+    <button class="btn primary" type="submit" name="_action" value="save">保存</button>
+    <button class="btn" type="submit" name="_action" value="save_next">保存并新增下一位武将</button>
+    <label class="inline-check">
+      <input type="checkbox" name="_inherit" value="1" checked> 下一位继承产品信息
+    </label>
+    {% if target_id %}
+      <a class="btn ghost" href="/view/general/{{ target_id }}">取消</a>
+      <a class="btn danger" href="/delete/general/{{ target_id }}">删除这个武将</a>
+    {% else %}
+      <a class="btn ghost" href="/list/general">取消</a>
+    {% endif %}
+    <span class="muted">Ctrl/⌘ + S 保存</span>
+  </div>
+</form>
+
+{# 新技能行模板：JS 克隆后把 __i__ 换成真实序号 #}
+<template id="skill-row-template">
+  {{ skill_row({"index": "__i__", "skill_id": "", "version_id": "", "new_name": "", "new_id": "",
+                 "new_text": "", "new_version_label": "", "new_version_id": "",
+                 "add_version_text": "", "add_version_label": "", "add_version_from": ""}, "__i__") }}
+</template>
+
+{% if references %}
+  <section>
+    <h2>被引用（{{ references | length }}）</h2>
+    {{ reference_list(references) }}
+  </section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}<script src="/static/editor.js"></script>{% endblock %}

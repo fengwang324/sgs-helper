@@ -3,21 +3,25 @@
 # ============================================================
 id: general_huangyueying_sample_identity
 name: 【SAMPLE】黄月英
+title: ''
+general_number: null
 mode: identity
 faction: 蜀
-hp: 3
+hp: 3.0
 gender: female
 product_id: product_identity_sample_2025
-package: sample_standard
-skill_ids:
-  - skill_jizhi
-  - skill_qicai
+general_set: sample_standard
+skills:
+  - skill_id: skill_jizhi
+    version_id: null
+  - skill_id: skill_qicai
+    version_id: null
 aliases:
   - 黄月英
 source:
   type: community_db
   title: 【SAMPLE】占位资料来源
-  reference: ""
+  reference: ''
   notes: 仅用于验证数据结构
 verification_status: unverified
 notes: 【SAMPLE】占位数据。
