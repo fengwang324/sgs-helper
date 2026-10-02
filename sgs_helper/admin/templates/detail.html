@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, mode_badge, entity_link, source_block, reference_list with context %}
+
+{% block content %}
+<div class="page-head">
+  <h1><span class="kind-chip">{{ row.kind_label }}</span> {{ row.name }}</h1>
+  <div class="actions">
+    <a class="btn" href="/edit/{{ kind }}/{{ row.id }}">编辑</a>
+    <a class="btn danger" href="/delete/{{ kind }}/{{ row.id }}">删除</a>
+    <a class="btn ghost" href="/list/{{ kind }}">返回列表</a>
+    <a class="btn ghost" href="/raw/{{ kind }}/{{ row.id }}" title="查看这条记录所在的 YAML 文件原文">YAML 原文</a>
+  </div>
+</div>
+
+{% if action_error %}<div class="banner error">{{ action_error }}</div>{% endif %}
+
+<p class="meta">
+  <code class="id">{{ row.id }}</code>
+  {{ mode_badge(row.mode) }}
+  {{ status_badge(row.verification_status) }}
+  <span class="muted">来源文件</span> <code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code>
+</p>
+<p class="sub">{{ row.subtitle }}</p>
+
+{# ---------------------------------------------------------------- 技能 #}
+{% if kind == 'skill' %}
+  <section>
+    <h2>SkillDefinition → SkillVersion</h2>
+    <p class="muted">
+      技能本体只是“这个概念”；具体规则文本按 模式 / 产品 / 时期 分成多条 SkillVersion，
+      旧版本永不覆盖。当前有效版本由 <code>mode + effective_from + effective_to</code> 推导（基准日 {{ detail.as_of }}）。
+    </p>
+
+    {% for group in detail.modes %}
+      <div class="subblock">
+        <h3>
+          模式：{{ group.label }}
+          <a class="btn small" href="/new/skill_version?skill_id={{ row.id }}&mode={{ group.mode }}{% if group.current_id %}&previous_version_id={{ group.current_id }}{% endif %}">新增技能版本</a>
+        </h3>
+        <p>
+          当前有效版本：
+          {% if group.current_id %}
+            <a href="/view/skill_version/{{ group.current_id }}">{{ name_of('skill_version', group.current_id) }}</a>
+            <code class="id">{{ group.current_id }}</code>
+            {% if group.current_mode != group.mode %}<span class="badge common">来自 {{ group.current_mode | mode_label }}</span>{% endif %}
+          {% else %}
+            <span class="badge warn">该模式下没有生效中的版本</span>
+          {% endif %}
+        </p>
+        {% if group.ambiguous_ids %}
+          <p class="badge conflict">存在并列版本（推导有歧义）：{{ group.ambiguous_ids | join('、') }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {% if detail.versions %}
+      <table class="rows">
+        <tr>
+          <th>版本</th><th>模式</th><th>状态</th><th>生效区间</th><th>前一版本</th><th>后继</th><th>产品</th><th>核验</th><th></th>
+        </tr>
+        {% for v in detail.versions %}
+          <tr>
+            <td>
+              <a href="/view/skill_version/{{ v.id }}">{{ v.entity.version_label or v.id }}</a>
+              <code class="id">{{ v.id }}</code>
+              {% if v.current_for_modes %}<span class="badge ok">当前有效：{{ v.current_for_modes | join('、') }}</span>{% endif %}
+              {% if v.ambiguous_for_modes %}<span class="badge conflict">并列：{{ v.ambiguous_for_modes | join('、') }}</span>{% endif %}
+            </td>
+            <td>{{ mode_badge(v.entity.mode) }}</td>
+            <td>
+              {% if v.status == 'active' %}<span class="badge ok">生效中</span>
+              {% elif v.status == 'future' %}<span class="badge warn">未生效</span>
+              {% else %}<span class="badge muted">已过期</span>{% endif %}
+            </td>
+            <td class="nowrap">{{ v.entity.effective_from or '不限' }} ~ {{ v.entity.effective_to or '至今' }}</td>
+            <td>{% if v.previous_id %}<a href="/view/skill_version/{{ v.previous_id }}"><code class="id">{{ v.previous_id }}</code></a>{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>
+              {% if v.next_ids %}{% for nid in v.next_ids %}<a href="/view/skill_version/{{ nid }}"><code class="id">{{ nid }}</code></a>{% endfor %}
+              {% else %}<span class="muted">—</span>{% endif %}
+            </td>
+            <td>{{ v.product_name or '—' }}</td>
+            <td>{{ status_badge(v.entity.verification_status) }}</td>
+            <td class="nowrap">
+              <a href="/new/skill_version?skill_id={{ row.id }}&mode={{ v.entity.mode }}&previous_version_id={{ v.id }}">新增版本</a> ·
+              <a href="/edit/skill_version/{{ v.id }}">编辑</a> ·
+              <a href="/delete/skill_version/{{ v.id }}">删除</a>
+            </td>
+          </tr>
+          <tr class="detail-row">
+            <td colspan="9">
+              <div class="rule-text">{{ v.entity.text }}</div>
+              {% if v.entity.change_note %}<div class="sub">变更说明：{{ v.entity.change_note }}</div>{% endif %}
+              {% if v.keyword_names %}<div class="sub">相关关键词：{{ v.keyword_names | join('、') }}</div>{% endif %}
+              {% if v.timing_names %}<div class="sub">相关时点：{{ v.timing_names | join('、') }}</div>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+
+      <h3>历史版本链</h3>
+      <ul class="chains">
+        {% for chain in detail.chains %}
+          <li>{{ chain | join(' → ') }}</li>
+        {% else %}
+          <li class="muted">没有形成链（每条版本都是独立起点）。</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="badge warn">这个技能本体还没有任何 SkillVersion。</p>
+      <p><a class="btn" href="/new/skill_version?skill_id={{ row.id }}">新增第一条技能版本</a></p>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ---------------------------------------------------------------- 武将 #}
+{% if kind == 'general' %}
+  <section>
+    <h2>General → 关联技能 → SkillVersion</h2>
+    <table class="kv">
+      <tr><th>势力 / 体力</th><td>{{ entity.faction or '—' }} / {{ entity.hp }}</td></tr>
+      <tr><th>性别</th><td>{{ entity.gender | gender_label }}</td></tr>
+      <tr><th>所属产品</th><td>{{ entity_link('product', entity.product_id) }}</td></tr>
+      <tr><th>包</th><td>{{ entity.package or '—' }}</td></tr>
+      <tr><th>模式</th><td>{{ mode_badge(entity.mode) }}</td></tr>
+      <tr><th>基准日</th><td>{{ detail.as_of }}</td></tr>
+    </table>
+
+    {% for item in detail.skills %}
+      <div class="subblock">
+        <h3>
+          {{ entity_link('skill', item.skill_id) }}
+          <a class="btn small" href="/new/skill_version?skill_id={{ item.skill_id }}&mode={{ entity.mode }}&product_id={{ entity.product_id or '' }}{% if item.current %}&previous_version_id={{ item.current.id }}{% endif %}">新增技能版本</a>
+        </h3>
+        {% if item.current_entity %}
+          <div class="rule-text">{{ item.current_entity.text }}</div>
+          <p class="sub">
+            当前有效版本（{{ entity.mode | mode_label }}）：
+            <a href="/view/skill_version/{{ item.current_entity.id }}">{{ item.current_entity.id }}</a>
+          </p>
+        {% else %}
+          <p class="badge warn">该技能在「{{ entity.mode | mode_label }}」下没有生效中的版本。</p>
+          {% if item.ambiguous_ids %}<p class="badge conflict">并列版本：{{ item.ambiguous_ids | join('、') }}</p>{% endif %}
+        {% endif %}
+        <details>
+          <summary>全部相关版本（{{ item.versions | length }}）</summary>
+          <ul>
+            {% for v in item.versions %}
+              <li>
+                <a href="/view/skill_version/{{ v.entity.id }}"><code class="id">{{ v.entity.id }}</code></a>
+                {{ mode_badge(v.entity.mode) }}
+                {% if v.status == 'active' %}<span class="badge ok">生效中</span>
+                {% elif v.status == 'future' %}<span class="badge warn">未生效</span>
+                {% else %}<span class="badge muted">已过期</span>{% endif %}
+                <span class="muted">{{ v.entity.effective_from or '不限' }} ~ {{ v.entity.effective_to or '至今' }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+{# ---------------------------------------------------------------- 卡牌 #}
+{% if kind == 'card' %}
+  <section>
+    <h2>CardDefinition → CardPrinting</h2>
+    {% if detail.printings %}
+      <table class="rows">
+        <tr>
+          <th>产品</th><th>花色</th><th>点数</th><th>角标</th><th>编号</th><th>包/牌堆</th><th>数量</th><th>核验</th><th></th>
+        </tr>
+        {% for p in detail.printings %}
+          <tr>
+            <td>
+              <a href="/view/product/{{ p.entity.product_id }}">{{ p.product_name }}</a>
+              <code class="id">{{ p.entity.product_id }}</code>
+            </td>
+            <td>{{ p.suit_label }}</td>
+            <td>{{ p.rank_label }}</td>
+            <td>{{ p.entity.bottom_right_mark or '—' }}</td>
+            <td>{{ p.entity.card_number or '—' }}</td>
+            <td>{{ p.entity.package or '—' }} / {{ p.entity.card_set or '—' }}</td>
+            <td>{{ p.entity.quantity }}</td>
+            <td>{{ status_badge(p.entity.verification_status) }}</td>
+            <td class="nowrap">
+              <a href="/view/card_printing/{{ p.entity.id }}">详情</a> ·
+              <a href="/edit/card_printing/{{ p.entity.id }}">编辑</a> ·
+              <a href="/delete/card_printing/{{ p.entity.id }}">删除</a>
+            </td>
+          </tr>
+          <tr class="detail-row">
+            <td colspan="9">
+              <div class="rule-text">{{ p.entity.printed_text or '（未填卡面文本）' }}</div>
+              <div class="sub">
+                印刷名：{{ p.entity.name_printed }}
+                {% if p.entity.normalized_text %} · 检索文本：{{ p.entity.normalized_text }}{% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p class="badge warn">这张卡还没有任何实体卡印刷记录。</p>
+      <p><a class="btn" href="/new/card_printing?card_id={{ row.id }}">新增实体卡印刷</a></p>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ---------------------------------------------------------------- 产品 #}
+{% if kind == 'product' %}
+  <section>
+    <h2>产品内容</h2>
+    <table class="kv">
+      <tr><th>系列 / 版次</th><td>{{ entity.series or '—' }} / {{ entity.edition or '—' }}</td></tr>
+      <tr><th>出版方</th><td>{{ entity.publisher or '—' }}</td></tr>
+      <tr><th>发行</th><td>{{ entity.release_year or '—' }}{% if entity.release_date %}（{{ entity.release_date }}）{% endif %}</td></tr>
+      <tr><th>包含牌堆</th><td>{{ entity.included_sets | join('、') or '—' }}</td></tr>
+    </table>
+
+    <div class="subblock">
+      <h3>收录武将（{{ detail.generals | length }}）<a class="btn small" href="/new/general?product_id={{ row.id }}&mode={{ entity.mode }}">新增武将</a></h3>
+      {% if detail.generals %}
+        <ul class="inline-list">
+          {% for g in detail.generals %}
+            <li><a href="/view/general/{{ g.id }}">{{ g.name }}</a> {{ status_badge(g.verification_status) }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="muted">没有。</p>{% endif %}
+    </div>
+
+    <div class="subblock">
+      <h3>实体卡印刷（{{ detail.printings | length }}）<a class="btn small" href="/new/card_printing?product_id={{ row.id }}">新增实体卡</a></h3>
+      {% if detail.printings %}
+        <ul class="inline-list">
+          {% for p in detail.printings %}
+            <li>
+              <a href="/view/card_printing/{{ p.id }}">{{ p.name_printed }}</a>
+              <span class="muted">{{ p.suit | suit_label }}{{ p.rank | rank_label }}{% if p.bottom_right_mark %} · 角标 {{ p.bottom_right_mark }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="muted">没有。</p>{% endif %}
+    </div>
+
+    <div class="subblock">
+      <h3>绑定本产品的技能版本（{{ detail.skill_versions | length }}）</h3>
+      {% if detail.skill_versions %}
+        <ul class="inline-list">
+          {% for v in detail.skill_versions %}
+            <li>
+              <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
+              {{ mode_badge(v.mode) }} {{ status_badge(v.verification_status) }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="muted">没有。</p>{% endif %}
+    </div>
+  </section>
+{% endif %}
+
+{# ---------------------------------------------------------------- 技能版本 #}
+{% if kind == 'skill_version' %}
+  <section>
+    <h2>版本位置</h2>
+    <table class="kv">
+      <tr><th>SkillDefinition</th><td>{{ entity_link('skill', entity.skill_id) }}</td></tr>
+      <tr><th>前一版本</th><td>{{ entity_link('skill_version', entity.previous_version_id) }}</td></tr>
+      <tr><th>后继版本</th><td>
+        {% set successor = references | selectattr('field', 'equalto', 'previous_version_id') | list %}
+        {% if successor %}
+          {% for ref in successor %}<a href="/view/skill_version/{{ ref.id }}"><code class="id">{{ ref.id }}</code></a>{% endfor %}
+        {% else %}<span class="muted">—（没有更新的版本引用它）</span>{% endif %}
+      </td></tr>
+      <tr><th>本版本文本</th><td><div class="rule-text">{{ entity.text }}</div></td></tr>
+    </table>
+    <p>
+      <a class="btn" href="/new/skill_version?skill_id={{ entity.skill_id }}&mode={{ entity.mode }}&previous_version_id={{ entity.id }}">基于本版本新增技能版本</a>
+    </p>
+  </section>
+{% endif %}
+
+{# ---------------------------------------------------------------- 通用字段 #}
+<section>
+  <h2>全部字段</h2>
+  <table class="kv">
+    {% for field in fields %}
+      <tr>
+        <th>{{ field.label }}<div class="fname">{{ field.name }}</div></th>
+        <td>
+          {% if field.links %}
+            <ul class="inline-list">
+              {% for link in field.links %}
+                <li>
+                  <a href="/view/{{ link.kind }}/{{ link.id }}">{{ link.name }}</a>
+                  <code class="id">{{ link.id }}</code>
+                  {% if not link.exists %}<span class="badge error">缺失</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% elif field.empty %}
+            <span class="muted">—</span>
+          {% elif field.name in ('notes', 'text', 'printed_text', 'question', 'answer', 'definition', 'description', 'change_note') %}
+            <div class="rule-text">{{ field.text }}</div>
+          {% else %}
+            {{ field.text }}
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section>
+  <h2>资料来源</h2>
+  {{ source_block(source) }}
+</section>
+
+<section>
+  <h2>被引用（{{ references | length }}）</h2>
+  <p class="muted">删除前会检查这里；只要还有引用，删除会被拒绝。</p>
+  {{ reference_list(references) }}
+</section>
+
+<section>
+  <h2>YAML 原文</h2>
+  <p class="muted">文件：<code>{{ yaml_path }}</code>（网页永远不会直接改 SQLite；保存时先写这个文件，再重建数据库）</p>
+  <details>
+    <summary>展开</summary>
+    <pre class="yaml">{{ yaml_text }}</pre>
+  </details>
+</section>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, reference_list, issue_table with context %}
+
+{% block content %}
+<div class="page-head">
+  <h1>删除 {{ row.kind_label }}：{{ row.name }}</h1>
+  <div class="actions">
+    <a class="btn ghost" href="/view/{{ kind }}/{{ row.id }}">返回详情</a>
+    <a class="btn ghost" href="/list/{{ kind }}">返回列表</a>
+  </div>
+</div>
+
+{% if action_error %}<div class="banner error">{{ action_error }}</div>{% endif %}
+{% if issues %}{{ issue_table(issues) }}{% endif %}
+
+<section>
+  <table class="kv">
+    <tr><th>类型</th><td><span class="kind-chip">{{ row.kind_label }}</span></td></tr>
+    <tr><th>ID</th><td><code class="id">{{ row.id }}</code></td></tr>
+    <tr><th>模式</th><td>{{ row.mode | mode_label or '—' }}</td></tr>
+    <tr><th>核验状态</th><td>{{ status_badge(row.verification_status) }}</td></tr>
+    <tr><th>YAML 文件</th><td><code class="file">{{ row.file }}</code></td></tr>
+  </table>
+</section>
+
+{% if impact and impact.lines %}
+  <section>
+    <h2>删除影响</h2>
+    <ul class="impact">
+      {% for line in impact.lines %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    {% if impact.is_current %}
+      <div class="banner warn">它仍是当前有效版本，删除后相关模式会取不到技能文本。</div>
+    {% endif %}
+  </section>
+{% endif %}
+
+<section>
+  <h2>引用检查（{{ references | length }}）</h2>
+  {% if references %}
+    <div class="banner error">有 {{ references | length }} 条记录引用它，<strong>不能直接删除</strong>。请先处理这些引用（改指向、或先删除引用方）。</div>
+  {% else %}
+    <div class="banner ok">没有任何记录引用它，可以安全删除。</div>
+  {% endif %}
+  {{ reference_list(references) }}
+</section>
+
+<section>
+  <h2>确认</h2>
+  {% if references %}
+    <p class="muted">删除按钮已被引用检查阻止；即使强行提交，服务端也会再次校验并拒绝。</p>
+    <form method="post" action="/delete/{{ kind }}/{{ row.id }}">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+      <button class="btn" type="submit" disabled>仍然删除（会被拒绝）</button>
+    </form>
+  {% else %}
+    <p>将从 <code>{{ row.file }}</code> 删除这条记录，然后按 YAML 重建 SQLite。删除动作会写入 Git 工作区（未提交）。</p>
+    <form method="post" action="/delete/{{ kind }}/{{ row.id }}" onsubmit="return confirm('确认删除 {{ row.id }}？');">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+      <button class="btn danger" type="submit">确认删除</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

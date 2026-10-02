@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if title %}{{ title }} · {% endif %}sgs-helper 资料管理</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <a href="/">三国杀资料管理</a>
+    <span class="tag" title="网页只写 YAML，SQLite 由 YAML 重建">YAML 权威源 · 本地工具</span>
+  </div>
+  <form class="search" action="/search" method="get" role="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="搜索 产品 / 武将 / 技能 / 技能版本 / 卡牌 / 实体卡 / FAQ / 关键词 / 时点" aria-label="搜索">
+    <button type="submit">搜索</button>
+  </form>
+  <form class="rebuild" action="/rebuild" method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <button type="submit" title="按当前 data/ 下的 YAML 全量重建 build/sgs.db">重建数据库</button>
+  </form>
+</header>
+
+<nav class="kinds">
+  <a href="/" class="{{ 'active' if not current_kind else '' }}">首页</a>
+  {% for item in kinds %}
+    <a href="/list/{{ item.kind }}" class="{{ 'active' if current_kind == item.kind else '' }}">{{ item.label }}<span class="count">{{ item.count }}</span></a>
+  {% endfor %}
+  <a href="/review" class="{{ 'active' if request.url.path == '/review' else '' }}">待核验<span class="count warn-count">{{ review_count }}</span></a>
+  <a href="/help" class="{{ 'active' if request.url.path == '/help' else '' }}">说明</a>
+</nav>
+
+<main>
+  {% if not db_state.exists %}
+    <div class="banner warn">还没有生成 <code>{{ db_state.path }}</code>。点击右上角「重建数据库」，或运行 <code>python scripts/build_db.py</code>。</div>
+  {% elif db_state.stale %}
+    <div class="banner warn">
+      SQLite 生成物与当前 YAML <strong>不一致</strong>（可能是手工改过 YAML，或有人直接动了 build/sgs.db）。
+      本页显示的内容始终来自 YAML；如需让 CLI / 小程序读到最新数据，请点击「重建数据库」。
+    </div>
+  {% endif %}
+  {% if validation.errors %}
+    <div class="banner error">
+      当前 YAML 有 {{ validation.errors | length }} 条校验错误：新增/修改会被拦截，直到错误修好。
+      <a href="/#issues">查看错误</a>
+    </div>
+  {% endif %}
+  {% for item in flash %}
+    <div class="banner {{ item.level }}">{{ item.text }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  <span>{{ total }} 条记录</span>
+  <span>· SQLite：{{ db_state.built_at or '未构建' }}</span>
+  <span>· 数据目录：<code>{{ db_state.meta.data_dir if db_state.meta else '—' }}</code></span>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -110,12 +110,26 @@ class ValidationResult:
 def validate_data_dir(data_dir: Path) -> ValidationResult:
     """校验整个 ``data/`` 目录。"""
     raws, load_issues = load_data_dir(data_dir)
+    return validate_entities(data_dir, raws, load_issues)
+
+
+def validate_entities(
+    data_dir: Path,
+    raws: Iterable[RawEntity],
+    load_issues: Iterable[Issue] = (),
+) -> ValidationResult:
+    """校验一批**已经在内存里**的原始实体，不读盘。
+
+    这是 ``validate_data_dir`` 的底层入口，也被本地管理网页复用：
+    管理端先把“候选改动”合成 RawEntity 列表在内存里跑一遍完整校验，
+    通过了才写 YAML，于是磁盘上不会出现非法数据。
+    """
     bundle = DataBundle(data_dir=data_dir)
     result = ValidationResult(data_dir=data_dir, bundle=bundle)
     result.errors.extend(i for i in load_issues if i.is_error)
     result.warnings.extend(i for i in load_issues if not i.is_error)
 
-    _validate_models(raws, bundle, result)
+    _validate_models(list(raws), bundle, result)
     _check_references(bundle, result)
     _check_kind_consistency(bundle, result)
     _check_version_consistency(bundle, result)

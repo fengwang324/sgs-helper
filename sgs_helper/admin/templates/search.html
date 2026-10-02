@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, mode_badge with context %}
+
+{% block content %}
+<div class="page-head">
+  <h1>搜索结果{% if q %}：<span class="query">{{ q }}</span>{% endif %}</h1>
+  <div class="actions">
+    <a class="btn ghost" href="/">返回首页</a>
+  </div>
+</div>
+
+<form class="filters" action="/search" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="继续搜索…">
+  <select name="kind">
+    <option value="">全部类型</option>
+    {% for k in KIND_ORDER %}
+      <option value="{{ k }}" {{ 'selected' if kind == k else '' }}>{{ KIND_BY_NAME[k].label }}</option>
+    {% endfor %}
+  </select>
+  <select name="status">
+    <option value="">全部核验状态</option>
+    {% for value, label in VERIFICATION_LABELS.items() %}
+      <option value="{{ value }}" {{ 'selected' if status == value else '' }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="mode">
+    <option value="">全部模式</option>
+    {% for value, label in MODE_LABELS.items() %}
+      <option value="{{ value }}" {{ 'selected' if mode == value else '' }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">筛选</button>
+</form>
+
+{% if not q %}
+  <p class="muted">在上面输入关键词后回车。搜索范围：全部 9 类实体（含技能规则文本、卡面文本、别名、相关对象名称）。</p>
+{% elif not rows %}
+  <p class="muted">没有匹配「{{ q }}」的记录。</p>
+{% else %}
+  <p class="muted">命中 {{ rows | length }} 条。</p>
+  <table class="rows">
+    <tr>
+      <th>类型</th><th>名称</th><th>模式</th><th>来源</th><th>核验</th><th>YAML 位置</th>
+    </tr>
+    {% for row in rows %}
+      <tr>
+        <td><span class="kind-chip">{{ row.kind_label }}</span></td>
+        <td>
+          <a href="/view/{{ row.kind }}/{{ row.id }}">{{ row.name }}</a>
+          <div class="sub">{{ row.subtitle }}</div>
+          <code class="id">{{ row.id }}</code>
+        </td>
+        <td>{{ mode_badge(row.mode) }}</td>
+        <td>
+          {% if row.source %}
+            <span class="src-type">{{ row.source.type_label }}</span>
+            {% if row.source.title %}<div class="sub">{{ row.source.title }}</div>{% endif %}
+            {% if row.source.reference %}
+              <div class="sub">
+                {% if row.source.reference | is_url %}
+                  <a href="{{ row.source.reference }}" target="_blank" rel="noopener noreferrer">链接</a>
+                {% else %}{{ row.source.reference }}{% endif %}
+              </div>
+            {% endif %}
+          {% else %}<span class="muted">未记录</span>{% endif %}
+        </td>
+        <td>{{ status_badge(row.verification_status) }}</td>
+        <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+{% endblock %}

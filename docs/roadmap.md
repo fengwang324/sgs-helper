@@ -73,4 +73,6 @@
 
 微信登录与用户体系、管理后台、MySQL/PostgreSQL、Docker 集群 / Kubernetes、微服务、
 Elasticsearch、自动抓取全网、完整规则模拟器。
+（“本地资料维护网页” `sgs_helper/admin/` 已经做了，但它只是本机上直接编辑 YAML 的工具，
+不属于这里的线上后台。）
 这些都等出现**真实需求**再说；本项目的数据结构不会阻碍它们以后加入。

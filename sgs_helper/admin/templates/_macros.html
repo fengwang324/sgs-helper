@@ -1,0 +1,78 @@
+{# 共用小宏：状态徽章、模式徽章、来源块、实体链接 #}
+
+{% macro status_badge(status) -%}
+  {%- if status -%}
+    <span class="badge status-{{ status }}">{{ status | status_label }}</span>
+  {%- else -%}
+    <span class="badge status-none">无核验状态</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro mode_badge(mode) -%}
+  {%- if mode %}<span class="badge mode-{{ mode }}">{{ mode | mode_label }}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro entity_link(kind, entity_id, label=None) -%}
+  {%- if entity_id -%}
+    <a class="elink" href="/view/{{ kind }}/{{ entity_id }}"
+       title="{{ kind }} {{ entity_id }}">{{ label or name_of(kind, entity_id) }}</a>
+    <code class="id">{{ entity_id }}</code>
+  {%- else -%}
+    <span class="muted">—</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro source_block(source) -%}
+  {%- if source -%}
+    <table class="kv source">
+      <tr><th>source.type</th><td><code>{{ source.type }}</code> {{ source.type_label }}</td></tr>
+      <tr><th>source.title</th><td>{{ source.title or '（空）' }}</td></tr>
+      <tr><th>source.reference</th><td>
+        {%- if source.reference -%}
+          {%- if source.reference | is_url -%}
+            <a href="{{ source.reference }}" target="_blank" rel="noopener noreferrer">{{ source.reference }}</a>
+          {%- else -%}
+            {{ source.reference }}
+          {%- endif -%}
+        {%- else -%}（空）{%- endif -%}
+      </td></tr>
+      <tr><th>source.notes</th><td>{{ source.notes or '（空）' }}</td></tr>
+    </table>
+  {%- else -%}
+    <p class="muted">这条记录没有填写 source。资料来源是长期维护的关键，建议补上。</p>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro reference_list(references) -%}
+  {%- if references -%}
+    <ul class="refs">
+      {%- for ref in references -%}
+        <li>
+          <span class="kind-chip small">{{ ref.kind_label }}</span>
+          <a href="/view/{{ ref.kind }}/{{ ref.id }}">{{ ref.name }}</a>
+          <code class="id">{{ ref.id }}</code>
+          <span class="muted">字段：{{ ref.field }}</span>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- else -%}
+    <p class="muted">没有任何其他记录引用它。</p>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro issue_table(issues) -%}
+  {%- if issues -%}
+    <table class="issues">
+      <tr><th>文件</th><th>字段</th><th>原因</th></tr>
+      {%- for issue in issues -%}
+        <tr class="{{ 'err' if issue.is_error else 'warn' }}">
+          <td><code>data/{{ issue.path }}{% if issue.line %}:{{ issue.line }}{% endif %}</code></td>
+          <td><code>{% if issue.entity_id %}{{ issue.entity_id }}.{% endif %}{{ issue.field }}</code></td>
+          <td>{{ issue.message }}</td>
+        </tr>
+      {%- endfor -%}
+    </table>
+  {%- else -%}
+    <p class="muted">没有。</p>
+  {%- endif -%}
+{%- endmacro %}

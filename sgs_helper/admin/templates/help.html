@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-head">
+  <h1>使用说明</h1>
+</div>
+
+<section>
+  <h2>这个页面能做什么</h2>
+  <ul>
+    <li>统一搜索 9 类实体，看结果类型、名称、模式、来源和 <code>verification_status</code>；</li>
+    <li>逐类浏览列表，按 mode / 核验状态 / 产品 / 包 筛选，重点看 <code>community</code>、<code>unverified</code>、<code>conflict</code>；</li>
+    <li>查看详情：技能看 SkillDefinition → 当前版本 → 历史版本链；卡牌看 CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）；武将看关联技能及其 SkillVersion；</li>
+    <li>新增与编辑：表单字段由现有 Pydantic 模型生成，不需要记 YAML 字段名；</li>
+    <li>技能更新用「新增技能版本」，旧版本永不覆盖；</li>
+    <li><a href="/review">待核验清单</a>：把所有未核验/社区来源/冲突的记录集中起来，方便拿实体卡逐条核验；</li>
+    <li>删除前会检查引用关系，被引用就拒绝删除并列出引用方。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>核心原则：YAML 是唯一权威源</h2>
+  <pre class="flow">浏览器编辑 → 写回 data/ 下的 YAML → validate → build_db → SQLite 更新</pre>
+  <ul>
+    <li>网页<strong>不会</strong>直接修改 <code>build/sgs.db</code>；SQLite 只是生成物，可随时全量重建；</li>
+    <li>保存时先在内存里把改动合并进完整数据集做一次校验，<strong>校验不通过就一个字都不落盘</strong>；</li>
+    <li>写盘成功后会立即执行 <code>build_database()</code> 重建 SQLite（先建临时库，成功后原子替换，失败则回滚 YAML）；</li>
+    <li>本页展示的数据始终直接读自 YAML，所以永远不会出现“看到的是旧值、改的却是新值”。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>9 类实体</h2>
+  <table class="compact">
+    <tr><th>类型</th><th>目录</th><th>说明</th></tr>
+    {% for spec in specs %}
+      <tr>
+        <td><a href="/list/{{ spec.kind }}">{{ spec.label }}</a></td>
+        <td><code>data/{{ spec.dirname }}/</code></td>
+        <td>{{ spec.kind }}<code class="id">（id 前缀 {{ spec.id_prefix }}）</code></td>
+      </tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section>
+  <h2>命令行等价操作</h2>
+  <pre class="flow">python scripts/validate_data.py     # 校验
+python scripts/build_db.py          # 由 YAML 全量重建 build/sgs.db
+python scripts/query.py skill 集智  # 查询（只读 SQLite）
+python -m pytest -q                 # 测试
+uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000   # 本页面</pre>
+</section>
+
+<section>
+  <h2>已知限制（有意为之）</h2>
+  <ul>
+    <li>写 YAML 时会<strong>规范化格式</strong>：字段顺序按模型顺序、长文本改成块状标量（<code>|-</code>），
+        记录内部的行内注释、锚点/别名不会被保留；文件顶部的注释块会保留。</li>
+    <li>一个文件里放了多条记录时（例如 <code>data/keywords/core_keywords.yaml</code>），编辑其中一条会<strong>整文件重写</strong>（其他记录内容不变，格式会被规范化）。</li>
+    <li>列表字段（别名、关联 id 等）用“一行一项”的文本框，空行会被忽略，前后空格会被去掉。</li>
+    <li>本地工具：没有登录和权限控制，默认只监听 127.0.0.1。如果用 <code>--host 0.0.0.0</code> 暴露到局域网，请自行确保网络环境可信（表单带 CSRF token，但这不是完整的认证）。</li>
+    <li>不是正式微信小程序，也不提供 API 给小程序的鉴权/限流。</li>
+  </ul>
+</section>
+{% endblock %}

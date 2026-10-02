@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -118,6 +119,50 @@ def build_main(argv: list[str] | None = None) -> int:
             f"\n（提示：本次构建有 {len(result.warnings)} 条警告，执行 "
             "python scripts/validate_data.py 可查看详情）"
         )
+    return 0
+
+
+# ---------------------------------------------------------------- admin
+
+
+def admin_main(argv: list[str] | None = None) -> int:
+    """启动本地资料管理网页（可选依赖：fastapi / uvicorn / jinja2 / python-multipart）。"""
+    parser = argparse.ArgumentParser(
+        prog="admin.py", description="启动本地资料管理网页（只写 YAML，SQLite 由 YAML 重建）"
+    )
+    parser.add_argument("--data-dir", default=None, help="数据目录，默认 ./data")
+    parser.add_argument("--db", default=None, help="生成的数据库路径，默认 ./build/sgs.db")
+    parser.add_argument("--host", default="127.0.0.1", help="监听地址，默认 127.0.0.1（仅本机）")
+    parser.add_argument("--port", type=int, default=8000, help="监听端口，默认 8000")
+    parser.add_argument("--reload", action="store_true", help="代码改动自动重启（开发用）")
+    args = parser.parse_args(argv)
+
+    try:
+        import uvicorn
+    except ImportError:  # pragma: no cover - 依赖缺失时的友好提示
+        print(
+            '✗ 未安装网页依赖。请先执行：pip install -e ".[admin]"\n'
+            "  （需要 fastapi / uvicorn / jinja2 / python-multipart）",
+            file=sys.stderr,
+        )
+        return 1
+
+    data_dir = Path(args.data_dir).resolve() if args.data_dir else default_data_dir().resolve()
+    db_path = Path(args.db).resolve() if args.db else default_db_path().resolve()
+    if not data_dir.is_dir():
+        print(f"✗ 数据目录不存在：{data_dir}", file=sys.stderr)
+        return 1
+
+    # 让 uvicorn 的 worker（含 --reload 子进程）拿到同一份配置
+    os.environ["SGS_DATA_DIR"] = str(data_dir)
+    os.environ["SGS_DB"] = str(db_path)
+
+    print("sgs-helper 本地资料管理")
+    print(f"  数据目录（权威源）：{data_dir}")
+    print(f"  SQLite 生成物      ：{db_path}")
+    print(f"  浏览器打开         ：http://127.0.0.1:{args.port}")
+    print("  流程：浏览器编辑 → 写回 YAML → validate → build_db → SQLite 更新")
+    uvicorn.run("sgs_helper.admin.app:app", host=args.host, port=args.port, reload=args.reload)
     return 0
 
 

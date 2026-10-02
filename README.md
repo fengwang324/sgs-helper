@@ -5,6 +5,8 @@
 
 > 当前阶段的目标只有一个：把**资料库底座**做对。
 > 不做复杂前端、不做用户系统、不做云数据库、不接大模型问答、不做规则模拟器。
+> （唯一的例外是一个**只在本机跑**的资料维护网页 `sgs_helper/admin/`：
+> 它没有前端框架、没有登录，只是把手工编辑 YAML 变成表单编辑 YAML，见 [docs/admin.md](docs/admin.md)。）
 
 ## 当前数据状态：全部是 SAMPLE 占位数据
 
@@ -39,6 +41,10 @@ python scripts/query.py keyword 濒死
 python scripts/query.py timing 伤害结算
 python scripts/query.py product 国战
 python scripts/query.py search 集智
+
+# 5. 可选：浏览器里维护资料（只写 YAML，SQLite 由 YAML 重建）
+pip install -e ".[admin]"
+python scripts/admin.py --port 8000       # 打开 http://127.0.0.1:8000
 ```
 
 依赖：Python ≥ 3.10、PyYAML、Pydantic v2（测试用 pytest）。不需要任何数据库服务。
@@ -66,8 +72,15 @@ sgs-helper/
 │   ├── db.py                 # SQLite 全量重建、FTS5、构建元信息
 │   ├── repo.py               # 查询层：只读 SQLite，返回纯 dict
 │   ├── render.py             # 把查询结果渲染成人可读文本（CLI 用）
-│   └── cli.py                # validate / build / query 三个命令行
-├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py
+│   ├── cli.py                # validate / build / query / admin 命令行
+│   └── admin/                # ★ 本地资料管理网页（FastAPI + Jinja2，可选依赖）
+│       ├── app.py            #   路由与页面装配
+│       ├── store.py          #   读 YAML（快照 + 内存检索）、安全写 YAML、重建 SQLite
+│       ├── forms.py          #   由 Pydantic 模型生成表单、把提交值转回实体
+│       ├── yaml_writer.py    #   可读 YAML 读写（保留注释头/块状标量/原子落盘）
+│       ├── templates/        #   Jinja2 模板
+│       └── static/           #   一个 CSS + 一个很小的 JS
+├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py / admin.py
 ├── tests/                    # pytest 测试（108 个）
 ├── build/                    # 生成物目录（sgs.db，**不进 Git**）
 ├── docs/                     # 设计说明、操作手册、路线图
@@ -297,16 +310,59 @@ python scripts/query.py stats                   # 数据库构建元信息
 
 检索顺序：精确名称 → 别名 → 名称前缀/包含 → 正文包含；中文短词由 FTS5 兜底。
 
+## 本地资料管理网页（可选，见 docs/admin.md）
+
+不想手改 YAML 时，可以在浏览器里查看 / 搜索 / 新增 / 修改资料：
+
+```bash
+pip install -e ".[admin]"                                  # fastapi / uvicorn / jinja2 / python-multipart
+uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
+# 或： python scripts/admin.py --port 8000
+```
+
+打开 <http://127.0.0.1:8000>：
+
+- `/` 统一搜索框（9 类实体）+ 数据量与核验状态分布 + 当前校验错误；
+- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `package` 筛选；
+- `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 当前版本 → 历史版本链`，
+  卡牌显示 `CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）`，
+  武将显示关联技能及其 `SkillVersion`；
+- `/new/{kind}`、`/edit/{kind}/{id}` 表单（字段由 Pydantic 模型生成）；
+- `/review` 汇总 `unverified` / `community` / `conflict`，方便拿实体卡逐条核验；
+- 技能详情页的「新增技能版本」会预填 `skill_id` / `previous_version_id` / `mode` / `product_id`，
+  **旧版本永不覆盖**；
+- 删除前检查引用关系，被引用就拒绝删除并列出引用方。
+
+页面**不会**直接改 SQLite。保存流程固定为：
+
+```text
+浏览器编辑 → 写回对应 YAML → validate → build_db → SQLite 更新
+```
+
+先在内存里把改动合进完整数据集跑一遍完整校验，**校验不通过一个字都不落盘**（页面给出
+文件 / 字段 / 原因）；写盘用「临时文件 + fsync + os.replace」，重建数据库也先写临时库再原子替换。
+编辑页还带内容哈希与 CSRF token：同一条记录被两个标签页同时改、或你手工改过 YAML，提交会被拒绝并提示刷新。
+
+写回的 YAML 仍然是人可读的：字段顺序按模型顺序、长文本用块状标量（不折行）、
+文件顶部注释块保留、原文是单条/列表/`items:` 包装就还是哪种结构。
+已知限制（记录内部注释、锚点/别名不保留；多记录文件会整文件重写）见
+[docs/admin.md](docs/admin.md)。
+
+
 ## 测试
 
 ```bash
-python -m pytest -q          # 108 个测试
+python -m pytest -q          # 142 个测试
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、
 引用与一致性校验（错误与警告）、SQLite 构建（表结构、幂等重建、来源去重、元信息、可追溯列）、
 两层关联（技能本体↔版本、卡牌定义↔印刷、同名不覆盖）、
-查询（当前有效版本按日期推导、模式分组、历史链、检索、FAQ 关联）、CLI 端到端。
+查询（当前有效版本按日期推导、模式分组、历史链、检索、FAQ 关联）、CLI 端到端、
+本地管理网页（页面可启动、搜索可用、编辑 YAML 后重建数据库、非法修改被 validate 拦截且不落盘、
+新增 SkillVersion 不覆盖旧版本、被引用实体不能删除、YAML 往返无损、CSRF 与并发保护）。
+
+管理网页的测试全部在 `tmp_path` 的副本上跑，不会碰仓库里真实的 `data/`。
 
 ---
 
@@ -322,7 +378,9 @@ python -m pytest -q          # 108 个测试
 
 ## 后续接微信小程序建议从哪里开始
 
-当前**不要**做登录、用户系统、管理后台、MySQL、Elasticsearch、大模型问答。
+当前**不要**做登录、用户系统、线上管理后台、MySQL、Elasticsearch、大模型问答。
+（`sgs_helper/admin/` 是本机的资料维护网页，不是线上后台：它直接写 YAML 权威源，
+没有鉴权与多用户设计。）
 需要做 API 时，从 `sgs_helper/repo.py` 上加一层薄 FastAPI 即可：
 
 ```text
@@ -347,6 +405,7 @@ python -m pytest -q          # 108 个测试
 ③ 加 FastAPI（只读、无鉴权、单进程，读 SQLite 即可）→ ④ 再做基于资料库的 AI QA。
 
 更多说明见 [docs/design.md](docs/design.md)（设计取舍与已知边界）、
+[docs/admin.md](docs/admin.md)（本地资料管理网页：入口、写入流程、已知限制）、
 [docs/operations.md](docs/operations.md)（维护手册）、[docs/roadmap.md](docs/roadmap.md)（路线图）。
 
 ## 已知边界（先不做，记录在案）

@@ -24,6 +24,34 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 关键点：**校验与构建是分开的两次执行**（`validate_data.py` / `build_db.py`），
 `build_db.py` 内部也会先校验一遍，校验不过就退出（返回码 2），避免生成半成品数据库。
 
+### 1.1 本地管理网页的写入路径（`sgs_helper/admin/`，可选）
+
+浏览器维护资料的路径与上面完全相同，只是把「人手工编辑 YAML」换成「表单写 YAML」：
+
+```text
+浏览器表单（sgs_helper/admin/forms.py 由模型生成）
+        │  先在内存里合成候选实体
+        ↓
+validate.validate_entities(raws, …)     与 CLI 同一套校验（模型 + 交叉引用 + 一致性）
+        │  不通过 → 一个字都不落盘，页面显示 文件/字段/原因
+        ↓
+yaml_writer（临时文件 + fsync + os.replace）   字段顺序按模型、长文本用块状标量、原子替换
+        ↓
+data/**/*.yaml
+        │  build_database()：先写临时库，成功后 os.replace 到 build/sgs.db
+        ↓
+build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存在）
+```
+
+两个刻意的取舍：
+
+1. **读也走 YAML**。页面渲染、列表、搜索都直接读权威源（`validate_data_dir` 得到的 bundle +
+   `db._search_row` + `repo._score`），而不是读可能过期的 `build/sgs.db`，
+   这样“看到的内容”和“编辑的内容”永远是同一份；SQLite 只服务于 CLI 与未来的小程序。
+2. **写盘前后各校验一次**。写盘前用内存候选快照校验（保证磁盘上不出现非法 YAML），
+   写盘后由 `build_database` 从磁盘重新装载再校验一次（保证建库用的是磁盘真值）。
+   编辑页还会带上该记录的内容哈希，页面打开后文件被改动过就拒绝写入，避免覆盖别人的修改。
+
 ## 2. 为什么技能要拆两层
 
 | | Skills（SkillDefinition） | SkillVersions |
@@ -126,6 +154,8 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 ## 7. 明确不做（当前阶段）
 
 - 微信登录、用户系统、管理后台、云数据库、Docker/K8s、微服务；
+  （本地的 `sgs_helper/admin/` 资料维护网页不算在这个清单里：它只在本机跑、
+  没有登录与多用户，直接写 YAML 权威源，见 [admin.md](admin.md)）
 - Elasticsearch、复杂 RAG、大模型 Agent、自动抓取全网；
 - 完整规则模拟器、技能效果结构化（effects/targets/conditions）。
 
