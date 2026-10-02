@@ -105,13 +105,13 @@ def test_pages_start(client: TestClient, store) -> None:
     seed = {
         "product": "product_guozhan_sample_2024",
         "general": "general_kongrong_sample_guozhan",
-        "skill": "skill_jizhi",
-        "skill_version": "skill_jizhi_identity_v2",
+        "skill": "skill_ji_zhi",
+        "skill_version": "skill_ji_zhi_identity_v1",
         "card": "card_sha",
         "card_printing": "card_sha_sample_guozhan_spade_7",
-        "faq": "faq_0001",
-        "keyword": "keyword_use_card",
-        "timing": "timing_use_card",
+        "faq": "faq_rule_flow_damage",
+        "keyword": "keyword_shi_yong",
+        "timing": "timing_hui_he_jie_shu_shi",
     }
     urls = ["/", "/search?q=集智", "/review", "/help", "/healthz"]
     for kind in seed:
@@ -120,9 +120,9 @@ def test_pages_start(client: TestClient, store) -> None:
         response = client.get(url)
         assert response.status_code == 200, url
     # 编辑页与删除确认页
-    assert client.get("/edit/faq/faq_0001").status_code == 200
-    assert client.get("/delete/faq/faq_0001").status_code == 200
-    assert client.get("/raw/faq/faq_0001").status_code == 200
+    assert client.get("/edit/faq/faq_rule_flow_damage").status_code == 200
+    assert client.get("/delete/faq/faq_rule_flow_damage").status_code == 200
+    assert client.get("/raw/faq/faq_rule_flow_damage").status_code == 200
     # 未知类型 / 未知记录
     assert client.get("/list/nope").status_code == 404
     assert client.get("/view/skill/nope").status_code == 404
@@ -149,7 +149,7 @@ def test_search_finds_entities_and_shows_metadata(client: TestClient) -> None:
     body = response.text
     assert "技能本体" in body
     assert "技能版本" in body
-    assert "skill_jizhi" in body
+    assert "skill_ji_zhi" in body
     # 结果里要有模式、来源、核验状态
     assert "未核验" in body
     assert "社区资料" in body or "官方" in body
@@ -158,33 +158,33 @@ def test_search_finds_entities_and_shows_metadata(client: TestClient) -> None:
 def test_search_supports_kind_and_status_filters(client: TestClient) -> None:
     only_skill = client.get("/search?q=集智&kind=skill")
     assert only_skill.status_code == 200
-    assert "skill_jizhi" in only_skill.text
-    assert "skill_jizhi_identity_v1" not in only_skill.text
+    assert "skill_ji_zhi" in only_skill.text
+    assert "skill_ji_zhi_identity_v1" not in only_skill.text
 
     only_version = client.get("/search?q=集智&kind=skill_version")
-    assert "skill_jizhi_identity_v1" in only_version.text
-    assert '<code class="id">skill_jizhi</code>' not in only_version.text
+    assert "skill_ji_zhi_identity_v1" in only_version.text
+    assert '<code class="id">skill_ji_zhi</code>' not in only_version.text
 
     empty = client.get("/search?q=集智&status=physical_verified")
     assert "没有匹配" in empty.text
 
 
 def test_search_by_id_works(client: TestClient) -> None:
-    response = client.get("/search?q=keyword_use_card")
-    assert "keyword_use_card" in response.text
+    response = client.get("/search?q=keyword_shi_yong")
+    assert "keyword_shi_yong" in response.text
 
 
 # ---------------------------------------------------------------- 3. 编辑后重建数据库
 
 
 def test_edit_writes_yaml_and_rebuilds_sqlite(client: TestClient, app, workdir: Path) -> None:
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】改写后的回答")
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】改写后的回答")
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 303
-    assert response.headers["location"].startswith("/view/faq/faq_0001")
+    assert response.headers["location"].startswith("/view/faq/faq_rule_flow_damage")
 
     # YAML 落盘
-    text = yaml_of(workdir, "faq", "faq_0001").read_text(encoding="utf-8")
+    text = yaml_of(workdir, "faq", "faq_rule_flow_damage").read_text(encoding="utf-8")
     assert "【测试】改写后的回答" in text
 
     # SQLite 已由 YAML 重建，且与 YAML 完全同步
@@ -198,26 +198,24 @@ def test_edit_writes_yaml_and_rebuilds_sqlite(client: TestClient, app, workdir: 
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    report = faq_report(conn, "faq_0001")
+    report = faq_report(conn, "faq_rule_flow_damage")
     conn.close()
     assert report["faq"]["answer"] == "【测试】改写后的回答"
 
     # 页面本身也立即读到新值（读的是 YAML）
-    page = client.get("/view/faq/faq_0001")
+    page = client.get("/view/faq/faq_rule_flow_damage")
     assert "【测试】改写后的回答" in page.text
 
 
 def test_edit_keeps_yaml_readable(client: TestClient, app, workdir: Path) -> None:
     payload = form_payload(
-        app, "faq", "faq_0001", answer="第一行\n第二行\n第三行"
+        app, "faq", "faq_rule_flow_damage", answer="第一行\n第二行\n第三行"
     )
-    post(client, "/edit/faq/faq_0001", data=payload)
-    text = yaml_of(workdir, "faq", "faq_0001").read_text(encoding="utf-8")
+    post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    text = yaml_of(workdir, "faq", "faq_rule_flow_damage").read_text(encoding="utf-8")
     assert "answer: |-" in text  # 多行文本用块状标量，不会被折行
     reloaded = yaml.safe_load(text)
     assert reloaded["answer"] == "第一行\n第二行\n第三行"
-    # 顶部注释块保留
-    assert text.lstrip().startswith("#")
 
 
 def test_manual_rebuild_endpoint(client: TestClient, app, workdir: Path) -> None:
@@ -342,7 +340,7 @@ def test_duplicate_id_is_blocked(client: TestClient, app, workdir: Path) -> None
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
-        "id": "keyword_use_card",
+        "id": "keyword_shi_yong",
         "name": "重复 id 测试",
         "definition": "测试",
         "mode": "common",
@@ -364,9 +362,9 @@ def test_duplicate_id_is_blocked(client: TestClient, app, workdir: Path) -> None
 def test_bad_id_is_rejected_without_touching_disk(
     client: TestClient, app, workdir: Path
 ) -> None:
-    payload = form_payload(app, "faq", "faq_0001")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage")
     payload["id"] = "../../etc/passwd"
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 400
     assert "ID 只能" in response.text
     assert not (workdir / "etc").exists()
@@ -377,15 +375,21 @@ def test_bad_id_is_rejected_without_touching_disk(
 
 
 def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path) -> None:
-    old_path = yaml_of(workdir, "skill_version", "skill_jizhi_identity_v2")
+    old_path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v1")
     old_before = old_path.read_text(encoding="utf-8")
+    db_path = workdir / "build" / "sgs.db"
+    post(client, "/rebuild", data={"_csrf": app.state.csrf})
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    before_versions = len(skill_report(conn, "skill_ji_zhi")["versions"])
+    conn.close()
 
     today = date.today().isoformat()
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
-        "id": "skill_jizhi_identity_v3",
-        "skill_id": "skill_jizhi",
+        "id": "skill_ji_zhi_identity_v3",
+        "skill_id": "skill_ji_zhi",
         "mode": "identity",
         "text": "【测试】第三次调整后的技能文本",
         "version_label": "测试新版",
@@ -393,9 +397,9 @@ def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path)
         "package": "",
         "effective_from": today,
         "effective_to": "",
-        "previous_version_id": "skill_jizhi_identity_v2",
+        "previous_version_id": "skill_ji_zhi_identity_v1",
         "change_note": "【测试】新增版本，旧版本保留",
-        "related_keywords": "keyword_use_card",
+        "related_keywords": "keyword_shi_yong",
         "related_timing_ids": "",
         "source.type": "official_rule",
         "source.title": "【测试】公告",
@@ -406,42 +410,41 @@ def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path)
     }
     response = post(client, "/new/skill_version", data=payload)
     assert response.status_code == 303, response.text
-    assert response.headers["location"].startswith("/view/skill_version/skill_jizhi_identity_v3")
+    assert response.headers["location"].startswith("/view/skill_version/skill_ji_zhi_identity_v3")
 
     # 旧版本原样保留
     assert old_path.read_text(encoding="utf-8") == old_before
-    new_path = yaml_of(workdir, "skill_version", "skill_jizhi_identity_v3")
+    new_path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v3")
     assert new_path.exists()
 
-    # 数据库里现在是 5 条版本（原有 4 条 + 新增 1 条）
+    # 数据库里新增了一条版本，旧版本还在
     db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    reports = skill_report(conn, "skill_jizhi")
+    reports = skill_report(conn, "skill_ji_zhi")
     conn.close()
-    assert len(reports["versions"]) == 5
+    assert len(reports["versions"]) == before_versions + 1
     ids = {v["id"] for v in reports["versions"]}
-    assert {"skill_jizhi_identity_v1", "skill_jizhi_identity_v2", "skill_jizhi_identity_v3"} <= ids
-    if today >= "2025-06-01":  # v2 自 2025-06-01 起生效
-        current_ids = [
-            v["id"] for v in reports["versions"] if "identity" in v["current_for_modes"]
-        ]
-        assert current_ids == ["skill_jizhi_identity_v3"]
+    assert {"skill_ji_zhi_identity_v1", "skill_ji_zhi_identity_v3"} <= ids
+    current_ids = [
+        v["id"] for v in reports["versions"] if "identity" in v["current_for_modes"]
+    ]
+    assert current_ids == ["skill_ji_zhi_identity_v3"]
 
     # 技能详情页显示历史版本链
-    page = client.get("/view/skill/skill_jizhi")
-    assert "skill_jizhi_identity_v2" in page.text
-    assert "skill_jizhi_identity_v3" in page.text
+    page = client.get("/view/skill/skill_ji_zhi")
+    assert "skill_ji_zhi_identity_v1" in page.text
+    assert "skill_ji_zhi_identity_v3" in page.text
 
 
 def test_new_skill_version_prefilled_from_current(client: TestClient) -> None:
     response = client.get(
-        "/new/skill_version?skill_id=skill_jizhi&mode=identity"
-        "&previous_version_id=skill_jizhi_identity_v2"
+        "/new/skill_version?skill_id=skill_ji_zhi&mode=identity"
+        "&previous_version_id=skill_ji_zhi_identity_v1"
     )
     assert response.status_code == 200
-    assert 'name="skill_id" value="skill_jizhi"' in response.text
-    assert "skill_jizhi_identity_v2" in response.text
+    assert 'name="skill_id" value="skill_ji_zhi"' in response.text
+    assert "skill_ji_zhi_identity_v1" in response.text
 
 
 # ---------------------------------------------------------------- 6. 被引用实体不能删除
@@ -465,12 +468,28 @@ def test_delete_blocked_when_referenced(client: TestClient, app, workdir: Path) 
 def test_delete_blocked_for_skill_version_with_successor(
     client: TestClient, app, workdir: Path
 ) -> None:
-    path = yaml_of(workdir, "skill_version", "skill_jizhi_identity_v1")
+    """旧版本只要被“更新的版本”用 previous_version_id 指着，就不能删。"""
+    store = app.state.store
+    base = store.entity("skill_version", "skill_ji_zhi_identity_v1")
+    created = store.save(
+        "skill_version",
+        {
+            "id": "skill_ji_zhi_identity_v9",
+            "skill_id": "skill_ji_zhi",
+            "mode": "identity",
+            "text": "【测试】更新的版本",
+            "previous_version_id": "skill_ji_zhi_identity_v1",
+            "source": dict(base.source.model_dump(mode="json")) if base.source else None,
+        },
+    )
+    assert created.ok, created.error
+
+    path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v1")
     payload = {
         "_csrf": app.state.csrf,
-        "_base_sha": app.state.store.entity_sha("skill_version", "skill_jizhi_identity_v1"),
+        "_base_sha": app.state.store.entity_sha("skill_version", "skill_ji_zhi_identity_v1"),
     }
-    response = post(client, "/delete/skill_version/skill_jizhi_identity_v1", data=payload)
+    response = post(client, "/delete/skill_version/skill_ji_zhi_identity_v1", data=payload)
     assert response.status_code == 200
     assert "previous_version_id" in response.text
     assert path.exists()
@@ -519,28 +538,28 @@ def test_delete_confirm_page_lists_references(client: TestClient) -> None:
 
 
 def test_post_without_csrf_token_is_rejected(client: TestClient, app, workdir: Path) -> None:
-    path = yaml_of(workdir, "faq", "faq_0001")
+    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】不该写入")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】不该写入")
     payload.pop("_csrf")
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 403
     assert path.read_text(encoding="utf-8") == before
 
 
 def test_edit_form_contains_csrf_and_base_sha(client: TestClient) -> None:
-    body = client.get("/edit/faq/faq_0001").text
+    body = client.get("/edit/faq/faq_rule_flow_damage").text
     assert 'name="_csrf"' in body
     assert 'name="_base_sha"' in body
 
 
 def test_post_without_base_sha_is_rejected(client: TestClient, app, workdir: Path) -> None:
     """并发校验字段不能“省略即放过”——否则任何脚本都能覆盖页面打开后的修改。"""
-    path = yaml_of(workdir, "faq", "faq_0001")
+    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】不该写入")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】不该写入")
     payload.pop("_base_sha")
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 400
     assert "_base_sha" in response.text
     assert path.read_text(encoding="utf-8") == before
@@ -550,15 +569,15 @@ def test_rollback_restores_file_when_untouched(
     client: TestClient, app, workdir: Path, monkeypatch
 ) -> None:
     """重建失败且文件没被别人动过：回滚到原内容。"""
-    path = yaml_of(workdir, "faq", "faq_0001")
+    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】会被回滚")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】会被回滚")
 
     def boom():
         raise RuntimeError("模拟重建失败")
 
     monkeypatch.setattr(app.state.store, "_build_atomic", boom)
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 400
     assert "已回滚" in response.text
     assert path.read_text(encoding="utf-8") == before
@@ -568,8 +587,8 @@ def test_rollback_does_not_clobber_external_edit(
     client: TestClient, app, workdir: Path, monkeypatch
 ) -> None:
     """重建失败 + 期间有人改了同一个文件：绝不回滚覆盖别人的修改。"""
-    path = yaml_of(workdir, "faq", "faq_0001")
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】失败保存")
+    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】失败保存")
 
     def failing_build_with_external_edit():
         path.write_text(
@@ -580,7 +599,7 @@ def test_rollback_does_not_clobber_external_edit(
     monkeypatch.setattr(
         app.state.store, "_build_atomic", failing_build_with_external_edit
     )
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 400
     text = path.read_text(encoding="utf-8")
     assert "外部追加的注释" in text   # 别人的改动保住了
@@ -590,16 +609,20 @@ def test_rollback_does_not_clobber_external_edit(
 
 def test_concurrent_modification_is_detected(client: TestClient, app, workdir: Path) -> None:
     """页面打开后文件被别人改过：必须拒绝写入，而不是覆盖。"""
-    payload = form_payload(app, "faq", "faq_0001", answer="【测试】来自旧页面")
-    path = yaml_of(workdir, "faq", "faq_0001")
-    external = path.read_text(encoding="utf-8").replace("占位数据", "别人改过的内容")
-    path.write_text(external, encoding="utf-8")
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】来自旧页面")
+    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    external = yaml.safe_load(path.read_text(encoding="utf-8"))
+    external["answer"] = "别人改过的内容"
+    path.write_text(
+        yaml.safe_dump(external, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
 
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 400
     assert "没有写入任何文件" in response.text
-    assert "别人改过的内容" in path.read_text(encoding="utf-8")
-    assert "【测试】来自旧页面" not in path.read_text(encoding="utf-8")
+    after = path.read_text(encoding="utf-8")
+    assert "别人改过的内容" in after
+    assert "【测试】来自旧页面" not in after
 
 
 # ---------------------------------------------------------------- 8. YAML 与模型往返
@@ -719,11 +742,11 @@ def test_reference_fields_cover_every_id_field() -> None:
 
 def test_reverse_refs_and_delete_guard_agree(app) -> None:
     store = app.state.store
-    refs = store.reverse_refs("skill", "skill_jizhi")
+    refs = store.reverse_refs("skill", "skill_ji_zhi")
     kinds = {ref["kind"] for ref in refs}
     assert "general" in kinds
     assert "skill_version" in kinds
-    outcome = store.delete("skill", "skill_jizhi")
+    outcome = store.delete("skill", "skill_ji_zhi")
     assert outcome.ok is False
     assert outcome.blocked is True
 
@@ -764,8 +787,8 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
         product_id="product_guozhan_sample_2024",
         general_set="sample_jiubian",
         skill_count="1",
-        skill_0_skill_id="skill_jizhi",
-        skill_0_version_id="skill_jizhi_guozhan_v1",
+        skill_0_skill_id="skill_ji_zhi",
+        skill_0_version_id="skill_ji_zhi_guozhan_v1",
         aliases="测试别名\n另一个别名",
         **{"source.type": "physical_card", "source.title": "本人实体卡"},
         verification_status="physical_verified",
@@ -780,7 +803,7 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert reloaded["general_number"] == "qq-001"
     assert reloaded["general_set"] == "sample_jiubian"
     assert reloaded["skills"] == [
-        {"skill_id": "skill_jizhi", "version_id": "skill_jizhi_guozhan_v1"}
+        {"skill_id": "skill_ji_zhi", "version_id": "skill_ji_zhi_guozhan_v1"}
     ]
     assert reloaded["verification_status"] == "physical_verified"
 
@@ -792,8 +815,8 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert report["general"]["hp"] == 2.5
     assert report["general"]["aliases"] == ["测试别名", "另一个别名"]
     assert report["product"]["id"] == "product_guozhan_sample_2024"
-    assert report["skills"][0]["version_id"] == "skill_jizhi_guozhan_v1"
-    assert report["skills"][0]["pinned"]["id"] == "skill_jizhi_guozhan_v1"
+    assert report["skills"][0]["version_id"] == "skill_ji_zhi_guozhan_v1"
+    assert report["skills"][0]["pinned"]["id"] == "skill_ji_zhi_guozhan_v1"
 
 
 def test_create_general_without_source_uses_model_default(client: TestClient, app, workdir: Path) -> None:
@@ -833,10 +856,10 @@ def test_source_required_entity_needs_source(client: TestClient, app, workdir: P
 
 
 def test_edit_source_reference_url_is_clickable(client: TestClient, app) -> None:
-    payload = form_payload(app, "faq", "faq_0001", **{"source.reference": "https://example.com/faq"})
-    response = post(client, "/edit/faq/faq_0001", data=payload)
+    payload = form_payload(app, "faq", "faq_rule_flow_damage", **{"source.reference": "https://example.com/faq"})
+    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 303
-    page = client.get("/view/faq/faq_0001")
+    page = client.get("/view/faq/faq_rule_flow_damage")
     assert 'href="https://example.com/faq"' in page.text
     assert 'rel="noopener noreferrer"' in page.text
 

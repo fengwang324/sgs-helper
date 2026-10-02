@@ -12,9 +12,9 @@ gender: female
 product_id: product_identity_sample_2025
 general_set: sample_standard
 skills:
-  - skill_id: skill_jizhi
+  - skill_id: skill_ji_zhi
     version_id: null
-  - skill_id: skill_qicai
+  - skill_id: skill_qi_cai
     version_id: null
 aliases:
   - 黄月英

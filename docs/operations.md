@@ -35,15 +35,37 @@ git add -A && git commit -m "data: ..." && git push
    或详情页的「以此武将为模板新增」。
 4. 录完随时看 `/review`，把 `unverified` / `community` / `conflict` 的记录逐条核验掉。
 
-## 1. 把 SAMPLE 数据换成真实数据
+## 1. 哪些是真实数据、哪些还是 SAMPLE
 
-当前 `data/` 里全是占位数据（`【SAMPLE】` / `【示例占位】`）。建议按下面的顺序替换：
+规则侧（技能 / FAQ / 关键词 / 时点）已经从
+[《三国杀官方规则集 3.0》网页版](https://gltjk.com/sanguosha/rules/)导入：
 
-1. **先建产品**（`data/products/`）：产品是其它记录的锚点，`product_id` 都要指向它。
-2. **再建技能本体 + 技能版本**（`data/skills/`、`data/skill_versions/`）：文本一定要照抄实体卡/官方原文，不要改写。
-3. **再建武将**（`data/generals/`）：确认体力、势力、技能组、所属产品。
-4. **再建卡牌定义 + 实体卡印刷**（`data/cards/`、`data/card_printings/`）：按牌堆清点，逐张登记花色点数与角标。
-5. **最后补 FAQ / 关键词 / 时点**。
+| 目录 | 现状 | 来源 |
+| --- | --- | --- |
+| `data/skills/`（308）、`data/skill_versions/`（397） | 真实规则文本 | 规则集武将页，按模式各取一个印次 |
+| `data/faq/`（83） | 真实裁定 | 规则集专题/流程章节 + 武将页 ◆ 裁定 |
+| `data/keywords/`（126）、`data/timings/`（30） | 真实定义 | 规则集「用语」「游戏的流程」 |
+| `data/products/`（3）、`data/generals/`（3）、`data/cards/`、`data/card_printings/` | **仍是 SAMPLE 占位** | 待用实体卡替换 |
+
+重新导入 / 增量导入（站点更新时）：
+
+```bash
+pip install pypinyin                                    # 可选：生成拼音 id
+bash scripts/import_rules_book.sh                       # 下载页面到 /tmp/rules
+python scripts/import_rules_book.py --stage all         # 写 data/（会覆盖同名 id）
+python scripts/validate_data.py && python scripts/build_db.py && python -m pytest -q
+```
+
+导入的规则侧统一带 `source.type: official_rule` + `verification_status: community`
+（网页版是社区整理、未按实体卡核验）。**核验一条就升一条**：对着实体卡逐字比对之后，
+把 `verification_status` 改成 `physical_verified`，按需要在 `notes` 里记下差异。
+
+## 1.1 替换剩下的 SAMPLE 数据（产品 / 武将 / 卡牌）
+
+1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品是武将和实体卡的锚点。
+2. **再建武将**（`/new/general`）：顺手把技能版本绑对上（规则集里的技能已经导好了）。
+3. **再建卡牌定义 + 实体卡印刷**：按牌堆清点，逐张登记花色点数与角标。
+4. **最后清理 SAMPLE 文件**：删掉后跑 `validate_data.py`，它会帮你列出还没处理的引用。
 
 替换时的三条纪律：
 

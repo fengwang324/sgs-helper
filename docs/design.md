@@ -24,6 +24,16 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 关键点：**校验与构建是分开的两次执行**（`validate_data.py` / `build_db.py`），
 `build_db.py` 内部也会先校验一遍，校验不过就退出（返回码 2），避免生成半成品数据库。
 
+数据来源策略：规则侧数据（技能 / FAQ / 关键词 / 时点）来自
+[《三国杀官方规则集 3.0》的网页版](https://gltjk.com/sanguosha/rules/)，
+按“内容是什么”标 `source.type=official_rule`，按“来源可靠到什么程度”标
+`verification_status=community`（社区整理的网页版，未按实体卡核验）——
+两者分开记录，核验一条就升一条，不因为文档名称里带“官方”就默认可信。
+
+解析性能：数据长到近千个 YAML 之后，`loader` 做了两件事 ——
+有 libyaml 就用 C 解析器（快 5～7 倍），以及单条映射不再为了拿行号多解析一遍；
+`AdminStore` 则对“文件指纹”做了毫秒级缓存，避免渲染一页时把上千个文件 stat 上万次。
+
 ### 1.1 本地管理网页的写入路径（`sgs_helper/admin/`，可选）
 
 浏览器维护资料的路径与上面完全相同，只是把「人手工编辑 YAML」换成「表单写 YAML」：
@@ -86,7 +96,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 | | Skills（SkillDefinition） | SkillVersions |
 | --- | --- | --- |
 | 表示 | “集智”这个概念 | 某个模式/产品/时期下的具体文本 |
-| 主键 | `skill_jizhi` | `skill_jizhi_identity_v2` |
+| 主键 | `skill_ji_zhi` | `skill_ji_zhi_identity_v1` |
 | 变化 | 极少 | 每次平衡调整都新增 |
 
 不拆层就会出现两种灾难：① 同一技能名在不同模式/产品下互相覆盖；

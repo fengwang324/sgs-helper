@@ -1,0 +1,21 @@
+id: skill_po_jun_identity_v1
+skill_id: skill_po_jun
+mode: identity
+text: |-
+  每当你使用【杀】对目标角色造成伤害后，你可以令其摸X张牌（X为其体力值且至多为5），然后其翻面。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

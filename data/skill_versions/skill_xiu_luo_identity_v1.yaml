@@ -1,0 +1,21 @@
+id: skill_xiu_luo_identity_v1
+skill_id: skill_xiu_luo
+mode: identity
+text: |-
+  准备阶段开始时，你可以弃置与你判定区里一张牌花色相同的一张手牌，弃置你判定区里的此牌且你可以重复此流程。
+version_label: 虎牢关
+product_id: null
+package: 虎牢关
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

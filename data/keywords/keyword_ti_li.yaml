@@ -1,0 +1,17 @@
+id: keyword_ti_li
+name: 体力
+definition: |-
+  游戏开始时，每名角色均拥有等同于体力上限的体力，在游戏过程中此数值有可能发生变化（回复或扣减），通常是在游戏中用于计算时被提到。
+  ◆角色的体力有可能小于0。
+  例如：体力为1的庞统-甘夫人在判定阶段受到【闪电】造成的3点伤害，进入濒死状态，进行濒死结算，轮到其进行响应时其发动【涅槃】，当其将体力值回复至3点时，其至多可以发动五次【淑慎】。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「数值」

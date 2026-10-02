@@ -8,16 +8,25 @@
 > （唯一的例外是一个**只在本机跑**的资料维护网页 `sgs_helper/admin/`：
 > 它没有前端框架、没有登录，只是把手工编辑 YAML 变成表单编辑 YAML，见 [docs/admin.md](docs/admin.md)。）
 
-## 当前数据状态：全部是 SAMPLE 占位数据
+## 当前数据状态
 
-`data/` 下的内容**只用于验证结构**，不是真实规则：
+**规则侧数据已经是真实资料**（来自《三国杀官方规则集 3.0》），**产品 / 武将 / 卡牌侧仍是 SAMPLE 占位**：
 
-- 所有实体的 `name` 都带 `【SAMPLE】` 前缀，明文名称放在 `aliases` 里；
-- 所有规则文本（技能文本、FAQ 问答、卡面原文、关键词定义）都以 `【示例占位】` 开头；
-- `source.title` 都是 `【SAMPLE】…`，`verification_status` 基本都是 `unverified`；
-- `faq_0004` 专门演示 `verification_status: conflict`（来源冲突）怎么写。
+| 类型 | 来源 | 状态 |
+| --- | --- | --- |
+| 技能本体 308 / 技能版本 397 | gltjk.com 网页版《三国杀官方规则集 3.0》 | 真实文本，`verification_status: community`（社区网页版，未按实体卡核验） |
+| FAQ / 裁定 83 | 同上（规则专题与流程章节 + 武将页的 ◆ 裁定） | 同上 |
+| 规则关键词 126 / 时点 30 | 同上（用语、游戏的流程） | 同上 |
+| 产品 3 / 武将 3 / 卡牌 4 / 实体卡印刷 6 | 仓库自带示例 | **SAMPLE 占位**，名称带 `【SAMPLE】` 前缀，待用实体卡替换 |
 
-替换成真实资料的方法见下文《日常操作手册》。在替换完成前，**不要把这些文本当成规则结论**。
+- 规则侧来源统一写成：`source.type: official_rule`、`source.title: 三国杀官方规则集 3.0`、
+  `source.reference: https://gltjk.com/sanguosha/rules/`（`source.notes` 里注明这是社区网页版）。
+- 每个技能按模式各留一条版本：身份局取**标准版**印次的文本，国战取**国战标准版**；
+  同一技能在其它印次（界限突破、台湾版、铜雀台、国战·阵/势…）还有不同文本时，
+  会写在该版本的 `notes` 里，需要时再单独补一条 SkillVersion。
+- 卡面/规则文本逐字照抄网页版，包括站点本身的排版细节；**未按实体卡核验**，
+  所以统一是 `community`，可以随时在管理页里逐条核对升级成 `physical_verified`。
+- 产品 / 武将 / 卡牌的替换方法见《日常操作手册》。在替换完成前，**不要把 SAMPLE 文本当成规则结论**。
 
 ---
 
@@ -37,7 +46,7 @@ python scripts/query.py skill 集智         # 4. 查询
 python scripts/query.py general 孔融
 python scripts/query.py card 杀
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死
+python scripts/query.py keyword 濒死状态
 python scripts/query.py timing 伤害结算
 python scripts/query.py product 国战
 python scripts/query.py search 集智
@@ -134,11 +143,12 @@ sgs-helper/
 ## SkillDefinition / SkillVersion 如何工作
 
 ```text
-skill_jizhi（技能本体 · data/skills/jizhi.yaml）
-├── skill_jizhi_guozhan_v1      国战 · product_guozhan_sample_2024 · 2024-08-01 ~
-├── skill_jizhi_identity_v1     身份局 · product_identity_sample_2025 · 2020-01-01 ~ 2025-05-31
-└── skill_jizhi_identity_v2     身份局 · 2025-06-01 ~  （previous_version_id → v1）
+skill_ji_zhi（技能本体 · data/skills/skill_ji_zhi.yaml）
+├── skill_ji_zhi_guozhan_v1     国战 · 国战标准版印次 · 每当你使用非转化的非延时类锦囊牌时…
+└── skill_ji_zhi_identity_v1    身份局 · 标准版印次 · 每当你使用锦囊牌时…
 ```
+
+（更新技能时新增一条 SkillVersion 并用 `previous_version_id` 串链，见下文《技能平衡更新》。）
 
 - **同名技能在不同模式、不同产品、不同时期下必须并存**，各写各的 SkillVersion。
 - **更新技能 = 新增一条 SkillVersion**：新文件 + `previous_version_id` + `effective_from` + `change_note`。
@@ -317,11 +327,11 @@ python scripts/build_db.py --db build/sgs.db --no-fts
 ```bash
 python scripts/query.py skill 集智              # 各模式 / 当前有效版本 / 历史版本 / 文本 / 来源 / 变更说明
 python scripts/query.py skill 集智 --as-of 2024-01-01
-python scripts/query.py skill skill_jizhi --json
+python scripts/query.py skill skill_ji_zhi --json
 python scripts/query.py general 孔融            # 含“获得技能后的完整技能说明”
 python scripts/query.py card 杀                 # 定义 + 各产品印刷（花色/点数/角标/卡面原文）
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死
+python scripts/query.py keyword 濒死状态
 python scripts/query.py timing 伤害结算
 python scripts/query.py product 国战
 python scripts/query.py search 集智             # 跨类型检索
@@ -379,7 +389,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 ## 测试
 
 ```bash
-python -m pytest -q          # 183 个测试
+python -m pytest -q          # 185 个测试
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、

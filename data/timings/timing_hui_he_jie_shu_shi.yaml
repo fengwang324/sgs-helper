@@ -1,0 +1,19 @@
+id: timing_hui_he_jie_shu_shi
+name: 回合结束时
+description: |-
+  该角色的回合所有阶段均执行完毕，回合即将结束。
+  能发动的技能/能执行的技能效果：【横江②】、【放权】弃置一张手牌令一名其他角色进行一个额外的回合的效果、【谦逊】获得所有“节”的效果、【窃听】、【咒缚】获得角色武将牌旁的“咒”的效果。
+mode: common
+parent_id: null
+previous_ids: []
+next_ids: []
+related_keywords: []
+related_skill_ids: []
+related_faq_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

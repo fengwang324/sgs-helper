@@ -9,7 +9,6 @@ subtype: normal
 aliases:
   - 杀
 related_keywords:
-  - keyword_use_card
-  - keyword_target
-  - keyword_damage
+  - keyword_shi_yong
+  - keyword_mu_biao_jue_se
 notes: 【SAMPLE】占位数据。实体卡印刷见 data/card_printings/。

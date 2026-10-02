@@ -1,0 +1,21 @@
+id: skill_wu_hun_identity_v1
+skill_id: skill_wu_hun
+mode: identity
+text: |-
+  锁定技，每当你受到1点伤害后，你令来源获得1枚“梦魇”标记；锁定技，当你死亡时，你令一名拥有最多“梦魇”标记的其他角色判定，若结果不为【桃】或【桃园结义】，其死亡。
+version_label: 神话再临·风
+product_id: null
+package: 风
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

@@ -1,0 +1,15 @@
+id: keyword_sha_si
+name: 杀死
+definition: |-
+  当目标角色因受到一个来源对其造成的伤害而进行濒死结算且未于此次濒死结算中被挽救，则此来源杀死了目标角色。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「游戏流程」

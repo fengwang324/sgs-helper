@@ -1,0 +1,24 @@
+id: faq_ruling_skill_pao_xiao_1
+question: |-
+  【咆哮】使用【杀】指定A为目标后触发【咆哮②】，你无视A的防具的效果持续到：
+  此【杀】因对A无效而终止使用结算
+answer: |-
+  你使用【杀】指定A为目标后触发【咆哮②】，你无视A的防具的效果持续到：
+  此【杀】因对A无效而终止使用结算。
+  此【杀】被A使用的【闪】抵消。
+  此【杀】对A进行使用结算造成的伤害，在伤害结算中防止此伤害。
+  此【杀】对A进行使用结算造成的伤害，在伤害结算中计算出最终的伤害值。
+mode: guozhan
+related_general_ids: []
+related_skill_ids:
+  - skill_pao_xiao
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 《三国杀官方规则集 3.0》中武将【刘备】技能【咆哮】的裁定原文；问题栏取自原文首个分句

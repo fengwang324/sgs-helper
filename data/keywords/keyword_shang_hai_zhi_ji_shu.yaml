@@ -1,0 +1,16 @@
+id: keyword_shang_hai_zhi_ji_shu
+name: 伤害值基数
+definition: |-
+  牌或技能描述中，“造成/受到X点伤害”的X即此伤害的伤害值基数。
+  例如：装备【古锭刀】的角色使用【酒】后对只有一张手牌的于吉（旧风）使用【杀】，于吉（旧风）用方块【闪】发动【蛊惑】使用【闪】进行响应，该角色质疑失败后死亡，其装备区里的【古锭刀】被弃置，因此继续进行【杀】的使用结算，于吉（旧风）受到2点伤害。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「数值」

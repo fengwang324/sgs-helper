@@ -41,7 +41,7 @@ def test_validate_script_reports_error(tmp_path: Path, data_dir: Path) -> None:
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
     replace_in(
-        broken / "generals" / "kongrong_sample_guozhan.yaml", "skill_id: skill_lirang",
+        broken / "generals" / "kongrong_sample_guozhan.yaml", "skill_id: skill_li_rang",
         "skill_id: skill_not_exist",
     )
     result = run_script("scripts/validate_data.py", "--data-dir", str(broken))
@@ -92,8 +92,8 @@ def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> No
         ("general", "孔融"),
         ("card", "杀"),
         ("faq", "伤害"),
-        ("keyword", "濒死"),
-        ("timing", "伤害结算"),
+        ("keyword", "濒死状态"),
+        ("timing", "判定阶段"),
         ("product", "国战示例"),
         ("search", "集智"),
     ],
@@ -116,30 +116,39 @@ def test_query_json_output(cli_db: Path) -> None:
     result = run_script("scripts/query.py", "--db", str(cli_db), "--json", "skill", "集智")
     assert result.returncode == 0
     payload = json.loads(result.stdout)
-    assert payload["definition"]["id"] == "skill_jizhi"
+    assert payload["definition"]["id"] == "skill_ji_zhi"
     assert payload["modes"]
 
 
-def test_query_as_of_switches_version(cli_db: Path) -> None:
+def test_query_as_of_switches_version(synth: Path, tmp_path: Path) -> None:
+    """--as-of 能切换“当前有效版本”，且选项写在子命令前后都可用。
+
+    用合成数据集：真实数据里每个 (技能, 模式) 只有一条版本，演示不了“按日期切换”。
+    """
+    from sgs_helper.db import build_database
+
+    db_path = tmp_path / "synth.db"
+    build_database(synth, db_path)
+
     # 选项写在子命令之后也要能用
     result = run_script(
-        "scripts/query.py", "--db", str(cli_db), "skill", "集智",
-        "--as-of", "2024-01-01", "--json",
+        "scripts/query.py", "--db", str(db_path), "skill", "演示技能",
+        "--as-of", "2024-06-01", "--json",
     )
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
     identity = next(g for g in payload["modes"] if g["mode"] == "identity")
-    assert identity["current_id"] == "skill_jizhi_identity_v1"
+    assert identity["current_id"] == "skill_demo_identity_v1"
 
     # 选项写在子命令之前同样可用
     result_before = run_script(
-        "scripts/query.py", "--db", str(cli_db), "--as-of", "2026-10-02", "--json",
-        "skill", "集智",
+        "scripts/query.py", "--db", str(db_path), "--as-of", "2025-06-01", "--json",
+        "skill", "演示技能",
     )
     assert result_before.returncode == 0
     payload_before = json.loads(result_before.stdout)
     identity_before = next(g for g in payload_before["modes"] if g["mode"] == "identity")
-    assert identity_before["current_id"] == "skill_jizhi_identity_v2"
+    assert identity_before["current_id"] == "skill_demo_identity_v2"
 
 
 def test_query_stats(cli_db: Path) -> None:

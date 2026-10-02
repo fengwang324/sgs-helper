@@ -1,0 +1,15 @@
+id: keyword_qu_xiao
+name: 取消
+definition: |-
+  在一张牌的使用流程中取消一名目标角色，即令其不再是此牌的目标。若将其取消后，此牌仍有其他目标，则继续对其他目标进行结算；若此牌仅有的目标被取消，则终止此牌的使用流程。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「事件、响应与结算」

@@ -14,10 +14,10 @@ gender: male
 product_id: product_guozhan_sample_2024
 general_set: sample_jiubian
 skills:
-  - skill_id: skill_mingshi
-    version_id: skill_mingshi_guozhan_v1
-  - skill_id: skill_lirang
-    version_id: skill_lirang_guozhan_v1
+  - skill_id: skill_ming_shi
+    version_id: skill_ming_shi_guozhan_v1
+  - skill_id: skill_li_rang
+    version_id: skill_li_rang_guozhan_v1
 aliases:
   - 孔融
 source:

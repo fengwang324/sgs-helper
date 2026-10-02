@@ -1,0 +1,14 @@
+id: keyword_chu_li_qu
+name: 处理区
+definition: 大多数情况下处理游戏牌的区域。处理区里的牌须正面朝上放置。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「区域」

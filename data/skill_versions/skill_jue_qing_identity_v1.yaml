@@ -1,0 +1,21 @@
+id: skill_jue_qing_identity_v1
+skill_id: skill_jue_qing
+mode: identity
+text: |-
+  锁定技，每当你对一名角色造成的伤害结算开始前，你将造成此伤害改为令其失去X点体力（X为此伤害的伤害值基数）。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：一将成名（旧）

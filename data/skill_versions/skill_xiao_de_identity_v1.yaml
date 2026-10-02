@@ -1,0 +1,21 @@
+id: skill_xiao_de_identity_v1
+skill_id: skill_xiao_de
+mode: identity
+text: |-
+  每当一名其他角色死亡后，你可以声明其武将牌的一项技能（觉醒技和主公技除外），然后于你的回合结束之前拥有此技能且“孝德”无效。
+version_label: 未标注印次
+product_id: null
+package: '?'
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

@@ -1,0 +1,20 @@
+id: skill_wang_xi_tian_identity_v1
+skill_id: skill_wang_xi_tian
+mode: identity
+text: 幽幽鬼城，颠倒众生。冥冥修罗，为谁摆正。乾坤一掷，天命难成。
+version_label: 狄仁杰之通天帝国
+product_id: null
+package: 狄仁杰之通天帝国
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

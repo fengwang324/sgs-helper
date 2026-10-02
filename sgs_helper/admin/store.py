@@ -22,6 +22,7 @@ import os
 import re
 import sqlite3
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -199,6 +200,10 @@ class FileBackup:
 class AdminStore:
     """本地资料管理的数据访问对象。线程安全（单进程、少量并发足够）。"""
 
+    #: 文件指纹的缓存时间（秒）。一次页面请求通常远小于它，
+    #: 所以整页只 stat 一遍目录；同时又能在提交后的下一次请求看到外部改动。
+    FINGERPRINT_TTL = 0.5
+
     def __init__(self, data_dir: Path, db_path: Path) -> None:
         self.data_dir = Path(data_dir)
         self.db_path = Path(db_path)
@@ -206,7 +211,10 @@ class AdminStore:
         self._lock = threading.RLock()
         self._snapshot: ValidationResult | None = None
         self._fingerprint: str = ""
+        self._fingerprint_at: float = 0.0
         self._index: dict[str, dict[str, tuple[str, str, str]]] = {}
+        self._digest: str = ""
+        self._digest_fingerprint: str = ""
 
     # ------------------------------------------------------------ 快照
 
@@ -221,9 +229,25 @@ class AdminStore:
         return "|".join(sorted(parts))
 
     def snapshot(self, *, force: bool = False) -> ValidationResult:
-        """返回当前 YAML 的校验结果（含 bundle）。文件一变就自动重新装载。"""
+        """返回当前 YAML 的校验结果（含 bundle）。
+
+        页面渲染时会**大量**访问 ``self.bundle``：如果每次访问都去 stat 一遍
+        全部 YAML 文件，几百个文件的数据量下整页会慢到不可用。所以这里对
+        “文件指纹”做了一个很短的缓存：一次请求只算一遍，跨请求最多每
+        ``FINGERPRINT_TTL`` 秒重算一次。
+        """
         with self._lock:
+            now = time.monotonic()
+            needs_check = (
+                force
+                or self._snapshot is None
+                or (now - self._fingerprint_at) > self.FINGERPRINT_TTL
+            )
+            if not needs_check:
+                return self._snapshot  # type: ignore[return-value]
+
             fingerprint = self._fingerprint_now()
+            self._fingerprint_at = now
             if force or self._snapshot is None or fingerprint != self._fingerprint:
                 self._snapshot = validate_data_dir(self.data_dir)
                 self._fingerprint = fingerprint
@@ -234,7 +258,10 @@ class AdminStore:
         with self._lock:
             self._snapshot = None
             self._fingerprint = ""
+            self._fingerprint_at = 0.0
             self._index = {}
+            self._digest = ""
+            self._digest_fingerprint = ""
 
     @property
     def bundle(self) -> DataBundle:
@@ -833,6 +860,11 @@ class AdminStore:
         actual = self._entity_sha_in_file(check_path, check_id)
         if actual == expected_sha:
             return ""
+        if expected_sha == "":
+            # 新增时表示“这条记录还不该存在”。id 撞车应该由校验器报
+            # “id 重复：… 已在 xxx.yaml 中定义”（带文件与行号），
+            # 不要在这里误导成“文件被改动过”。
+            return ""
         return (
             "这条记录在页面打开之后被改动过了（可能是另一个标签页，或者你手工编辑了 YAML）。"
             "为了避免覆盖其他人的修改，本次**没有写入任何文件**，请刷新页面确认最新内容后重试。"
@@ -1348,6 +1380,7 @@ class AdminStore:
 
     def db_state(self) -> dict:
         """YAML 与生成物是否同步（页面顶部横幅用）。"""
+        snapshot = self.snapshot()  # 顺带保证指纹是最新的
         state: dict[str, Any] = {
             "path": str(self.db_path),
             "exists": self.db_path.exists(),
@@ -1374,8 +1407,11 @@ class AdminStore:
         state["built_at"] = meta.get("built_at", "")
         state["counts"] = {k: int(v) for k, v in meta.items() if k.startswith("count.")}
         try:
-            digest = manifest_digest(self.data_dir)
-            state["stale"] = meta.get("yaml_manifest_sha256") != digest
+            # 内容指纹会读全部 YAML，按当前文件指纹缓存一次即可
+            if self._digest_fingerprint != self._fingerprint:
+                self._digest = manifest_digest(self.data_dir)
+                self._digest_fingerprint = self._fingerprint
+            state["stale"] = meta.get("yaml_manifest_sha256") != self._digest
         except OSError:  # pragma: no cover
             state["stale"] = True
         return state

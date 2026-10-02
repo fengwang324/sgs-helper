@@ -1,0 +1,21 @@
+id: skill_yao_wu_identity_v1
+skill_id: skill_yao_wu
+mode: identity
+text: |-
+  锁定技，每当一名角色使用红色【杀】对你造成伤害时，其选择一项：1.回复1点体力；2.摸一张牌。
+version_label: 标准版
+product_id: null
+package: 标
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：界限突破

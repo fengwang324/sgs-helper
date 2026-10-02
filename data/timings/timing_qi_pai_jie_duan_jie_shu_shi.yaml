@@ -1,0 +1,17 @@
+id: timing_qi_pai_jie_duan_jie_shu_shi
+name: 弃牌阶段结束时
+description: 能发动的技能：【固政】、【旋风②】、【琴音】。
+mode: common
+parent_id: null
+previous_ids: []
+next_ids: []
+related_keywords: []
+related_skill_ids: []
+related_faq_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

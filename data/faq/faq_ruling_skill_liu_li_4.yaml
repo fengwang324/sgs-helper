@@ -1,0 +1,19 @@
+id: faq_ruling_skill_liu_li_4
+question: |-
+  执行【流离】的效果会取消自己且令【流离】的目标角色成为此【杀】的新目标或第N次成为此【杀】的目标，处理完其成为此【杀】的新目标时或第N次成为此【杀】的目标时的所
+answer: |-
+  你执行【流离】的效果会取消自己且令【流离】的目标角色成为此【杀】的新目标或第N次成为此【杀】的目标，处理完其成为此【杀】的新目标时或第N次成为此【杀】的目标时的所有事件后，【流离】结算完毕。（N＞1）
+mode: identity
+related_general_ids: []
+related_skill_ids:
+  - skill_liu_li
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 《三国杀官方规则集 3.0》中武将【大乔】技能【流离】的裁定原文；问题栏取自原文首个分句

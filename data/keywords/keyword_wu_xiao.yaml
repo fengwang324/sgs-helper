@@ -1,0 +1,18 @@
+id: keyword_wu_xiao
+name: 无效
+definition: |-
+  一般用于以下两种情况：
+  一张牌对使用目标无效，即终止对该目标的结算。
+  凌天翼按：一张牌对角色无效，该角色依然可以被选择为此牌的使用目标。例如，可以对装备【仁王盾】的角色使用黑色的【杀】，但是该角色不能使用【闪】进行响应。虽然此【杀】无效，但是依然会计入出牌阶段使用【杀】的次数限制。
+  一个技能无效，即非状态类技能不能发动，状态类技能不能产生影响（反之则称为此技能有效）。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「事件、响应与结算」

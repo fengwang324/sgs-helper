@@ -1,0 +1,19 @@
+id: keyword_yi_chu_you_xi
+name: 移出游戏
+definition: |-
+  移出游戏的牌不为任何角色所拥有。移出游戏的牌须正面朝上放置。
+  例如：司马懿对邓艾发动【反馈】不可以选择获得邓艾武将牌上的“田”。
+  ◆（扣）置于武将牌上/旁的牌都是移出游戏的牌。
+  ◆若一名角色的一个技能将其（扣）置于武将牌上的牌称为“X”，则该角色所有技能中凡提及X都默认为其武将牌上的X 。
+  ◆一名角色将…牌（扣）置于武将牌上/旁，默认是指（扣）置于该角色的武将牌上/旁。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

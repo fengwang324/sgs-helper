@@ -1,0 +1,16 @@
+id: keyword_bin_si_zhuang_tai
+name: 濒死状态
+definition: |-
+  一名角色的体力值被扣减后，若该角色的体力值为0，则其进入濒死状态，须进行濒死结算。处于濒死状态的角色并不会立即死亡，须进行濒死结算。但若B在A的濒死结算中进入濒死状态，则插入进行B的濒死结算，在B的濒死结算过程中A视为不处于濒死状态，直到B的濒死结算完毕继续进行A的濒死结算。也就是说，不可能有两名以上的角色同时“处于濒死状态”。若在B的濒死结算过程中，A的体力值被扣减，A不进入濒死状态，继续正常进行B的濒死结算。
+  例如：贾诩对于吉（旧风）使用【杀】，于吉（旧风）受到1点伤害，进入濒死状态，进行濒死结算时于吉（旧风）发动【蛊惑】对自己使用【桃】，A质疑失败后失去1点体力，进入濒死状态，进行濒死结算时于吉（旧风）会受到【完杀】的影响不可以对A使用【桃】或发动【蛊惑】对A使用【桃】。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「游戏流程」

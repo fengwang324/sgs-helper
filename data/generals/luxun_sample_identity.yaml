@@ -12,9 +12,9 @@ gender: male
 product_id: product_identity_sample_2025
 general_set: sample_standard
 skills:
-  - skill_id: skill_qianxun
+  - skill_id: skill_qian_xun
     version_id: null
-  - skill_id: skill_lianying
+  - skill_id: skill_lian_ying
     version_id: null
 aliases:
   - 陆逊

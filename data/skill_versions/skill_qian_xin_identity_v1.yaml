@@ -1,0 +1,21 @@
+id: skill_qian_xin_identity_v1
+skill_id: skill_qian_xin
+mode: identity
+text: |-
+  觉醒技，当你造成伤害后，若你已受伤，你减1点体力上限，然后获得“荐言”（出牌阶段限一次，你可以选择一种类别/颜色，然后亮出牌堆顶的一张牌，若此牌不为此类别/颜色，你重复此流程。你令一名男性角色获得最后亮出的此类别/颜色的牌，然后将亮出的其余牌置入弃牌堆）。
+version_label: 界限突破
+product_id: null
+package: 界限突破
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

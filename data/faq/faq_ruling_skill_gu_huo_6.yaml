@@ -1,0 +1,22 @@
+id: faq_ruling_skill_gu_huo_6
+question: |-
+  【蛊惑】此牌在亮出前的牌名视为你声明的牌名（即你在选择目标时此牌的牌名即你声明的牌名）；在亮出后（若仍进行结算）以你声明的牌名进行结算
+answer: |-
+  此牌在亮出前的牌名视为你声明的牌名（即你在选择目标时此牌的牌名即你声明的牌名）；在亮出后（若仍进行结算）以你声明的牌名进行结算。
+  例如：于吉用最后一张手牌发动【蛊惑】使用【杀】时会受到【方天画戟】的影响，可以额外选择至多两个目标。
+  例如：装备【朱雀羽扇】的于吉在使用【杀】的时机发动【蛊惑】可以声明发动【朱雀羽扇①】使用一张火【杀】，然后其他所有角色从当前回合角色开始按逆时针方向依次决定是否质疑（选项为此牌是否为普通【杀】），若无角色质疑或有角色质疑但亮出此牌是红桃普通【杀】，则此牌按火【杀】使用。
+  例如：杨修对于吉发动【鸡肋】选择基本牌，此回合内于吉不可以发动【蛊惑】声明使用基本牌。
+mode: identity
+related_general_ids: []
+related_skill_ids:
+  - skill_gu_huo
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 《三国杀官方规则集 3.0》中武将【于吉】技能【蛊惑】的裁定原文；问题栏取自原文首个分句

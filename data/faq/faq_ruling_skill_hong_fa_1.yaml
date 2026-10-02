@@ -1,0 +1,20 @@
+id: faq_ruling_skill_hong_fa_1
+question: 【弘法】“黄巾天兵符”是你的武将技能
+answer: |-
+  “黄巾天兵符”是你的武将技能。
+  “黄巾天兵符”
+  你执行的效果中的“群势力角色数”+X（X为不大于“天兵”数的自然数）；每当你失去体力时，你可以将一张“天兵”置入弃牌堆，防止此失去体力；与你势力相同的角色可以将一张“天兵”当【杀】使用或打出。
+mode: guozhan
+related_general_ids: []
+related_skill_ids:
+  - skill_hong_fa
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 《三国杀官方规则集 3.0》中武将【张角】技能【弘法】的裁定原文；问题栏取自原文首个分句

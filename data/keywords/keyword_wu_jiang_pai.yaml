@@ -1,0 +1,18 @@
+id: keyword_wu_jiang_pai
+name: 武将牌
+definition: |-
+  武将牌代表玩家操控的三国武将。武将牌上标识了势力、体力上限、技能、性别等属性。
+  ◆武将牌的技能专指武将牌左下角用白底的技能框圈起来的技能。
+  例如：左慈发动【化身②】不能声明邓艾的武将牌的文字里的【急袭】。
+  例如：张飞杀死蔡文姬，蔡文姬触发【断肠】，张飞失去其当前的所有武将技能。然后在张飞死亡后，夏侯氏发动【孝德】依然可以拥有张飞的武将牌的【咆哮】。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「牌」

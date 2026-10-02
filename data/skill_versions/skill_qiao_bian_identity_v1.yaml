@@ -1,0 +1,21 @@
+id: skill_qiao_bian_identity_v1
+skill_id: skill_qiao_bian
+mode: identity
+text: |-
+  你可以弃置一张手牌，跳过一个阶段（准备阶段和结束阶段除外），然后若你以此法：跳过摸牌阶段，你可以选择一至两名有手牌的其他角色，然后获得这些角色的各一张手牌；跳过出牌阶段，你可以将一名角色判定区/装备区里的一张牌置入另一名角色的判定区/装备区。
+version_label: 神话再临·山
+product_id: null
+package: 山
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

@@ -19,6 +19,13 @@ from .constants import KIND_BY_DIRNAME, KINDS
 #: 文件级错误用这种 path 记录
 YAML_SUFFIXES = (".yaml", ".yml")
 
+#: 有 libyaml 时用 C 实现的解析器：同样的 YAML，快 5～7 倍
+#: （数据长到几百个文件以后，这一条直接决定管理页能不能“秒开”）
+try:  # pragma: no cover - 取决于环境是否装了 libyaml
+    from yaml import CSafeLoader as _SafeLoader
+except ImportError:  # pragma: no cover
+    from yaml import SafeLoader as _SafeLoader
+
 
 @dataclass
 class Origin:
@@ -132,7 +139,7 @@ def iter_yaml_files(data_dir: Path) -> list[tuple[Path, str, str]]:
 def _top_level_lines(text: str) -> list[int]:
     """取出每个顶层实体在文件中的起始行号（1-based）。"""
     try:
-        node = yaml.compose(text)
+        node = yaml.compose(text, Loader=_SafeLoader)
     except yaml.YAMLError:
         return []
     if node is None:
@@ -149,6 +156,20 @@ def _top_level_lines(text: str) -> list[int]:
     return [1]
 
 
+def _first_content_line(text: str) -> int:
+    """单个映射的起始行号，不额外解析一遍 YAML。
+
+    绝大多数数据文件是“一个文件一条记录”，这种情况下的起始行就是第一个
+    既不是空行、也不是注释、也不是 ``---`` 的行。
+    """
+    for number, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#") or line == "---":
+            continue
+        return number
+    return 1
+
+
 def load_yaml_file(path: Path, rel: str, kind: str) -> tuple[list[RawEntity], list[Issue]]:
     """读取单个 YAML 文件，返回原始实体与文件级问题。"""
     try:
@@ -159,7 +180,7 @@ def load_yaml_file(path: Path, rel: str, kind: str) -> tuple[list[RawEntity], li
     sha256 = hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     try:
-        data = yaml.safe_load(text)
+        data = yaml.load(text, Loader=_SafeLoader)
     except yaml.YAMLError as exc:
         line = None
         mark = getattr(exc, "problem_mark", None)
@@ -170,6 +191,9 @@ def load_yaml_file(path: Path, rel: str, kind: str) -> tuple[list[RawEntity], li
     if data is None:
         return [], []
 
+    multi = isinstance(data, list) or (
+        isinstance(data, dict) and isinstance(data.get("items"), list)
+    )
     if isinstance(data, dict) and isinstance(data.get("items"), list):
         items = data["items"]
     elif isinstance(data, list):
@@ -187,7 +211,8 @@ def load_yaml_file(path: Path, rel: str, kind: str) -> tuple[list[RawEntity], li
             )
         ]
 
-    lines = _top_level_lines(text)
+    # 单条映射不必再解析一遍（compose）就能拿到起始行
+    lines = _top_level_lines(text) if multi else [_first_content_line(text)]
     entities: list[RawEntity] = []
     issues: list[Issue] = []
     for index, item in enumerate(items):

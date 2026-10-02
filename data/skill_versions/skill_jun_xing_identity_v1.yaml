@@ -1,0 +1,21 @@
+id: skill_jun_xing_identity_v1
+skill_id: skill_jun_xing
+mode: identity
+text: |-
+  出牌阶段限一次，你可以弃置至少一张手牌并选择一名其他角色，令其选择一项：1.弃置与你弃置的牌类别均不同的一张手牌；2.翻面，然后摸X张牌（X为你以此法弃置的牌数）。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

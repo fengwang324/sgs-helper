@@ -1,0 +1,15 @@
+id: keyword_pin_dian
+name: 拼点
+definition: |-
+  两名有手牌的角色各以一张手牌进行点数大小的比较，然后根据结果执行相应效果的操作。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

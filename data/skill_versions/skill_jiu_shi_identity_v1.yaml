@@ -1,0 +1,21 @@
+id: skill_jiu_shi_identity_v1
+skill_id: skill_jiu_shi
+mode: identity
+text: |-
+  每当你需要使用【酒】时，若你的武将牌正面朝上，你可以翻面，视为使用【酒】；每当你受到的伤害结算结束后，若你此时与因受到此伤害而扣减体力前武将牌均背面朝上，你可以翻面。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

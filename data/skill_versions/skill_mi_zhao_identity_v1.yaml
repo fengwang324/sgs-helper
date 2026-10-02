@@ -1,0 +1,21 @@
+id: skill_mi_zhao_identity_v1
+skill_id: skill_mi_zhao
+mode: identity
+text: |-
+  出牌阶段限一次，你可以将所有手牌交给一名角色，令其与你选择的有手牌的另一名角色拼点，然后拼点赢的角色视为对拼点没赢的角色使用【杀】。
+version_label: 铜雀台
+product_id: null
+package: 铜雀台
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：未标注印次

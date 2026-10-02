@@ -1,0 +1,21 @@
+id: skill_shuang_xiong_guozhan_v1
+skill_id: skill_shuang_xiong
+mode: guozhan
+text: |-
+  摸牌阶段开始时，你可以放弃摸牌，判定，当判定牌生效后，你获得之，若如此做，你于此回合内可以将一张与之颜色不同的手牌当【决斗】使用。
+version_label: 国战标准版
+product_id: null
+package: 国-标
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

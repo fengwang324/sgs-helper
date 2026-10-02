@@ -1,0 +1,21 @@
+id: skill_fen_cheng_identity_v1
+skill_id: skill_fen_cheng
+mode: identity
+text: |-
+  限定技，出牌阶段，你可以令所有其他角色各选择一项：1.弃置至少X张牌（若上一名进行选择的角色以此法弃置过牌，X为这些被弃置的牌数+1，否则X为1）；2.受到你造成的2点火焰伤害。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：一将成名（旧）

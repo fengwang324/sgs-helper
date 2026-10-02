@@ -1,0 +1,21 @@
+id: skill_ye_yan_identity_v1
+skill_id: skill_ye_yan
+mode: identity
+text: |-
+  限定技，出牌阶段，你可以选择一至三名角色，对这些角色造成至多共3点火焰伤害（你选择目标时任意分配每名目标角色受到的伤害点数，若你将对一名角色分配的火焰伤害点数不小于2，你须执行弃置四张花色各不相同的手牌并失去3点体力的消耗）。
+version_label: 神话再临·火
+product_id: null
+package: 火
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

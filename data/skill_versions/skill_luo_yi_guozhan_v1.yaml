@@ -1,0 +1,21 @@
+id: skill_luo_yi_guozhan_v1
+skill_id: skill_luo_yi
+mode: guozhan
+text: |-
+  摸牌阶段，你可以少摸一张牌，若如此做，每当你于此回合内使用【杀】或【决斗】对目标角色造成伤害时，你令伤害值+1。
+version_label: 国战标准版
+product_id: null
+package: 国-标
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

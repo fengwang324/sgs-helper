@@ -1,0 +1,21 @@
+id: skill_zen_hui_identity_v1
+skill_id: skill_zen_hui
+mode: identity
+text: |-
+  每当你于出牌阶段内使用【杀】或黑色非延时类锦囊牌指定目标时，若目标数为1，你可以令除该目标外的是你使用此牌的合法目标的一名其他角色选择一项：1.将一张牌交给你，若如此做，其代替你成为此牌的使用者；2.也成为此牌的目标。每阶段限一次。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

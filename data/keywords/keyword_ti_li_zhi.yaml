@@ -1,0 +1,16 @@
+id: keyword_ti_li_zhi
+name: 体力值
+definition: |-
+  角色的体力牌上未被武将牌挡住的阴阳鱼个数，通常是作为游戏中所调用的一个参数被提到。
+  ◆当角色的体力降到0或更低时，由于体力牌上的阴阳鱼全部被挡住，其体力值为0。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「数值」

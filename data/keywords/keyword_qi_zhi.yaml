@@ -1,0 +1,19 @@
+id: keyword_qi_zhi
+name: 弃置
+definition: |-
+  将一名角色区域里的牌置入处理区，然后将之置入弃牌堆。
+  ◆A令B弃置牌，是由B执行弃置的操作，即由B自己选择被弃置的牌；A弃置B的牌，是由A执行弃置的操作，即由A选择被弃置的牌。
+  例如：杨修对一名角色发动【鸡肋】选择一种牌的类别，该角色不能弃置该类别的手牌，但是其他角色可以弃置该角色该类别的手牌。
+  ◆角色执行一次弃置X张牌的技能效果时，若该角色拥有的牌数小于X，则全部弃置。
+  例如：已损失的体力值为3的孙坚发动【英魂】令只有一张手牌且装备区里没有牌的陆逊摸一张牌，然后弃置三张牌。陆逊摸一张牌后须弃置全部两张手牌，然后陆逊可以发动【连营】摸一张牌（不可以再弃置此牌）。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

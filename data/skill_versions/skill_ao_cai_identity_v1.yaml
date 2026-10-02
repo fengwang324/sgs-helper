@@ -1,0 +1,21 @@
+id: skill_ao_cai_identity_v1
+skill_id: skill_ao_cai
+mode: identity
+text: |-
+  每当你于回合外需要使用或打出【杀】/【闪】时，你可以观看牌堆顶的两张牌，若如此做，你可以使用或打出其中的一张【杀】/【闪】；每当你于回合外需要对你使用【桃】或【酒】时，你可以观看牌堆顶的两张牌，若如此做，你可以对自己使用其中的一张【桃】或【酒】；每当你于回合外需要使用【桃】时，你可以观看牌堆顶的两张牌，若如此做，你可以以方法Ⅱ使用其中的一张【桃】。
+version_label: 未标注印次
+product_id: null
+package: '?'
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

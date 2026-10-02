@@ -1,0 +1,21 @@
+id: skill_xian_si_identity_v1
+skill_id: skill_xian_si
+mode: identity
+text: |-
+  准备阶段开始时，你可以选择一至两名有牌的角色，将这些角色的各一张牌置于武将牌上，称为“逆”；每当一名角色需要对你使用【杀】时，其可以将两张“逆”置入弃牌堆，视为对你使用【杀】（有距离限制）。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

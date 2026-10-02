@@ -1,0 +1,16 @@
+id: keyword_mou_shi_wu_zui_duo_shao
+name: （某事物）最多/少
+definition: |-
+  允许有多名角色的该事物并列最多/少，即这些角色中的每一名都是该事物最多/少的。
+  ◆若所有角色都没有该事物，则不存在该事物最多的角色。
+aliases: []
+mode: common
+related_keyword_ids: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》用语「数值」

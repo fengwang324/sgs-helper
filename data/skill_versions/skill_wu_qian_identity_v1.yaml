@@ -1,0 +1,21 @@
+id: skill_wu_qian_identity_v1
+skill_id: skill_wu_qian
+mode: identity
+text: |-
+  出牌阶段，你可以弃2枚“暴怒”标记并选择一名角色，你于此回合内拥有“无双”且其防具的技能于此回合内无效。
+version_label: 神话再临·林
+product_id: null
+package: 林
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：未标注印次

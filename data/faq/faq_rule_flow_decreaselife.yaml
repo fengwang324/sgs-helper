@@ -1,0 +1,27 @@
+id: faq_rule_flow_decreaselife
+question: 扣减体力事件的结算流程是怎样的？
+answer: |-
+  扣减体力结算中有：扣减体力前，扣减体力时，扣减体力后三个时机。
+  1、在伤害事件中产生的扣减体力事件的结算流程。
+  （1）扣减体力前：须进行下列检测：a.【酒诗②】、【狂骨】、【暴虐】的发动条件是否满足。b.受到属性伤害的角色重置的条件是否满足。c.属性伤害结算结束后触发连环的条件是否满足。
+  （2）扣减体力时：能发动的技能：【不屈（旧风）】。
+  然后受到伤害的角色按照最终的伤害值扣减体力，若其体力被扣减至0，其进行濒死结算。
+  （3）扣减体力后：能发动的技能：【伤逝】。
+  2、在失去体力事件中产生的扣减体力事件的结算流程。
+  （1）扣减体力前。
+  （2）扣减体力时：能发动的技能：【不屈（旧风）】。
+  然后失去体力的角色扣减相应的体力，若其体力被扣减至0，其进行濒死结算。
+  （3）扣减体力后：能发动的技能：【伤逝】。至此扣减体力结算完毕。
+mode: common
+related_general_ids: []
+related_skill_ids: []
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》流程章节：扣减体力事件的结算流程

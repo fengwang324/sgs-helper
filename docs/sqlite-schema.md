@@ -312,7 +312,7 @@ CREATE TABLE timings (
 每个实体表都带三列：
 
 - `source_key`：指向 `sources` 表（YAML 内嵌 source 结构去重后的结果）；
-- `yaml_file`：数据来源文件，例如 `data/skills/jizhi.yaml`；
+- `yaml_file`：数据来源文件，例如 `data/skills/skill_ji_zhi.yaml`；
 - `yaml_line`：该条记录在文件中的起始行号。
 
 `meta` 表另有 `git_commit` / `git_branch` / `git_dirty` / `yaml_manifest_sha256`，

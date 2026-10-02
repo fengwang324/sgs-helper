@@ -1,0 +1,20 @@
+id: timing_you_xi_kai_shi_qian_fen_fa_qi_shi_shou_pai_shi
+name: 游戏开始前分发起始手牌时
+description: |-
+  能发动/产生影响的技能：【挫锐①】、【七星①】。
+  注意：因获得牌发动的技能不考虑分发起始手牌导致的获得牌。
+  例如：夏侯惇在获得起始手牌后不能发动【清俭】。
+mode: common
+parent_id: null
+previous_ids: []
+next_ids: []
+related_keywords: []
+related_skill_ids: []
+related_faq_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

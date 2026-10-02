@@ -1,0 +1,21 @@
+id: skill_xian_zhou_identity_v1
+skill_id: skill_xian_zhou
+mode: identity
+text: |-
+  限定技，出牌阶段，你可以将装备区里的所有牌交给一名角色，令其选择一项： 1.令你回复X点体力；2.选择其攻击范围内的一至X名角色，然后对这些角色各造成1点伤害。（X为你以此法交给其的牌数）
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''

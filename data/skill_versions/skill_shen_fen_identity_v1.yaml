@@ -1,0 +1,21 @@
+id: skill_shen_fen_identity_v1
+skill_id: skill_shen_fen
+mode: identity
+text: |-
+  出牌阶段限一次，你可以弃6枚“暴怒”标记并选择所有其他角色，对这些角色各造成1点伤害，然后这些角色先各弃置装备区里的所有牌再各弃置四张手牌，你翻面。
+version_label: 神话再临·林
+product_id: null
+package: 林
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：未标注印次

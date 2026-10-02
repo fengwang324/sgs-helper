@@ -1,0 +1,21 @@
+id: skill_xuan_feng_identity_v1
+skill_id: skill_xuan_feng
+mode: identity
+text: |-
+  每当你失去装备区里的牌后，你可以依次弃置一名有牌的其他角色的两张牌，或选择两名有牌的其他角色，弃置这些角色的各一张牌；弃牌阶段结束时，若你于此阶段内弃置过你的至少两张手牌，你可以依次弃置一名有牌的其他角色的两张牌，或选择两名有牌的其他角色，弃置这些角色的各一张牌。
+version_label: 一将成名
+product_id: null
+package: 将
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：一将成名（旧）

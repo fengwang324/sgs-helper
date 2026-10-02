@@ -294,10 +294,10 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
         product_id=before["product_id"],
         general_set=before["general_set"],
         skill_count="2",
-        skill_0_skill_id="skill_mingshi",
-        skill_0_version_id="skill_mingshi_guozhan_v1",
-        skill_1_skill_id="skill_lirang",
-        skill_1_version_id="skill_lirang_guozhan_v1",
+        skill_0_skill_id="skill_ming_shi",
+        skill_0_version_id="skill_ming_shi_guozhan_v1",
+        skill_1_skill_id="skill_li_rang",
+        skill_1_version_id="skill_li_rang_guozhan_v1",
         _base_sha=store.entity_sha("general", "general_kongrong_sample_guozhan"),
     )
     for key in (
@@ -312,7 +312,7 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
     assert after["source"] == before["source"]
     assert after["notes"] == before["notes"]
     assert after["hp"] == 2.0
-    assert [ref["skill_id"] for ref in after["skills"]] == ["skill_mingshi", "skill_lirang"]
+    assert [ref["skill_id"] for ref in after["skills"]] == ["skill_ming_shi", "skill_li_rang"]
 
 
 # ---------------------------------------------------------------- 7 & 8 & 9
@@ -322,20 +322,20 @@ def test_existing_skill_can_be_searched_and_bound(client: TestClient, store) -> 
     """7) 技能搜索 API + 绑定已有技能。"""
     hits = client.get("/api/skills", params={"q": "集智"}).json()
     assert hits, "搜索不到已有技能"
-    assert hits[0]["id"] == "skill_jizhi"
+    assert hits[0]["id"] == "skill_ji_zhi"
     assert hits[0]["version_count"] >= 1
 
     by_alias = client.get("/api/skills", params={"q": "集智"}).json()
-    assert any(item["id"] == "skill_jizhi" for item in by_alias)
+    assert any(item["id"] == "skill_ji_zhi" for item in by_alias)
 
-    by_id = client.get("/api/skills", params={"q": "skill_jizhi"}).json()
-    assert by_id[0]["id"] == "skill_jizhi"
+    by_id = client.get("/api/skills", params={"q": "skill_ji_zhi"}).json()
+    assert by_id[0]["id"] == "skill_ji_zhi"
 
 
 def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store) -> None:
     """8) 显式绑定 SkillVersion，存入 YAML 并进入 general_skills 表。"""
     versions = client.get(
-        "/api/skills/skill_jizhi/versions",
+        "/api/skills/skill_ji_zhi/versions",
         params={"mode": "identity", "product_id": "product_identity_sample_2025"},
     ).json()["versions"]
     assert versions, "该技能应该有版本可绑定"
@@ -352,7 +352,7 @@ def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store)
             gender="female",
             product_id="product_identity_sample_2025",
             skill_count="1",
-            skill_0_skill_id="skill_jizhi",
+            skill_0_skill_id="skill_ji_zhi",
             skill_0_version_id=picked["id"],
             _base_sha=store.entity_sha("general", "general_huangyueying_sample_identity"),
         ),
@@ -360,13 +360,13 @@ def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store)
     assert response.status_code == 303, response.text
 
     data = load_yaml(entity_file(workdir, "general", "general_huangyueying_sample_identity"))
-    assert data["skills"] == [{"skill_id": "skill_jizhi", "version_id": picked["id"]}]
+    assert data["skills"] == [{"skill_id": "skill_ji_zhi", "version_id": picked["id"]}]
 
     conn = sqlite3.connect(workdir / "build" / "sgs.db")
     conn.row_factory = sqlite3.Row
     row = conn.execute(
         "SELECT version_id FROM general_skills WHERE general_id = ? AND skill_id = ?",
-        ("general_huangyueying_sample_identity", "skill_jizhi"),
+        ("general_huangyueying_sample_identity", "skill_ji_zhi"),
     ).fetchone()
     report = general_report(conn, "general_huangyueying_sample_identity")
     conn.close()
@@ -386,8 +386,8 @@ def test_version_must_belong_to_same_skill(client: TestClient, workdir: Path, st
             name="【SAMPLE】黄月英",
             mode="identity",
             skill_count="1",
-            skill_0_skill_id="skill_qicai",
-            skill_0_version_id="skill_jizhi_identity_v1",  # 属于别的技能
+            skill_0_skill_id="skill_qi_cai",
+            skill_0_version_id="skill_ji_zhi_identity_v1",  # 属于别的技能
             _base_sha=store.entity_sha("general", "general_huangyueying_sample_identity"),
         ),
     )
@@ -395,8 +395,8 @@ def test_version_must_belong_to_same_skill(client: TestClient, workdir: Path, st
     assert "和选中的技能不一致" in response.text
     data = load_yaml(entity_file(workdir, "general", "general_huangyueying_sample_identity"))
     assert data["skills"] == [
-        {"skill_id": "skill_jizhi", "version_id": None},
-        {"skill_id": "skill_qicai", "version_id": None},
+        {"skill_id": "skill_ji_zhi", "version_id": None},
+        {"skill_id": "skill_qi_cai", "version_id": None},
     ]  # 原文件没被改动
 
 
@@ -419,7 +419,7 @@ def test_validator_reports_foreign_version_reference() -> None:
             data={
                 "id": "general_kongrong_sample_guozhan",
                 "name": "孔融",
-                "skills": [{"skill_id": "skill_mingshi", "version_id": "skill_lirang_guozhan_v1"}],
+                "skills": [{"skill_id": "skill_ming_shi", "version_id": "skill_li_rang_guozhan_v1"}],
             },
             origin=Origin("generals/kongrong_sample_guozhan.yaml", 1, ""),
         )
@@ -487,7 +487,7 @@ def test_add_version_to_existing_skill_sets_previous(
     client: TestClient, workdir: Path, store
 ) -> None:
     """12 + 13) 已有技能新增版本，并正确串上 previous_version_id。"""
-    old_path = workdir / "data" / "skill_versions" / "lirang_guozhan_v1.yaml"
+    old_path = workdir / "data" / "skill_versions" / "skill_li_rang_guozhan_v1.yaml"
     old_before = old_path.read_text(encoding="utf-8")
 
     response = post(
@@ -498,11 +498,11 @@ def test_add_version_to_existing_skill_sets_previous(
             name="【SAMPLE】孔融",
             mode="guozhan",
             skill_count="1",
-            skill_0_skill_id="skill_lirang",
-            skill_0_version_id="skill_lirang_guozhan_v1",
+            skill_0_skill_id="skill_li_rang",
+            skill_0_version_id="skill_li_rang_guozhan_v1",
             skill_0_add_version_text="【测试】2026 调整后的礼让文本。",
             skill_0_add_version_label="2026 调整",
-            skill_0_add_version_from="skill_lirang_guozhan_v1",
+            skill_0_add_version_from="skill_li_rang_guozhan_v1",
             _base_sha=store.entity_sha("general", "general_kongrong_sample_guozhan"),
         ),
     )
@@ -512,17 +512,17 @@ def test_add_version_to_existing_skill_sets_previous(
     assert old_path.read_text(encoding="utf-8") == old_before
     data = load_yaml(entity_file(workdir, "general", "general_kongrong_sample_guozhan"))
     version_id = data["skills"][0]["version_id"]
-    assert version_id != "skill_lirang_guozhan_v1"
+    assert version_id != "skill_li_rang_guozhan_v1"
     new_version = load_yaml(workdir / "data" / "skill_versions" / f"{version_id}.yaml")
-    assert new_version["previous_version_id"] == "skill_lirang_guozhan_v1"
+    assert new_version["previous_version_id"] == "skill_li_rang_guozhan_v1"
     assert new_version["version_label"] == "2026 调整"
-    assert new_version["skill_id"] == "skill_lirang"
+    assert new_version["skill_id"] == "skill_li_rang"
 
 
 def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
     """18) 内容完全相同的版本不重复创建：直接复用已有版本。"""
     before_count = len(list((workdir / "data" / "skill_versions").glob("*.yaml")))
-    existing = load_yaml(workdir / "data" / "skill_versions" / "lirang_guozhan_v1.yaml")
+    existing = load_yaml(workdir / "data" / "skill_versions" / "skill_li_rang_guozhan_v1.yaml")
 
     response = post(
         client,
@@ -531,9 +531,8 @@ def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
             client.app,
             name="复用测试",
             mode="guozhan",
-            product_id="product_guozhan_sample_2024",
             skill_count="1",
-            skill_0_skill_id="skill_lirang",
+            skill_0_skill_id="skill_li_rang",
             skill_0_add_version_text=existing["text"],
         ),
     )
@@ -541,7 +540,7 @@ def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
     after_count = len(list((workdir / "data" / "skill_versions").glob("*.yaml")))
     assert after_count == before_count
     data = load_yaml(entity_file(workdir, "general", new_general_id(response)))
-    assert data["skills"][0]["version_id"] == "skill_lirang_guozhan_v1"
+    assert data["skills"][0]["version_id"] == "skill_li_rang_guozhan_v1"
 
 
 # ---------------------------------------------------------------- 14 & 15 & 16
@@ -679,11 +678,11 @@ def test_missing_base_sha_is_rejected(client: TestClient, app, workdir: Path) ->
 
 def test_delete_skill_blocked_by_general_ref(client: TestClient, store) -> None:
     """18) 武将还在引用技能 -> 不能删除 Skill，并列出引用方。"""
-    references = store.reverse_refs("skill", "skill_jizhi")
+    references = store.reverse_refs("skill", "skill_ji_zhi")
     assert any(ref["kind"] == "general" for ref in references)
     assert any(ref["field"] == "skills[0].skill_id" for ref in references if ref["kind"] == "general")
 
-    outcome = store.delete("skill", "skill_jizhi")
+    outcome = store.delete("skill", "skill_ji_zhi")
     assert outcome.ok is False
     assert outcome.blocked is True
     assert any(ref["kind"] == "general" for ref in outcome.references)
@@ -691,12 +690,12 @@ def test_delete_skill_blocked_by_general_ref(client: TestClient, store) -> None:
 
 def test_delete_pinned_skill_version_blocked(client: TestClient, store) -> None:
     """18) 版本被武将显式绑定 -> 不能删除 SkillVersion。"""
-    references = store.reverse_refs("skill_version", "skill_mingshi_guozhan_v1")
+    references = store.reverse_refs("skill_version", "skill_ming_shi_guozhan_v1")
     assert any(
         ref["kind"] == "general" and ref["field"] == "skills[0].version_id"
         for ref in references
     )
-    outcome = store.delete("skill_version", "skill_mingshi_guozhan_v1")
+    outcome = store.delete("skill_version", "skill_ming_shi_guozhan_v1")
     assert outcome.ok is False
     assert outcome.blocked is True
 
@@ -704,17 +703,17 @@ def test_delete_pinned_skill_version_blocked(client: TestClient, store) -> None:
 def test_delete_unpinned_skill_version_allowed(client: TestClient, store) -> None:
     """没有被任何武将绑定的版本可以删除（这里用一条新建的版本验证）。"""
     candidate = {
-        "id": "skill_jizhi_guozhan_v9",
-        "skill_id": "skill_jizhi",
+        "id": "skill_ji_zhi_guozhan_v9",
+        "skill_id": "skill_ji_zhi",
         "mode": "guozhan",
         "text": "【测试】临时版本",
         "source": {"type": "discussion", "title": "测试"},
     }
     created = store.save("skill_version", candidate)
     assert created.ok, created.error
-    outcome = store.delete("skill_version", "skill_jizhi_guozhan_v9")
+    outcome = store.delete("skill_version", "skill_ji_zhi_guozhan_v9")
     assert outcome.ok is True
-    assert store.entity("skill_version", "skill_jizhi_guozhan_v9") is None
+    assert store.entity("skill_version", "skill_ji_zhi_guozhan_v9") is None
 
 
 # ---------------------------------------------------------------- 录入辅助 API
@@ -741,17 +740,20 @@ def test_duplicate_name_api(client: TestClient) -> None:
     assert hits[0]["general_set"] and hits[0]["product_name"]
 
 
-def test_version_options_rank_matching_first(client: TestClient) -> None:
+def test_version_options_are_ranked_and_descriptive(client: TestClient) -> None:
+    """版本候选：按 产品匹配 > 模式匹配 > common > 其它 排序，且信息足够人判断。"""
     data = client.get(
-        "/api/skills/skill_jizhi/versions",
+        "/api/skills/skill_ji_zhi/versions",
         params={"mode": "identity", "product_id": "product_identity_sample_2025"},
     ).json()
     versions = data["versions"]
     assert versions
-    assert versions[0]["same_product"] is True
-    assert versions[0]["rank"] == 0
-    assert versions[0]["text_excerpt"]
-    assert versions[0]["text"]
+    ranks = [v["rank"] for v in versions]
+    assert ranks == sorted(ranks)                     # 排序单调
+    assert versions[0]["same_mode"] is True           # 同模式的排最前
+    for item in versions:
+        assert item["text_excerpt"] and item["text"]
+        assert item["mode_label"] and item["id"]
 
 
 def test_general_editor_page_renders_rows_and_combos(client: TestClient) -> None:
@@ -761,7 +763,7 @@ def test_general_editor_page_renders_rows_and_combos(client: TestClient) -> None
     assert "skill-rows" in body
     assert "skill-row-template" in body
     assert 'name="skill_0_skill_id"' in body
-    assert "skill_mingshi" in body
+    assert "skill_ming_shi" in body
     assert "保存并新增下一位武将" in body
 
 
@@ -778,7 +780,7 @@ def test_new_general_page_can_copy_from_template(client: TestClient) -> None:
 def test_general_detail_shows_pinned_version(client: TestClient) -> None:
     body = client.get("/view/general/general_kongrong_sample_guozhan").text
     assert "显式绑定版本" in body
-    assert "skill_mingshi_guozhan_v1" in body
+    assert "skill_ming_shi_guozhan_v1" in body
     assert "按卡面指定" in body
 
 
@@ -834,7 +836,7 @@ def test_copy_general_template_does_not_copy_name_number_title(
             product_id="product_guozhan_sample_2024",
             general_set="sample_jiubian",
             skill_count="1",
-            skill_0_skill_id="skill_jizhi",
+            skill_0_skill_id="skill_ji_zhi",
         ),
     )
     template_id = new_general_id(source)
@@ -858,7 +860,7 @@ def test_legacy_general_shape_is_rejected() -> None:
     import pydantic
 
     with pytest.raises(pydantic.ValidationError):
-        General.model_validate({"id": "general_x", "name": "X", "skill_ids": ["skill_jizhi"]})
+        General.model_validate({"id": "general_x", "name": "X", "skill_ids": ["skill_ji_zhi"]})
     with pytest.raises(pydantic.ValidationError):
         General.model_validate({"id": "general_x", "name": "X", "package": "p"})
     with pytest.raises(pydantic.ValidationError):

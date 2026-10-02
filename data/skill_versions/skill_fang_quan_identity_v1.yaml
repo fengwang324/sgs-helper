@@ -1,0 +1,21 @@
+id: skill_fang_quan_identity_v1
+skill_id: skill_fang_quan
+mode: identity
+text: |-
+  你可以跳过出牌阶段，若如此做，此回合结束时，你可以弃置一张手牌并选择一名其他角色，若如此做，其获得一个额外的回合。
+version_label: 神话再临·山
+product_id: null
+package: 山
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_rule
+  title: 三国杀官方规则集 3.0
+  reference: https://gltjk.com/sanguosha/rules/
+  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
+verification_status: community
+notes: ''
