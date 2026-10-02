@@ -468,6 +468,60 @@ def test_edit_form_contains_csrf_and_base_sha(client: TestClient) -> None:
     assert 'name="_base_sha"' in body
 
 
+def test_post_without_base_sha_is_rejected(client: TestClient, app, workdir: Path) -> None:
+    """并发校验字段不能“省略即放过”——否则任何脚本都能覆盖页面打开后的修改。"""
+    path = yaml_of(workdir, "faq", "faq_0001")
+    before = path.read_text(encoding="utf-8")
+    payload = form_payload(app, "faq", "faq_0001", answer="【测试】不该写入")
+    payload.pop("_base_sha")
+    response = post(client, "/edit/faq/faq_0001", data=payload)
+    assert response.status_code == 400
+    assert "_base_sha" in response.text
+    assert path.read_text(encoding="utf-8") == before
+
+
+def test_rollback_restores_file_when_untouched(
+    client: TestClient, app, workdir: Path, monkeypatch
+) -> None:
+    """重建失败且文件没被别人动过：回滚到原内容。"""
+    path = yaml_of(workdir, "faq", "faq_0001")
+    before = path.read_text(encoding="utf-8")
+    payload = form_payload(app, "faq", "faq_0001", answer="【测试】会被回滚")
+
+    def boom():
+        raise RuntimeError("模拟重建失败")
+
+    monkeypatch.setattr(app.state.store, "_build_atomic", boom)
+    response = post(client, "/edit/faq/faq_0001", data=payload)
+    assert response.status_code == 400
+    assert "已回滚" in response.text
+    assert path.read_text(encoding="utf-8") == before
+
+
+def test_rollback_does_not_clobber_external_edit(
+    client: TestClient, app, workdir: Path, monkeypatch
+) -> None:
+    """重建失败 + 期间有人改了同一个文件：绝不回滚覆盖别人的修改。"""
+    path = yaml_of(workdir, "faq", "faq_0001")
+    payload = form_payload(app, "faq", "faq_0001", answer="【测试】失败保存")
+
+    def failing_build_with_external_edit():
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\n# 外部追加的注释\n", encoding="utf-8"
+        )
+        raise RuntimeError("模拟重建失败")
+
+    monkeypatch.setattr(
+        app.state.store, "_build_atomic", failing_build_with_external_edit
+    )
+    response = post(client, "/edit/faq/faq_0001", data=payload)
+    assert response.status_code == 400
+    text = path.read_text(encoding="utf-8")
+    assert "外部追加的注释" in text   # 别人的改动保住了
+    assert "【测试】失败保存" in text  # 我们写的内容也没被回滚（因为文件已被改动）
+    assert "没有回滚" in response.text
+
+
 def test_concurrent_modification_is_detected(client: TestClient, app, workdir: Path) -> None:
     """页面打开后文件被别人改过：必须拒绝写入，而不是覆盖。"""
     payload = form_payload(app, "faq", "faq_0001", answer="【测试】来自旧页面")

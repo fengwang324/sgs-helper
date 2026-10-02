@@ -352,7 +352,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 ## 测试
 
 ```bash
-python -m pytest -q          # 142 个测试
+python -m pytest -q          # 145 个测试
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、

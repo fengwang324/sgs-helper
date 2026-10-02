@@ -399,7 +399,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         form = await verified_form(request)
         candidate, errors = forms.parse_form(kind, form)
         values = forms.values_from_form(kind, form)
-        base_sha = base_sha_of(form)
+        base_sha = require_base_sha(form)
         if errors:
             return _form_error(
                 request, render, live, kind, values,
@@ -460,7 +460,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         form = await verified_form(request)
         candidate, errors = forms.parse_form(kind, form)
         values = forms.values_from_form(kind, form)
-        base_sha = base_sha_of(form)
+        base_sha = require_base_sha(form)
         if errors:
             return _form_error(
                 request, render, live, kind, values,
@@ -511,7 +511,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         require_kind(kind)
         live: AdminStore = request.app.state.store
         form = await verified_form(request)
-        base_sha = base_sha_of(form)
+        base_sha = require_base_sha(form)
         outcome = live.delete(kind, entity_id, expected_sha=base_sha)
         if outcome.ok:
             return RedirectResponse(
@@ -611,9 +611,28 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
 
 
 def base_sha_of(form: Any) -> str | None:
-    """表单里的 ``_base_sha``：``None`` 表示这次提交不做并发检查。"""
+    """表单里的 ``_base_sha``：``None`` 表示这次提交不做并发检查（仅给程序化调用用）。"""
     value = form.get("_base_sha") if hasattr(form, "get") else None
     return None if value is None else str(value)
+
+
+def require_base_sha(form: Any) -> str:
+    """网页表单必须带 ``_base_sha``。
+
+    如果允许“不带就跳过并发检查”，任何人（或任何脚本）只要漏掉这个字段就能覆盖
+    页面打开之后发生的修改。所以 HTTP 层强制要求它存在；``AdminStore.save``
+    仍然保留 ``expected_sha=None`` 的宽松入口给程序化调用。
+    """
+    value = base_sha_of(form)
+    if value is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "表单缺少并发校验字段 _base_sha：请回到页面刷新后重新提交。"
+                "本次**没有写入任何文件**，数据库也没有变化。"
+            ),
+        )
+    return value
 
 
 def issue_field(field_name: str) -> str:

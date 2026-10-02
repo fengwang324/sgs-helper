@@ -108,10 +108,17 @@ class SaveOutcome:
 
 
 class FileBackup:
-    """写盘前的文件内容备份；失败时按字面回滚（新建的文件则删除）。"""
+    """写盘前的文件内容备份；失败时按字面回滚（新建的文件则删除）。
+
+    **安全点**：回滚只在“文件内容仍然等于我们刚写进去的内容”时执行。
+    如果写盘到回滚之间有人（另一个进程 / 你手工编辑）改了同一个文件，就跳过回滚并记录下来，
+    绝不把别人的修改抹掉。
+    """
 
     def __init__(self) -> None:
         self._saved: dict[Path, str | None] = {}
+        self._written: dict[Path, str | None] = {}
+        self.skipped: list[Path] = []
 
     def stash(self, path: Path) -> None:
         path = Path(path)
@@ -119,8 +126,25 @@ class FileBackup:
             return
         self._saved[path] = path.read_text(encoding="utf-8") if path.exists() else None
 
-    def rollback(self) -> None:
+    def note_written(self, path: Path) -> None:
+        """记录“我们写进去的内容”，回滚时用来判断文件是否被外部改动过。"""
+        path = Path(path)
+        try:
+            self._written[path] = path.read_text(encoding="utf-8") if path.exists() else None
+        except OSError:  # pragma: no cover
+            self._written[path] = None
+
+    def rollback(self) -> list[Path]:
+        """回滚；返回因为“已被外部改动”而跳过的文件列表。"""
+        self.skipped = []
         for path, text in self._saved.items():
+            try:
+                current = path.read_text(encoding="utf-8") if path.exists() else None
+            except OSError:  # pragma: no cover
+                current = None
+            if path in self._written and current != self._written[path]:
+                self.skipped.append(path)
+                continue
             try:
                 if text is None:
                     if path.exists():
@@ -128,7 +152,8 @@ class FileBackup:
                 else:
                     path.write_text(text, encoding="utf-8")
             except OSError:  # pragma: no cover - 回滚失败只能记日志
-                pass
+                self.skipped.append(path)
+        return self.skipped
 
 
 # ---------------------------------------------------------------- Store
@@ -839,8 +864,10 @@ class AdminStore:
 
             try:
                 yaml_writer.upsert_entity(target, kind, entity, old_id=old_id)
+                backup.note_written(target)
                 if stale_path is not None and stale_path != target:
                     yaml_writer.remove_entity(stale_path, old_id or "")
+                    backup.note_written(stale_path)
             except (OSError, ValueError) as exc:
                 backup.rollback()
                 self.invalidate()
@@ -853,18 +880,20 @@ class AdminStore:
             try:
                 build = self._build_atomic()
             except DataValidationError as exc:
-                backup.rollback()
+                skipped = backup.rollback()
                 self.invalidate()
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id, issues=exc.result.errors,
-                    error="写盘后校验仍然失败，已回滚 YAML 文件", rolled_back=True,
+                    error=_rollback_note("写盘后校验仍然失败，已回滚 YAML 文件", skipped),
+                    rolled_back=True,
                 )
             except Exception as exc:  # pragma: no cover - 磁盘/权限等意外
-                backup.rollback()
+                skipped = backup.rollback()
                 self.invalidate()
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id,
-                    error=f"重建数据库失败，已回滚 YAML：{exc}", rolled_back=True,
+                    error=_rollback_note(f"重建数据库失败，已回滚 YAML：{exc}", skipped),
+                    rolled_back=True,
                 )
 
             return SaveOutcome(
@@ -917,6 +946,7 @@ class AdminStore:
             backup.stash(path)
             try:
                 yaml_writer.remove_entity(path, entity_id)
+                backup.note_written(path)
             except (OSError, ValueError) as exc:
                 backup.rollback()
                 self.invalidate()
@@ -929,18 +959,18 @@ class AdminStore:
             try:
                 build = self._build_atomic()
             except DataValidationError as exc:
-                backup.rollback()
+                skipped = backup.rollback()
                 self.invalidate()
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id, issues=exc.result.errors,
-                    error="删除后校验失败，已回滚", rolled_back=True,
+                    error=_rollback_note("删除后校验失败，已回滚", skipped), rolled_back=True,
                 )
             except Exception as exc:  # pragma: no cover
-                backup.rollback()
+                skipped = backup.rollback()
                 self.invalidate()
                 return SaveOutcome(
                     ok=False, kind=kind, entity_id=entity_id,
-                    error=f"重建数据库失败，已回滚：{exc}", rolled_back=True,
+                    error=_rollback_note(f"重建数据库失败，已回滚：{exc}", skipped), rolled_back=True,
                 )
 
             return SaveOutcome(
@@ -1004,6 +1034,17 @@ class AdminStore:
         if path is None or not path.exists():
             return ""
         return path.read_text(encoding="utf-8")
+
+
+def _rollback_note(message: str, skipped: list[Path]) -> str:
+    """回滚结果说明；如果某些文件因为被外部改动而没有回滚，必须说清楚。"""
+    if not skipped:
+        return message
+    names = "、".join(str(path) for path in skipped)
+    return (
+        f"{message}；但 {names} 在本次写入之后又被外部改动过，为避免覆盖别人的修改，"
+        "这些文件**没有回滚**，请手工检查内容"
+    )
 
 
 def _iter_yaml(data_dir: Path):
