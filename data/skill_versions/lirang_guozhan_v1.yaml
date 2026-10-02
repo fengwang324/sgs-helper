@@ -1,0 +1,25 @@
+# 【SAMPLE / 占位数据】SkillVersion（国战）
+id: skill_lirang_guozhan_v1
+skill_id: skill_lirang
+mode: guozhan
+text: >
+  【示例占位】当你的牌被其他角色获得后，你可以令其摸一张牌或弃置一张牌（示例）。
+version_label: 国战示例版
+product_id: product_guozhan_sample_2024
+package: sample_jiubian
+effective_from: 2024-08-01
+effective_to: null
+previous_version_id: null
+change_note: ""
+related_keywords:
+  - keyword_lose_card
+  - keyword_gain_card
+related_timing_ids:
+  - timing_use_card
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: unverified
+notes: 【SAMPLE】占位数据。

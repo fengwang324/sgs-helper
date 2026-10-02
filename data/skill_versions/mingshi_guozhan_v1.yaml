@@ -1,0 +1,24 @@
+# 【SAMPLE / 占位数据】SkillVersion（国战）
+id: skill_mingshi_guozhan_v1
+skill_id: skill_mingshi
+mode: guozhan
+text: >
+  【示例占位】锁定技，当你受到伤害时，若伤害来源为你的势力以外的角色，此伤害减一。
+version_label: 国战示例版
+product_id: product_guozhan_sample_2024
+package: sample_jiubian
+effective_from: 2024-08-01
+effective_to: null
+previous_version_id: null
+change_note: ""
+related_keywords:
+  - keyword_damage
+related_timing_ids:
+  - timing_damage
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: community
+notes: 【SAMPLE】占位数据。

@@ -1,0 +1,19 @@
+# 模板文件：目录名以 _ 开头，不会被校验/建库读取。
+# 复制到 data/products/ 下并改 id 即可。
+id: product_change_me
+name: 产品名称
+series: 三国杀国战
+mode: guozhan           # common/guozhan/identity/ol/mobile/other
+publisher: 游卡
+release_year: 2024
+release_date: 2024-08-01 # 可省略；填了就必须与 release_year 同年
+edition: 初版
+included_sets:
+  - standard
+source:
+  type: physical_card   # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
+  title: 本人实体产品
+  reference: ""
+  notes: ""
+verification_status: unverified
+notes: ""

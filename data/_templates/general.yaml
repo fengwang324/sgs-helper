@@ -1,0 +1,19 @@
+# 模板：武将。只引用 skill_id，不写技能文本。
+id: general_change_me
+name: 武将名
+mode: guozhan
+faction: 群
+hp: 1.5                 # 支持 0.5 步进（国战常见 1.5 / 2.5）
+gender: male            # male/female/unknown
+product_id: product_change_me
+package: standard
+skill_ids:
+  - skill_change_me
+aliases: []
+source:
+  type: physical_card
+  title: 本人实体卡
+  reference: ""
+  notes: ""
+verification_status: physical_verified
+notes: ""

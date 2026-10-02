@@ -1,0 +1,24 @@
+# 【SAMPLE / 占位数据】SkillVersion
+id: skill_qicai_identity_v1
+skill_id: skill_qicai
+mode: identity
+text: >
+  【示例占位】你使用锦囊牌无距离限制；其他角色不能弃置你的牌。
+version_label: 示例初版
+product_id: product_identity_sample_2025
+package: sample_standard
+effective_from: 2020-01-01
+effective_to: null
+previous_version_id: null
+change_note: ""
+related_keywords:
+  - keyword_use_card
+related_timing_ids:
+  - timing_use_card
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: unverified
+notes: 【SAMPLE】占位数据。

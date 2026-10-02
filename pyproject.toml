@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sgs-helper"
+version = "0.1.0"
+description = "三国杀线下助手资料库：YAML 为唯一权威源，SQLite 为可随时重建的生成物"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "fengwang324", email = "fengwang324@gmail.com" }]
+dependencies = [
+    "PyYAML>=6.0",
+    "pydantic>=2.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sgs-validate = "sgs_helper.cli:validate_main"
+sgs-build = "sgs_helper.cli:build_main"
+sgs-query = "sgs_helper.cli:query_main"
+
+[tool.setuptools]
+packages = ["sgs_helper"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

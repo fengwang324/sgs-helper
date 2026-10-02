@@ -1,0 +1,29 @@
+# ============================================================
+# SkillVersion【SAMPLE / 占位数据】
+# 技能的“历史版本”：保留、不修改；新版本通过 previous_version_id 串链。
+# ============================================================
+id: skill_jizhi_identity_v1
+skill_id: skill_jizhi
+mode: identity
+text: >
+  【示例占位】当你使用一张非延时锦囊牌时，你可以摸一张牌。
+  本段文字为结构示例，不是真实技能文本，未经官方规则核验。
+version_label: 示例初版
+product_id: product_identity_sample_2025
+package: sample_standard
+effective_from: 2020-01-01
+effective_to: 2025-05-31
+previous_version_id: null
+change_note: ""
+related_keywords:
+  - keyword_use_card
+  - keyword_draw
+related_timing_ids:
+  - timing_use_card
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: unverified
+notes: 【SAMPLE】占位数据。

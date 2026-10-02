@@ -1,0 +1,10 @@
+# 【SAMPLE / 占位数据】CardDefinition
+id: card_tao
+name: 【SAMPLE】桃
+card_type: basic
+subtype: normal
+aliases:
+  - 桃
+related_keywords:
+  - keyword_dying
+notes: 【SAMPLE】占位数据。

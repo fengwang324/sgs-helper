@@ -1,0 +1,160 @@
+# ============================================================
+# 时点【SAMPLE / 占位数据】
+# 本文件演示 {items: [...]} 包装形式。
+# previous_ids / next_ids 只描述大体先后关系，第一版不做完整规则模拟器。
+# ============================================================
+items:
+  - id: timing_turn
+    name: 【SAMPLE】回合流程
+    description: >
+      【示例占位】一个回合的整体流程，包含判定 / 摸牌 / 出牌 / 弃牌等阶段。
+    mode: common
+    parent_id: null
+    previous_ids: []
+    next_ids:
+      - timing_turn_start
+    related_keywords: []
+    related_skill_ids: []
+    related_faq_ids: []
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_turn_start
+    name: 【SAMPLE】回合开始
+    description: >
+      【示例占位】回合开始时触发的时点。
+    mode: common
+    parent_id: timing_turn
+    previous_ids:
+      - timing_turn
+    next_ids:
+      - timing_draw_phase
+    related_keywords: []
+    related_skill_ids: []
+    related_faq_ids: []
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_draw_phase
+    name: 【SAMPLE】摸牌阶段
+    description: >
+      【示例占位】摸牌阶段开始时摸牌、结算相关技能的时点。
+    mode: common
+    parent_id: timing_turn
+    previous_ids:
+      - timing_turn_start
+    next_ids:
+      - timing_use_card
+    related_keywords:
+      - keyword_draw
+    related_skill_ids: []
+    related_faq_ids: []
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_use_card
+    name: 【SAMPLE】使用牌时
+    description: >
+      【示例占位】声明使用一张牌到结算完成之间的时点（含指定目标）。
+    mode: common
+    parent_id: null
+    previous_ids:
+      - timing_draw_phase
+    next_ids:
+      - timing_damage
+    related_keywords:
+      - keyword_use_card
+      - keyword_play_card
+      - keyword_target
+    related_skill_ids:
+      - skill_jizhi
+    related_faq_ids: []
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_damage
+    name: 【SAMPLE】伤害结算
+    description: >
+      【示例占位】与伤害相关的规则时点：伤害成立 -> 扣减体力 -> 触发相关技能。
+    mode: common
+    parent_id: null
+    previous_ids:
+      - timing_use_card
+    next_ids:
+      - timing_dying
+    related_keywords:
+      - keyword_damage
+    related_skill_ids: []
+    related_faq_ids:
+      - faq_0001
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_dying
+    name: 【SAMPLE】濒死结算
+    description: >
+      【示例占位】角色体力降至 0 及以下后进入濒死，依次询问是否使用“桃”。
+    mode: common
+    parent_id: null
+    previous_ids:
+      - timing_damage
+    next_ids:
+      - timing_death
+    related_keywords:
+      - keyword_dying
+    related_skill_ids: []
+    related_faq_ids:
+      - faq_0001
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。
+
+  - id: timing_death
+    name: 【SAMPLE】死亡结算
+    description: >
+      【示例占位】濒死未被救回后角色死亡（阵亡）的时点。
+    mode: common
+    parent_id: null
+    previous_ids:
+      - timing_dying
+    next_ids: []
+    related_keywords:
+      - keyword_death
+    related_skill_ids: []
+    related_faq_ids: []
+    source:
+      type: community_db
+      title: 【SAMPLE】占位资料来源
+      reference: ""
+      notes: 仅用于验证数据结构
+    verification_status: unverified
+    notes: 【SAMPLE】占位数据。

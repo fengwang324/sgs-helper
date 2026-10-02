@@ -1,0 +1,10 @@
+# 【SAMPLE / 占位数据】CardDefinition
+id: card_shan
+name: 【SAMPLE】闪
+card_type: basic
+subtype: normal
+aliases:
+  - 闪
+related_keywords:
+  - keyword_play_card
+notes: 【SAMPLE】占位数据。

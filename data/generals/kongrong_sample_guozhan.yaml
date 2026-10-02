@@ -1,0 +1,25 @@
+# ============================================================
+# 【SAMPLE / 占位数据】
+# 武将名取自公开资料，但体力 / 技能组 / 所属包均为占位示例，待实体卡核验。
+# 注意：武将只引用 skill_id，技能文本一律到 data/skill_versions/ 里查。
+# ============================================================
+id: general_kongrong_sample_guozhan
+name: 【SAMPLE】孔融
+mode: guozhan
+faction: 群
+hp: 1.5
+gender: male
+product_id: product_guozhan_sample_2024
+package: sample_jiubian
+skill_ids:
+  - skill_mingshi
+  - skill_lirang
+aliases:
+  - 孔融
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: unverified
+notes: 【SAMPLE】占位数据；体力与技能组需按实体卡核验。

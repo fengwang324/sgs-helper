@@ -1,0 +1,25 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ---- 生成物：SQLite 数据库随时可由 data/ 下的 YAML 完整重建，不进 Git ----
+build/
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

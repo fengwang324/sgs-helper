@@ -1,0 +1,24 @@
+# 【SAMPLE / 占位数据】FAQ（国战）
+id: faq_0002
+question: >
+  【示例占位】国战中“名士”的伤害减免，与伤害来源的势力判断在什么时点确认？
+answer: >
+  【示例占位】结构示例答案：建库阶段只负责“把问题和依据存好”，
+  真实结论必须来自官方规则或官方 FAQ。
+mode: guozhan
+related_general_ids:
+  - general_kongrong_sample_guozhan
+related_skill_ids:
+  - skill_mingshi
+related_card_ids: []
+related_keywords:
+  - keyword_damage
+related_timing_ids:
+  - timing_damage
+source:
+  type: community_db
+  title: 【SAMPLE】社区资料库（占位）
+  reference: ""
+  notes: 社区资料，未经官方核验
+verification_status: community
+notes: 【SAMPLE】占位数据。

@@ -1,0 +1,25 @@
+# 【SAMPLE / 占位数据】FAQ（身份局）
+id: faq_0005
+question: >
+  【示例占位】当一名角色成为“杀”的目标后，能否立即使用“闪”响应？
+answer: >
+  【示例占位】结构示例答案（占位）。
+mode: identity
+related_general_ids:
+  - general_luxun_sample_identity
+related_skill_ids: []
+related_card_ids:
+  - card_sha
+  - card_shan
+related_keywords:
+  - keyword_play_card
+  - keyword_use_card
+related_timing_ids:
+  - timing_use_card
+source:
+  type: discussion
+  title: 【SAMPLE】玩家讨论（占位）
+  reference: ""
+  notes: 社区讨论，未经核验
+verification_status: community
+notes: 【SAMPLE】占位数据。

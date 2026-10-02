@@ -1,0 +1,23 @@
+# ============================================================
+# 【SAMPLE / 占位数据】
+# 本文件仅用于验证数据结构，**不代表任何真实产品信息**。
+# 后续请用本人实体产品 + 官方资料核验后替换。
+# ============================================================
+id: product_guozhan_sample_2024
+name: 【SAMPLE】国战示例产品（2024）
+series: 三国杀国战
+mode: guozhan
+publisher: 【SAMPLE】示例出版社
+release_year: 2024
+release_date: 2024-08-01
+edition: 示例初版
+included_sets:
+  - sample_standard
+  - sample_jiubian
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构，真实信息待按本人实体产品核验
+verification_status: unverified
+notes: 【SAMPLE】占位数据。每条 product 记录代表一个真实线下产品。

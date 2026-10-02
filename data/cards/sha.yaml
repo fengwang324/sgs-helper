@@ -1,0 +1,15 @@
+# ============================================================
+# CardDefinition：规则意义上的卡牌（不区分具体产品的印刷）
+# 【SAMPLE / 占位数据】
+# ============================================================
+id: card_sha
+name: 【SAMPLE】杀
+card_type: basic
+subtype: normal
+aliases:
+  - 杀
+related_keywords:
+  - keyword_use_card
+  - keyword_target
+  - keyword_damage
+notes: 【SAMPLE】占位数据。实体卡印刷见 data/card_printings/。

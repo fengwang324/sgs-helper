@@ -1,0 +1,19 @@
+# 模板：FAQ / 裁定。答案必须带来源。
+id: faq_0000
+question: >
+  问题……
+answer: >
+  结论……（并说明依据）
+mode: common                     # common/guozhan/identity/ol/mobile/other
+related_general_ids: []
+related_skill_ids: []
+related_card_ids: []
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_faq
+  title: 官方 FAQ 第 N 版
+  reference: ""
+  notes: ""
+verification_status: official     # unverified/community/official/physical_verified/conflict
+notes: ""

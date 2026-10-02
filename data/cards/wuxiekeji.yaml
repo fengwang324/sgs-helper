@@ -1,0 +1,10 @@
+# 【SAMPLE / 占位数据】CardDefinition（锦囊牌）
+id: card_wuxiekeji
+name: 【SAMPLE】无懈可击
+card_type: trick
+subtype: instant
+aliases:
+  - 无懈可击
+related_keywords:
+  - keyword_use_card
+notes: 【SAMPLE】占位数据。

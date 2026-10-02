@@ -1,0 +1,19 @@
+# 模板：时点
+id: timing_change_me
+name: 时点名
+description: >
+  时点说明……
+mode: common
+parent_id: null
+previous_ids: []
+next_ids: []
+related_keywords: []
+related_skill_ids: []
+related_faq_ids: []
+source:
+  type: official_rule
+  title: ""
+  reference: ""
+  notes: ""
+verification_status: unverified
+notes: ""

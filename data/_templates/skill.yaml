@@ -1,0 +1,10 @@
+# 模板：SkillDefinition（技能本体）。规则文本请放 skill_versions/。
+id: skill_change_me
+name: 技能名
+aliases: []
+notes: ""
+source:
+  type: community_db
+  title: ""
+  reference: ""
+  notes: ""

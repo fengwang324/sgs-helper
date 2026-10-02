@@ -1,0 +1,24 @@
+# 【SAMPLE / 占位数据】CardPrinting
+# rank 用卡面写法 Q，校验时会自动归一化为 12（数据库里存 12）。
+id: card_wuxiekeji_sample_identity_club_q
+card_id: card_wuxiekeji
+name_printed: 【SAMPLE】无懈可击
+mode: identity
+product_id: product_identity_sample_2025
+package: sample_standard
+card_set: sample_standard
+suit: club
+rank: Q
+quantity: 1
+printed_text: >
+  【示例占位】当一张锦囊牌生效前，你可以使用此牌抵消之（占位文本）。
+normalized_text: 无懈可击 锦囊
+bottom_right_mark: ""
+card_number: SAMPLE-0002
+source:
+  type: community_db
+  title: 【SAMPLE】占位资料来源
+  reference: ""
+  notes: 仅用于验证数据结构
+verification_status: unverified
+notes: 【SAMPLE】占位数据。

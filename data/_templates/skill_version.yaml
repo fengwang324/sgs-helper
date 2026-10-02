@@ -1,0 +1,25 @@
+# 模板：SkillVersion（某模式 / 产品 / 时期的技能文本）。
+# 更新技能时**新增**一条本文件，并填 previous_version_id，不要改旧文件。
+id: skill_change_me_guozhan_v1
+skill_id: skill_change_me
+mode: guozhan
+text: >
+  技能原文……
+version_label: 初版
+product_id: product_change_me   # 不绑定具体产品时写 null
+package: null
+effective_from: 2024-08-01      # 空 = 无穷早
+effective_to: null              # 空 = 至今有效
+previous_version_id: null
+change_note: ""
+related_keywords:
+  - keyword_use_card
+related_timing_ids:
+  - timing_use_card
+source:
+  type: physical_card
+  title: 本人实体卡
+  reference: ""
+  notes: ""
+verification_status: unverified
+notes: ""

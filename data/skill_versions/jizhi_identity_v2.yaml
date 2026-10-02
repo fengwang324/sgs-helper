@@ -1,0 +1,32 @@
+# ============================================================
+# SkillVersion【SAMPLE / 占位数据】
+# 演示“平衡性调整”的正确做法：**新增**一条版本，并回指 previous_version_id。
+# 旧版本 jizhi_identity_v1 原样保留，不覆盖。
+# ============================================================
+id: skill_jizhi_identity_v2
+skill_id: skill_jizhi
+mode: identity
+text: >
+  【示例占位】当你使用一张非延时锦囊牌时，你可以摸一张牌；若该牌是你本回合使用的
+  第一张锦囊牌，则改为摸两张牌。本段文字为结构示例，不是真实技能文本。
+version_label: 示例平衡调整后
+product_id: null
+package: null
+effective_from: 2025-06-01
+effective_to: null
+previous_version_id: skill_jizhi_identity_v1
+change_note: >
+  【示例占位】演示用变更说明：把“摸一张牌”调整为“首张锦囊牌摸两张牌”。
+  真实的变更说明应写明官方公告出处。
+related_keywords:
+  - keyword_use_card
+  - keyword_draw
+related_timing_ids:
+  - timing_use_card
+source:
+  type: official_rule
+  title: 【SAMPLE】某次平衡调整公告（占位）
+  reference: ""
+  notes: 仅为演示 source.type=official_rule 的结构，并非真实公告
+verification_status: unverified
+notes: 【SAMPLE】占位数据。product_id 为 null 表示该版本不绑定具体产品。
