@@ -160,6 +160,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             "current_kind": "",
             "q": "",
             "name_of": live.name_of,
+            "hp_label": hp_label,
         }
         payload.update(extra)
         return payload
@@ -347,6 +348,13 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
 
     # ------------------------------------------------------------ 专用录入页：实体产品
 
+    def hp_label(value: Any) -> str:
+        """体力显示：3 而不是 3.0；1.5 照常。"""
+        if value in (None, ""):
+            return "未填"
+        number = float(value)
+        return str(int(number)) if number == int(number) else str(number)
+
     def _editor_ctx(request: Request, kind: str, **extra: Any) -> dict:
         """产品 / 武将录入页共用的上下文（含下拉候选与高级字段选项）。"""
         live: AdminStore = request.app.state.store
@@ -359,6 +367,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 "info": [],
                 "base_sha": "",
                 "mode_choices": editors.mode_choices(),
+                "variant_choices": editors.variant_choices(),
                 "gender_choices": editors.gender_choices(),
                 "hp_choices": editors.HP_CHOICES,
                 "verification_choices": editors.verification_choices(),
@@ -539,20 +548,22 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             "general_set_suggestions": live.suggest_values("general_set", limit=60),
         }
 
+    def _general_params(request: Request) -> dict[str, str]:
+        allowed = {
+            "name", "title", "general_number", "mode", "faction", "hp", "gender",
+            "product_id", "general_set", "id", "variant", "notes", "general_notes",
+        }
+        return {
+            key: value
+            for key, value in request.query_params.items()
+            if key in allowed
+        }
+
     @app.get("/new/general", response_class=HTMLResponse)
     def new_general(request: Request) -> HTMLResponse:
         require_kind("general")
         live: AdminStore = request.app.state.store
-        params = {
-            key: value
-            for key, value in request.query_params.items()
-            if key
-            in {
-                "name", "title", "general_number", "mode", "faction", "hp", "gender",
-                "product_id", "general_set", "id", "notes",
-            }
-        }
-        values = editors.general_values(live, None, params=params)
+        values = editors.general_values(live, None, None, params=_general_params(request))
 
         rows: list[dict] = []
         template_source = None
@@ -561,18 +572,26 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         copy_attrs = request.query_params.get("copy") == "attrs"
         if source_id:
             entity = live.entity("general", source_id)
+            variants = (
+                live.variants_of(source_id) if entity is not None else []
+            )
+            first = variants[0] if variants else None
             if entity is not None:
-                # 无论哪种入口：产品 / 模式 / 武将牌系列都带入
-                values["product_id"] = values.get("product_id") or (entity.product_id or "")
-                values["mode"] = values.get("mode") or (entity.mode or "")
-                values["general_set"] = values.get("general_set") or (entity.general_set or "")
+                # 无论哪种入口：产品 / 模式 / 武将牌系列都带入（它们现在属于版本）
+                if first is not None:
+                    values["product_id"] = values.get("product_id") or (first.product_id or "")
+                    values["mode"] = values.get("mode") or (first.mode or "")
+                    values["general_set"] = values.get("general_set") or (first.general_set or "")
                 if copy_attrs:
-                    # 「以此武将为模板新增」：势力 / 勾玉 / 性别可选择复制（默认带上）
+                    # 「以此武将为模板新增」：势力 / 体力 / 性别可选择复制（默认带上）
                     template_source = entity
-                    for field_name in ("faction", "hp", "gender"):
-                        value = getattr(entity, field_name, None)
-                        if value not in (None, ""):
-                            values.setdefault(field_name, "" if value is None else str(value))
+                    if first is not None:
+                        for field_name in ("faction", "hp", "gender"):
+                            value = getattr(first, field_name, None)
+                            if value not in (None, ""):
+                                values.setdefault(
+                                    field_name, "" if value is None else str(value)
+                                )
                 else:
                     # 「保存并新增下一位」：只继承产品信息
                     inherit_source = entity
@@ -587,11 +606,12 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 rows=rows,
                 mode="create",
                 target_id="",
+                variant_id="",
+                variant_label=values.get("variant") or "标准版",
                 action="/new/general",
                 general=None,
                 template_source=template_source,
                 inherit_source=inherit_source,
-                skill_rows_from=template_source,
                 **_general_editor_extra(request),
             ),
         )
@@ -607,6 +627,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 request, "general_edit.html", "general", result, "/new/general", "create",
                 extra=_general_editor_extra(request),
             )
+        # 新增：General 一定不存在（_base_sha 为空串表示“这条记录还不该存在”）
         result.changes[0].expected_sha = base_sha
         outcome = live.save_batch(result.changes)
         if not outcome.ok:
@@ -635,6 +656,31 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         general = live.entity("general", entity_id)
         if general is None:
             raise HTTPException(status_code=404, detail="武将不存在")
+
+        variants = live.variants_of(entity_id)
+        wanted = request.query_params.get("variant", "")
+        adding_variant = wanted == "new"
+        variant = None
+        if not adding_variant:
+            if wanted:
+                variant = live.entity("general_variant", wanted)
+                if variant is None or variant.general_id != entity_id:
+                    raise HTTPException(status_code=404, detail="武将版本不存在")
+            elif variants:
+                variant = variants[0]
+
+        values = editors.general_values(
+            live, general, variant, params=_general_params(request)
+        )
+        if adding_variant:
+            values["variant"] = request.query_params.get("label", "") or "标准版"
+            values["variant_id"] = ""
+            values["title"] = ""
+            values["general_number"] = ""
+            if variants:
+                first = variants[0]
+                values.setdefault("mode", first.mode or "")
+                values.setdefault("product_id", first.product_id or "")
         return render(
             request,
             "general_edit.html",
@@ -642,13 +688,19 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 request,
                 "general",
                 title=f"编辑武将：{general.name}",
-                values=editors.general_values(live, general),
-                rows=editors.rows_from_general(live, general),
+                values=values,
+                rows=editors.rows_from_variant(live, variant),
                 mode="edit",
                 target_id=entity_id,
+                variant_id=(variant.id if variant else ""),
+                variant_label=(variant.variant if variant else values.get("variant", "标准版")),
                 action=f"/edit/general/{entity_id}",
                 general=general,
+                variant=variant,
+                all_variants=variants,
+                adding_variant=adding_variant,
                 base_sha=live.entity_sha("general", entity_id),
+                variant_sha=(live.entity_sha("general_variant", variant.id) if variant else ""),
                 references=live.reverse_refs("general", entity_id),
                 template_source=None,
                 **_general_editor_extra(request),
@@ -663,7 +715,15 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             raise HTTPException(status_code=404, detail="武将不存在")
         form = await verified_form(request)
         base_sha = require_base_sha(form)
-        result = editors.parse_general_form(form, store=live, existing=general)
+        variant_sha = str(form.get("_variant_sha", "") or "")
+        variant_id = str(form.get("_variant_id", "") or "")
+        variant = live.entity("general_variant", variant_id) if variant_id else None
+        if variant is not None and variant.general_id != entity_id:
+            raise HTTPException(status_code=404, detail="武将版本不属于这个武将")
+
+        result = editors.parse_general_form(
+            form, store=live, existing=general, variant=variant
+        )
         if result.errors:
             return _editor_failure(
                 request, "general_edit.html", "general", result,
@@ -671,6 +731,10 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 extra=_general_editor_extra(request),
             )
         result.changes[0].expected_sha = base_sha
+        # 版本这一条：新建时要求“还不存在”，编辑时要求内容哈希没变
+        for change in result.changes:
+            if change.kind == "general_variant":
+                change.expected_sha = variant_sha if variant is not None else ""
         outcome = live.save_batch(result.changes)
         if not outcome.ok:
             return _editor_failure(
@@ -685,7 +749,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             )
         return RedirectResponse(
             f"/view/general/{result.record_id}?saved=1&warn={len(outcome.warnings)}"
-            f"&info={len(result.info)}",
+            f"&info={len(result.info)}&variant={result.variant_id}",
             status_code=303,
         )
 
@@ -739,10 +803,10 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.get("/new/{kind}", response_class=HTMLResponse)
     def new_page(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general"}:
-            # 产品 / 武将走专用录入页
+        if kind in {"product", "general", "general_variant"}:
+            # 产品 / 武将 / 武将版本都走专用录入页（generic 表单漏掉技能行会清空技能）
             raise HTTPException(
-                status_code=404, detail=f"{KIND_BY_NAME[kind].label}请使用专用录入页 /new/{kind}"
+                status_code=404, detail=f"{KIND_BY_NAME[kind].label}请使用专用录入页"
             )
         live: AdminStore = request.app.state.store
         values = forms.values_from_defaults(kind)
@@ -789,7 +853,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/new/{kind}", response_class=HTMLResponse)
     async def create_entity(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general"}:
+        if kind in {"product", "general", "general_variant"}:
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)
@@ -820,7 +884,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.get("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     def edit_page(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general"}:
+        if kind in {"product", "general", "general_variant"}:
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         entity = live.entity(kind, entity_id)
@@ -854,7 +918,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     async def update_entity(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general"}:
+        if kind in {"product", "general", "general_variant"}:
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)

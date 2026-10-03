@@ -10,14 +10,15 @@
 
 ## 当前数据状态
 
-**规则侧数据已经是真实资料**（来自《三国杀官方规则集 3.0》），**产品 / 武将 / 卡牌侧仍是 SAMPLE 占位**：
+**规则侧 + 武将侧已经是真实资料**（规则集 3.0 + 两个 wiki），**产品 / 卡牌侧仍是 SAMPLE 占位**：
 
 | 类型 | 来源 | 状态 |
 | --- | --- | --- |
 | 技能本体 308 / 技能版本 397 | gltjk.com 网页版《三国杀官方规则集 3.0》 | 真实文本，`verification_status: community`（社区网页版，未按实体卡核验） |
 | FAQ / 裁定 83 | 同上（规则专题与流程章节 + 武将页的 ◆ 裁定） | 同上 |
 | 规则关键词 126 / 时点 30 | 同上（用语、游戏的流程） | 同上 |
-| 产品 3 / 武将 3 / 卡牌 4 / 实体卡印刷 6 | 仓库自带示例 | **SAMPLE 占位**，名称带 `【SAMPLE】` 前缀，待用实体卡替换 |
+| 武将 26 / 武将版本 26 | [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/)，标准包部分用[萌娘百科·三国杀](https://mzh.moegirl.org.cn/%E4%B8%89%E5%9B%BD%E6%9D%80)核对名单 | 真实数据，`verification_status: community`；**只有标准包（标准身份版）**，每个武将一条 `标准版` Variant |
+| 产品 3 / 卡牌 4 / 实体卡印刷 6 | 仓库自带示例 | **SAMPLE 占位**，名称带 `【SAMPLE】` 前缀，待用实体卡替换 |
 
 - 规则侧来源统一写成：`source.type: official_rule`、`source.title: 三国杀官方规则集 3.0`、
   `source.reference: https://gltjk.com/sanguosha/rules/`（`source.notes` 里注明这是社区网页版）。
@@ -26,7 +27,12 @@
   会写在该版本的 `notes` 里，需要时再单独补一条 SkillVersion。
 - 卡面/规则文本逐字照抄网页版，包括站点本身的排版细节；**未按实体卡核验**，
   所以统一是 `community`，可以随时在管理页里逐条核对升级成 `physical_verified`。
-- 产品 / 武将 / 卡牌的替换方法见《日常操作手册》。在替换完成前，**不要把 SAMPLE 文本当成规则结论**。
+- 武将的两层结构见下文《数据模型一览》：`General`（个体）只存名字/别名，
+  模式 / 势力 / 体力 / 称号 / 编号 / 技能都在 `GeneralVariant`（版本）上。
+  本轮只录**标准身份版**：身份局体力记 3/4/5；国战等版本以后再加 Variant。
+- 技能文本目前用的还是规则集（凌天翼 3.0）的规范化表述，与 WIKI 卡面原文在个别用词上可能不同，
+  每个武将版本的 `notes` 里都写了“待按实体卡核验”。
+- 产品 / 卡牌的替换方法见《日常操作手册》。在替换完成前，**不要把 SAMPLE 文本当成规则结论**。
 
 ---
 
@@ -112,7 +118,8 @@ sgs-helper/
 | kind | 目录 | SQLite 表 | 说明 |
 | --- | --- | --- | --- |
 | product | `data/products/` | `products` | 真实发行的线下产品 |
-| general | `data/generals/` | `generals` | 武将（`skills` 关系里引用 skill_id + 可选 version_id） |
+| general | `data/generals/` | `generals` | **General**：武将个体（只有名字/别名/备注） |
+| general_variant | `data/general_variants/` | `general_variants` | **GeneralVariant**：某模式/版本下的武将数据（势力/体力/称号/技能…） |
 | skill | `data/skills/` | `skills` | **SkillDefinition**：技能本体 |
 | skill_version | `data/skill_versions/` | `skill_versions` | **SkillVersion**：某模式/产品/时期的文本 |
 | card | `data/cards/` | `cards` | **CardDefinition**：规则意义上的卡牌 |
@@ -131,7 +138,12 @@ sgs-helper/
 - `mode`：`common`（通用）/ `guozhan`（国战）/ `identity`（身份局）/ `ol` / `mobile` / `other`；
   **产品与武将的 mode 允许为空**（先录入，以后再补）。
 - `Product.general_sets`（武将牌系列）与 `Product.card_sets`（游戏牌牌堆）是两件事，不要混。
-- `General.hp`（勾玉）允许为空；`General.skills` 是关系列表：
+- **武将分两层**：`General`（武将个体）只存 `id / name / aliases / notes`；
+  模式、势力、体力、性别、称号、编号、产品、武将牌系列、技能全部属于 `GeneralVariant`。
+  「诸葛亮 / 界诸葛亮 / 神诸葛亮」官方名不同 → 三个 General；
+  「标准版诸葛亮 / 国战诸葛亮」官方名都是「诸葛亮」→ 同一个 General 的两个 Variant。
+- `GeneralVariant.hp`（体力）允许为空：身份局标准版记正常体力（3/4/5），
+  国战按阴阳鱼记 1.5 / 2 / 2.5；`GeneralVariant.skills` 是关系列表
   `[{skill_id, version_id}]`，`version_id` 为空表示“按模式+生效区间自动推导”。
 - `verification_status`：`unverified` / `community` / `official` / `physical_verified` / `conflict`。
 - `source.type`：`physical_card`（本人实体卡）/ `official_rule` / `official_faq` / `official_online` / `community_db` / `wiki` / `discussion`。
@@ -197,25 +209,40 @@ card_sha（“杀”这个概念 · data/cards/sha.yaml）
    两者是两件事，**不要混**（旧字段 `included_sets` 已删除）。
 3. `publisher` / `edition` / `source` / `verification_status` 等属于“高级信息”，可以留空。
 
-### 新增一个武将
+### 新增一个武将（General + GeneralVariant）
 
-1. 打开 `/new/general`（或 `cp data/_templates/general.yaml data/generals/kongrong_guozhan.yaml`）
-2. **只有 `name` 是必填的**，其余先留空也可以保存：
-   `title`（称号）、`general_number`（卡面编号，如 `WEI001`）、`mode`、`faction`、`hp`（勾玉）、
-   `gender`、`product_id`、`general_set`（武将牌系列）、`skills`；
+1. 打开 `/new/general`：上半张表填**武将个体**（名字必填、别名、内部 ID），
+   下半张表填**版本**（版本标签 `标准版` / `国战版` / …、称号、编号、模式、势力、体力、性别、
+   武将牌系列、技能）。官方名不同就是不同武将；同名不同玩法是新开一个版本。
+2. **只有 `name` 是必填的**，其余可以先留空，以后再补。
 3. **不要在这里写技能文本**：`skills` 只写关系，技能文本由 SkillVersion 提供：
 
    ```yaml
+   # data/generals/general_zhu_ge_liang.yaml —— 武将个体
+   id: general_zhu_ge_liang
+   name: 诸葛亮
+   aliases: [老诸葛, 空城诸葛]
+
+   # data/general_variants/variant_zhu_ge_liang_biao_zhun_ban.yaml —— 版本
+   id: variant_zhu_ge_liang_biao_zhun_ban
+   general_id: general_zhu_ge_liang
+   variant: 标准版
+   mode: identity
+   faction: 蜀
+   hp: 3
+   general_set: 标准-灵心慧性
    skills:
-     - skill_id: skill_mingshi
-       version_id: skill_mingshi_guozhan_v1   # 这张卡印的就是这一版；留空则自动推导
+     - skill_id: skill_guan_xing
+       version_id: skill_guan_xing_identity_v1   # 这张卡印的就是这一版；留空则自动推导
    ```
 
-4. 在管理页里可以直接搜索已有技能、内联新建技能与技能版本，一次提交完成；
-5. 校验会告警“某技能在该模式下没有任何 SkillVersion”，提醒你补技能版本。
+4. 管理页可以直接搜索已有技能、内联新建技能与技能版本，一次提交完成（只 rebuild 一次）；
+   给同一个武将再加版本：进详情页 → 「+ 新增版本」（`/edit/general/<id>?variant=new`）。
+5. 校验会告警“某技能在该模式下没有任何 SkillVersion”，提醒你补技能版本；
+   “武将还没有任何版本”也会告警。
 
 同名武将在不同产品/版本下会互相覆盖吗？——不会：`id` 唯一即可并存，
-管理页会自动生成内部 `id`，卡面编号放在 `general_number` 里。
+管理页会自动生成内部 `id`，卡面编号放在版本的 `general_number` 里。
 
 ### 新增一个技能
 
@@ -352,11 +379,11 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 
 打开 <http://127.0.0.1:8000>：
 
-- `/` 统一搜索框（9 类实体）+ 数据量与核验状态分布 + 当前校验错误；
+- `/` 统一搜索框（10 类实体）+ 数据量与核验状态分布 + 当前校验错误；
 - `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `general_set` 筛选；
 - `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 当前版本 → 历史版本链`，
   卡牌显示 `CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）`，
-  武将显示 `General → 技能（显式绑定的版本优先，否则自动推导）→ SkillVersion`；
+  武将显示 `General → GeneralVariant（每个版本的势力/体力/称号/技能）→ SkillVersion`；
 - **`/new/product`、`/new/general`：产品 / 武将专用录入页** ——
   产品只要 名称/年份/模式/武将牌/游戏牌；武将**只有名字必填**，
   技能行支持搜索已有技能、内联新建技能、内联新增版本、指定版本、排序；
@@ -366,7 +393,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 - `/review` 汇总 `unverified` / `community` / `conflict`，方便拿实体卡逐条核验；
 - 删除前检查引用关系（含 `skills[].version_id` 这种嵌套引用），被引用就拒绝删除并列出引用方。
 
-武将录入页一次提交可能同时产生 `1 个 General + N 个 Skill + N 个 SkillVersion`，
+武将录入页一次提交可能同时产生 `1 个 General + 1 个 GeneralVariant + N 个 Skill + N 个 SkillVersion`，
 它们由 `AdminStore.save_batch()` 当**一个事务**处理：全部合进内存 → 完整校验 →
 全部写盘 → **只 rebuild 一次 SQLite**；任何一步失败则全部回滚、旧数据库保持不变。
 
@@ -389,7 +416,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 ## 测试
 
 ```bash
-python -m pytest -q          # 185 个测试
+python -m pytest -q          # 186 个测试
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、
@@ -450,7 +477,8 @@ rebuild 失败全部回滚）。
 
 ## 已知边界（先不做，记录在案）
 
-- 武将没有独立的 `GeneralPrinting` 层：同名武将在不同产品下请用不同 `general.id` 并各自记录 `product_id`。
+- 武将只有 `General` + `GeneralVariant` 两层：同一个武将的不同玩法/版本各写一条 `GeneralVariant`
+  （各自带 `mode` / `hp` / `product_id` / `skills`），不需要「武将印刷」层。
 - 技能文本没有结构化（没有 effects/targets/conditions 字段）：这是完整的规则引擎，超出当前阶段。
 - 一个实体只带一个 `source`：需要多来源并列时，目前用 `verification_status: conflict` + `notes` 说明；
   以后可以扩展成来源关联表。

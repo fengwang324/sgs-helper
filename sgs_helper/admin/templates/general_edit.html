@@ -101,7 +101,7 @@
       <a class="btn ghost" href="/view/general/{{ target_id }}">返回详情</a>
       <a class="btn" href="/new/general?from={{ target_id }}&copy=attrs">以此武将为模板新增</a>
     {% endif %}
-    <a class="btn ghost" href="/list/general">返回列表</a>
+    <a class="btn ghost" href="/list/general">武将列表</a>
   </div>
 </div>
 
@@ -118,53 +118,89 @@
   </section>
 {% endif %}
 
+{% if all_variants %}
+  <div class="banner">
+    <strong>版本</strong>（一个武将可以有多个版本，它们的模式/体力/势力/技能各写各的）：
+    {% for item in all_variants %}
+      <a class="btn small {{ 'active' if item.id == variant_id else '' }}"
+         href="/edit/general/{{ target_id }}?variant={{ item.id }}">{{ item.variant }}</a>
+    {% endfor %}
+    <a class="btn small {{ 'active' if adding_variant else '' }}"
+       href="/edit/general/{{ target_id }}?variant=new">+ 新增版本</a>
+  </div>
+{% endif %}
+{% if adding_variant %}
+  <div class="banner warn">正在给「{{ values.get('name') or target_id }}」新增一个版本：填好版本标签（例如 国战版）后保存即可。</div>
+{% endif %}
+
 {% if template_source %}
   <div class="banner warn copy-panel"
-       data-source-values='{{ {"faction": template_source.faction or "", "hp": (template_source.hp | string) if template_source.hp is not none else "", "gender": template_source.gender or "unknown"} | tojson }}'>
+       data-source-values='{{ {"faction": values.get("faction", ""), "hp": values.get("hp", ""), "gender": values.get("gender", "unknown")} | tojson }}'>
     以「{{ template_source.name }}」为模板：<strong>产品 / 模式 / 武将牌系列</strong>已带入
     （<strong>不会</strong>复制名字、编号、称号、内部 ID、技能）。
     勾选决定是否复制：
     <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="faction" checked> 势力</label>
-    <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="hp" checked> 勾玉</label>
+    <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="hp" checked> 体力</label>
     <label class="inline-check"><input type="checkbox" class="copy-toggle" data-field="gender" checked> 性别</label>
   </div>
 {% elif inherit_source %}
   <div class="banner warn">
     已继承上一位武将「{{ inherit_source.name }}」的<strong>产品信息</strong>：
-    产品 / 模式 / 武将牌系列已带入（名字、编号、称号、势力、勾玉、技能都不继承）。
+    产品 / 模式 / 武将牌系列已带入（名字、编号、称号、势力、体力、技能都不继承）。
   </div>
 {% endif %}
 
 <section class="hint">
   <p>
-    <strong>只有名字是必填的</strong>：其余都可以先留空（包括模式、势力、勾玉、系列、产品、技能），
-    先把手头有的信息录进来，以后再补。
-    保存 = 写回 YAML → 完整校验 → 重建 SQLite；这一页一次提交最多同时创建
-    1 个武将 + N 个技能 + N 个技能版本，**只重建一次数据库**，任何一条不合法则全都不落盘。
+    两层结构：<strong>武将个体（General）</strong>只存名字/别名这类稳定信息；
+    <strong>模式 / 势力 / 体力 / 性别 / 称号 / 编号 / 武将牌系列 / 技能</strong>都属于
+    <strong>版本（GeneralVariant）</strong>——「标准版诸葛亮」和「国战版诸葛亮」是同一个武将的两个版本，
+    而「界诸葛亮」「神诸葛亮」因为官方名不同，是另外的武将个体。
+  </p>
+  <p>
+    保存 = 写回 YAML → 完整校验 → 重建 SQLite；一次提交最多同时创建
+    1 个武将 + 1 个版本 + N 个技能 + N 个技能版本，**只重建一次数据库**，任何一条不合法则全都不落盘。
   </p>
 </section>
 
 <form method="post" action="{{ action }}" class="entity-form editor-form" data-editor="general" autocomplete="off">
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+  <input type="hidden" name="_variant_sha" value="{{ variant_sha or '' }}">
+  <input type="hidden" name="_variant_id" value="{{ variant_id or '' }}">
+  <input type="hidden" name="variant_id" value="{{ values.get('variant_id', '') }}">
 
+  <h2 class="section-title">武将</h2>
   <div class="field-grid">
+    <div class="field {{ 'has-error' if error_map.get('name') else '' }}">
+      <label for="f-name">名字 <span class="req">*</span></label>
+      <input id="f-name" name="name" value="{{ values.get('name', '') }}" autofocus>
+      <p class="help">官方武将名。名字不同就是不同的武将个体（例如 诸葛亮 / 界诸葛亮 / 神诸葛亮）。</p>
+      <div id="duplicate-panel" class="duplicate-panel" hidden></div>
+      {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="f-variant">版本标签</label>
+      <input id="f-variant" name="variant" value="{{ values.get('variant', '标准版') }}" list="variant-options">
+      <datalist id="variant-options">
+        {% for value, label in variant_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </datalist>
+      <p class="help">同一个武将的多个版本靠它区分：标准版 / 国战版 / 界限突破 / OL / 手卡（手杀）…</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">版本信息（{{ variant_label }}）</h2>
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-title">称号</label>
+      <input id="f-title" name="title" value="{{ values.get('title', '') }}" placeholder="例如 迟暮的丞相">
+    </div>
     <div class="field">
       <label for="f-general_number">编号</label>
       <input id="f-general_number" name="general_number" value="{{ values.get('general_number', '') }}"
              placeholder="WEI001 / shu-01">
       <p class="help">实体卡上的编号；和内部 ID 无关。</p>
       {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-    <div class="field">
-      <label for="f-title">称号</label>
-      <input id="f-title" name="title" value="{{ values.get('title', '') }}" placeholder="例如 独眼的罗刹">
-    </div>
-    <div class="field {{ 'has-error' if error_map.get('name') else '' }}">
-      <label for="f-name">名字 <span class="req">*</span></label>
-      <input id="f-name" name="name" value="{{ values.get('name', '') }}" autofocus>
-      <div id="duplicate-panel" class="duplicate-panel" hidden></div>
-      {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
 
@@ -181,7 +217,7 @@
     <div class="field">
       <label for="f-faction-combo">势力</label>
       <div class="combo" data-combo="faction">
-        <input id="f-faction-combo" class="combo-input" autocomplete="off" placeholder="搜索或输入，例如 魏"
+        <input id="f-faction-combo" class="combo-input" autocomplete="off" placeholder="搜索或输入，例如 蜀"
                value="{{ values.get('faction', '') }}">
         <input type="hidden" class="combo-value" name="faction" value="{{ values.get('faction', '') }}">
         <div class="combo-list" hidden></div>
@@ -189,7 +225,7 @@
       <p class="help">已有值可以直接选，没有的可以自己输。</p>
     </div>
     <div class="field">
-      <label for="f-hp">勾玉</label>
+      <label for="f-hp">体力</label>
       <select id="f-hp" name="hp">
         <option value="">（未填）</option>
         {% for option in hp_choices %}
@@ -199,6 +235,7 @@
           <option value="{{ values.get('hp') }}" selected>{{ values.get('hp') }}</option>
         {% endif %}
       </select>
+      <p class="help">身份局标准版记正常体力（3/4/5）；国战按阴阳鱼记 1.5 / 2 / 2.5。</p>
       {% for message in error_map.get('hp', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
     <div class="field">
@@ -216,21 +253,21 @@
       <label for="f-general_set-combo">武将牌系列</label>
       <div class="combo" data-combo="general_set">
         <input id="f-general_set-combo" class="combo-input" autocomplete="off"
-               placeholder="搜索或输入，例如 九变篇" value="{{ values.get('general_set', '') }}">
+               placeholder="搜索或输入，例如 标准" value="{{ values.get('general_set', '') }}">
         <input type="hidden" class="combo-value" name="general_set" value="{{ values.get('general_set', '') }}">
         <div class="combo-list" hidden></div>
       </div>
       <p class="help">选择产品后会优先给该产品的 general_sets；也可以直接输入别的值。</p>
     </div>
     <div class="field {{ 'has-error' if error_map.get('product_id') else '' }}">
-      <label for="f-product-combo">产品</label>
+      <label for="f-product-combo">产品（可空）</label>
       <div class="combo" data-combo="product">
         <input id="f-product-combo" class="combo-input" autocomplete="off"
                placeholder="搜索产品名称 / ID / 年份" value="{{ name_of('product', values.get('product_id')) if values.get('product_id') else '' }}">
         <input type="hidden" class="combo-value" name="product_id" value="{{ values.get('product_id', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">选好产品后，只为空着的字段带入模式与武将牌系列，不会覆盖你已经填的内容。</p>
+      <p class="help">本轮武将数据不要求关联产品，留空即可。</p>
       {% for message in error_map.get('product_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
@@ -247,6 +284,8 @@
 
   <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') or error_map.get('aliases') else '' }}>
     <summary>高级信息（内部 ID / 别名 / 来源 / 备注）</summary>
+
+    <h3>武将个体（General）</h3>
     <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
       <label for="f-id">内部 ID</label>
       <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按名字自动生成">
@@ -256,8 +295,14 @@
     <div class="field">
       <label for="f-aliases">别名（一行一个）</label>
       <textarea id="f-aliases" name="aliases" rows="2">{{ values.get('aliases', '') }}</textarea>
+      <p class="help">例如 老诸葛、空城诸葛；用于检索。</p>
+    </div>
+    <div class="field">
+      <label for="f-general_notes">武将个体备注</label>
+      <textarea id="f-general_notes" name="general_notes" rows="2">{{ values.get('general_notes', '') }}</textarea>
     </div>
 
+    <h3>当前版本（{{ variant_label }}）</h3>
     <fieldset class="source-group">
       <legend>资料来源 source</legend>
       <p class="help">可以留空（默认 unverified，会进入待核验页面）；也可以现在就填。</p>
@@ -293,7 +338,7 @@
       </select>
     </div>
     <div class="field">
-      <label for="f-notes">备注</label>
+      <label for="f-notes">版本备注</label>
       <textarea id="f-notes" name="notes" rows="2">{{ values.get('notes', '') }}</textarea>
     </div>
   </details>

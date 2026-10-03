@@ -52,9 +52,19 @@ PRODUCT_DEFAULTS: dict[str, Any] = {
     "notes": "",
 }
 
+#: 武将个体（General）：只有相对稳定的信息
 GENERAL_DEFAULTS: dict[str, Any] = {
     "id": "",
     "name": "",
+    "aliases": [],
+    "notes": "",
+}
+
+#: 武将版本（GeneralVariant）：模式/势力/体力/称号/技能等版本属性都在这里
+VARIANT_DEFAULTS: dict[str, Any] = {
+    "id": "",
+    "general_id": "",
+    "variant": "标准版",
     "title": "",
     "general_number": None,
     "mode": None,
@@ -64,11 +74,15 @@ GENERAL_DEFAULTS: dict[str, Any] = {
     "product_id": None,
     "general_set": None,
     "skills": [],
-    "aliases": [],
     "source": None,
     "verification_status": "unverified",
     "notes": "",
 }
+
+#: 版本标签的常用取值（下拉里可以直接选，也可以自己输）
+VARIANT_LABELS: tuple[str, ...] = (
+    "标准版", "国战版", "界限突破", "OL", "手卡（手杀）", "其他",
+)
 
 
 @dataclass
@@ -79,6 +93,8 @@ class EditorResult:
     errors: list[FieldError] = field(default_factory=list)
     info: list[str] = field(default_factory=list)
     record_id: str = ""
+    #: 本次提交对应的武将版本 id（GeneralVariant）
+    variant_id: str = ""
     values: dict[str, str] = field(default_factory=dict)
     rows: list[dict] = field(default_factory=list)
 
@@ -88,6 +104,19 @@ class EditorResult:
 
 
 # ---------------------------------------------------------------- 表单取值
+
+
+#: 浏览器表单有时会带上来这些“空的写法”，一律当空处理
+_NULLISH = {"", "none", "null", "nil", "~", "undefined"}
+
+
+def _optional_text(form: Mapping[str, Any], name: str) -> str | None:
+    """可空文本字段：空串 / None / null / ~ 都算“没填”。"""
+    raw = form.get(name)
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    return None if text.lower() in _NULLISH else text
 
 
 def _text(form: Mapping[str, Any], name: str) -> str:
@@ -341,12 +370,12 @@ def rows_from_form(form: Mapping[str, Any]) -> list[dict]:
     return [row.as_dict() for row in parse_skill_rows(form)]
 
 
-def rows_from_general(store, general: Any | None) -> list[dict]:
+def rows_from_variant(store, variant: Any | None) -> list[dict]:
     """编辑页初始行：把已存在的技能关系渲染成一行行表单。"""
-    if general is None:
+    if variant is None:
         return []
     rows: list[dict] = []
-    for index, ref in enumerate(general.skills):
+    for index, ref in enumerate(variant.skills):
         skill = store.entity("skill", ref.skill_id)
         version = store.entity("skill_version", ref.version_id) if ref.version_id else None
         rows.append(
@@ -359,7 +388,7 @@ def rows_from_general(store, general: Any | None) -> list[dict]:
                 "skill_name": skill.name if skill else ref.skill_id,
                 "version_label": (version.version_label or version.id) if version else "",
                 "version_options": store.skill_version_options(
-                    ref.skill_id, mode=general.mode, product_id=general.product_id
+                    ref.skill_id, mode=variant.mode, product_id=variant.product_id
                 ),
             }
         )
@@ -420,62 +449,93 @@ def _new_version_change(
 
 
 def parse_general_form(
-    form: Mapping[str, Any], *, store, existing: Any | None = None
+    form: Mapping[str, Any],
+    *,
+    store,
+    existing: Any | None = None,
+    variant: Any | None = None,
 ) -> EditorResult:
-    """武将录入/编辑：一次提交可能同时产生 General + Skill + SkillVersion。"""
+    """武将录入/编辑：一次提交产生 General + GeneralVariant（+ 可选的新 Skill / SkillVersion）。
+
+    - ``existing``：已有的武将个体（General），改的是名字/别名/备注；
+    - ``variant``：已有的武将版本（GeneralVariant），改的是模式/势力/体力/称号/技能等；
+      为 None 时表示给这个武将**新建**一个版本（``variant=new`` 或首次录入）。
+    """
     result = EditorResult(values=echo_values(form))
     errors = result.errors
     info = result.info
-    data = _base(existing, GENERAL_DEFAULTS)
 
-    # ---- 基本字段（只有 name 必填）
+    # ---------------------------------------------------------------- General
+    general_data = _base(existing, GENERAL_DEFAULTS)
     if "name" in form:
-        data["name"] = _text(form, "name")
-    if not str(data.get("name") or "").strip():
+        general_data["name"] = _text(form, "name")
+    if not str(general_data.get("name") or "").strip():
         errors.append(FieldError("name", "武将名字必填"))
 
     raw_id = _text(form, "id")
     if raw_id:
-        data["id"] = raw_id
+        general_data["id"] = raw_id
     elif existing is None:
-        data["id"] = make_entity_id(
-            "general_", str(data.get("name") or "general"), store.bundle.ids("general")
+        general_data["id"] = make_entity_id(
+            "general_", str(general_data.get("name") or "general"), store.bundle.ids("general")
         )
+    if "aliases" in form:
+        general_data["aliases"] = _multi(form, "aliases")
+    if "general_notes" in form:
+        general_data["notes"] = _text(form, "general_notes")
 
+    # ---------------------------------------------------------------- Variant
+    variant_data = _base(variant, VARIANT_DEFAULTS)
+    variant_data["general_id"] = str(general_data.get("id") or "")
+
+    if "variant" in form:
+        variant_data["variant"] = _text(form, "variant") or "标准版"
     for name in ("title", "faction"):
         if name in form:
-            data[name] = _text(form, name)
+            variant_data[name] = _text(form, name)
     if "general_number" in form:
-        data["general_number"] = _text(form, "general_number") or None
+        variant_data["general_number"] = _optional_text(form, "general_number")
     if "general_set" in form:
-        data["general_set"] = _text(form, "general_set") or None
+        variant_data["general_set"] = _optional_text(form, "general_set")
     if "product_id" in form:
-        data["product_id"] = _text(form, "product_id") or None
+        variant_data["product_id"] = _optional_text(form, "product_id")
     if "mode" in form:
-        _apply_enum(data, form, "mode", Mode, errors)
+        _apply_enum(variant_data, form, "mode", Mode, errors)
     if "gender" in form:
-        _apply_enum(data, form, "gender", Gender, errors, nullable=False)
+        _apply_enum(variant_data, form, "gender", Gender, errors, nullable=False)
     if "hp" in form:
-        data["hp"] = _hp(form, "hp", errors)
+        variant_data["hp"] = _hp(form, "hp", errors)
 
     known_products = store.bundle.ids("product")
-    if data.get("product_id") and data["product_id"] not in known_products:
-        errors.append(FieldError("product_id", f"产品不存在：{data['product_id']}"))
+    if variant_data.get("product_id") and variant_data["product_id"] not in known_products:
+        errors.append(FieldError("product_id", f"产品不存在：{variant_data['product_id']}"))
 
-    for name in ("aliases",):
-        if name in form:
-            data[name] = _multi(form, name)
     if "notes" in form:
-        data["notes"] = _text(form, "notes")
+        variant_data["notes"] = _text(form, "notes")
     if "verification_status" in form:
-        _apply_enum(data, form, "verification_status", VerificationStatus, errors, nullable=False)
+        _apply_enum(
+            variant_data, form, "verification_status", VerificationStatus, errors, nullable=False
+        )
     source = _source_from_form(form)
     if source != "keep":
-        data["source"] = source
+        variant_data["source"] = source
 
-    # ---- 技能行
-    mode = data.get("mode")
-    product_id = data.get("product_id")
+    # 版本 id：已有版本沿用；新建时生成
+    variant_id = ""
+    if variant is not None:
+        variant_id = variant.id
+    else:
+        raw_variant_id = _text(form, "variant_id")
+        variant_id = raw_variant_id or make_entity_id(
+            "variant_",
+            f"{general_data.get('name') or 'general'} {variant_data.get('variant') or ''}",
+            store.bundle.ids("general_variant"),
+        )
+    variant_data["id"] = variant_id
+
+    # ---------------------------------------------------------------- 技能行
+    mode = variant_data.get("mode")
+    product_id = variant_data.get("product_id")
     existing_skills = store.bundle.ids("skill")
     generated_ids: set[str] = set()
     refs: list[dict] = []
@@ -592,29 +652,48 @@ def parse_general_form(
 
     if mode is None and any(ref["version_id"] for ref in refs):
         info.append(
-            "武将没有填模式：新建的技能版本按 common（跨模式通用）保存，之后可以在技能版本页面改成具体模式。"
+            "武将版本没有填模式：新建的技能版本按 common（跨模式通用）保存，"
+            "之后可以在技能版本页面改成具体模式。"
         )
 
-    data["skills"] = refs
+    variant_data["skills"] = refs
 
-    # ---- 把武将本体也放进这一批（放在最前面，方便页面/日志先看到它）
+    # ---------------------------------------------------------------- 组装成一批
     result.changes.insert(
         0,
-        Change(kind="general", candidate=data, old_id=existing.id if existing else None),
+        Change(kind="general_variant", candidate=variant_data, old_id=variant.id if variant else None),
     )
-    result.record_id = str(data.get("id") or "")
+    result.changes.insert(
+        0,
+        Change(kind="general", candidate=general_data, old_id=existing.id if existing else None),
+    )
+    result.record_id = str(general_data.get("id") or "")
+    result.variant_id = variant_id
     return result
 
 
-def general_values(store, general: Any | None, *, params: Mapping[str, Any] | None = None) -> dict[str, str]:
+def general_values(
+    store,
+    general: Any | None,
+    variant: Any | None = None,
+    *,
+    params: Mapping[str, Any] | None = None,
+) -> dict[str, str]:
     """渲染武将录入页时的初始值（不含技能行，技能行单独给）。"""
-    if general is None:
-        values: dict[str, str] = {}
-    else:
-        from .forms import values_from_entity
+    from .forms import values_from_entity
 
-        values = values_from_entity("general", general)
+    values: dict[str, str] = {}
+    if general is not None:
+        values.update(values_from_entity("general", general))
         values["aliases"] = "\n".join(general.aliases or [])
+        values["general_notes"] = general.notes or ""
+    if variant is not None:
+        variant_values = values_from_entity("general_variant", variant)
+        for key, value in variant_values.items():
+            if key in {"id", "general_id"}:
+                continue
+            values[key] = value
+        values["variant_id"] = variant.id
     if params:
         for key, value in params.items():
             if value not in (None, ""):
@@ -623,6 +702,10 @@ def general_values(store, general: Any | None, *, params: Mapping[str, Any] | No
 
 
 # ---------------------------------------------------------------- 共用小工具
+
+
+def variant_choices() -> list[tuple[str, str]]:
+    return [(label, label) for label in VARIANT_LABELS]
 
 
 def mode_choices() -> list[tuple[str, str]]:

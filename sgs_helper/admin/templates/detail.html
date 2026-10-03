@@ -115,86 +115,98 @@
 {# ---------------------------------------------------------------- 武将 #}
 {% if kind == 'general' %}
   <section>
-    <h2>General → 技能 → SkillVersion</h2>
+    <h2>General（武将个体）→ GeneralVariant（版本）→ 技能</h2>
     <p class="muted">
-      技能行里显式选了版本的，就显示那个版本（实体卡上印的就是它）；
-      没指定版本的，按「武将模式 + 生效区间」自动推导当前有效版本。
+      武将个体只存名字/别名；模式、势力、体力、称号、编号、系列与技能都属于**版本**。
+      技能行里显式选了版本的显示那个版本（卡上印的就是它），没选的按「模式 + 生效区间」自动推导。
     </p>
     <table class="kv">
-      <tr><th>编号 / 称号</th><td>{{ entity.general_number or '—' }} / {{ entity.title or '—' }}</td></tr>
-      <tr><th>势力 / 勾玉</th><td>
-        {{ entity.faction or '—' }} /
-        {% if entity.hp is not none %}{{ entity.hp }}{% else %}<span class="muted">未填</span>{% endif %}
-      </td></tr>
-      <tr><th>性别</th><td>{{ entity.gender | gender_label }}</td></tr>
-      <tr><th>所属产品</th><td>{{ entity_link('product', entity.product_id) }}</td></tr>
-      <tr><th>武将牌系列</th><td>{{ entity.general_set or '—' }}</td></tr>
-      <tr><th>模式</th><td>{{ mode_badge(entity.mode) or '—' }}</td></tr>
-      <tr><th>基准日</th><td>{{ detail.as_of }}</td></tr>
+      <tr><th>名字</th><td>{{ entity.name }}</td></tr>
+      <tr><th>别名</th><td>{{ entity.aliases | join('、') or '—' }}</td></tr>
+      <tr><th>版本数</th><td>{{ detail.variants | length }}</td></tr>
+      <tr><th>备注</th><td>{{ entity.notes or '—' }}</td></tr>
     </table>
-
-    {% for item in detail.skills %}
-      <div class="subblock" id="skill-{{ item.position }}">
-        <h3>
-          {{ entity_link('skill', item.skill_id) }}
-          <a class="btn small" href="/edit/general/{{ row.id }}#skill-{{ item.position }}">在录入页修改</a>
-          <a class="btn small" href="/new/skill_version?skill_id={{ item.skill_id }}&mode={{ entity.mode or '' }}&product_id={{ entity.product_id or '' }}{% if item.current %}&previous_version_id={{ item.current.id }}{% endif %}">新增技能版本</a>
-        </h3>
-        {% if item.version_id %}
-          <p class="sub">
-            显式绑定版本：
-            {% if item.pinned %}
-              <a href="/view/skill_version/{{ item.version_id }}"><code class="id">{{ item.version_id }}</code></a>
-              <span class="badge ok">按卡面指定</span>
-            {% else %}
-              <code class="id">{{ item.version_id }}</code>
-              <span class="badge error">版本不存在（可能被删掉了）</span>
-            {% endif %}
-          </p>
-        {% else %}
-          <p class="sub muted">没有显式绑定版本 → 按模式与生效区间推导。</p>
-        {% endif %}
-
-        {% if item.current %}
-          <div class="rule-text">{{ item.current.text }}</div>
-          <p class="sub">
-            显示的是
-            <a href="/view/skill_version/{{ item.current.id }}">{{ item.current.id }}</a>
-            {% if item.current.version_label %}［{{ item.current.version_label }}］{% endif %}
-            {{ mode_badge(item.current.mode) }}
-            <span class="muted">{{ item.current.effective_from or '不限' }} ~ {{ item.current.effective_to or '至今' }}</span>
-            <span class="badge {{ 'ok' if item.pinned else 'muted' }}">{{ '显式绑定' if item.pinned else '自动推导' }}</span>
-          </p>
-        {% else %}
-          <p class="badge warn">该技能没有可用版本（该模式下没有生效中的版本）。</p>
-          {% if item.ambiguous_ids %}<p class="badge conflict">并列版本：{{ item.ambiguous_ids | join('、') }}</p>{% endif %}
-        {% endif %}
-
-        <details>
-          <summary>该技能的全部版本（{{ item.all_versions | length }}）</summary>
-          <ul>
-            {% for v in item.all_versions %}
-              <li>
-                <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
-                {% if v.id == item.version_id %}<span class="badge ok">武将绑定</span>{% endif %}
-                {{ mode_badge(v.mode) }}
-                {% if v.status == 'active' %}<span class="badge ok">生效中</span>
-                {% elif v.status == 'future' %}<span class="badge warn">未生效</span>
-                {% else %}<span class="badge muted">已过期</span>{% endif %}
-                <span class="muted">{{ v.effective_from or '不限' }} ~ {{ v.effective_to or '至今' }}</span>
-                {% if v.product_id %} · {{ name_of('product', v.product_id) }}{% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </details>
-      </div>
-    {% else %}
-      <p class="muted">这个武将还没有关联技能。</p>
-    {% endfor %}
     <p>
-      <a class="btn" href="/edit/general/{{ row.id }}">在录入页添加技能 / 指定版本</a>
+      <a class="btn" href="/edit/general/{{ row.id }}">编辑武将</a>
+      <a class="btn ghost" href="/edit/general/{{ row.id }}?variant=new">+ 新增版本</a>
       <a class="btn ghost" href="/new/general?from={{ row.id }}&copy=attrs">以此武将为模板新增</a>
     </p>
+
+    {% for item in detail.variants %}
+      <div class="subblock" id="variant-{{ item.id }}">
+        <h3>
+          版本：{{ item.variant }}
+          {{ mode_badge(item.entity.mode) }}
+          <a class="btn small" href="{{ item.edit_url }}">编辑这个版本</a>
+        </h3>
+        <p class="sub">
+          称号 {{ item.entity.title or '—' }} · 势力 {{ item.entity.faction or '—' }} ·
+          体力 {{ hp_label(item.entity.hp) }} ·
+          {{ item.entity.gender | gender_label }} ·
+          编号 {{ item.entity.general_number or '—' }} ·
+          系列 {{ item.entity.general_set or '—' }}
+          {% if item.product_name %} · 产品 {{ item.product_name }}{% endif %}
+        </p>
+        <p class="sub">
+          <code class="id">{{ item.id }}</code>
+          {{ status_badge(item.entity.verification_status) }}
+          {% if item.source %}
+            · {{ item.source.type_label }}{% if item.source.title %}：{{ item.source.title }}{% endif %}
+            {% if item.source.reference %}
+              {% if item.source.reference | is_url %}
+                · <a href="{{ item.source.reference }}" target="_blank" rel="noopener noreferrer">来源链接</a>
+              {% else %}· {{ item.source.reference }}{% endif %}
+            {% endif %}
+          {% endif %}
+        </p>
+
+        {% for entry in item.skills %}
+          <div class="skill-block">
+            <h4>
+              {{ entity_link('skill', entry.skill_id) }}
+              {% if entry.version_id %}
+                {% if entry.pinned %}<span class="badge ok">按卡面指定</span>
+                {% else %}<span class="badge error">绑定版本不存在</span>{% endif %}
+              {% endif %}
+            </h4>
+            {% if entry.current %}
+              <div class="rule-text">{{ entry.current.text }}</div>
+              <p class="sub">
+                {{ mode_badge(entry.current.mode) }}
+                <a href="/view/skill_version/{{ entry.current.id }}"><code class="id">{{ entry.current.id }}</code></a>
+                {% if entry.current.version_label %}［{{ entry.current.version_label }}］{% endif %}
+                <span class="muted">{{ entry.current.effective_from or '不限' }} ~ {{ entry.current.effective_to or '至今' }}</span>
+                <span class="badge {{ 'ok' if entry.pinned else 'muted' }}">{{ '显式绑定' if entry.pinned else '自动推导' }}</span>
+              </p>
+            {% else %}
+              <p class="badge warn">该技能在这个版本的模式下没有可用文本。</p>
+              {% if entry.ambiguous_ids %}<p class="badge conflict">并列版本：{{ entry.ambiguous_ids | join('、') }}</p>{% endif %}
+            {% endif %}
+            <details>
+              <summary>该技能的全部版本（{{ entry.all_versions | length }}）</summary>
+              <ul>
+                {% for v in entry.all_versions %}
+                  <li>
+                    <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
+                    {% if v.id == entry.version_id %}<span class="badge ok">武将绑定</span>{% endif %}
+                    {{ mode_badge(v.mode) }}
+                    {% if v.status == 'active' %}<span class="badge ok">生效中</span>
+                    {% elif v.status == 'future' %}<span class="badge warn">未生效</span>
+                    {% else %}<span class="badge muted">已过期</span>{% endif %}
+                    <span class="muted">{{ v.effective_from or '不限' }} ~ {{ v.effective_to or '至今' }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </details>
+          </div>
+        {% else %}
+          <p class="muted">这个版本还没有关联技能。</p>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="badge warn">这个武将还没有任何版本（GeneralVariant）。</p>
+      <p><a class="btn" href="/edit/general/{{ row.id }}?variant=new">+ 新增标准版</a></p>
+    {% endfor %}
   </section>
 {% endif %}
 
@@ -266,13 +278,17 @@
     </table>
 
     <div class="subblock">
-      <h3>收录武将（{{ detail.generals | length }}）
+      <h3>收录武将版本（{{ detail.variants | length }}）
         <a class="btn small" href="/new/general?product_id={{ row.id }}{% if entity.mode %}&mode={{ entity.mode }}{% endif %}{% if entity.general_sets %}&general_set={{ entity.general_sets[0] }}{% endif %}">新增武将</a>
       </h3>
-      {% if detail.generals %}
+      {% if detail.variants %}
         <ul class="inline-list">
-          {% for g in detail.generals %}
-            <li><a href="/view/general/{{ g.id }}">{{ g.name }}</a> {{ status_badge(g.verification_status) }}</li>
+          {% for v in detail.variants %}
+            <li>
+              <a href="/view/general/{{ v.general_id }}">{{ v._display_name or v.general_id }}</a>
+              <code class="id">{{ v.id }}</code>
+              {{ status_badge(v.verification_status) }}
+            </li>
           {% endfor %}
         </ul>
       {% else %}<p class="muted">没有。</p>{% endif %}

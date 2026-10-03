@@ -5,7 +5,7 @@
 
 ## 阶段 0（当前）：资料库底座 ✅
 
-- [x] YAML 数据模型（9 类实体，技能/卡牌两层，版本不覆盖）
+- [x] YAML 数据模型（10 类实体，技能/卡牌/武将两层，版本不覆盖）
 - [x] Pydantic 校验 + 交叉引用 + 一致性检查（错误 / 警告分级）
 - [x] SQLite 全量重建（幂等、可追溯、FTS5 可选）
 - [x] 查询工具（skill / general / card / faq / keyword / timing / product / search，支持 `--json`）

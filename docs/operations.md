@@ -45,7 +45,8 @@ git add -A && git commit -m "data: ..." && git push
 | `data/skills/`（308）、`data/skill_versions/`（397） | 真实规则文本 | 规则集武将页，按模式各取一个印次 |
 | `data/faq/`（83） | 真实裁定 | 规则集专题/流程章节 + 武将页 ◆ 裁定 |
 | `data/keywords/`（126）、`data/timings/`（30） | 真实定义 | 规则集「用语」「游戏的流程」 |
-| `data/products/`（3）、`data/generals/`（3）、`data/cards/`、`data/card_printings/` | **仍是 SAMPLE 占位** | 待用实体卡替换 |
+| `data/generals/`（26）、`data/general_variants/`（26） | 真实数据，**只有标准包（标准身份版）** | [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/)，名单用[萌娘百科·三国杀](https://mzh.moegirl.org.cn/%E4%B8%89%E5%9B%BD%E6%9D%80)核对 |
+| `data/products/`（3）、`data/cards/`、`data/card_printings/` | **仍是 SAMPLE 占位** | 待用实体卡替换 |
 
 重新导入 / 增量导入（站点更新时）：
 
@@ -60,12 +61,27 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 （网页版是社区整理、未按实体卡核验）。**核验一条就升一条**：对着实体卡逐字比对之后，
 把 `verification_status` 改成 `physical_verified`，按需要在 `notes` 里记下差异。
 
-## 1.1 替换剩下的 SAMPLE 数据（产品 / 武将 / 卡牌）
+## 1.1 武将是两层：General + GeneralVariant
 
-1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品是武将和实体卡的锚点。
-2. **再建武将**（`/new/general`）：顺手把技能版本绑对上（规则集里的技能已经导好了）。
-3. **再建卡牌定义 + 实体卡印刷**：按牌堆清点，逐张登记花色点数与角标。
-4. **最后清理 SAMPLE 文件**：删掉后跑 `validate_data.py`，它会帮你列出还没处理的引用。
+武将数据由脚本 `scripts/import_generals_wiki.py` 从 WIKI 导入（只取「经典版本」段 = 标准身份版）。
+
+- `General`（`data/generals/`）：只有 `id` / `name` / `aliases` / `notes`。
+  官方武将名不同就是不同的武将个体（诸葛亮 / 界诸葛亮 / 神诸葛亮）。
+- `GeneralVariant`（`data/general_variants/`）：`variant`（标准版 / 国战版 / 界限突破 …）
+  + 模式、势力、体力、性别、称号、编号、武将牌系列、产品、技能。
+  官方名相同、玩法不同 → 同一个 General 的多个 Variant。
+- 体力口径：身份局标准版记正常体力（3/4/5）；国战按阴阳鱼记 1.5 / 2 / 2.5
+  （**不要**把半阴阳鱼记成 3/4/5）。
+- 导入时**只录明确属于标准版的部分**，拿不准的不猜：
+  萌娘百科的「标准版」名单与 WIKI 的 `武将包` 不一致的（例如袁术，WIKI 归在神话再临·雷包），
+  本轮先不录，留待按实体卡确认。
+
+## 1.2 替换剩下的 SAMPLE 数据（产品 / 卡牌）
+
+1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品是实体卡的锚点
+   （武将数据不要求关联产品）。
+2. **再建卡牌定义 + 实体卡印刷**：按牌堆清点，逐张登记花色点数与角标。
+3. **最后清理 SAMPLE 文件**：删掉后跑 `validate_data.py`，它会帮你列出还没处理的引用。
 
 替换时的三条纪律：
 

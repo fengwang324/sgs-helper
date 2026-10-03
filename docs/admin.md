@@ -37,11 +37,11 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | 路由 | 作用 |
 | --- | --- |
 | `GET /` | 首页：统一搜索框、各类型条数、核验状态分布、SQLite 状态、当前校验错误与警告 |
-| `GET /search?q=&kind=&status=&mode=` | 跨 9 类实体检索，显示类型 / 名称 / 模式 / 来源 / 核验状态 / YAML 位置 |
+| `GET /search?q=&kind=&status=&mode=` | 跨 10 类实体检索，显示类型 / 名称 / 模式 / 来源 / 核验状态 / YAML 位置 |
 | `GET /list/{kind}?q=&mode=&status=&product=&package=&page=` | 分类列表 + 筛选 + 分页 |
 | `GET /view/{kind}/{id}` | 详情页（技能 / 卡牌 / 武将有专门的分层展示） |
 | **`GET|POST /new/product`、`/edit/product/{id}`** | **产品专用录入页**（见第 3 节） |
-| **`GET|POST /new/general`、`/edit/general/{id}`** | **武将专用录入页**（见第 3、4、5 节） |
+| **`GET|POST /new/general`、`/edit/general/{id}[?variant=…]`** | **武将专用录入页**（General + GeneralVariant，见第 3、4、5 节） |
 | `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、卡牌、实体卡、FAQ、关键词、时点） |
 | `GET|POST /delete/{kind}/{id}` | 删除确认 + 引用检查 |
 | `GET /review[?status=]` | 待核验清单：`unverified` / `community` / `conflict` |
@@ -58,7 +58,7 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | `GET /api/skills/{id}/versions?mode=&product_id=` | 某技能的可选版本，按「产品匹配 > 模式匹配 > common > 其它」排序；每项带版本标签、模式、产品、生效时间、文本摘要/全文 |
 | `GET /api/products?q=` | 产品搜索（名称 / ID / 年份） |
 | `GET /api/suggest?field=faction|general_set&q=` | 势力 / 武将牌系列的已有值（带使用次数） |
-| `GET /api/generals?name=` | 同名武将提醒（模式 / 产品 / 系列 / 编号） |
+| `GET /api/generals?name=` | 同名武将提醒（版本 / 模式 / 产品 / 系列 / 编号） |
 | `GET /api/version-exists?skill_id=&mode=&product_id=&text=` | 是否已有内容完全相同的技能版本 |
 
 ---
@@ -93,13 +93,17 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 ### 武将录入页
 
-首屏基本就是照着一张武将牌从上往下录：
+首屏分两截：**上面是武将个体（General）**，**下面是这一版的数据（GeneralVariant）**。
 
 ```text
 新增武将
-编号 [ WEI001 ]   称号 [ 独眼的罗刹 ]   名字 * [ 张辽 ]
-模式 [ 国战 ▼ ]  势力 [ 魏 ]  勾玉 [ 2.5 ▼ ]  性别 [ 男 ▼ ]
-武将牌系列 [ 九变篇 ]   产品 [ 群狼环鼎 ▼ ]
+── 武将（General）─────────────────────────────
+名字 * [ 张辽 ]            版本标签 [ 标准版 ]
+
+── 版本信息（标准版）──────────────────────────
+称号 [ 前将军 ]   编号 [ WEI004 ]
+模式 [ 身份局 ▼ ]  势力 [ 魏 ]  体力 [ 4 ▼ ]  性别 [ 男 ▼ ]
+武将牌系列 [ 标准-勇冠三军 ]   产品 [ （可空）▼ ]
 
 技能
 ┌─────────────────────────────────────────┐
@@ -113,8 +117,18 @@ python scripts/admin.py --port 8000 --reload # 开发用
 [保存] [保存并新增下一位武将]  ☑ 下一位继承产品信息
 ```
 
-**只有名字是必填的**。模式、势力、勾玉、性别、武将牌系列、产品、技能都可以先留空，
-先把手头有的信息录进来，以后再补（详情页与待核验页会一直提醒缺什么）。
+**只有名字是必填的**。其余字段都可以先留空，先把手头有的信息录进来，
+以后再补（详情页与待核验页会一直提醒缺什么）。
+
+两层怎么分：
+
+- **武将个体（General）**：`name` + `aliases` + `notes`。官方武将名不同就是不同的武将
+  （诸葛亮 / 界诸葛亮 / 神诸葛亮）。
+- **版本（GeneralVariant）**：`variant`（版本标签）+ `mode` + `faction` + `hp` + `gender`
+  + `title` + `general_number` + `general_set` + `product_id` + `skills` + 来源。
+  「标准版诸葛亮」和「国战诸葛亮」是同一个武将的两个版本，不是两个武将。
+- 给同一个武将再加一个版本：详情页点「+ 新增版本」（= `/edit/general/<id>?variant=new`），
+  或者直接在版本标签里写 `国战版` 再保存；编辑页顶部有版本切换按钮。
 
 各字段的行为：
 
@@ -288,7 +302,7 @@ skills:
 - 不用两个平行数组，避免顺序错位；
 - 详情页：显式绑定优先显示指定版本（标记「按卡面指定」），否则按
   `mode + effective_from/effective_to` 推导当前有效版本（标记「自动推导」）；
-- SQLite 侧落到 `general_skills(general_id, skill_id, version_id, position)`，
+- SQLite 侧落到 `variant_skills(variant_id, general_id, skill_id, version_id, position)`，
   `position` 就是卡面上的技能顺序。
 
 ---

@@ -35,7 +35,11 @@ def test_duplicate_id_is_detected(synth: Path) -> None:
 
 
 def test_missing_skill_reference_is_detected(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
+    replace_in(
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
     result = validate_data_dir(synth)
     assert not result.ok
     text = error_text(result)
@@ -46,7 +50,8 @@ def test_missing_skill_reference_is_detected(synth: Path) -> None:
 
 def test_missing_product_reference_is_detected(synth: Path) -> None:
     replace_in(
-        synth / "generals" / "demo_alpha.yaml", "product_id: product_demo_a",
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "product_id: product_demo_a",
         "product_id: product_missing",
     )
     result = validate_data_dir(synth)
@@ -57,7 +62,8 @@ def test_missing_product_reference_is_detected(synth: Path) -> None:
 
 def test_wrong_kind_reference_gives_hint(synth: Path) -> None:
     replace_in(
-        synth / "generals" / "demo_alpha.yaml", "product_id: product_demo_a",
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "product_id: product_demo_a",
         "product_id: card_demo",
     )
     result = validate_data_dir(synth)
@@ -66,7 +72,11 @@ def test_wrong_kind_reference_gives_hint(synth: Path) -> None:
 
 
 def test_empty_reference_element_is_detected(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", 'skill_id: ""')
+    replace_in(
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        'skill_id: ""',
+    )
     result = validate_data_dir(synth)
     assert not result.ok
     assert "skills[0].skill_id" in error_text(result)
@@ -123,7 +133,7 @@ def test_timing_parent_cycle_is_detected(synth: Path) -> None:
 
 def test_duplicate_reference_in_list_is_warned(synth: Path) -> None:
     replace_in(
-        synth / "generals" / "demo_alpha.yaml", "skills:\n  - skill_id: skill_demo\n",
+        synth / "general_variants" / "demo_alpha_guozhan.yaml", "skills:\n  - skill_id: skill_demo\n",
         "skills:\n  - skill_id: skill_demo\n  - skill_id: skill_demo\n",
     )
     result = validate_data_dir(synth)
@@ -143,7 +153,7 @@ def test_overlapping_effective_range_is_warned(synth: Path) -> None:
 
 
 def test_hp_step_is_warned(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_beta.yaml", "hp: 3\n", "hp: 3.3\n")
+    replace_in(synth / "general_variants" / "demo_beta_identity.yaml", "hp: 3\n", "hp: 3.3\n")
     result = validate_data_dir(synth)
     assert result.ok
     assert "不是 0.5 的整数倍" in warning_text(result)
@@ -169,7 +179,7 @@ def test_skill_without_version_is_warned(synth: Path) -> None:
 
 
 def test_missing_source_is_warned(synth: Path) -> None:
-    path = synth / "generals" / "demo_beta.yaml"
+    path = synth / "general_variants" / "demo_beta_identity.yaml"
     text = path.read_text(encoding="utf-8")
     path.write_text(text.replace(SOURCE_YAML, ""), encoding="utf-8")
     result = validate_data_dir(synth)
@@ -188,7 +198,7 @@ def test_timing_previous_next_asymmetry_is_warned(synth: Path) -> None:
 
 def test_mode_mismatch_with_product_is_warned(synth: Path) -> None:
     replace_in(
-        synth / "generals" / "demo_alpha.yaml", "product_id: product_demo_a",
+        synth / "general_variants" / "demo_alpha_guozhan.yaml", "product_id: product_demo_a",
         "product_id: product_demo_b",
     )
     result = validate_data_dir(synth)
@@ -197,7 +207,7 @@ def test_mode_mismatch_with_product_is_warned(synth: Path) -> None:
 
 
 def test_skill_without_version_in_general_mode_is_warned(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_beta.yaml", "mode: identity", "mode: ol")
+    replace_in(synth / "general_variants" / "demo_beta_identity.yaml", "mode: identity", "mode: ol")
     result = validate_data_dir(synth)
     assert result.ok
     assert "没有任何 SkillVersion" in warning_text(result)
@@ -207,9 +217,13 @@ def test_skill_without_version_in_general_mode_is_warned(synth: Path) -> None:
 
 
 def test_report_format_has_path_field_reason(synth: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
+    replace_in(
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
     report = validate_data_dir(synth).format_report()
-    assert "data/generals/demo_alpha.yaml" in report
+    assert "data/general_variants/demo_alpha_guozhan.yaml" in report
     assert "skills[0].skill_id" in report
     assert "skill_missing" in report
     assert "校验失败" in report

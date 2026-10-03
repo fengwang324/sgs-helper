@@ -1,15 +1,15 @@
 id: skill_qi_cai_identity_v1
 skill_id: skill_qi_cai
 mode: identity
-text: |-
-  锁定技，你使用锦囊牌无距离限制；锁定技，其他角色不能弃置你装备区里的不为坐骑牌的牌。
+text: 锁定技，你使用锦囊牌无距离限制。
 version_label: 标准版
 product_id: null
 package: 标
 effective_from: null
 effective_to: null
 previous_version_id: null
-change_note: ''
+change_note: |-
+  原文本『…；锁定技，其他角色不能弃置你装备区里的不为坐骑牌的牌』是规则集网页把【谦逊】的句子并进了同一段所致；台湾印次与 WIKI 卡面原文都只有『锁定技，你使用锦囊牌无距离限制』，据此修正。
 related_keywords: []
 related_timing_ids: []
 source:
@@ -18,4 +18,6 @@ source:
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: community
-notes: 规则集中该技能在同一模式下还有这些印次（未单独录入版本）：台湾版、标准版（旧）、界限突破
+notes: |-
+  规则集中该技能在同一模式下还有这些印次（未单独录入版本）：台湾版、标准版（旧）、界限突破
+  原文本『…；锁定技，其他角色不能弃置你装备区里的不为坐骑牌的牌』是规则集网页把【谦逊】的句子并进了同一段所致；台湾印次与 WIKI 卡面原文都只有『锁定技，你使用锦囊牌无距离限制』，据此修正。

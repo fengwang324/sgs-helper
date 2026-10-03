@@ -233,74 +233,91 @@ def render_skill(report: dict) -> str:
 # ---------------------------------------------------------------- 武将
 
 
+def fmt_hp(value: Any) -> str:
+    """体力显示：3 而不是 3.0，国战半勾玉仍显示 1.5。"""
+    if value is None:
+        return "未填"
+    number = float(value)
+    return str(int(number)) if number == int(number) else str(number)
+
+
 def render_general(report: dict) -> str:
     general = report["general"]
-    product = report.get("product") or {}
-    lines = ["=" * 72, f"武将：{general['name']}    （id：{general['id']}）"]
-    if general.get("title"):
-        lines.append(f"  称号：{general['title']}")
-    if general.get("general_number"):
-        lines.append(f"  编号：{general['general_number']}")
-    lines.append(
-        f"  模式：{mode_label(general.get('mode'))}    势力：{general.get('faction') or '未填'}    "
-        f"勾玉：{general['hp'] if general.get('hp') is not None else '未填'}    "
-        f"性别：{gender_label(general.get('gender'))}"
-    )
-    lines.append(
-        f"  所属产品：{general.get('product_id') or '（未填）'}"
-        + (f" / {product.get('name')}" if product else "")
-    )
-    if general.get("general_set"):
-        lines.append(f"  武将牌系列：{general['general_set']}")
+    lines = [
+        "=" * 72,
+        f"武将：{general['name']}    （id：{general['id']}；共 {len(report['variants'])} 个版本）",
+    ]
     if general.get("aliases"):
         lines.append(f"  别名：{'、'.join(general['aliases'])}")
-    lines.append(f"  来源：{fmt_source(general.get('source'))}")
-    lines.append(f"  校验状态：{verification_label(general.get('verification_status'))}")
-    lines.append(f"  源文件：{fmt_location(general)}")
     if general.get("notes"):
         lines.append(f"  备注：{general['notes']}")
-
-    lines.append("")
-    lines.append(_section(f"技能（模式 {mode_label(general.get('mode'))}；显式绑定的版本优先）"))
-    if not report["skills"]:
-        lines.append("  （该武将未关联任何技能）")
-    for entry in report["skills"]:
-        skill = entry.get("skill") or {}
-        lines.append(f"  ● {skill.get('name', entry['skill_id'])}    （{entry['skill_id']}）")
-        if entry.get("version_id"):
-            lines.append(f"      武将上显式绑定的版本：{entry['version_id']}")
-        if entry.get("pinned") is None and entry.get("version_id"):
-            lines.append("      ⚠ 绑定的版本不存在（可能被删掉了），下面显示推导出的版本")
-        if not entry["versions"]:
-            lines.append("      ⚠ 该技能没有任何 SkillVersion，拿不到技能文本")
-            continue
-        current = entry.get("current")
-        if current is not None:
-            how = "显式绑定" if entry.get("pinned") else "按模式+生效区间推导"
-            lines.append(
-                f"      当前显示版本（{how}）：{current['id']}"
-                + (f"  [{current['version_label']}]" if current.get("version_label") else "")
-                + f"    {fmt_range(current)}"
-            )
-            lines += _block("技能文本", current.get("text"), indent="        ")
-            lines.append(f"      来源：{fmt_source(current.get('source'))}")
-            lines.append(f"      校验状态：{verification_label(current.get('verification_status'))}")
-            if current.get("change_note"):
-                lines += _block("变更说明", current["change_note"], indent="        ")
-        else:
-            lines.append(
-                "      ⚠ 该模式当前没有唯一有效版本；候选："
-                + "、".join(entry["ambiguous_ids"] or ["无"])
-            )
-        others = [v for v in entry["versions"] if v["id"] != (current or {}).get("id")]
-        if others:
-            lines.append("      其他版本：")
-            for version in others:
-                lines.append(
-                    f"        - {version['id']}    {mode_label(version['mode'])}    "
-                    f"{fmt_range(version)}    {fmt_status(version)}"
-                )
+    lines.append(f"  源文件：{fmt_location(general)}")
+    if not report["variants"]:
         lines.append("")
+        lines.append("  ⚠ 这个武将还没有任何版本（GeneralVariant）")
+
+    for variant in report["variants"]:
+        lines.append("")
+        lines.append(
+            f"── 版本：{variant['variant']}（{variant['id']}）"
+            f"    模式：{mode_label(variant.get('mode'))}"
+            "  " + "-" * 20
+        )
+        lines.append(
+            f"  称号：{variant.get('title') or '未填'}    "
+            f"势力：{variant.get('faction') or '未填'}    "
+            f"体力：{fmt_hp(variant.get('hp'))}    "
+            f"性别：{gender_label(variant.get('gender'))}"
+        )
+        lines.append(
+            f"  编号：{variant.get('general_number') or '未填'}    "
+            f"武将牌系列：{variant.get('general_set') or '未填'}    "
+            f"所属产品：{variant.get('product_id') or '（未关联）'}"
+        )
+        lines.append(f"  来源：{fmt_source(variant.get('source'))}")
+        lines.append(
+            f"  校验状态：{verification_label(variant.get('verification_status'))}"
+        )
+        lines.append(f"  源文件：{fmt_location(variant)}")
+        if variant.get("notes"):
+            lines.append(f"  备注：{variant['notes']}")
+
+        lines.append("")
+        lines.append(f"  技能（{len(variant['skills'])} 个；显式绑定的版本优先）")
+        if not variant["skills"]:
+            lines.append("    （该版本未关联任何技能）")
+        for entry in variant["skills"]:
+            skill = entry.get("skill") or {}
+            lines.append(
+                f"    ● {skill.get('name', entry['skill_id'])}    （{entry['skill_id']}）"
+            )
+            if entry.get("version_id"):
+                lines.append(f"        武将上显式绑定的版本：{entry['version_id']}")
+                if entry.get("pinned") is None:
+                    lines.append("        ⚠ 绑定的版本不存在（可能被删掉了），下面显示推导出的版本")
+            if not entry["versions"]:
+                lines.append("        ⚠ 该技能没有任何 SkillVersion，拿不到技能文本")
+                continue
+            current = entry.get("current")
+            if current is not None:
+                how = "显式绑定" if entry.get("pinned") else "按模式+生效区间推导"
+                lines.append(
+                    f"        当前显示版本（{how}）：{current['id']}"
+                    + (f"  [{current['version_label']}]" if current.get("version_label") else "")
+                    + f"    {fmt_range(current)}"
+                )
+                lines += _block("技能文本", current.get("text"), indent="          ")
+                lines.append(f"        来源：{fmt_source(current.get('source'))}")
+                lines.append(
+                    f"        校验状态：{verification_label(current.get('verification_status'))}"
+                )
+                if current.get("change_note"):
+                    lines += _block("变更说明", current["change_note"], indent="          ")
+            else:
+                lines.append(
+                    "        ⚠ 该模式当前没有唯一有效版本；候选："
+                    + "、".join(entry["ambiguous_ids"] or ["无"])
+                )
     return "\n".join(lines)
 
 
@@ -462,8 +479,9 @@ def render_product(report: dict) -> str:
     if product.get("notes"):
         lines += _block("备注", product["notes"], indent="  ")
     lines.append("")
-    lines.append(f"  该产品收录武将 {len(report['generals'])} 名："
-                 + (_names(report["generals"]) or "（无）"))
+    variant_names = [f"{v.get('general_name')}（{v['variant']}）" for v in report["variants"]]
+    lines.append(f"  该产品收录武将版本 {len(variant_names)} 条："
+                 + ("、".join(variant_names) or "（无）"))
     lines.append(f"  该产品实体卡 {len(report['printings'])} 张："
                  + ("、".join(p["id"] for p in report["printings"]) or "（无）"))
     lines.append(f"  该产品技能版本 {len(report['skill_versions'])} 条："

@@ -88,6 +88,11 @@ def general_payload(app, **overrides) -> dict:
         "product_id": "",
         "general_set": "",
         "aliases": "",
+        "variant": "标准版",
+        "_variant_id": "",
+        "_variant_sha": "",
+        "variant_id": "",
+        "general_notes": "",
         "source.type": "",
         "source.title": "",
         "source.reference": "",
@@ -96,6 +101,30 @@ def general_payload(app, **overrides) -> dict:
         "notes": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
+def variant_of(app, general_id: str) -> str:
+    """取某个武将的第一个版本 id（编辑页默认编辑它）。"""
+    variants = app.state.store.variants_of(general_id)
+    assert variants, f"武将 {general_id} 没有任何版本"
+    return variants[0].id
+
+
+def general_edit(app, general_id: str, **overrides) -> dict:
+    """编辑已有武将/版本时应该提交的表单数据。"""
+    variant_id = str(overrides.pop("_variant", "") or variant_of(app, general_id))
+    payload = general_payload(app, **overrides)
+    store = app.state.store
+    payload["_base_sha"] = store.entity_sha("general", general_id)
+    payload["_variant_id"] = variant_id
+    payload["variant_id"] = variant_id
+    payload["_variant_sha"] = (
+        store.entity_sha("general_variant", variant_id) if variant_id else ""
+    )
+    if not payload.get("variant"):
+        entity = store.entity("general_variant", variant_id) if variant_id else None
+        payload["variant"] = entity.variant if entity else "标准版"
     return payload
 
 
@@ -129,7 +158,7 @@ def load_yaml(path: Path) -> dict:
 
 
 def entity_file(workdir: Path, kind: str, entity_id: str) -> Path:
-    """定位记录所在的 YAML 文件（文件名不一定等于 id，例如 kongrong_sample_guozhan.yaml）。"""
+    """定位记录所在的 YAML 文件（文件名不一定等于 id，例如 general_zhu_ge_liang.yaml）。"""
     from sgs_helper.constants import KIND_BY_NAME
     from sgs_helper.loader import load_data_dir
 
@@ -138,6 +167,17 @@ def entity_file(workdir: Path, kind: str, entity_id: str) -> Path:
         if raw.kind == kind and raw.data.get("id") == entity_id:
             return workdir / "data" / raw.origin.path
     return workdir / "data" / KIND_BY_NAME[kind].dirname / f"{entity_id}.yaml"
+
+
+def variant_file(workdir: Path, general_id: str) -> Path:
+    """找到某个武将的（第一个）GeneralVariant 文件。"""
+    from sgs_helper.loader import load_data_dir
+
+    raws, _issues = load_data_dir(workdir / "data")
+    found = [raw for raw in raws if raw.kind == "general_variant"
+             and raw.data.get("general_id") == general_id]
+    assert found, f"武将 {general_id} 没有任何版本文件"
+    return workdir / "data" / found[0].origin.path
 
 
 def new_general_id(response) -> str:
@@ -153,15 +193,18 @@ def test_only_name_is_required(client: TestClient, workdir: Path) -> None:
     response = post(client, "/new/general", data=general_payload(client.app, name="测试武将"))
     assert response.status_code == 303, response.text
     general_id = new_general_id(response)
-    data = load_yaml(entity_file(workdir, "general", general_id))
-    assert data["name"] == "测试武将"
-    assert data["mode"] is None
-    assert data["hp"] is None
-    assert data["general_number"] is None
-    assert data["general_set"] is None
-    assert data["product_id"] is None
-    assert data["skills"] == []
-    assert data["source"] is None
+    general = load_yaml(entity_file(workdir, "general", general_id))
+    assert general["name"] == "测试武将"  # 个体只有名字/别名
+    variant = load_yaml(variant_file(workdir, general_id))
+    assert variant["general_id"] == general_id
+    assert variant["variant"] == "标准版"
+    assert variant["mode"] is None
+    assert variant["hp"] is None
+    assert variant["general_number"] is None
+    assert variant["general_set"] is None
+    assert variant["product_id"] is None
+    assert variant["skills"] == []
+    assert variant["source"] is None
 
 
 def test_missing_id_is_generated_and_unique(client: TestClient, workdir: Path) -> None:
@@ -184,9 +227,10 @@ def test_missing_id_is_generated_and_unique(client: TestClient, workdir: Path) -
 
 
 def test_generated_id_is_stable_for_ascii_names(client: TestClient, workdir: Path) -> None:
-    response = post(client, "/new/general", data=general_payload(client.app, name="Zhang Liao"))
+    """ASCII 名字直接转写下划线 id；重名时追加序号（真实数据里已有 general_zhang_liao）。"""
+    response = post(client, "/new/general", data=general_payload(client.app, name="Li Dian"))
     general_id = new_general_id(response)
-    assert general_id == "general_zhang_liao"
+    assert general_id == "general_li_dian"
 
 
 # ---------------------------------------------------------------- 3
@@ -202,7 +246,7 @@ def test_general_number_accepts_letters_digits_and_separators(
     )
     assert response.status_code == 303, response.text
     general_id = new_general_id(response)
-    assert load_yaml(entity_file(workdir, "general", general_id))["general_number"] == number
+    assert load_yaml(variant_file(workdir, general_id))["general_number"] == number
 
 
 def test_general_number_rejects_odd_characters(client: TestClient, workdir: Path) -> None:
@@ -279,40 +323,45 @@ def test_product_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
 
 
 def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, store) -> None:
-    """6) 编辑旧武将：aliases / source / notes 必须保留。"""
-    path = entity_file(workdir, "general", "general_kongrong_sample_guozhan")
-    before = load_yaml(path)
-    assert before["aliases"] and before["source"] and before["notes"]
+    """6) 编辑旧武将：General 的 aliases、Variant 的 source / notes 都必须保留。"""
+    general_path = entity_file(workdir, "general", "general_zhu_ge_liang")
+    variant_path = variant_file(workdir, "general_zhu_ge_liang")
+    general_before = load_yaml(general_path)
+    variant_before = load_yaml(variant_path)
+    assert general_before["aliases"] and variant_before["source"]
 
-    payload = general_payload(
+    payload = general_edit(
         client.app,
-        name=before["name"],
-        mode="guozhan",
-        faction=before["faction"],
-        hp="2",
+        "general_zhu_ge_liang",
+        name=general_before["name"],
+        faction=variant_before["faction"],
+        hp="3",
         gender="male",
-        product_id=before["product_id"],
-        general_set=before["general_set"],
+        product_id=variant_before["product_id"] or "",
+        general_set=variant_before["general_set"],
         skill_count="2",
-        skill_0_skill_id="skill_ming_shi",
-        skill_0_version_id="skill_ming_shi_guozhan_v1",
-        skill_1_skill_id="skill_li_rang",
-        skill_1_version_id="skill_li_rang_guozhan_v1",
-        _base_sha=store.entity_sha("general", "general_kongrong_sample_guozhan"),
+        skill_0_skill_id="skill_guan_xing",
+        skill_0_version_id="skill_guan_xing_identity_v1",
+        skill_1_skill_id="skill_kong_cheng",
+        skill_1_version_id="skill_kong_cheng_identity_v1",
     )
     for key in (
-        "aliases", "notes", "verification_status",
+        "aliases", "notes", "general_notes", "verification_status",
         "source.type", "source.title", "source.reference", "source.notes",
     ):
         payload.pop(key)
-    response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
+    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
     assert response.status_code == 303, response.text
-    after = load_yaml(path)
-    assert after["aliases"] == before["aliases"]
-    assert after["source"] == before["source"]
-    assert after["notes"] == before["notes"]
-    assert after["hp"] == 2.0
-    assert [ref["skill_id"] for ref in after["skills"]] == ["skill_ming_shi", "skill_li_rang"]
+    after_general = load_yaml(general_path)
+    after_variant = load_yaml(variant_path)
+    assert after_general["aliases"] == general_before["aliases"]
+    assert after_variant["source"] == variant_before["source"]
+    assert after_variant["notes"] == variant_before["notes"]
+    assert after_variant["hp"] == 3.0
+    assert [ref["skill_id"] for ref in after_variant["skills"]] == [
+        "skill_guan_xing",
+        "skill_kong_cheng",
+    ]
 
 
 # ---------------------------------------------------------------- 7 & 8 & 9
@@ -333,7 +382,7 @@ def test_existing_skill_can_be_searched_and_bound(client: TestClient, store) -> 
 
 
 def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store) -> None:
-    """8) 显式绑定 SkillVersion，存入 YAML 并进入 general_skills 表。"""
+    """8) 显式绑定 SkillVersion，存入 YAML 并进入 variant_skills 表。"""
     versions = client.get(
         "/api/skills/skill_ji_zhi/versions",
         params={"mode": "identity", "product_id": "product_identity_sample_2025"},
@@ -341,12 +390,14 @@ def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store)
     assert versions, "该技能应该有版本可绑定"
     picked = versions[0]
 
+    variant_id = variant_of(client.app, "general_huang_yue_ying")
     response = post(
         client,
-        "/edit/general/general_huangyueying_sample_identity",
-        data=general_payload(
+        "/edit/general/general_huang_yue_ying",
+        data=general_edit(
             client.app,
-            name="【SAMPLE】黄月英",
+            "general_huang_yue_ying",
+            name="黄月英",
             mode="identity",
             hp="3",
             gender="female",
@@ -354,46 +405,45 @@ def test_general_can_pin_skill_version(client: TestClient, workdir: Path, store)
             skill_count="1",
             skill_0_skill_id="skill_ji_zhi",
             skill_0_version_id=picked["id"],
-            _base_sha=store.entity_sha("general", "general_huangyueying_sample_identity"),
         ),
     )
     assert response.status_code == 303, response.text
 
-    data = load_yaml(entity_file(workdir, "general", "general_huangyueying_sample_identity"))
+    data = load_yaml(variant_file(workdir, "general_huang_yue_ying"))
     assert data["skills"] == [{"skill_id": "skill_ji_zhi", "version_id": picked["id"]}]
 
     conn = sqlite3.connect(workdir / "build" / "sgs.db")
     conn.row_factory = sqlite3.Row
     row = conn.execute(
-        "SELECT version_id FROM general_skills WHERE general_id = ? AND skill_id = ?",
-        ("general_huangyueying_sample_identity", "skill_ji_zhi"),
+        "SELECT version_id FROM variant_skills WHERE variant_id = ? AND skill_id = ?",
+        (variant_id, "skill_ji_zhi"),
     ).fetchone()
-    report = general_report(conn, "general_huangyueying_sample_identity")
+    report = general_report(conn, "general_huang_yue_ying")
     conn.close()
     assert row["version_id"] == picked["id"]
-    assert report["skills"][0]["pinned"]["id"] == picked["id"]
-    # 没绑定版本的技能仍然走自动推导
-    assert report["skills"][0]["version_id"] == picked["id"]
+    entry = report["variants"][0]["skills"][0]
+    assert entry["pinned"]["id"] == picked["id"]
+    assert entry["version_id"] == picked["id"]
 
 
 def test_version_must_belong_to_same_skill(client: TestClient, workdir: Path, store) -> None:
     """9) version_id 必须属于对应 skill_id。"""
     response = post(
         client,
-        "/edit/general/general_huangyueying_sample_identity",
-        data=general_payload(
+        "/edit/general/general_huang_yue_ying",
+        data=general_edit(
             client.app,
-            name="【SAMPLE】黄月英",
+            "general_huang_yue_ying",
+            name="黄月英",
             mode="identity",
             skill_count="1",
             skill_0_skill_id="skill_qi_cai",
             skill_0_version_id="skill_ji_zhi_identity_v1",  # 属于别的技能
-            _base_sha=store.entity_sha("general", "general_huangyueying_sample_identity"),
         ),
     )
     assert response.status_code == 400
     assert "和选中的技能不一致" in response.text
-    data = load_yaml(entity_file(workdir, "general", "general_huangyueying_sample_identity"))
+    data = load_yaml(variant_file(workdir, "general_huang_yue_ying"))
     assert data["skills"] == [
         {"skill_id": "skill_ji_zhi", "version_id": None},
         {"skill_id": "skill_qi_cai", "version_id": None},
@@ -411,17 +461,20 @@ def test_validator_reports_foreign_version_reference() -> None:
     kept = [
         raw
         for raw in raws
-        if not (raw.kind == "general" and raw.data.get("id") == "general_kongrong_sample_guozhan")
+        if not (raw.kind == "general_variant" and raw.data.get("id") == "variant_zhu_ge_liang_biao_zhun_ban")
     ]
     kept.append(
         RawEntity(
-            kind="general",
+            kind="general_variant",
             data={
-                "id": "general_kongrong_sample_guozhan",
-                "name": "孔融",
-                "skills": [{"skill_id": "skill_ming_shi", "version_id": "skill_li_rang_guozhan_v1"}],
+                "id": "variant_zhu_ge_liang_biao_zhun_ban",
+                "general_id": "general_zhu_ge_liang",
+                "variant": "标准版",
+                "skills": [
+                    {"skill_id": "skill_guan_xing", "version_id": "skill_kong_cheng_identity_v1"}
+                ],
             },
-            origin=Origin("generals/kongrong_sample_guozhan.yaml", 1, ""),
+            origin=Origin("general_variants/variant_zhu_ge_liang_biao_zhun_ban.yaml", 1, ""),
         )
     )
     result = validate_entities(data_dir, kept, issues)
@@ -444,7 +497,7 @@ def test_create_general_with_new_skill_only(client: TestClient, workdir: Path) -
     )
     assert response.status_code == 303, response.text
     general_id = new_general_id(response)
-    data = load_yaml(entity_file(workdir, "general", general_id))
+    data = load_yaml(variant_file(workdir, general_id))
     skill_id = data["skills"][0]["skill_id"]
     assert data["skills"][0]["version_id"] is None
     assert (workdir / "data" / "skills" / f"{skill_id}.yaml").exists()
@@ -470,7 +523,7 @@ def test_create_general_with_skill_and_version(client: TestClient, workdir: Path
     )
     assert response.status_code == 303, response.text
     general_id = new_general_id(response)
-    data = load_yaml(entity_file(workdir, "general", general_id))
+    data = load_yaml(variant_file(workdir, general_id))
     skill_id = data["skills"][0]["skill_id"]
     version_id = data["skills"][0]["version_id"]
     assert version_id
@@ -487,42 +540,42 @@ def test_add_version_to_existing_skill_sets_previous(
     client: TestClient, workdir: Path, store
 ) -> None:
     """12 + 13) 已有技能新增版本，并正确串上 previous_version_id。"""
-    old_path = workdir / "data" / "skill_versions" / "skill_li_rang_guozhan_v1.yaml"
+    old_path = workdir / "data" / "skill_versions" / "skill_kong_cheng_identity_v1.yaml"
     old_before = old_path.read_text(encoding="utf-8")
 
     response = post(
         client,
-        "/edit/general/general_kongrong_sample_guozhan",
-        data=general_payload(
+        "/edit/general/general_zhu_ge_liang",
+        data=general_edit(
             client.app,
-            name="【SAMPLE】孔融",
-            mode="guozhan",
+            "general_zhu_ge_liang",
+            name="诸葛亮",
+            mode="identity",
             skill_count="1",
-            skill_0_skill_id="skill_li_rang",
-            skill_0_version_id="skill_li_rang_guozhan_v1",
-            skill_0_add_version_text="【测试】2026 调整后的礼让文本。",
+            skill_0_skill_id="skill_kong_cheng",
+            skill_0_version_id="skill_kong_cheng_identity_v1",
+            skill_0_add_version_text="【测试】2026 调整后的空城文本。",
             skill_0_add_version_label="2026 调整",
-            skill_0_add_version_from="skill_li_rang_guozhan_v1",
-            _base_sha=store.entity_sha("general", "general_kongrong_sample_guozhan"),
+            skill_0_add_version_from="skill_kong_cheng_identity_v1",
         ),
     )
     assert response.status_code == 303, response.text
 
     # 旧版本原样保留
     assert old_path.read_text(encoding="utf-8") == old_before
-    data = load_yaml(entity_file(workdir, "general", "general_kongrong_sample_guozhan"))
+    data = load_yaml(variant_file(workdir, "general_zhu_ge_liang"))
     version_id = data["skills"][0]["version_id"]
-    assert version_id != "skill_li_rang_guozhan_v1"
+    assert version_id != "skill_kong_cheng_identity_v1"
     new_version = load_yaml(workdir / "data" / "skill_versions" / f"{version_id}.yaml")
-    assert new_version["previous_version_id"] == "skill_li_rang_guozhan_v1"
+    assert new_version["previous_version_id"] == "skill_kong_cheng_identity_v1"
     assert new_version["version_label"] == "2026 调整"
-    assert new_version["skill_id"] == "skill_li_rang"
+    assert new_version["skill_id"] == "skill_kong_cheng"
 
 
 def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
     """18) 内容完全相同的版本不重复创建：直接复用已有版本。"""
     before_count = len(list((workdir / "data" / "skill_versions").glob("*.yaml")))
-    existing = load_yaml(workdir / "data" / "skill_versions" / "skill_li_rang_guozhan_v1.yaml")
+    existing = load_yaml(workdir / "data" / "skill_versions" / "skill_kong_cheng_identity_v1.yaml")
 
     response = post(
         client,
@@ -530,17 +583,17 @@ def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
         data=general_payload(
             client.app,
             name="复用测试",
-            mode="guozhan",
+            mode="identity",
             skill_count="1",
-            skill_0_skill_id="skill_li_rang",
+            skill_0_skill_id="skill_kong_cheng",
             skill_0_add_version_text=existing["text"],
         ),
     )
     assert response.status_code == 303, response.text
     after_count = len(list((workdir / "data" / "skill_versions").glob("*.yaml")))
     assert after_count == before_count
-    data = load_yaml(entity_file(workdir, "general", new_general_id(response)))
-    assert data["skills"][0]["version_id"] == "skill_li_rang_guozhan_v1"
+    data = load_yaml(variant_file(workdir, new_general_id(response)))
+    assert data["skills"][0]["version_id"] == "skill_kong_cheng_identity_v1"
 
 
 # ---------------------------------------------------------------- 14 & 15 & 16
@@ -644,25 +697,26 @@ def test_base_sha_conflict_still_protects_general(
     client: TestClient, app, workdir: Path
 ) -> None:
     """17) 专用录入页同样受 `_base_sha` 并发保护约束。"""
-    path = entity_file(workdir, "general", "general_kongrong_sample_guozhan")
-    payload = general_payload(
+    path = entity_file(workdir, "general", "general_zhu_ge_liang")
+    payload = general_edit(
         client.app,
-        name="【SAMPLE】孔融",
-        mode="guozhan",
+        "general_zhu_ge_liang",
+        name="诸葛亮",
+        mode="identity",
         title="不该写入的称号",
-        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
     )
-    # 页面打开之后，别人改了这条记录
+    # 页面打开之后，别人改了这条记录（改的是武将个体文件）
     path.write_text(
-        path.read_text(encoding="utf-8").replace("faction: 群", "faction: 魏"), encoding="utf-8"
+        path.read_text(encoding="utf-8").replace("name: 诸葛亮", "name: 诸葛亮（别人改过）"),
+        encoding="utf-8",
     )
 
-    response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
+    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
     assert response.status_code == 400
     assert "没有写入任何文件" in response.text
     text = path.read_text(encoding="utf-8")
-    assert "faction: 魏" in text            # 别人的改动保留
-    assert "不该写入的称号" not in text      # 我们这次没有写入
+    assert "诸葛亮（别人改过）" in text       # 别人的改动保留
+    assert "不该写入的称号" not in text       # 我们这次没有写入
 
 
 def test_missing_base_sha_is_rejected(client: TestClient, app, workdir: Path) -> None:
@@ -679,23 +733,36 @@ def test_missing_base_sha_is_rejected(client: TestClient, app, workdir: Path) ->
 def test_delete_skill_blocked_by_general_ref(client: TestClient, store) -> None:
     """18) 武将还在引用技能 -> 不能删除 Skill，并列出引用方。"""
     references = store.reverse_refs("skill", "skill_ji_zhi")
-    assert any(ref["kind"] == "general" for ref in references)
-    assert any(ref["field"] == "skills[0].skill_id" for ref in references if ref["kind"] == "general")
+    assert any(ref["kind"] == "general_variant" for ref in references)
+    assert any(
+        ref["field"].startswith("skills[") for ref in references
+        if ref["kind"] == "general_variant"
+    )
 
     outcome = store.delete("skill", "skill_ji_zhi")
     assert outcome.ok is False
     assert outcome.blocked is True
-    assert any(ref["kind"] == "general" for ref in outcome.references)
+    assert any(ref["kind"] == "general_variant" for ref in outcome.references)
 
 
 def test_delete_pinned_skill_version_blocked(client: TestClient, store) -> None:
     """18) 版本被武将显式绑定 -> 不能删除 SkillVersion。"""
-    references = store.reverse_refs("skill_version", "skill_ming_shi_guozhan_v1")
+    variant_id = variant_of(client.app, "general_zhu_ge_liang")
+    variant = store.entity("general_variant", variant_id)
+    outcome = store.save(
+        "general_variant",
+        dict(variant.model_dump(mode="json"))
+        | {"skills": [{"skill_id": "skill_guan_xing", "version_id": "skill_guan_xing_identity_v1"}]},
+        old_id=variant_id,
+    )
+    assert outcome.ok, outcome.error
+
+    references = store.reverse_refs("skill_version", "skill_guan_xing_identity_v1")
     assert any(
-        ref["kind"] == "general" and ref["field"] == "skills[0].version_id"
+        ref["kind"] == "general_variant" and ref["field"] == "skills[0].version_id"
         for ref in references
     )
-    outcome = store.delete("skill_version", "skill_ming_shi_guozhan_v1")
+    outcome = store.delete("skill_version", "skill_guan_xing_identity_v1")
     assert outcome.ok is False
     assert outcome.blocked is True
 
@@ -735,9 +802,11 @@ def test_suggest_api_returns_existing_values(client: TestClient) -> None:
 
 
 def test_duplicate_name_api(client: TestClient) -> None:
-    hits = client.get("/api/generals", params={"name": "孔融"}).json()
-    assert hits and hits[0]["id"] == "general_kongrong_sample_guozhan"
-    assert hits[0]["general_set"] and hits[0]["product_name"]
+    hits = client.get("/api/generals", params={"name": "诸葛亮"}).json()
+    assert hits and hits[0]["id"] == "general_zhu_ge_liang"
+    assert hits[0]["general_set"]  # 系列取自它的第一个版本
+    assert hits[0]["variant_labels"] == ["标准版"]
+    assert hits[0]["variant_count"] == 1
 
 
 def test_version_options_are_ranked_and_descriptive(client: TestClient) -> None:
@@ -757,31 +826,33 @@ def test_version_options_are_ranked_and_descriptive(client: TestClient) -> None:
 
 
 def test_general_editor_page_renders_rows_and_combos(client: TestClient) -> None:
-    body = client.get("/edit/general/general_kongrong_sample_guozhan").text
+    body = client.get("/edit/general/general_zhu_ge_liang").text
     assert 'data-combo="skill"' in body
     assert 'data-combo="product"' in body
     assert "skill-rows" in body
     assert "skill-row-template" in body
     assert 'name="skill_0_skill_id"' in body
-    assert "skill_ming_shi" in body
+    assert "skill_guan_xing" in body
     assert "保存并新增下一位武将" in body
 
 
 def test_new_general_page_can_copy_from_template(client: TestClient) -> None:
-    body = client.get("/new/general", params={"from": "general_kongrong_sample_guozhan", "copy": "attrs"}).text
+    body = client.get("/new/general", params={"from": "general_zhu_ge_liang", "copy": "attrs"}).text
     assert "为模板" in body
     assert 'data-field="faction"' in body
     assert "copy-toggle" in body
     assert "称号" in body and 'data-field="title"' not in body  # 称号不参与复制
-    # 产品信息已带入
-    assert 'value="product_guozhan_sample_2024"' in body
+    # 模板只带入模式/系列这类公共信息（产品不强制关联，所以这里不再要求带上产品）
 
 
-def test_general_detail_shows_pinned_version(client: TestClient) -> None:
-    body = client.get("/view/general/general_kongrong_sample_guozhan").text
-    assert "显式绑定版本" in body
-    assert "skill_ming_shi_guozhan_v1" in body
-    assert "按卡面指定" in body
+def test_general_detail_shows_variants_and_skills(client: TestClient) -> None:
+    body = client.get("/view/general/general_zhu_ge_liang").text
+    assert "General（武将个体）→ GeneralVariant（版本）" in body
+    assert "标准版" in body
+    assert "观星" in body and "空城" in body
+    # 没有显式绑定版本时，显示“自动推导”出来的当前版本
+    assert "skill_guan_xing_identity_v1" in body
+    assert "自动推导" in body
 
 
 def test_product_detail_shows_sets(client: TestClient) -> None:
@@ -868,11 +939,17 @@ def test_legacy_general_shape_is_rejected() -> None:
 
 
 def test_real_data_matches_new_schema(app, store) -> None:
-    """迁移后的示例数据能通过完整校验，并且 manifest 与数据库一致。"""
+    """真实数据能通过完整校验，并且武将是 General + GeneralVariant 两层。"""
     snapshot = store.snapshot()
     assert snapshot.ok, snapshot.format_report()
-    assert snapshot.bundle.count("general") >= 3
+    assert snapshot.bundle.count("general") >= 25
+    assert snapshot.bundle.count("general_variant") >= 25
+    # General 只有稳定信息：名字/别名/备注；模式/体力/技能都在版本上
     for general in snapshot.bundle.all("general").values():
-        assert hasattr(general, "skills")
+        assert not hasattr(general, "skills")
+        assert not hasattr(general, "hp")
+        assert not hasattr(general, "mode")
+    for variant in snapshot.bundle.all("general_variant").values():
+        assert variant.general_id in snapshot.bundle.ids("general")
     for product in snapshot.bundle.all("product").values():
         assert not hasattr(product, "included_sets")

@@ -15,7 +15,7 @@ from sgs_helper.repo import get_meta
 EXPECTED_TABLES = {
     "products",
     "generals",
-    "general_skills",
+    "variant_skills",
     "skills",
     "skill_versions",
     "cards",
@@ -46,7 +46,7 @@ def test_build_creates_db_file(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "nested" / "sgs.db"
     result = build_database(synth, db_path)
     assert db_path.exists()
-    assert result.total == 18
+    assert result.total == 21
     assert result.db_path == db_path
 
 
@@ -61,7 +61,7 @@ def test_counts_match_bundle(synth: Path, tmp_path: Path) -> None:
     assert result.counts["faq"] == 1
     assert result.counts["keyword"] == 2
     assert result.counts["timing"] == 2
-    assert result.total == 18
+    assert result.total == 21
 
 
 def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
@@ -82,19 +82,28 @@ def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
 
 
 def test_build_refuses_invalid_data(synth: Path, tmp_path: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
+    replace_in(
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
     with pytest.raises(DataValidationError) as excinfo:
         build_database(synth, tmp_path / "sgs.db")
     assert "skill_missing" in excinfo.value.result.format_report()
 
 
 def test_build_can_force_invalid_data(synth: Path, tmp_path: Path) -> None:
-    replace_in(synth / "generals" / "demo_alpha.yaml", "skill_id: skill_demo", "skill_id: skill_missing")
+    replace_in(
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path, allow_invalid=True)
     conn = sqlite3.connect(db_path)
     try:
         assert conn.execute("SELECT COUNT(*) FROM generals").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM general_variants").fetchone()[0] == 3
     finally:
         conn.close()
 
@@ -118,26 +127,34 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "1"
+    assert meta["schema_version"] == "2"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
-    assert meta["entity_total"] == "18"
+    assert meta["entity_total"] == "21"
     assert meta["fts5"] in {"0", "1"}
     assert "built_at" in meta
 
 
-def test_general_skills_join_table(synth_db: Path) -> None:
+def test_variant_skills_join_table(synth_db: Path) -> None:
+    """技能关系挂在**武将版本**上（general_id 冗余存一份，方便按武将查）。"""
     conn = sqlite3.connect(synth_db)
     try:
         rows = conn.execute(
-            "SELECT general_id, skill_id, version_id, position FROM general_skills "
-            "ORDER BY general_id"
+            "SELECT variant_id, general_id, skill_id, version_id, position "
+            "FROM variant_skills ORDER BY variant_id"
         ).fetchall()
     finally:
         conn.close()
     assert rows == [
-        ("general_demo_alpha", "skill_demo", None, 0),
-        ("general_demo_beta", "skill_demo", None, 0),
+        ("variant_demo_alpha_guozhan", "general_demo_alpha", "skill_demo", None, 0),
+        (
+            "variant_demo_alpha_identity",
+            "general_demo_alpha",
+            "skill_demo",
+            "skill_demo_identity_v1",
+            0,
+        ),
+        ("variant_demo_beta_identity", "general_demo_beta", "skill_demo", None, 0),
     ]
 
 

@@ -15,7 +15,7 @@ import re
 from datetime import date
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from .constants import (
     ID_PATTERN,
@@ -106,7 +106,7 @@ class Product(StrictModel):
 
 
 class GeneralSkillRef(StrictModel):
-    """武将 → 技能的关系（以及这个武将**具体用哪一版**技能文本）。
+    """武将版本 → 技能的关系（以及这个版本**具体用哪一版**技能文本）。
 
     为什么不用 ``skill_ids: [...]`` 两个平行数组：平行数组一旦顺序错位就会静默张冠李戴，
     而且表达不了“实体武将卡上印的到底是哪一版”。
@@ -122,32 +122,58 @@ class GeneralSkillRef(StrictModel):
 
 
 class General(StrictModel):
-    """武将。只引用技能（以及可选的具体版本），不把技能规则文本写死。
+    """**武将个体**。只保存相对稳定的信息。
 
-    **只有 ``name`` 是必须填的**：这个库要允许“先录手头已有的信息、以后再补全”，
-    不能因为缺一个字段就整条保存不了。
+    ``诸葛亮`` / ``界诸葛亮`` / ``神诸葛亮`` 是**不同**的 General（官方武将名不同）；
+    而“标准版诸葛亮”与“国战版诸葛亮”官方名都还是``诸葛亮``，
+    它们是同一个 General 的两个 :class:`GeneralVariant`。
+
+    模式、势力、体力、性别、称号、产品、武将牌系列、技能配置**都不在这里**，
+    一律放在 GeneralVariant 上 —— 那些本来就是“版本之间会变”的东西。
     """
 
     id: Id
     name: Name
-    #: 称号（武将卡上的称号，例如“独眼的罗刹”）
+    aliases: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
+class GeneralVariant(StrictModel):
+    """某个玩法 / 版本下的武将数据（身份局标准版、国战版、界限突破…）。
+
+    只有 ``name`` 之类的稳定信息留在 General，其余全部在这里：
+
+    - ``variant``：版本标签，例如 ``标准版`` / ``国战版`` / ``界限突破``；
+    - ``mode``：游戏模式；身份局标准版记正常体力（3/4/5），
+      国战按规则意义上的阴阳鱼记 1.5 / 2 / 2.5（**不要**把半阴阳鱼记成 3/4/5）；
+    - 其余字段可以留空，先录手头有的信息。
+    """
+
+    id: Id
+    general_id: Id
+    #: 版本标签（同一武将的多个版本靠它区分，例如 标准版 / 国战版）
+    variant: str = "标准版"
     title: str = ""
-    #: 实体卡上的编号（例如 WEI001 / shu-01）。**不是**内部 id，允许大小写字母/数字/-/_。
     general_number: str | None = None
     mode: Mode | None = None
     faction: str = ""
-    #: 勾玉（体力）。允许为空：先录入名字、以后再补体力。
     hp: float | None = Field(default=None, gt=0, le=10)
     gender: Gender = Gender.unknown
     product_id: Id | None = None
-    #: 武将牌系列 / 武将牌组（替代旧的、含义不清的 ``package``）
     general_set: str | None = None
     #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
     skills: list[GeneralSkillRef] = Field(default_factory=list)
-    aliases: list[str] = Field(default_factory=list)
     source: Source | None = None
     verification_status: VerificationStatus = VerificationStatus.unverified
     notes: str = ""
+
+    @field_serializer("hp")
+    def _serialize_hp(self, value: float | None) -> float | int | None:
+        """体力写成 3 / 4 / 5 而不是 3.0；国战半勾玉仍然是 1.5。"""
+        if value is None:
+            return None
+        number = float(value)
+        return int(number) if number.is_integer() else number
 
     @field_validator("general_number", mode="before")
     @classmethod
@@ -332,6 +358,7 @@ class Timing(StrictModel):
 MODEL_BY_KIND: dict[str, type[StrictModel]] = {
     "product": Product,
     "general": General,
+    "general_variant": GeneralVariant,
     "skill": Skill,
     "skill_version": SkillVersion,
     "card": Card,

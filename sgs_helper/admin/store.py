@@ -295,6 +295,10 @@ class AdminStore:
             return getattr(entity, "name_printed", "") or entity.id
         if kind == "faq":
             return truncate(getattr(entity, "question", ""), 50)
+        if kind == "general_variant":
+            general = self.bundle.get("general", getattr(entity, "general_id", ""))
+            base = getattr(general, "name", "") or getattr(entity, "general_id", "")
+            return f"{base}（{getattr(entity, 'variant', '')}）"
         return getattr(entity, "name", "") or entity.id
 
     def name_of(self, kind: str, entity_id: str | None) -> str:
@@ -316,9 +320,22 @@ class AdminStore:
             ]
             return " · ".join(b for b in bits if b)
         if kind == "general":
+            variants = [
+                v for v in bundle.all("general_variant").values()
+                if v.general_id == entity.id
+            ]
+            bits = []
+            if getattr(entity, "aliases", None):
+                bits.append("别名：" + "、".join(entity.aliases))
+            bits.append(f"{len(variants)} 个版本")
+            if variants:
+                bits.append("、".join(sorted(v.variant for v in variants)))
+            return " · ".join(bits)
+        if kind == "general_variant":
             bits = [
                 getattr(entity, "faction", "") or "",
-                f"{getattr(entity, 'hp', '')} 勾玉" if getattr(entity, "hp", None) is not None else "",
+                f"{entity.hp} 体力" if getattr(entity, "hp", None) is not None else "",
+                getattr(entity, "title", "") or "",
                 f"系列：{entity.general_set}" if getattr(entity, "general_set", None) else "",
             ]
             skills = [
@@ -362,6 +379,20 @@ class AdminStore:
         if kind == "timing":
             return truncate(getattr(entity, "description", ""), 60)
         return ""
+
+    def variants_of(self, general_id: str) -> list[Any]:
+        """某个武将个体的全部版本（按版本标签排序）。"""
+        return sorted(
+            (
+                v
+                for v in self.bundle.all("general_variant").values()
+                if v.general_id == general_id
+            ),
+            key=lambda v: (v.variant, v.id),
+        )
+
+    def _product_id_of_variant(self, variant: Any) -> str | None:
+        return getattr(variant, "product_id", None)
 
     def describe(self, kind: str, entity: Any) -> dict:
         """列表/搜索结果的一行。"""
@@ -482,7 +513,7 @@ class AdminStore:
             if product and getattr(entity, "product_id", None) != product:
                 continue
             if package:
-                if kind == "general":
+                if kind in {"general", "general_variant"}:
                     if getattr(entity, "general_set", None) != package:
                         continue
                 elif getattr(entity, "package", None) != package:
@@ -513,7 +544,7 @@ class AdminStore:
             product = getattr(entity, "product_id", None)
             if product:
                 products[product] = products.get(product, 0) + 1
-            if kind == "general":
+            if kind in {"general", "general_variant"}:
                 value = getattr(entity, "general_set", None)
             else:
                 value = getattr(entity, "package", None)
@@ -531,7 +562,7 @@ class AdminStore:
             "statuses": options(statuses, lambda k: VERIFICATION_LABELS.get(k, k)),
             "products": options(products, lambda k: self.name_of("product", k)),
             "packages": options(packages, lambda k: k),
-            "package_label": "武将牌系列" if kind == "general" else "包/牌堆",
+            "package_label": "武将牌系列" if kind in {"general", "general_variant"} else "包/堆",
         }
 
     def review_groups(self) -> list[dict]:
@@ -700,10 +731,11 @@ class AdminStore:
         """势力 / 武将牌系列这类“自由文本但希望复用已有值”的字段的候选值。"""
         text = (query or "").strip()
         counter: dict[str, int] = {}
-        for general in self.bundle.all("general").values():
+        # 势力 / 武将牌系列现在属于 GeneralVariant
+        for variant in self.bundle.all("general_variant").values():
             value = (
-                getattr(general, "faction", "") if field_name == "faction"
-                else getattr(general, "general_set", None) if field_name == "general_set"
+                getattr(variant, "faction", "") if field_name == "faction"
+                else getattr(variant, "general_set", None) if field_name == "general_set"
                 else None
             )
             if not value:
@@ -722,19 +754,29 @@ class AdminStore:
         if not text:
             return []
         rows = []
-        for general_id, general in self.bundle.all("general").items():
+        bundle = self.bundle
+        for general_id, general in bundle.all("general").items():
             if general.name != text and text not in general.name:
                 continue
+            variants = sorted(
+                (v for v in bundle.all("general_variant").values() if v.general_id == general_id),
+                key=lambda v: (v.variant, v.id),
+            )
+            first = variants[0] if variants else None
             rows.append(
                 {
                     "id": general_id,
                     "name": general.name,
-                    "mode": general.mode,
-                    "mode_label": MODE_LABELS.get(general.mode or "", general.mode or ""),
-                    "product_id": general.product_id,
-                    "product_name": self.name_of("product", general.product_id),
-                    "general_set": general.general_set or "",
-                    "general_number": general.general_number or "",
+                    "mode": first.mode if first else None,
+                    "mode_label": MODE_LABELS.get(first.mode or "", first.mode or "")
+                    if first
+                    else "",
+                    "product_id": first.product_id if first else None,
+                    "product_name": self.name_of("product", first.product_id) if first else "",
+                    "general_set": (first.general_set or "") if first else "",
+                    "general_number": (first.general_number or "") if first else "",
+                    "variant_labels": [v.variant for v in variants],
+                    "variant_count": len(variants),
                     "exact": general.name == text,
                 }
             )
@@ -819,7 +861,9 @@ class AdminStore:
         elif kind == "product":
             bundle = self.bundle
             counts = {
-                "武将": sum(1 for g in bundle.all("general").values() if g.product_id == entity_id),
+                "武将版本": sum(
+                    1 for v in bundle.all("general_variant").values() if v.product_id == entity_id
+                ),
                 "实体卡": sum(1 for p in bundle.all("card_printing").values() if p.product_id == entity_id),
                 "技能版本": sum(1 for v in bundle.all("skill_version").values() if v.product_id == entity_id),
             }
@@ -946,48 +990,69 @@ class AdminStore:
             return None
         bundle = self.bundle
         as_of = date.today().isoformat()
-        mode = entity.mode
 
-        skills = []
-        for position, ref in enumerate(entity.skills):
-            skill = bundle.get("skill", ref.skill_id)
-            versions = [
-                v for v in bundle.all("skill_version").values() if v.skill_id == ref.skill_id
-            ]
-            versions.sort(
-                key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id)
-            )
-            payloads = {v.id: v.model_dump(mode="json") for v in versions}
-            for payload in payloads.values():
-                payload["status"] = _status(payload, as_of)
+        variants = []
+        for variant in sorted(
+            (v for v in bundle.all("general_variant").values() if v.general_id == general_id),
+            key=lambda v: (v.variant, v.id),
+        ):
+            mode = variant.mode
+            payloads: dict[str, dict] = {}
+            skills = []
+            for position, ref in enumerate(variant.skills):
+                versions = [
+                    v
+                    for v in bundle.all("skill_version").values()
+                    if v.skill_id == ref.skill_id
+                ]
+                versions.sort(
+                    key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id)
+                )
+                for version in versions:
+                    if version.id not in payloads:
+                        payload = version.model_dump(mode="json")
+                        payload["status"] = _status(payload, as_of)
+                        payloads[version.id] = payload
 
-            candidates = [p for p in payloads.values() if p["mode"] in (mode, "common")]
-            pinned = payloads.get(ref.version_id) if ref.version_id else None
-            derived, ambiguous = (
-                pick_current(candidates, mode, as_of) if candidates else (None, [])
-            )
-            skills.append(
+                candidates = [
+                    payloads[v.id]
+                    for v in versions
+                    if payloads[v.id]["mode"] in (mode, "common")
+                ]
+                pinned = payloads.get(ref.version_id) if ref.version_id else None
+                derived, ambiguous = (
+                    pick_current(candidates, mode, as_of) if candidates else (None, [])
+                )
+                skills.append(
+                    {
+                        "position": position,
+                        "skill_id": ref.skill_id,
+                        "skill": bundle.get("skill", ref.skill_id),
+                        "version_id": ref.version_id,
+                        "pinned": pinned,
+                        "derived": derived,
+                        "current": pinned or derived,
+                        "pinned_missing": bool(ref.version_id and pinned is None),
+                        "all_versions": [payloads[v.id] for v in versions],
+                        "ambiguous_ids": [p["id"] for p in ambiguous],
+                    }
+                )
+            variants.append(
                 {
-                    "position": position,
-                    "skill_id": ref.skill_id,
-                    "skill": skill,
-                    "version_id": ref.version_id,
-                    "pinned": pinned,
-                    "derived": derived,
-                    "current": pinned or derived,
-                    "pinned_missing": bool(ref.version_id and pinned is None),
-                    "all_versions": [payloads[v.id] for v in versions],
-                    "ambiguous_ids": [p["id"] for p in ambiguous],
-                    "edit_url": (
-                        f"/edit/general/{general_id}#skill-{position}"
-                    ),
+                    "entity": variant,
+                    "id": variant.id,
+                    "variant": variant.variant,
+                    "skills": skills,
+                    "product_name": self.name_of("product", variant.product_id),
+                    "source": source_dict(variant),
+                    "edit_url": f"/edit/general/{general_id}?variant={variant.id}",
                 }
             )
+
         return {
             "kind": "general",
             "general": entity,
-            "product": bundle.get("product", entity.product_id) if entity.product_id else None,
-            "skills": skills,
+            "variants": variants,
             "as_of": as_of,
         }
 
@@ -1023,13 +1088,17 @@ class AdminStore:
         if entity is None:
             return None
         bundle = self.bundle
-        generals = [g for g in bundle.all("general").values() if g.product_id == product_id]
+        variants = [v for v in bundle.all("general_variant").values() if v.product_id == product_id]
+        for variant in variants:
+            general = bundle.get("general", variant.general_id)
+            variant_name = getattr(general, "name", variant.general_id)
+            variant._display_name = f"{variant_name}（{variant.variant}）"  # type: ignore[attr-defined]
         printings = [p for p in bundle.all("card_printing").values() if p.product_id == product_id]
         versions = [v for v in bundle.all("skill_version").values() if v.product_id == product_id]
         return {
             "kind": "product",
             "product": entity,
-            "generals": sorted(generals, key=lambda g: g.id),
+            "variants": sorted(variants, key=lambda v: (v.general_id, v.variant, v.id)),
             "printings": sorted(printings, key=lambda p: (p.card_set or "", p.suit, p.rank or 0, p.id)),
             "skill_versions": sorted(versions, key=lambda v: (v.skill_id, mode_sort_key(v.mode), v.id)),
         }

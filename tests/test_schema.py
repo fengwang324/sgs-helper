@@ -5,7 +5,14 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from sgs_helper.schema import CardPrinting, General, Product, SkillVersion, Source
+from sgs_helper.schema import (
+    CardPrinting,
+    General,
+    GeneralVariant,
+    Product,
+    SkillVersion,
+    Source,
+)
 
 SOURCE = {"type": "community_db", "title": "测试来源"}
 
@@ -98,11 +105,37 @@ def test_empty_rule_text_is_rejected() -> None:
 
 
 def test_hp_bounds() -> None:
-    General(id="general_x", name="X", mode="guozhan", hp=1.5)
+    """体力属于 GeneralVariant（武将个体不存体力）。"""
+    GeneralVariant(id="variant_x", general_id="general_x", mode="guozhan", hp=1.5)
     with pytest.raises(ValidationError):
-        General(id="general_x", name="X", mode="guozhan", hp=0)
+        GeneralVariant(id="variant_x", general_id="general_x", hp=0)
     with pytest.raises(ValidationError):
-        General(id="general_x", name="X", mode="guozhan", hp=99)
+        GeneralVariant(id="variant_x", general_id="general_x", hp=99)
+
+
+def test_general_stays_stable_and_variant_carries_the_rest() -> None:
+    """诸葛亮 / 界诸葛亮 是两个 General；标准版与国战版是同一个 General 的两个 Variant。"""
+    assert set(General.model_fields) == {"id", "name", "aliases", "notes"}
+    general = General(id="general_zhu_ge_liang", name="诸葛亮", aliases=["老诸葛"])
+    standard = GeneralVariant(
+        id="variant_zhu_ge_liang_biao_zhun_ban",
+        general_id=general.id,
+        variant="标准版",
+        mode="identity",
+        faction="蜀",
+        hp=3,
+        title="迟暮的丞相",
+    )
+    guozhan = GeneralVariant(
+        id="variant_zhu_ge_liang_guo_zhan_ban",
+        general_id=general.id,
+        variant="国战版",
+        mode="guozhan",
+        faction="蜀",
+        hp=1.5,
+    )
+    assert standard.general_id == guozhan.general_id == general.id
+    assert standard.variant != guozhan.variant
 
 
 def test_source_requires_known_type() -> None:

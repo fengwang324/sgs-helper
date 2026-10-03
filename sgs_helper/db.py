@@ -30,7 +30,7 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
@@ -38,9 +38,10 @@ COLUMNS: dict[str, tuple[str, ...]] = {
         "name", "series", "mode", "publisher", "release_year", "release_date",
         "edition", "general_sets", "card_sets", "notes", "verification_status",
     ),
-    "general": (
-        "name", "title", "general_number", "mode", "faction", "hp", "gender",
-        "product_id", "general_set", "aliases", "notes", "verification_status",
+    "general": ("name", "aliases", "notes"),
+    "general_variant": (
+        "general_id", "variant", "title", "general_number", "mode", "faction", "hp",
+        "gender", "product_id", "general_set", "notes", "verification_status",
     ),
     "skill": ("name", "aliases", "notes"),
     "skill_version": (
@@ -88,8 +89,11 @@ TRACE_COLUMNS: tuple[str, ...] = ("source_key", "yaml_file", "yaml_line")
 
 #: 索引：(名称, 定义)
 INDEXES: tuple[tuple[str, str], ...] = (
-    ("idx_generals_product", "generals(product_id)"),
-    ("idx_generals_mode", "generals(mode)"),
+    ("idx_general_variants_general", "general_variants(general_id)"),
+    ("idx_general_variants_mode", "general_variants(mode)"),
+    ("idx_general_variants_product", "general_variants(product_id)"),
+    ("idx_variant_skills_variant", "variant_skills(variant_id)"),
+    ("idx_variant_skills_skill", "variant_skills(skill_id)"),
     ("idx_skill_versions_skill", "skill_versions(skill_id, mode)"),
     ("idx_skill_versions_prev", "skill_versions(previous_version_id)"),
     ("idx_skill_versions_window", "skill_versions(skill_id, effective_from, effective_to)"),
@@ -226,12 +230,13 @@ def _create_schema(conn: sqlite3.Connection, with_fts: bool) -> bool:
         conn.execute(f"CREATE TABLE {spec.table} (\n  " + ",\n  ".join(columns) + "\n)")
 
     conn.execute(
-        "CREATE TABLE general_skills (\n"
+        "CREATE TABLE variant_skills (\n"
+        "  variant_id TEXT NOT NULL,\n"
         "  general_id TEXT NOT NULL,\n"
         "  skill_id TEXT NOT NULL,\n"
         "  version_id TEXT,\n"
         "  position INTEGER NOT NULL,\n"
-        "  PRIMARY KEY (general_id, skill_id)\n"
+        "  PRIMARY KEY (variant_id, skill_id)\n"
         ")"
     )
     conn.execute(
@@ -296,10 +301,21 @@ def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, s
         parts.append("武将牌 " + " ".join(entity.general_sets))
         parts.append("游戏牌 " + " ".join(entity.card_sets))
     elif kind == "general":
-        parts += [entity.title, entity.faction, entity.general_set or "", entity.notes]
+        parts += list(entity.aliases)
+        parts.append(entity.notes)
+    elif kind == "general_variant":
+        general = bundle.get("general", entity.general_id)
+        general_name = str(getattr(general, "name", entity.general_id))
+        name = f"{general_name}（{entity.variant}）"
+        parts += [
+            entity.variant, entity.title, entity.faction, entity.general_set or "",
+            entity.notes, general_name,
+        ]
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
         if entity.general_number:
             parts.append(entity.general_number)
+        if general is not None:
+            parts += list(getattr(general, "aliases", []) or [])
         parts.append(_names_of(bundle, "skill", [ref.skill_id for ref in entity.skills]))
     elif kind == "skill":
         parts.append(entity.notes)
@@ -399,12 +415,14 @@ def _insert_sources(conn: sqlite3.Connection, bundle: DataBundle) -> int:
 
 def _insert_relations(conn: sqlite3.Connection, bundle: DataBundle) -> None:
     rows = []
-    for general_id, general in sorted(bundle.all("general").items()):
-        for position, ref in enumerate(general.skills):
-            rows.append((general_id, ref.skill_id, ref.version_id, position))
+    for variant_id, variant in sorted(bundle.all("general_variant").items()):
+        for position, ref in enumerate(variant.skills):
+            rows.append(
+                (variant_id, variant.general_id, ref.skill_id, ref.version_id, position)
+            )
     conn.executemany(
-        "INSERT OR IGNORE INTO general_skills "
-        "(general_id, skill_id, version_id, position) VALUES (?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO variant_skills "
+        "(variant_id, general_id, skill_id, version_id, position) VALUES (?, ?, ?, ?, ?)",
         rows,
     )
 

@@ -4,7 +4,7 @@
 修改表结构请改 `sgs_helper/db.py` 的 `COLUMNS` / `INDEXES` / `SCHEMA_VERSION`，
 然后重新执行 `python scripts/build_db.py`。
 
-- schema 版本：`1`
+- schema 版本：`2`（武将拆成 `generals` + `general_variants`，技能关系表改名 `variant_skills`）
 - 生成时间：`2026-10-02T04:18:02+00:00`
 - YAML 清单指纹：`e9008bf3c0dd9f68f57631b5c468617a07c641f1b198d80fc6e6884ba9fc6018`
 - 全文检索 FTS5：`启用`
@@ -127,17 +127,19 @@ CREATE TABLE 'fts_search_docsize'(id INTEGER PRIMARY KEY, sz BLOB);
 CREATE TABLE 'fts_search_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID;
 ```
 
-### `general_skills`
+### `variant_skills`
 
-武将 → 技能的关系表（由 ``General.skills`` 生成；``version_id`` 是武将显式绑定的技能版本，可为 NULL）。
+武将**版本** → 技能的关系表（由 ``GeneralVariant.skills`` 生成；``version_id`` 是武将显式绑定的技能版本，可为 NULL；
+``general_id`` 冗余存一份，方便按武将统计）。
 
 ```sql
-CREATE TABLE general_skills (
+CREATE TABLE variant_skills (
+  variant_id TEXT NOT NULL,
   general_id TEXT NOT NULL,
   skill_id TEXT NOT NULL,
   version_id TEXT,
   position INTEGER NOT NULL,
-  PRIMARY KEY (general_id, skill_id)
+  PRIMARY KEY (variant_id, skill_id)
 );
 ```
 
@@ -147,6 +149,23 @@ CREATE TABLE general_skills (
 CREATE TABLE generals (
   id TEXT PRIMARY KEY,
   name TEXT,
+  aliases TEXT,
+  notes TEXT,
+  source_key TEXT,
+  yaml_file TEXT,
+  yaml_line INTEGER
+);
+```
+
+### `general_variants`
+
+某个玩法/版本下的武将数据（模式、势力、体力、称号、编号、技能都在这里）。
+
+```sql
+CREATE TABLE general_variants (
+  id TEXT PRIMARY KEY,
+  general_id TEXT,
+  variant TEXT,
   title TEXT,
   general_number TEXT,
   mode TEXT,
@@ -155,7 +174,6 @@ CREATE TABLE generals (
   gender TEXT,
   product_id TEXT,
   general_set TEXT,
-  aliases TEXT,
   notes TEXT,
   verification_status TEXT,
   source_key TEXT,
@@ -298,8 +316,10 @@ CREATE TABLE timings (
 - `idx_card_printings_mark`：card_printings(bottom_right_mark)
 - `idx_card_printings_product`：card_printings(product_id)
 - `idx_faqs_mode`：faqs(mode)
-- `idx_generals_mode`：generals(mode)
-- `idx_generals_product`：generals(product_id)
+- `idx_general_variants_general`：general_variants(general_id)
+- `idx_general_variants_mode`：general_variants(mode)
+- `idx_general_variants_product`：general_variants(product_id)
+- `idx_variant_skills_variant`：variant_skills(variant_id)
 - `idx_keywords_mode`：keywords(mode)
 - `idx_search_index_kind`：search_index(kind)
 - `idx_skill_versions_prev`：skill_versions(previous_version_id)
@@ -312,7 +332,7 @@ CREATE TABLE timings (
 每个实体表都带三列：
 
 - `source_key`：指向 `sources` 表（YAML 内嵌 source 结构去重后的结果）；
-- `yaml_file`：数据来源文件，例如 `data/skills/skill_ji_zhi.yaml`；
+- `yaml_file`：数据来源文件，例如 `data/skills/skill_ji_zhi.yaml`、`data/general_variants/variant_zhu_ge_liang_biao_zhun_ban.yaml`；
 - `yaml_line`：该条记录在文件中的起始行号。
 
 `meta` 表另有 `git_commit` / `git_branch` / `git_dirty` / `yaml_manifest_sha256`，

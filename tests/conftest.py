@@ -55,8 +55,19 @@ mode: identity
 release_year: 2020
 {SOURCE_YAML}verification_status: unverified
 """,
-    "generals/demo_alpha.yaml": f"""id: general_demo_alpha
+    # 武将：General（个体，只有名字/别名）+ GeneralVariant（模式/势力/体力/技能…）
+    "generals/demo_alpha.yaml": """id: general_demo_alpha
 name: 演示武将甲
+aliases:
+  - 演示甲
+""",
+    "generals/demo_beta.yaml": """id: general_demo_beta
+name: 演示武将乙
+""",
+    "general_variants/demo_alpha_guozhan.yaml": f"""id: variant_demo_alpha_guozhan
+general_id: general_demo_alpha
+variant: 国战版
+title: 演示称号甲
 mode: guozhan
 faction: 群
 hp: 1.5
@@ -65,12 +76,23 @@ product_id: product_demo_a
 general_set: 演示武将牌系列
 skills:
   - skill_id: skill_demo
-aliases:
-  - 演示甲
 {SOURCE_YAML}verification_status: unverified
 """,
-    "generals/demo_beta.yaml": f"""id: general_demo_beta
-name: 演示武将乙
+    "general_variants/demo_alpha_identity.yaml": f"""id: variant_demo_alpha_identity
+general_id: general_demo_alpha
+variant: 标准版
+mode: identity
+faction: 群
+hp: 3
+gender: male
+skills:
+  - skill_id: skill_demo
+    version_id: skill_demo_identity_v1
+{SOURCE_YAML}verification_status: unverified
+""",
+    "general_variants/demo_beta_identity.yaml": f"""id: variant_demo_beta_identity
+general_id: general_demo_beta
+variant: 标准版
 mode: identity
 faction: 蜀
 hp: 3

@@ -1,0 +1,21 @@
+id: variant_lv_meng_biao_zhun_ban
+general_id: general_lv_meng
+variant: 标准版
+title: 白衣渡江
+general_number: null
+mode: identity
+faction: 吴
+hp: 4
+gender: male
+product_id: null
+general_set: 标准-灵心慧性
+skills:
+  - skill_id: skill_ke_ji
+    version_id: null
+source:
+  type: wiki
+  title: 三国杀WIKI（bilibili）
+  reference: https://wiki.biligame.com/sgs/吕蒙
+  notes: 武将页「吕蒙」的经典版本（身份局标准版）；社区 WIKI，未按实体卡核验
+verification_status: community
+notes: 技能文本暂用《三国杀官方规则集 3.0》的规范化表述：与 WIKI 的卡面原文在个别用词上可能不同（例如 仁德/突袭/无双/观星 等），待按实体卡逐条核验后再改。

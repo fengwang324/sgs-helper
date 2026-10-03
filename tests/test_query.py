@@ -73,11 +73,19 @@ def test_history_chain(synth_conn) -> None:
 
 
 def test_general_report_uses_mode_specific_version(synth_conn) -> None:
+    """每个版本各取自己模式下的技能文本（国战版 vs 标准版）。"""
     report = general_report(synth_conn, "general_demo_alpha", AS_OF_2026)
     assert report is not None
-    entry = report["skills"][0]
-    assert entry["current"]["id"] == "skill_demo_guozhan_v1"
-    assert "国战版" in entry["current"]["text"]
+    variants = {v["variant"]: v for v in report["variants"]}
+    assert set(variants) == {"国战版", "标准版"}
+
+    guozhan = variants["国战版"]["skills"][0]
+    assert guozhan["current"]["id"] == "skill_demo_guozhan_v1"
+    assert "国战版" in guozhan["current"]["text"]
+
+    # 标准版这条显式绑定了 v1，比“按日期推导”优先
+    standard = variants["标准版"]["skills"][0]
+    assert standard["current"]["id"] == "skill_demo_identity_v1"
 
 
 # ---------------------------------------------------------------- 解析 / 检索
@@ -148,7 +156,8 @@ def test_card_report_returns_product_and_mark(synth_conn) -> None:
 def test_product_report_lists_related_rows(synth_conn) -> None:
     report = product_report(synth_conn, "product_demo_a")
     assert report is not None
-    assert [g["id"] for g in report["generals"]] == ["general_demo_alpha"]
+    assert [v["id"] for v in report["variants"]] == ["variant_demo_alpha_guozhan"]
+    assert report["variants"][0]["general_name"] == "演示武将甲"
     assert [p["id"] for p in report["printings"]] == ["card_demo_a_spade_1"]
     assert [v["id"] for v in report["skill_versions"]] == [
         "skill_demo_guozhan_v1",
@@ -169,7 +178,7 @@ def test_keyword_and_timing_reports(synth_conn) -> None:
 def test_stats_reports_meta(synth_conn) -> None:
     payload = stats(synth_conn)
     assert payload["counts"]["skill_version"] == 4
-    assert payload["meta"]["schema_version"] == "1"
+    assert payload["meta"]["schema_version"] == "2"
 
 
 def test_json_serializable(synth_conn) -> None:

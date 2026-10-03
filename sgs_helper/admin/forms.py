@@ -52,6 +52,8 @@ FIELD_LABELS: dict[str, str] = {
     "package": "包/分包",
     "title": "称号",
     "general_number": "编号",
+    "variant": "版本标签",
+    "general_id": "所属武将",
     "skills": "技能",
     "skill_id": "所属技能",
     "text": "规则文本",
@@ -110,6 +112,8 @@ FIELD_HELP: dict[str, str] = {
     "card_sets": "一行一项：这个产品里的游戏牌牌堆（标准牌堆、九变牌堆…）。",
     "title": "武将卡上的称号，例如“独眼的罗刹”。",
     "general_number": "实体卡上的编号，例如 WEI001 / shu-01；和内部 ID 是两回事。",
+    "variant": "这个版本叫什么：标准版 / 国战版 / 界限突破 / OL / 手杀 / 其他。",
+    "general_id": "指向武将个体（General）；一个武将可以有多个版本。",
     "hp": "勾玉数量，支持 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5；允许留空以后再补。",
     "skills": "武将的技能关系（含可选的具体版本绑定）；日常录入请用“武将录入页”。",
 }

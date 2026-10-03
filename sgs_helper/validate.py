@@ -32,9 +32,10 @@ from .schema import MODEL_BY_KIND
 #:
 #: 这张表同时驱动校验器的引用检查与本地管理页的删除保护，只声明一次。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
-    ("general", "product_id", "product", False),
-    ("general", "skills[].skill_id", "skill", True),
-    ("general", "skills[].version_id", "skill_version", True),
+    ("general_variant", "general_id", "general", False),
+    ("general_variant", "product_id", "product", False),
+    ("general_variant", "skills[].skill_id", "skill", True),
+    ("general_variant", "skills[].version_id", "skill_version", True),
     ("skill_version", "skill_id", "skill", False),
     ("skill_version", "product_id", "product", False),
     ("skill_version", "previous_version_id", "skill_version", False),
@@ -115,7 +116,7 @@ def iter_reference_values(entity: Any, field: str) -> list[ReferenceValue]:
     return found
 
 #: source 允许为空的 kind（其余 kind 的 source 由模型层强制必填）
-SOURCE_OPTIONAL_KINDS = ("product", "general", "skill")
+SOURCE_OPTIONAL_KINDS = ("product", "general_variant", "skill")
 
 
 @dataclass
@@ -382,41 +383,45 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
     products = bundle.all("product")
 
     # 武将：体力步进 / 产品模式一致 / 技能关系（含显式版本绑定）
-    for entity_id, general in bundle.all("general").items():
-        origin = bundle.origin_of("general", entity_id)
-        if general.hp is not None and abs(general.hp * 2 - round(general.hp * 2)) > 1e-9:
+    for entity_id, variant in bundle.all("general_variant").items():
+        origin = bundle.origin_of("general_variant", entity_id)
+        if variant.hp is not None and abs(variant.hp * 2 - round(variant.hp * 2)) > 1e-9:
             result.warnings.append(
                 Issue(
                     "warning",
                     origin.path,
                     "hp",
-                    f"勾玉（体力）{general.hp} 不是 0.5 的整数倍；国战/身份局体力通常按 0.5 步进，请确认",
+                    f"体力 {variant.hp} 不是 0.5 的整数倍；国战/身份局体力通常按 0.5 步进，请确认",
                     line=origin.line,
                     entity_id=entity_id,
                 )
             )
-        if general.product_id and general.product_id in products:
-            product = products[general.product_id]
-            if product.mode is not None and general.mode is not None and product.mode != general.mode:
+        if variant.product_id and variant.product_id in products:
+            product = products[variant.product_id]
+            if (
+                product.mode is not None
+                and variant.mode is not None
+                and product.mode != variant.mode
+            ):
                 result.warnings.append(
                     Issue(
                         "warning",
                         origin.path,
                         "mode",
-                        f"武将模式 {_mode_label(general.mode)} 与所属产品 "
+                        f"武将模式 {_mode_label(variant.mode)} 与所属产品 "
                         f"{product.id} 的模式 {_mode_label(product.mode)} 不一致",
                         line=origin.line,
                         entity_id=entity_id,
                     )
                 )
-            if product.general_sets and general.general_set:
-                if general.general_set not in product.general_sets:
+            if product.general_sets and variant.general_set:
+                if variant.general_set not in product.general_sets:
                     result.warnings.append(
                         Issue(
                             "warning",
                             origin.path,
                             "general_set",
-                            f'武将牌系列 "{general.general_set}" 不在所属产品 {product.id} 的 '
+                            f'武将牌系列 "{variant.general_set}" 不在所属产品 {product.id} 的 '
                             f"general_sets（{'、'.join(product.general_sets)}）里，请确认是不是录错了产品",
                             line=origin.line,
                             entity_id=entity_id,
@@ -425,7 +430,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
 
         versions = bundle.all("skill_version")
         seen_skills: dict[str, int] = {}
-        for position, ref in enumerate(general.skills):
+        for position, ref in enumerate(variant.skills):
             field_path = f"skills[{position}].skill_id"
             if ref.skill_id in seen_skills:
                 result.warnings.append(
@@ -433,7 +438,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                         "warning",
                         origin.path,
                         field_path,
-                        f"同一武将重复引用技能 {ref.skill_id}"
+                        f"同一个武将版本重复引用技能 {ref.skill_id}"
                         f"（已在 skills[{seen_skills[ref.skill_id]}] 出现）",
                         line=origin.line,
                         entity_id=entity_id,
@@ -465,7 +470,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             hit = [
                 sv
                 for sv in versions.values()
-                if sv.skill_id == ref.skill_id and sv.mode in (general.mode, "common")
+                if sv.skill_id == ref.skill_id and sv.mode in (variant.mode, "common")
             ]
             if not hit:
                 result.warnings.append(
@@ -474,12 +479,50 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                         origin.path,
                         field_path,
                         f'技能 "{skill.name}"({ref.skill_id}) 在模式 '
-                        f"{_mode_label(general.mode)} 下没有任何 SkillVersion，"
+                        f"{_mode_label(variant.mode)} 下没有任何 SkillVersion，"
                         "查询时拿不到技能文本",
                         line=origin.line,
                         entity_id=entity_id,
                     )
                 )
+
+    # 武将个体：至少有一个版本；同一武将的版本标签不要重复
+    variants_by_general: dict[str, list[str]] = {}
+    for variant_id, variant in bundle.all("general_variant").items():
+        variants_by_general.setdefault(variant.general_id, []).append(variant_id)
+    for general_id, general in bundle.all("general").items():
+        origin = bundle.origin_of("general", general_id)
+        if general_id not in variants_by_general:
+            result.warnings.append(
+                Issue(
+                    "warning",
+                    origin.path,
+                    "id",
+                    f'武将 "{general.name}" 还没有任何版本（GeneralVariant），'
+                    "录入时至少要有“标准版”这一条",
+                    line=origin.line,
+                    entity_id=general_id,
+                )
+            )
+        seen_labels: dict[tuple, str] = {}
+        for variant_id in variants_by_general.get(general_id, []):
+            variant = bundle.get("general_variant", variant_id)
+            key = (variant.variant, variant.mode)
+            if key in seen_labels:
+                variant_origin = bundle.origin_of("general_variant", variant_id)
+                result.warnings.append(
+                    Issue(
+                        "warning",
+                        variant_origin.path,
+                        "variant",
+                        f"同一武将出现重复版本：{variant.variant} / {_mode_label(variant.mode)}"
+                        f"（{seen_labels[key]} 与 {variant_id}）",
+                        line=variant_origin.line,
+                        entity_id=variant_id,
+                    )
+                )
+            else:
+                seen_labels[key] = variant_id
 
     # 卡牌印刷：产品模式一致 / 花色点数组合 / 同产品重复
     combos: dict[tuple, list[str]] = {}
@@ -556,14 +599,20 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             general = bundle.get("general", general_id)
             if general is None:
                 continue
-            if general.mode not in (faq.mode, "common"):
+            modes = {
+                variant.mode
+                for variant in bundle.all("general_variant").values()
+                if variant.general_id == general_id
+            }
+            if modes and faq.mode not in modes and "common" not in modes:
                 result.warnings.append(
                     Issue(
                         "warning",
                         origin.path,
                         "related_general_ids",
                         f"FAQ 模式 {MODE_LABELS.get(faq.mode, faq.mode)} 与关联武将 "
-                        f"{general_id} 的模式 {_mode_label(general.mode)} 不一致",
+                        f"{general_id} 的版本模式（{'、'.join(sorted(m or '未填' for m in modes))}）"
+                        "都不一致",
                         line=origin.line,
                         entity_id=entity_id,
                     )

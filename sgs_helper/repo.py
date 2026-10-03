@@ -403,32 +403,31 @@ def skill_report(
     }
 
 
-def general_skill_refs(conn: sqlite3.Connection, general_id: str) -> list[dict]:
-    """读武将的技能关系（含可选的具体版本绑定），顺序即卡面上的技能顺序。"""
+def variant_skill_refs(conn: sqlite3.Connection, variant_id: str) -> list[dict]:
+    """读某个武将版本的技能关系（含可选的具体版本绑定），顺序即卡面上的技能顺序。"""
     rows = conn.execute(
-        "SELECT skill_id, version_id, position FROM general_skills "
-        "WHERE general_id = ? ORDER BY position",
-        (general_id,),
+        "SELECT skill_id, version_id, position FROM variant_skills "
+        "WHERE variant_id = ? ORDER BY position",
+        (variant_id,),
     ).fetchall()
-    return [
-        {"skill_id": row[0], "version_id": row[1], "position": row[2]} for row in rows
-    ]
+    return [{"skill_id": row[0], "version_id": row[1], "position": row[2]} for row in rows]
 
 
-def general_report(
-    conn: sqlite3.Connection, query: str, as_of: dt.date | None = None
-) -> dict | None:
-    entity, _candidates = resolve(conn, "general", query)
-    if entity is None:
-        return None
-    as_of = as_of or dt.date.today()
-    as_of_iso = as_of.isoformat()
+def general_variants(conn: sqlite3.Connection, general_id: str) -> list[dict]:
+    """读某个武将个体的全部版本。"""
+    return _fetch_all(
+        conn,
+        "general_variant",
+        "SELECT * FROM general_variants WHERE general_id = ? ORDER BY variant, id",
+        (general_id,),
+    )
 
-    product = fetch(conn, "product", entity.get("product_id"))
-    mode = entity.get("mode")
 
+def _variant_skills(conn: sqlite3.Connection, variant: dict, as_of_iso: str) -> list[dict]:
+    """给一个武将版本的技能打上“当前显示哪一版”的信息。"""
+    mode = variant.get("mode")
     skills = []
-    for ref in general_skill_refs(conn, entity["id"]):
+    for ref in variant_skill_refs(conn, variant["id"]):
         skill_id = ref["skill_id"]
         pinned_id = ref["version_id"]
         skill = fetch(conn, "skill", skill_id)
@@ -450,25 +449,37 @@ def general_report(
         skills.append(
             {
                 "skill_id": skill_id,
-                #: 武将上显式绑定的版本 id（可能为空）
+                "skill": skill,
                 "version_id": pinned_id,
-                #: 显式绑定的版本；没有就给 None
                 "pinned": pinned,
-                #: 该模式下的候选版本
                 "versions": candidates,
-                #: 该技能的全部版本
                 "all_versions": all_versions,
-                #: 真正应该显示的版本：显式指定优先，否则用推导出来的当前有效版本
                 "current": pinned or derived,
                 "derived": derived,
                 "ambiguous_ids": [v["id"] for v in ambiguous],
             }
         )
+    return skills
+
+
+def general_report(
+    conn: sqlite3.Connection, query: str, as_of: dt.date | None = None
+) -> dict | None:
+    entity, _candidates = resolve(conn, "general", query)
+    if entity is None:
+        return None
+    as_of = as_of or dt.date.today()
+    as_of_iso = as_of.isoformat()
+
+    variants = []
+    for variant in general_variants(conn, entity["id"]):
+        variants.append({**variant, "skills": _variant_skills(conn, variant, as_of_iso)})
+
     return {
         "kind": "general",
         "general": entity,
-        "product": product,
-        "skills": skills,
+        "variants": variants,
+        "product": fetch(conn, "product", (variants[0].get("product_id") if variants else None)),
         "as_of": as_of_iso,
     }
 
@@ -567,12 +578,20 @@ def product_report(conn: sqlite3.Connection, query: str) -> dict | None:
     entity, _candidates = resolve(conn, "product", query)
     if entity is None:
         return None
+    variants = _fetch_all(
+        conn,
+        "general_variant",
+        "SELECT * FROM general_variants WHERE product_id = ? ORDER BY general_id, variant, id",
+        (entity["id"],),
+    )
+    for variant in variants:
+        general = fetch(conn, "general", variant.get("general_id"))
+        variant["general"] = general
+        variant["general_name"] = (general or {}).get("name") or variant.get("general_id")
     return {
         "kind": "product",
         "product": entity,
-        "generals": _fetch_all(
-            conn, "general", "SELECT * FROM generals WHERE product_id = ? ORDER BY id", (entity["id"],)
-        ),
+        "variants": variants,
         "printings": _fetch_all(
             conn, "card_printing",
             "SELECT * FROM card_printings WHERE product_id = ? ORDER BY card_set, suit, COALESCE(rank, 0), id",

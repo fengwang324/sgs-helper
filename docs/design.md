@@ -72,11 +72,11 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
    旧的 `skill_ids: [...]` 只能回答“有哪些技能”，回答不了“这张卡印的是哪一版”。
    现在是 `skills: [{skill_id, version_id}]`：`version_id` 为空就走自动推导，
    不为空则必须属于同一个 `skill_id`（校验器强制，SQLite 落到
-   `general_skills(general_id, skill_id, version_id, position)`）。
+   `variant_skills(variant_id, general_id, skill_id, version_id, position)`）。
    不用两个平行数组，避免顺序错位。
 3. **内部 id 与卡面编号分开**：
    `id` 继续做内部主键（YAML 文件名 / URL / 外键），卡面编号放
-   `General.general_number`（自由字符串，允许大小写与 `-` / `_`）。
+   `GeneralVariant.general_number`（自由字符串，允许大小写与 `-` / `_`）。
    录入页不要求填 `id`：后端按名字生成合法唯一 id（ASCII 直接转写，中文退化为稳定短哈希），
    已存在的记录绝不重新生成。
 
@@ -86,7 +86,10 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 ### 1.3 一次提交 = 一个事务
 
-武将录入页一次提交可能产生 `1 个 General + N 个 Skill + N 个 SkillVersion`。
+武将个体与玩法版本分成两层：`General`（id / name / aliases / notes）与
+`GeneralVariant`（模式 / 势力 / 体力 / 性别 / 称号 / 编号 / 产品 / 武将牌系列 / 技能）。
+官方名不同 → 不同 General；官方名相同、玩法不同 → 同一 General 的不同 Variant。
+武将录入页一次提交可能产生 `1 个 General + 1 个 GeneralVariant + N 个 Skill + N 个 SkillVersion`。
 如果按条调用保存，就会多次重建数据库、中途失败还会留下半套数据。
 所以写入口收敛到 `AdminStore.save_batch()`：合并内存候选 → 一次完整校验 →
 一次写盘（逐个原子替换）→ **一次 rebuild**；失败则全部回滚。
@@ -155,7 +158,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 ## 5. SQLite 结构与检索
 
 - 一种实体一张表；多值字段（`skill_ids`、`related_keywords` 等）以 JSON 文本存储，
-  另外把武将↔技能额外落一张 `general_skills` 关联表，方便以后做反向查询。
+  另外把「武将版本 ↔ 技能」额外落一张 `variant_skills` 关联表，方便以后做反向查询。
 - 建了必要的索引：`skill_versions(skill_id, mode)`、`skill_versions(skill_id, effective_from, effective_to)`、
   `card_printings(card_id)`、`card_printings(product_id)`、`card_printings(bottom_right_mark)` 等。
 - 统一的 `search_index(kind, entity_id, name, aliases, body)` 承担检索：
@@ -202,7 +205,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 | 边界 | 现状 | 将来的做法 |
 | --- | --- | --- |
-| 同名武将跨产品 | 用不同的 `general.id`（各自带 `product_id`），必要时加 `aliases` | 若成为常态，再抽 `GeneralPrinting` 层 |
+| 同名武将跨产品/玩法 | 同一个 `general.id`，每个玩法各写一条 `GeneralVariant`（各自带 `mode` / `product_id` / `skills`） | 不需要「武将印刷」层 |
 | 一个实体多来源 | 单 `source` 字段 + `conflict` 状态 + notes 说明 | 抽 `entity_sources` 关联表 |
 | 产品级规则特例 | `mode` 优先，未做产品级优先级 | 给 SkillVersion 加 `scope` / `rule_priority` |
 | 时点结算顺序 | 只记录 prev/next/parent | 需要时再引入顺序号与嵌套时点 |

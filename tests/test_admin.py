@@ -74,10 +74,34 @@ def form_payload(app, kind: str, entity_id: str, **overrides) -> dict:
     return payload
 
 
+def variant_of(app, general_id: str) -> str:
+    """取某个武将的第一个版本 id（编辑页默认编辑它）。"""
+    variants = app.state.store.variants_of(general_id)
+    assert variants, f"武将 {general_id} 没有任何版本"
+    return variants[0].id
+
+
+def general_edit(app, general_id: str, **overrides) -> dict:
+    """编辑已有武将/版本时应该提交的表单数据。"""
+    variant_id = str(overrides.pop("_variant", "") or variant_of(app, general_id))
+    payload = general_payload(app, **overrides)
+    store = app.state.store
+    payload["_base_sha"] = store.entity_sha("general", general_id)
+    payload["_variant_id"] = variant_id
+    payload["variant_id"] = variant_id
+    payload["_variant_sha"] = (
+        store.entity_sha("general_variant", variant_id) if variant_id else ""
+    )
+    if not payload.get("variant"):
+        entity = store.entity("general_variant", variant_id) if variant_id else None
+        payload["variant"] = entity.variant if entity else "标准版"
+    return payload
+
+
 def yaml_of(workdir: Path, kind: str, entity_id: str) -> Path:
     """定位某条记录所在的 YAML 文件。
 
-    文件名不一定等于 id（真实数据里是 ``data/generals/kongrong_sample_guozhan.yaml``
+    文件名不一定等于 id（真实数据里是 ``data/general_variants/variant_zhu_ge_liang_biao_zhun_ban.yaml``
     这样的名字），所以先在磁盘上按 id 查，查不到才按新增记录的命名约定推断。
     """
     from sgs_helper.constants import KIND_BY_NAME
@@ -89,6 +113,17 @@ def yaml_of(workdir: Path, kind: str, entity_id: str) -> Path:
             if raw.kind == kind and raw.data.get("id") == entity_id:
                 return workdir / "data" / raw.origin.path
     return workdir / "data" / KIND_BY_NAME[kind].dirname / f"{entity_id}.yaml"
+
+
+def find_variant_yaml(workdir: Path, general_id: str) -> Path:
+    """找到某个武将的（第一个）GeneralVariant 文件。"""
+    from sgs_helper.loader import load_data_dir
+
+    raws, _issues = load_data_dir(workdir / "data")
+    found = [raw for raw in raws if raw.kind == "general_variant"
+             and raw.data.get("general_id") == general_id]
+    assert found, f"武将 {general_id} 没有任何版本文件"
+    return workdir / "data" / found[0].origin.path
 
 
 def post(client: TestClient, url: str, **kwargs):
@@ -104,7 +139,7 @@ def test_pages_start(client: TestClient, store) -> None:
     """首页 / 列表 / 详情 / 新增 / 编辑 / 待核验 / 说明 / 健康检查全部能打开。"""
     seed = {
         "product": "product_guozhan_sample_2024",
-        "general": "general_kongrong_sample_guozhan",
+        "general": "general_zhu_ge_liang",
         "skill": "skill_ji_zhi",
         "skill_version": "skill_ji_zhi_identity_v1",
         "card": "card_sha",
@@ -244,6 +279,11 @@ def general_payload(app, **overrides) -> dict:
         "product_id": "",
         "general_set": "",
         "aliases": "",
+        "variant": "标准版",
+        "_variant_id": "",
+        "_variant_sha": "",
+        "variant_id": "",
+        "general_notes": "",
         "source.type": "",
         "source.title": "",
         "source.reference": "",
@@ -283,7 +323,7 @@ def product_payload(app, **overrides) -> dict:
 def test_invalid_edit_is_blocked_and_nothing_written(
     client: TestClient, app, workdir: Path
 ) -> None:
-    path = yaml_of(workdir, "general", "general_kongrong_sample_guozhan")
+    path = yaml_of(workdir, "general", "general_zhu_ge_liang")
     before = path.read_text(encoding="utf-8")
     db_path = workdir / "build" / "sgs.db"
     build_database(workdir / "data", db_path)
@@ -291,18 +331,18 @@ def test_invalid_edit_is_blocked_and_nothing_written(
 
     payload = general_payload(
         app,
-        name="【SAMPLE】孔融",
+        name="诸葛亮",
         mode="guozhan",
         skill_count="1",
         skill_0_skill_id="skill_does_not_exist",
-        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
+        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
     )
-    response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
+    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
 
     assert response.status_code == 400
     assert "skill_does_not_exist" in response.text
     # 具体文件 / 字段 / 原因
-    assert "data/generals/" in response.text
+    assert "data/general_variants/" in response.text
     assert "skills[0].skill_id" in response.text
     assert "不存在" in response.text
     # 一个字都没写，数据库也没变
@@ -313,11 +353,11 @@ def test_invalid_edit_is_blocked_and_nothing_written(
 def test_invalid_model_field_is_blocked(client: TestClient, app, workdir: Path) -> None:
     payload = general_payload(
         app,
-        name="【SAMPLE】孔融",
+        name="诸葛亮",
         hp="abc",
-        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
+        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
     )
-    response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
+    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
     assert response.status_code == 400
     assert "勾玉要写数字" in response.text
 
@@ -326,13 +366,13 @@ def test_unknown_field_cannot_be_injected(client: TestClient, app, workdir: Path
     """表单之外的字段进不来（专用录入页只读自己认识的字段）。"""
     payload = general_payload(
         app,
-        name="【SAMPLE】孔融",
-        _base_sha=app.state.store.entity_sha("general", "general_kongrong_sample_guozhan"),
+        name="诸葛亮",
+        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
     )
     payload["totally_bogus"] = "1"
-    response = post(client, "/edit/general/general_kongrong_sample_guozhan", data=payload)
+    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
     assert response.status_code == 303
-    text = yaml_of(workdir, "general", "general_kongrong_sample_guozhan").read_text(encoding="utf-8")
+    text = yaml_of(workdir, "general", "general_zhu_ge_liang").read_text(encoding="utf-8")
     assert "totally_bogus" not in text
 
 
@@ -460,7 +500,8 @@ def test_delete_blocked_when_referenced(client: TestClient, app, workdir: Path) 
     )
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    assert "general_kongrong_sample_guozhan" in response.text  # 列出引用它的对象
+    # 列出引用它的对象（武将数据不再强制关联产品，这里看实体卡）
+    assert "card_sha_sample_guozhan_spade_7" in response.text
     assert path.exists()
     assert path.read_text(encoding="utf-8") == before
 
@@ -531,7 +572,7 @@ def test_delete_confirm_page_lists_references(client: TestClient) -> None:
     response = client.get("/delete/product/product_guozhan_sample_2024")
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    assert "general_kongrong_sample_guozhan" in response.text
+    assert "card_sha_sample_guozhan_spade_7" in response.text
 
 
 # ---------------------------------------------------------------- 7. 安全与并发回归
@@ -744,7 +785,7 @@ def test_reverse_refs_and_delete_guard_agree(app) -> None:
     store = app.state.store
     refs = store.reverse_refs("skill", "skill_ji_zhi")
     kinds = {ref["kind"] for ref in refs}
-    assert "general" in kinds
+    assert "general_variant" in kinds
     assert "skill_version" in kinds
     outcome = store.delete("skill", "skill_ji_zhi")
     assert outcome.ok is False
@@ -796,27 +837,38 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
 
-    text = yaml_of(workdir, "general", "general_test_new").read_text(encoding="utf-8")
-    reloaded = yaml.safe_load(text)
-    assert reloaded["hp"] == 2.5
-    assert reloaded["aliases"] == ["测试别名", "另一个别名"]
-    assert reloaded["general_number"] == "qq-001"
-    assert reloaded["general_set"] == "sample_jiubian"
-    assert reloaded["skills"] == [
+    general = yaml.safe_load(
+        yaml_of(workdir, "general", "general_test_new").read_text(encoding="utf-8")
+    )
+    assert general["aliases"] == ["测试别名", "另一个别名"]
+    # 模式/体力/称号/编号/系列/技能这些“版本属性”写在 GeneralVariant 里
+    variant_id = f"variant_{general['id']}"
+    variant = yaml.safe_load(
+        find_variant_yaml(workdir, "general_test_new").read_text(encoding="utf-8")
+    )
+    assert variant["hp"] == 2.5
+    assert variant["general_number"] == "qq-001"
+    assert variant["general_set"] == "sample_jiubian"
+    assert variant["title"] == "测试称号"
+    assert variant["variant"] == "标准版"
+    assert variant["skills"] == [
         {"skill_id": "skill_ji_zhi", "version_id": "skill_ji_zhi_guozhan_v1"}
     ]
-    assert reloaded["verification_status"] == "physical_verified"
+    assert variant["verification_status"] == "physical_verified"
+    assert variant["source"]["type"] == "physical_card"
 
     db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     report = general_report(conn, "general_test_new")
     conn.close()
-    assert report["general"]["hp"] == 2.5
+    assert report["general"]["name"] == "【测试】新武将"
+    assert report["variants"][0]["hp"] == 2.5
+    assert report["variants"][0]["variant"] == "标准版"
     assert report["general"]["aliases"] == ["测试别名", "另一个别名"]
     assert report["product"]["id"] == "product_guozhan_sample_2024"
-    assert report["skills"][0]["version_id"] == "skill_ji_zhi_guozhan_v1"
-    assert report["skills"][0]["pinned"]["id"] == "skill_ji_zhi_guozhan_v1"
+    assert report["variants"][0]["skills"][0]["version_id"] == "skill_ji_zhi_guozhan_v1"
+    assert report["variants"][0]["skills"][0]["pinned"]["id"] == "skill_ji_zhi_guozhan_v1"
 
 
 def test_create_general_without_source_uses_model_default(client: TestClient, app, workdir: Path) -> None:
@@ -824,11 +876,17 @@ def test_create_general_without_source_uses_model_default(client: TestClient, ap
     payload = general_payload(app, id="general_test_nosource", name="【测试】无来源武将", hp="3")
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
-    reloaded = yaml.safe_load(yaml_of(workdir, "general", "general_test_nosource").read_text(encoding="utf-8"))
-    assert reloaded["source"] is None
-    assert reloaded["skills"] == []
-    assert reloaded["mode"] is None
-    assert reloaded["general_number"] is None
+    general = yaml.safe_load(
+        yaml_of(workdir, "general", "general_test_nosource").read_text(encoding="utf-8")
+    )
+    assert general["name"] == "【测试】无来源武将"
+    variant = yaml.safe_load(
+        find_variant_yaml(workdir, "general_test_nosource").read_text(encoding="utf-8")
+    )
+    assert variant["source"] is None
+    assert variant["skills"] == []
+    assert variant["mode"] is None
+    assert variant["general_number"] is None
 
 
 def test_source_required_entity_needs_source(client: TestClient, app, workdir: Path) -> None:
