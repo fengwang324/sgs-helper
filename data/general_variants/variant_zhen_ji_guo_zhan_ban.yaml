@@ -1,0 +1,26 @@
+id: variant_zhen_ji_guo_zhan_ban
+general_id: general_zhen_ji
+variant: 群狼环鼎
+title: 薄幸的美人
+general_number: G.WEI 007
+illustrator: DH
+image: variant_zhen_ji_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_qing_guo
+    version_id: skill_qing_guo_guozhan_qlhd_v1
+  - skill_id: skill_luo_shen
+    version_id: skill_luo_shen_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 007
+verification_status: unverified
+notes: Paddle 读出的称号为「薄幸的美入」；三国杀 WIKI 该武将称号为「薄幸的美人」（逐位相同 4 字），疑似 OCR 误读，请对照卡图核验

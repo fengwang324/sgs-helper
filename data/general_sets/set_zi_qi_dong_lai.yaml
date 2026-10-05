@@ -1,0 +1,12 @@
+id: set_zi_qi_dong_lai
+name: 紫气东来
+parent_id: null
+product_id: qlhd
+sort_order: 62
+notes: ''
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 系列/包信息按卡面与实物整理
+verification_status: unverified

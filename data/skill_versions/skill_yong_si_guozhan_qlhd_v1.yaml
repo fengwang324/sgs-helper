@@ -1,0 +1,21 @@
+id: skill_yong_si_guozhan_qlhd_v1
+skill_id: skill_yong_si
+mode: guozhan
+text: |-
+  锁定技，若场上没有【玉玺】，则你视为装备着【玉玺】，当你成为【知己知彼】的目标后，你展示你的所有手牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

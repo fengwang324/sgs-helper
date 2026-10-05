@@ -9,7 +9,6 @@ definition: |-
   例如：如图，当D装备【+1坐骑】时，C/E与D的距离为变2，B/F与D的距离变为3，A与D的距离变为4，而D与其他角色的距离不变；当D装备【-1坐骑】时，D与B/F的距离变为1，D与A的距离变为2，而其他角色与D的距离不变。
   ◆一名角色与其他角色间，最短距离为1。自己与自己的距离永远是0。
   例如：如图，当D装备【-1坐骑】时，D与C/E的距离为1。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -18,5 +17,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「数值」

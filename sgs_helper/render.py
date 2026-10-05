@@ -145,8 +145,6 @@ def render_skill(report: dict) -> str:
     by_id = {v["id"]: v for v in versions}
 
     lines = ["=" * 72, f"技能：{definition['name']}    （id：{definition['id']}）"]
-    if definition.get("aliases"):
-        lines.append(f"  别名：{'、'.join(definition['aliases'])}")
     lines.append(f"  技能本体来源：{fmt_source(definition.get('source'))}")
     lines.append(f"  源文件：{fmt_location(definition)}")
     if definition.get("notes"):
@@ -247,8 +245,6 @@ def render_general(report: dict) -> str:
         "=" * 72,
         f"武将：{general['name']}    （id：{general['id']}；共 {len(report['variants'])} 个版本）",
     ]
-    if general.get("aliases"):
-        lines.append(f"  别名：{'、'.join(general['aliases'])}")
     if general.get("notes"):
         lines.append(f"  备注：{general['notes']}")
     lines.append(f"  源文件：{fmt_location(general)}")
@@ -331,8 +327,6 @@ def render_card(report: dict) -> str:
         f"  类型：{card_type_label(definition.get('card_type'))}"
         + (f" / {definition['subtype']}" if definition.get("subtype") else "")
     )
-    if definition.get("aliases"):
-        lines.append(f"  别名：{'、'.join(definition['aliases'])}")
     keywords = report.get("keywords") or []
     if keywords:
         lines.append(f"  关联关键词：{_names(keywords)}")
@@ -411,8 +405,6 @@ def render_keyword(report: dict) -> str:
     keyword = report["keyword"]
     lines = ["=" * 72, f"关键词：{keyword['name']}    （id：{keyword['id']}）"]
     lines.append(f"  模式：{mode_label(keyword.get('mode'))}")
-    if keyword.get("aliases"):
-        lines.append(f"  别名：{'、'.join(keyword['aliases'])}")
     lines += _block("规则定义", keyword.get("definition"), indent="  ")
     if report.get("related_keywords"):
         lines.append(f"  相关关键词：{_names(report['related_keywords'])}")

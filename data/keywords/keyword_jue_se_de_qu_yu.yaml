@@ -1,8 +1,6 @@
 id: keyword_jue_se_de_qu_yu
 name: 角色的区域
-definition: |-
-  每名角色的区域包括手牌区、装备区和判定区。一名角色的判定区里不能有两张以上同名的牌。角色判定区里的牌不为任何角色所拥有。
-aliases: []
+definition: 每名角色的区域包括手牌区、装备区和判定区。一名角色的判定区里不能有两张以上同名的牌。角色判定区里的牌不为任何角色所拥有。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「区域」

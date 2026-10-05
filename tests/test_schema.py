@@ -115,8 +115,8 @@ def test_hp_bounds() -> None:
 
 def test_general_stays_stable_and_variant_carries_the_rest() -> None:
     """诸葛亮 / 界诸葛亮 是两个 General；标准版与国战版是同一个 General 的两个 Variant。"""
-    assert set(General.model_fields) == {"id", "name", "aliases", "notes"}
-    general = General(id="general_zhu_ge_liang", name="诸葛亮", aliases=["老诸葛"])
+    assert set(General.model_fields) == {"id", "name", "notes"}
+    general = General(id="general_zhu_ge_liang", name="诸葛亮")
     standard = GeneralVariant(
         id="variant_zhu_ge_liang_biao_zhun_ban",
         general_id=general.id,

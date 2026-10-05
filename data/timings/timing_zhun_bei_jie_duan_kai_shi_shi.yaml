@@ -1,7 +1,6 @@
 id: timing_zhun_bei_jie_duan_kai_shi_shi
 name: 准备阶段开始时
-description: |-
-  能发动的技能：【洛神】、【凿险】、【自立】、【秘计（旧将）】、【单骑】、【举义】、【替身】、【观星】、【志继】、【若愚】、【潜袭】、【陷嗣①】、【神智】、【勤学】、【英魂】、【魂姿】、【魂殇②】、【绝地】、【战神】、【弘法②】、【妄尊】、【拜印】、【修罗】。
+description: 能发动的技能：【洛神】、【凿险】、【自立】、【秘计（旧将）】、【单骑】、【举义】、【替身】、【观星】、【志继】、【若愚】、【潜袭】、【陷嗣①】、【神智】、【勤学】、【英魂】、【魂姿】、【魂殇②】、【绝地】、【战神】、【弘法②】、【妄尊】、【拜印】、【修罗】。
 mode: common
 parent_id: null
 previous_ids: []
@@ -14,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

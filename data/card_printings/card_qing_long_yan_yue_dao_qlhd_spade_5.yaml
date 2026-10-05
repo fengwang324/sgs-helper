@@ -1,0 +1,23 @@
+id: card_qing_long_yan_yue_dao_qlhd_spade_5
+card_id: card_qing_long_yan_yue_dao
+name_printed: 青龙偃月刀
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 5
+quantity: 1
+printed_text: 攻击范围 3 ◆锁定技，当你使用【杀】时，所有目标角色不能明置武将牌直到此【杀】结算完毕。
+normalized_text: ''
+bottom_right_mark: 青
+card_number: ''
+illustrator: ''
+image: card_qing_long_yan_yue_dao_qlhd_spade_5.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

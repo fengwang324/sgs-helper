@@ -1,0 +1,23 @@
+id: card_bai_qi_lin_qlhd_spade_2
+card_id: card_bai_qi_lin
+name_printed: 白麒麟
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 2
+quantity: 1
+printed_text: 你使用此牌时，对所有体力值大于你的角色依次造成1点雷电伤害。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_bai_qi_lin_qlhd_spade_2.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

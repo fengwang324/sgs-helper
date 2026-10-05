@@ -4,7 +4,6 @@ definition: |-
   为此参数赋值。“为”表示此数值可以被修正，“视为”表示此参数无论经过怎样的修正最终都是被赋值为此数值。
   例如：袁术发动【妄尊】令有“创”的周泰的手牌上限-1，此回合内周泰的手牌上限为“创”数-1。
   例如：A与B的距离视为1即无论A与B的距离本来是多少（或有经过坐骑牌的修正），最终都视为是1。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -13,5 +12,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「数值」

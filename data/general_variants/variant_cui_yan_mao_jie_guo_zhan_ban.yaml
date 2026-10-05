@@ -1,0 +1,27 @@
+id: variant_cui_yan_mao_jie_guo_zhan_ban
+general_id: general_cui_yan_mao_jie
+variant: 群狼环鼎
+title: 日出月盛
+general_number: G.WEI 021
+illustrator: 兴游
+image: variant_cui_yan_mao_jie_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 君临天下·权
+zhulianbihe:
+  - 曹丕
+skills:
+  - skill_id: skill_zheng_pi
+    version_id: skill_zheng_pi_guozhan_qlhd_v1
+  - skill_id: skill_feng_ying
+    version_id: skill_feng_ying_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 021
+verification_status: unverified
+notes: ''

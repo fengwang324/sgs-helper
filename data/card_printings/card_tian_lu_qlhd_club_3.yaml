@@ -1,0 +1,23 @@
+id: card_tian_lu_qlhd_club_3
+card_id: card_tian_lu
+name_printed: 天禄
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 3
+quantity: 1
+printed_text: ◆若场上没有与你势力相同的君主，你视为拥有你势力的君主技。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_tian_lu_qlhd_club_3.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

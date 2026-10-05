@@ -338,7 +338,6 @@ def import_skills() -> dict:
             {
                 "id": skill_id,
                 "name": name,
-                "aliases": [],
                 "notes": "",
                 "source": SOURCE,
             }
@@ -544,8 +543,7 @@ def import_keywords() -> list[dict]:
                     "id": candidate,
                     "name": term,
                     "definition": body,
-                    "aliases": [],
-                    "mode": "common",
+                        "mode": "common",
                     "related_keyword_ids": [],
                     "related_timing_ids": [],
                     "source": SOURCE,

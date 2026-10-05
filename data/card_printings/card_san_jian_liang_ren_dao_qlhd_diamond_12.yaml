@@ -1,0 +1,23 @@
+id: card_san_jian_liang_ren_dao_qlhd_diamond_12
+card_id: card_san_jian_liang_ren_dao
+name_printed: 三尖两刃刀
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: diamond
+rank: 12
+quantity: 1
+printed_text: 你使用【杀】对目标角色造成伤害后，可弃置一张手牌并对该角色距离1的另一名角色造成1点伤害。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_san_jian_liang_ren_dao_qlhd_diamond_12.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

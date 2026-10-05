@@ -1,0 +1,23 @@
+id: card_sheng_zhe_wei_wang_qlhd_none_na
+card_id: card_sheng_zhe_wei_wang
+name_printed: 胜者为王
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 指示物
+suit: none
+rank: null
+quantity: 1
+printed_text: ◇本轮内：有角色死亡时，杀死其的角色本局摸牌阶段摸牌数+3。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_sheng_zhe_wei_wang_qlhd_none_na.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

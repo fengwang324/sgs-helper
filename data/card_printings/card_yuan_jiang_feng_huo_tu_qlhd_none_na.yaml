@@ -1,0 +1,27 @@
+id: card_yuan_jiang_feng_huo_tu_qlhd_none_na
+card_id: card_yuan_jiang_feng_huo_tu
+name_printed: 缘江烽火图
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 指示物
+suit: none
+rank: null
+quantity: 1
+printed_text: |-
+  每名吴势力角色的出牌阶段限一次，该角色可以将一张装备牌置于你的“缘江烽火图”上，称为“烽火”。
+  每名吴势力的准备阶段，该角色可以根据“烽火”数量的规则在“①英姿”、“②好施”、“③逐猎”、“④度势”中选择技能，然后获得所选技能直到回合结束。
+  “烽火”数为：1，选择技能①；2，在技能①②中选择一个；3，在技能①②③中选择一个；4，在技能①②③④中选择一个；5或以上，在技能①②③④中选择两个。
+  锁定技，当你受到【杀】或锦囊牌造成的伤害后，你移去一张“烽火”。
+normalized_text: ''
+bottom_right_mark: 變
+card_number: ''
+illustrator: 瞌暗一休
+image: card_yuan_jiang_feng_huo_tu_qlhd_none_na.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 原本的牌堆归属是「九变篇」

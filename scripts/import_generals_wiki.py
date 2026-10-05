@@ -12,7 +12,7 @@
 
 结构
 ----
-- ``General``（`data/generals/`）：只有 id / name / aliases / notes。
+- ``General``（`data/generals/`）：只有 id / name / notes。
   官方名不同 = 不同武将个体（诸葛亮 / 界诸葛亮 / 神诸葛亮）。
 - ``GeneralVariant``（`data/general_variants/`）：variant 标签 + 模式 / 势力 / 体力 /
   性别 / 称号 / 编号 / 武将牌系列 / 产品 / 技能。官方名相同、玩法不同 → 同一个 General 的多个版本。
@@ -118,7 +118,7 @@ def clean_title(raw: str) -> str:
     return re.sub(r"（[^）]*）", "", parts[0]).strip()
 
 
-def clean_aliases(raw: str) -> list[str]:
+def _legacy_clean_aliases(raw: str) -> list[str]:
     value = strip_templates(raw)
     if not value:
         return []
@@ -204,7 +204,6 @@ def collect(pages_dir: Path, pack_prefix: str) -> list[dict]:
                 "faction": strip_templates(fields.get("势力", "")),
                 "gender": GENDER.get(fields.get("性别", ""), "unknown"),
                 "title": clean_title(fields.get("称号", "")),
-                "aliases": clean_aliases(fields.get("别称", "")),
                 "hp": fields.get("经典体力", ""),
                 "pack": pack,
                 "skills": skills_of(section),
@@ -268,7 +267,7 @@ def main() -> int:
             hp = None
 
         general = MODEL_BY_KIND["general"].model_validate(
-            {"id": general_id, "name": row["name"], "aliases": row["aliases"], "notes": ""}
+            {"id": general_id, "name": row["name"], "notes": ""}
         )
         variant = MODEL_BY_KIND["general_variant"].model_validate(
             {

@@ -6,7 +6,6 @@ definition: |-
   因执行牌或技能的效果而造成伤害，其渠道为此牌或此技能。
   因连环传导而造成伤害，其渠道与触发连环的伤害相同。
   因转移伤害而造成伤害，其渠道与被转移的伤害相同。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -15,5 +14,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

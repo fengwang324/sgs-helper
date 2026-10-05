@@ -278,7 +278,6 @@ def general_payload(app, **overrides) -> dict:
         "gender": "unknown",
         "product_id": "",
         "general_set": "",
-        "aliases": "",
         "variant": "标准版",
         "_variant_id": "",
         "_variant_sha": "",
@@ -384,7 +383,6 @@ def test_duplicate_id_is_blocked(client: TestClient, app, workdir: Path) -> None
         "name": "重复 id 测试",
         "definition": "测试",
         "mode": "common",
-        "aliases": "",
         "related_keyword_ids": "",
         "related_timing_ids": "",
         "source.type": "community_db",
@@ -544,7 +542,6 @@ def test_unreferenced_record_can_be_deleted(client: TestClient, app, workdir: Pa
         "name": "【测试】临时关键词",
         "definition": "测试用，随后删除",
         "mode": "common",
-        "aliases": "",
         "related_keyword_ids": "",
         "related_timing_ids": "",
         "source.type": "discussion",
@@ -830,7 +827,6 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
         skill_count="1",
         skill_0_skill_id="skill_ji_zhi",
         skill_0_version_id="skill_ji_zhi_guozhan_v1",
-        aliases="测试别名\n另一个别名",
         **{"source.type": "physical_card", "source.title": "本人实体卡"},
         verification_status="physical_verified",
     )
@@ -840,7 +836,7 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     general = yaml.safe_load(
         yaml_of(workdir, "general", "general_test_new").read_text(encoding="utf-8")
     )
-    assert general["aliases"] == ["测试别名", "另一个别名"]
+    assert "aliases" not in general          # 别名字段已彻底移除
     # 模式/体力/称号/编号/系列/技能这些“版本属性”写在 GeneralVariant 里
     variant_id = f"variant_{general['id']}"
     variant = yaml.safe_load(
@@ -865,7 +861,7 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert report["general"]["name"] == "【测试】新武将"
     assert report["variants"][0]["hp"] == 2.5
     assert report["variants"][0]["variant"] == "标准版"
-    assert report["general"]["aliases"] == ["测试别名", "另一个别名"]
+    assert "aliases" not in report["general"]
     assert report["product"]["id"] == "product_guozhan_sample_2024"
     assert report["variants"][0]["skills"][0]["version_id"] == "skill_ji_zhi_guozhan_v1"
     assert report["variants"][0]["skills"][0]["pinned"]["id"] == "skill_ji_zhi_guozhan_v1"
@@ -897,7 +893,6 @@ def test_source_required_entity_needs_source(client: TestClient, app, workdir: P
         "name": "【测试】缺来源关键词",
         "definition": "测试",
         "mode": "common",
-        "aliases": "",
         "related_keyword_ids": "",
         "related_timing_ids": "",
         "source.type": "",

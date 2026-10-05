@@ -1,0 +1,23 @@
+id: card_ci_xiong_shuang_gu_jian_qlhd_spade_2
+card_id: card_ci_xiong_shuang_gu_jian
+name_printed: 雌雄双股剑
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 2
+quantity: 1
+printed_text: 当你使用【杀】指定一名异性角色为目标后，你可以令其选择一项：弃置一张手牌；或令你摸一张牌。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_ci_xiong_shuang_gu_jian_qlhd_spade_2.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

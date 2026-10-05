@@ -1,0 +1,31 @@
+id: variant_sun_ce_guo_zhan_ban
+general_id: general_sun_ce
+variant: 群狼环鼎
+title: 江东的小霸王
+general_number: G.WU 010
+illustrator: 木美人
+image: variant_sun_ce_guo_zhan_ban.jpg
+mode: guozhan
+faction: 吴
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·势
+zhulianbihe:
+  - 周瑜
+  - 太史慈
+  - 大乔
+skills:
+  - skill_id: skill_ji_ang
+    version_id: skill_ji_ang_guozhan_qlhd_v1
+  - skill_id: skill_ying_yang
+    version_id: skill_ying_yang_guozhan_qlhd_v1
+  - skill_id: skill_hun_shang
+    version_id: skill_hun_shang_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WU 010
+verification_status: unverified
+notes: Paddle 读出的称号为「江东岭小王」；三国杀 WIKI 该武将称号为「江东的小霸王」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

@@ -1,0 +1,23 @@
+id: card_guo_he_chai_qiao_qlhd_spade_3
+card_id: card_guo_he_chai_qiao
+name_printed: 过河拆桥
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 3
+quantity: 1
+printed_text: 出牌阶段，对一名区域内有牌的其他角色使用。你将其区域内的一张牌弃置。
+normalized_text: ''
+bottom_right_mark: 锦囊
+card_number: ''
+illustrator: ''
+image: card_guo_he_chai_qiao_qlhd_spade_3.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

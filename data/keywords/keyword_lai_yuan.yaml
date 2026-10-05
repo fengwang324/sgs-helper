@@ -8,7 +8,6 @@ definition: |-
   ◆伤害结算中若来源已经死亡则视为此伤害没有来源。
   例如：孟获在张春华使用【南蛮入侵】指定目标后触发【祸首②】，如果其在该【南蛮入侵】的结算过程中死亡，之后该【南蛮入侵】造成的伤害没有来源。
   ◆使用牌造成伤害的来源受到技能的影响改变，不会改变牌的使用者。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -17,5 +16,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

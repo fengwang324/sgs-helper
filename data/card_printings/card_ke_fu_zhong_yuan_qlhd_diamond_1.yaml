@@ -1,0 +1,23 @@
+id: card_ke_fu_zhong_yuan_qlhd_diamond_1
+card_id: card_ke_fu_zhong_yuan
+name_printed: 克复中原
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 不臣篇
+suit: diamond
+rank: 1
+quantity: 1
+printed_text: 出牌阶段，对任意一名角色使用。这些角色各选择一项：1. 视为使用一张【杀】；2. 摸一张牌。蜀：蜀势力角色选择1时此【杀】伤害+1，选择2时改为摸两张牌。
+normalized_text: ''
+bottom_right_mark: 不臣
+card_number: ''
+illustrator: ''
+image: card_ke_fu_zhong_yuan_qlhd_diamond_1.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

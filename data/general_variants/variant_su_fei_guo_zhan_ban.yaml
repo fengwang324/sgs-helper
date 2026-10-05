@@ -1,0 +1,25 @@
+id: variant_su_fei_guo_zhan_ban
+general_id: general_su_fei
+variant: 群狼环鼎
+title: 诤友投明
+general_number: G.WU&QUN 070
+illustrator: Domi
+image: variant_su_fei_guo_zhan_ban.jpg
+mode: guozhan
+faction: 吴/群
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe:
+  - 甘宁
+skills:
+  - skill_id: skill_lian_pian
+    version_id: skill_lian_pian_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WU&QUN 070
+verification_status: unverified
+notes: Paddle 读出的称号为「关辉」；三国杀 WIKI 该武将称号为「义荐恩还」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

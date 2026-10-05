@@ -197,6 +197,35 @@ class FileBackup:
 # ---------------------------------------------------------------- Store
 
 
+#: 国战编号前缀里的「类别」标记（不是势力，但希望能在同一个筛选里选到）
+NUMBER_TAGS = {"AM": "野心家", "EM": "君主", "EMA": "君主"}
+
+
+def _number_tag(number: str) -> str:
+    n = (number or "").upper().replace(" ", "")
+    n = n[2:] if n.startswith("G.") else n
+    code = re.sub(r"\d+.*$", "", n).strip(".&/")
+    return NUMBER_TAGS.get(code, "")
+
+
+def _number_sort_key(number: str) -> str:
+    """把 G.WEI 9 / G.WEI 010 / GJIN016 这类编号规范成可排序的字符串。
+
+    去掉开头的 G./G-（国战前缀），数字左侧补零，于是「势力 + 编号」自然有序。
+    """
+    n = (number or "").upper().replace(" ", "")
+    if not n:
+        return "zzzz"
+    n = re.sub(r"^G[.\-]?", "", n)
+    n = re.sub(r"([A-Z])", r" \1", n).strip()
+    return re.sub(r"\d+", lambda m: m.group(0).zfill(3), n)
+
+
+def _faction_tokens(value: str) -> list[str]:
+    """势力字段可能是「魏/蜀」这种双势力，按分隔符拆成 token。"""
+    return [t for t in re.split(r"[/、,，\s]+", value or "") if t]
+
+
 class AdminStore:
     """本地资料管理的数据访问对象。线程安全（单进程、少量并发足够）。"""
 
@@ -325,8 +354,6 @@ class AdminStore:
                 if v.general_id == entity.id
             ]
             bits = []
-            if getattr(entity, "aliases", None):
-                bits.append("别名：" + "、".join(entity.aliases))
             bits.append(f"{len(variants)} 个版本")
             if variants:
                 bits.append("、".join(sorted(v.variant for v in variants)))
@@ -336,7 +363,9 @@ class AdminStore:
                 getattr(entity, "faction", "") or "",
                 f"{entity.hp} 体力" if getattr(entity, "hp", None) is not None else "",
                 getattr(entity, "title", "") or "",
-                f"系列：{entity.general_set}" if getattr(entity, "general_set", None) else "",
+                self.set_display(getattr(entity, "general_set", None)),
+                ("珠联璧合：" + "、".join(entity.zhulianbihe))
+                if getattr(entity, "zhulianbihe", None) else "",
             ]
             skills = [
                 self.display_name("skill", bundle.get("skill", ref.skill_id))
@@ -355,7 +384,10 @@ class AdminStore:
             mode = MODE_LABELS.get(getattr(entity, "mode", ""), getattr(entity, "mode", ""))
             start = getattr(entity, "effective_from", None) or "不限"
             end = getattr(entity, "effective_to", None) or "至今"
-            label = getattr(entity, "version_label", "") or ""
+            product = self.name_of("product", getattr(entity, "product_id", None))
+            label = self._display_label(entity, product, mode)
+            if not label and product:
+                label = product          # 标签与产品名重复时，用产品名占这个位置
             return f"{mode} · {label} · {start} ~ {end}".strip(" ·")
         if kind == "card":
             from ..constants import CARD_TYPE_LABELS
@@ -365,12 +397,28 @@ class AdminStore:
             )
             bits = [CARD_TYPE_LABELS.get(getattr(entity, "card_type", ""), ""), getattr(entity, "subtype", "")]
             return " · ".join(b for b in bits if b) + f"　{count} 种印刷"
+        if kind == "general_set":
+            bundle = self.bundle
+            parent = bundle.get("general_set", entity.parent_id) if entity.parent_id else None
+            kids = sorted((s for s in bundle.all("general_set").values()
+                           if s.parent_id == entity.id), key=lambda s: (s.sort_order, s.name))
+            used = sum(1 for v in bundle.all("general_variant").values()
+                       if (getattr(v, "general_set", "") or "") == entity.name)
+            bits = []
+            if parent is not None:
+                bits.append("属于 " + parent.name)
+            if kids:
+                bits.append("子系列 " + "、".join(k.name for k in kids))
+            bits.append("%d 个武将版本在用" % used)
+            return " · ".join(bits)
         if kind == "card_printing":
             product = self.display_name("product", bundle.get("product", entity.product_id))
             suit = SUIT_LABELS.get(getattr(entity, "suit", ""), getattr(entity, "suit", ""))
             rank = rank_label(getattr(entity, "rank", None))
             mark = getattr(entity, "bottom_right_mark", "") or ""
-            bits = [product, f"{suit}{rank}", f"角标 {mark}" if mark else ""]
+            cs = getattr(entity, "card_set", "") or getattr(entity, "package", "") or ""
+            bits = [product, f"{suit}{rank}", f"牌堆 {cs}" if cs else "",
+                    f"角标 {mark}" if mark else ""]
             return " · ".join(b for b in bits if b)
         if kind == "faq":
             return truncate(getattr(entity, "answer", ""), 60)
@@ -394,10 +442,58 @@ class AdminStore:
     def _product_id_of_variant(self, variant: Any) -> str | None:
         return getattr(variant, "product_id", None)
 
+    #: 核验状态的优先级（合成「武将」这一层的状态时取最保守的那个）
+    STATUS_ORDER = ("unverified", "conflict", "community", "official", "physical_verified")
+
+    def set_display(self, name: str | None) -> str:
+        """系列的展示文本：带上上级（君临天下·变（君临天下））。"""
+        if not name:
+            return ""
+        bundle = self.bundle
+        me = next((s for s in bundle.all("general_set").values() if s.name == name), None)
+        if me is not None and me.parent_id:
+            parent = bundle.get("general_set", me.parent_id)
+            if parent is not None:
+                return f"{name}（{parent.name}）"
+        return name
+
+    def status_of(self, kind: str, entity: Any) -> str:
+        """General 自己没有核验状态：用它的各个版本推导出来，
+        这样「武将列表」和「武将版本列表」显示的是一致的。"""
+        own = getattr(entity, "verification_status", None)
+        bundle = self.bundle
+        if kind in ("skill", "skill_version"):
+            # 技能 / 技能版本没有「自己的卡」：状态跟着**引用它的武将版本**走，
+            # 于是「武将核验过 => 它的技能也算核验」。
+            order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
+            refs = []
+            for v in bundle.all("general_variant").values():
+                for ref in (v.skills or []):
+                    hit = (ref.version_id == entity.id if kind == "skill_version"
+                           else ref.skill_id == entity.id)
+                    if hit:
+                        refs.append(v)
+                        break
+            if not refs:
+                return own or "unverified"
+            return min((getattr(v, "verification_status", None) or "unverified" for v in refs),
+                       key=lambda x: order.get(x, 99))
+        if kind != "general":
+            return own or "unverified"
+        statuses = [
+            getattr(v, "verification_status", None) or "unverified"
+            for v in bundle.all("general_variant").values()
+            if v.general_id == entity.id
+        ]
+        if not statuses:
+            return own or "unverified"
+        order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
+        return min(statuses, key=lambda x: order.get(x, 99))
+
     def describe(self, kind: str, entity: Any) -> dict:
         """列表/搜索结果的一行。"""
         origin = self.origin(kind, entity.id)
-        status = getattr(entity, "verification_status", None)
+        status = self.status_of(kind, entity)
         mode = getattr(entity, "mode", None)
         return {
             "kind": kind,
@@ -407,6 +503,7 @@ class AdminStore:
             "subtitle": self.subtitle(kind, entity),
             "title": getattr(entity, "title", "") or "",
             "general_number": getattr(entity, "general_number", None),
+            "general_id": getattr(entity, "general_id", None),
             "general_set": getattr(entity, "general_set", None),
             "general_sets": list(getattr(entity, "general_sets", []) or []),
             "card_sets": list(getattr(entity, "card_sets", []) or []),
@@ -490,6 +587,7 @@ class AdminStore:
         status: str = "",
         product: str = "",
         package: str = "",
+        faction: str = "",
     ) -> list[dict]:
         """列表页筛选：q / mode / verification_status / product_id / general_set（package）。
 
@@ -508,7 +606,7 @@ class AdminStore:
                 continue
             if mode and getattr(entity, "mode", None) != mode:
                 continue
-            if status and getattr(entity, "verification_status", None) != status:
+            if status and self.status_of(kind, entity) != status:
                 continue
             if product and getattr(entity, "product_id", None) != product:
                 continue
@@ -516,13 +614,54 @@ class AdminStore:
                 if kind in {"general", "general_variant"}:
                     if getattr(entity, "general_set", None) != package:
                         continue
+                elif kind == "card_printing":
+                    if package not in {getattr(entity, "card_set", None),
+                                       getattr(entity, "package", None)}:
+                        continue
                 elif getattr(entity, "package", None) != package:
+                    continue
+            if faction:
+                if kind == "general_variant":
+                    tags = _faction_tokens(getattr(entity, "faction", ""))
+                    tag = _number_tag(getattr(entity, "general_number", "") or "")
+                    if tag:
+                        tags.append(tag)
+                    if faction not in tags:
+                        continue
+                elif kind == "general":
+                    mine = set()
+                    for v in bundle.all("general_variant").values():
+                        if v.general_id == entity_id:
+                            mine.update(_faction_tokens(getattr(v, "faction", "")))
+                            t = _number_tag(getattr(v, "general_number", "") or "")
+                            if t:
+                                mine.add(t)
+                    if faction not in mine:
+                        continue
+                else:
                     continue
             rows.append(self.describe(kind, entity))
 
         if kind == "skill_version":
             rows.sort(key=lambda r: (self.name_of("skill", getattr(r["entity"], "skill_id", "")),
                                      mode_sort_key(getattr(r["entity"], "mode", "common")), r["id"]))
+        elif kind == "general_variant":
+            rows.sort(key=lambda r: (_number_sort_key(getattr(r["entity"], "general_number", "") or ""),
+                                     r["name"], r["id"]))
+        elif kind == "general_set":
+            def set_key(r):
+                e = r["entity"]
+                parent = bundle.get("general_set", e.parent_id) if e.parent_id else None
+                return ("" if parent is None else parent.name,
+                        getattr(e, "sort_order", 0), r["name"])
+            rows.sort(key=set_key)
+        elif kind == "general":
+            first: dict[str, str] = {}
+            for v in bundle.all("general_variant").values():
+                key = _number_sort_key(getattr(v, "general_number", "") or "")
+                if v.general_id not in first or key < first[v.general_id]:
+                    first[v.general_id] = key
+            rows.sort(key=lambda r: (first.get(r["id"], "zzzz"), r["name"], r["id"]))
         else:
             rows.sort(key=lambda r: (r["name"], r["id"]))
         return rows
@@ -538,18 +677,42 @@ class AdminStore:
             mode = getattr(entity, "mode", None)
             if mode:
                 modes[mode] = modes.get(mode, 0) + 1
-            status = getattr(entity, "verification_status", None)
+            status = self.status_of(kind, entity)
             if status:
                 statuses[status] = statuses.get(status, 0) + 1
             product = getattr(entity, "product_id", None)
             if product:
                 products[product] = products.get(product, 0) + 1
             if kind in {"general", "general_variant"}:
-                value = getattr(entity, "general_set", None)
+                values = [getattr(entity, "general_set", None)]
+            elif kind == "card_printing":
+                values = [getattr(entity, "card_set", None), getattr(entity, "package", None)]
             else:
-                value = getattr(entity, "package", None)
-            if value:
-                packages[value] = packages.get(value, 0) + 1
+                values = [getattr(entity, "package", None)]
+            for value in values:
+                if value:
+                    packages[value] = packages.get(value, 0) + 1
+
+        factions: dict[str, int] = {}
+        if kind == "general_variant":
+            for _eid, entity in bundle.all("general_variant").items():
+                tags = set(_faction_tokens(getattr(entity, "faction", "")))
+                t = _number_tag(getattr(entity, "general_number", "") or "")
+                if t:
+                    tags.add(t)
+                for t in tags:
+                    factions[t] = factions.get(t, 0) + 1
+        elif kind == "general":
+            for _eid, general in bundle.all("general").items():
+                mine = set()
+                for v in bundle.all("general_variant").values():
+                    if v.general_id == general.id:
+                        mine.update(_faction_tokens(getattr(v, "faction", "")))
+                        t = _number_tag(getattr(v, "general_number", "") or "")
+                        if t:
+                            mine.add(t)
+                for t in mine:
+                    factions[t] = factions.get(t, 0) + 1
 
         def options(mapping: dict[str, int], label_of=lambda k: k) -> list[dict]:
             return [
@@ -562,6 +725,7 @@ class AdminStore:
             "statuses": options(statuses, lambda k: VERIFICATION_LABELS.get(k, k)),
             "products": options(products, lambda k: self.name_of("product", k)),
             "packages": options(packages, lambda k: k),
+            "factions": options(factions, lambda k: k),
             "package_label": "武将牌系列" if kind in {"general", "general_variant"} else "包/堆",
         }
 
@@ -573,7 +737,7 @@ class AdminStore:
             rows: list[dict] = []
             for kind in KIND_ORDER:
                 for _eid, entity in bundle.all(kind).items():
-                    if getattr(entity, "verification_status", None) == status:
+                    if self.status_of(kind, entity) == status:
                         rows.append(self.describe(kind, entity))
             rows.sort(key=lambda r: (KIND_ORDER.index(r["kind"]), r["name"], r["id"]))
             groups.append(
@@ -589,14 +753,14 @@ class AdminStore:
     # ------------------------------------------------------------ 录入辅助（给前端 JSON API）
 
     def skill_search(self, query: str, limit: int = 20) -> list[dict]:
-        """技能搜索式组合框：按 名称 / aliases / id 匹配，名称命中优先。"""
+        """技能搜索式组合框：按 名称 / id 匹配，名称命中优先。"""
         text = (query or "").strip()
         bundle = self.bundle
         lowered = text.lower()
         scored: list[tuple] = []
         for skill_id, skill in bundle.all("skill").items():
             name = skill.name or ""
-            aliases = list(skill.aliases or [])
+            aliases: list[str] = []
             version_count = sum(
                 1 for v in bundle.all("skill_version").values() if v.skill_id == skill_id
             )
@@ -623,12 +787,31 @@ class AdminStore:
             {
                 "id": skill_id,
                 "name": name,
-                "aliases": aliases,
                 "version_count": version_count,
                 "exact": bool(text) and name == text,
             }
             for _score, _n, skill_id, name, aliases, version_count in scored[:limit]
         ]
+
+    def version_display_label(self, version: Any) -> str:
+        """给编辑页用：与产品名/模式名重复的版本标签不再单独显示一次。"""
+        if version is None:
+            return ""
+        return self._display_label(
+            version,
+            self.name_of("product", getattr(version, "product_id", None)),
+            MODE_LABELS.get(getattr(version, "mode", ""), getattr(version, "mode", "") or ""),
+        )
+
+    @staticmethod
+    def _display_label(version: Any, product_name: str, mode_label: str) -> str:
+        """版本标签如果与产品名/模式名重复，就不必再显示（避免「群狼环鼎 · 国战 · 群狼环鼎」）。"""
+        label = (getattr(version, "version_label", "") or "").strip()
+        if not label:
+            return ""
+        if label in {product_name.strip(), mode_label.strip()}:
+            return ""
+        return label
 
     def skill_version_options(
         self, skill_id: str, *, mode: str | None = None, product_id: str | None = None
@@ -656,6 +839,10 @@ class AdminStore:
                 {
                     "id": version.id,
                     "version_label": version.version_label or "",
+                    "display_label": self._display_label(
+                        version, self.name_of("product", version.product_id),
+                        MODE_LABELS.get(version.mode, version.mode or ""),
+                    ),
                     "mode": version.mode,
                     "mode_label": MODE_LABELS.get(version.mode, version.mode),
                     "product_id": version.product_id,
@@ -743,10 +930,31 @@ class AdminStore:
             if text and text not in str(value):
                 continue
             counter[str(value)] = counter.get(str(value), 0) + 1
-        return [
-            {"value": value, "count": counter[value]}
-            for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]
-        ]
+        if field_name == "general_set":
+            # 产品里声明过的系列也要能选到（哪怕当前还没有任何卡用它）
+            for product in self.bundle.all("product").values():
+                for value in (product.general_sets or []):
+                    value = str(value)
+                    if text and text not in value:
+                        continue
+                    counter.setdefault(value, 0)
+        out = []
+        for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]:
+            item: dict = {"value": value, "count": counter[value]}
+            if field_name == "general_set":
+                me = next((s for s in self.bundle.all("general_set").values()
+                           if s.name == value), None)
+                if me is not None:
+                    kids = [s.name for s in self.bundle.all("general_set").values()
+                            if s.parent_id == me.id]
+                    if me.parent_id:
+                        parent = self.bundle.get("general_set", me.parent_id)
+                        if parent is not None:
+                            item["parent"] = parent.name
+                    if kids:
+                        item["children"] = sorted(kids)
+            out.append(item)
+        return out
 
     def generals_named(self, name: str, limit: int = 8) -> list[dict]:
         """同名武将提醒（同名在不同产品/版本下是合法的，所以只提醒、不阻止）。"""
@@ -984,6 +1192,32 @@ class AdminStore:
             "as_of": as_of,
         }
 
+    def set_view(self, set_id: str) -> dict | None:
+        """系列详情：上级、子系列、以及所有在用这个系列的武将版本。"""
+        entity = self.entity("general_set", set_id)
+        if entity is None:
+            return None
+        bundle = self.bundle
+        parent = bundle.get("general_set", entity.parent_id) if entity.parent_id else None
+        children = sorted((s for s in bundle.all("general_set").values()
+                           if s.parent_id == entity.id), key=lambda s: (s.sort_order, s.name))
+        users = []
+        for variant in bundle.all("general_variant").values():
+            if (getattr(variant, "general_set", "") or "") != entity.name:
+                continue
+            general = bundle.get("general", variant.general_id)
+            users.append({
+                "id": variant.id,
+                "general_id": variant.general_id,
+                "name": (getattr(general, "name", "") or variant.general_id) + f"（{variant.variant}）",
+                "title": variant.title,
+                "number": variant.general_number,
+                "faction": variant.faction,
+                "status": self.status_of("general_variant", variant),
+            })
+        users.sort(key=lambda r: (_number_sort_key(r["number"] or ""), r["name"]))
+        return {"parent": parent, "children": children, "users": users}
+
     def general_view(self, general_id: str) -> dict | None:
         entity = self.entity("general", general_id)
         if entity is None:
@@ -1044,6 +1278,7 @@ class AdminStore:
                     "variant": variant.variant,
                     "skills": skills,
                     "product_name": self.name_of("product", variant.product_id),
+                    "set_display": self.set_display(variant.general_set),
                     "source": source_dict(variant),
                     "edit_url": f"/edit/general/{general_id}?variant={variant.id}",
                 }
@@ -1101,6 +1336,11 @@ class AdminStore:
             "variants": sorted(variants, key=lambda v: (v.general_id, v.variant, v.id)),
             "printings": sorted(printings, key=lambda p: (p.card_set or "", p.suit, p.rank or 0, p.id)),
             "skill_versions": sorted(versions, key=lambda v: (v.skill_id, mode_sort_key(v.mode), v.id)),
+            "set_chips": [
+                {"name": name, "id": index.get(name, "")}
+                for name in (entity.general_sets or [])
+                for index in [{s.name: s.id for s in bundle.all("general_set").values()}]
+            ],
         }
 
     # ------------------------------------------------------------ 写入

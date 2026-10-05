@@ -1,0 +1,20 @@
+id: skill_you_yan_guozhan_qlhd_v1
+skill_id: skill_you_yan
+mode: guozhan
+text: 你的回合内限一次，当你的牌因弃置而置入弃牌堆时你可以亮出牌堆顶的四张牌，然后获得其中与你此次弃置的牌花色均不相同的牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

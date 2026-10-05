@@ -1,0 +1,20 @@
+id: skill_xi_bing_guozhan_qlhd_v1
+skill_id: skill_xi_bing
+mode: guozhan
+text: 当一名其他角色于其出牌阶段使用第一张黑色【杀】或黑色普通锦囊牌指定唯一目标后，若其手牌数小于其体力值，你可令该角色将手牌摸至其当前体力值（至多摸至五张），若如此做其本回合不能再使用手牌。若你与其均明置所有武将牌，则你可以暗置你与其各一张武将牌且本回合不能再明置这些武将牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

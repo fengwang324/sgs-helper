@@ -34,6 +34,14 @@
       {% endfor %}
     </select>
   {% endif %}
+  {% if options.factions %}
+    <select name="faction">
+      <option value="">全部势力</option>
+      {% for item in options.factions %}
+        <option value="{{ item.value }}" {{ 'selected' if faction == item.value else '' }}>{{ item.label }}（{{ item.count }}）</option>
+      {% endfor %}
+    </select>
+  {% endif %}
   {% if options.packages %}
     <select name="package">
       <option value="">全部包</option>
@@ -43,10 +51,19 @@
     </select>
   {% endif %}
   <button type="submit">筛选</button>
-  {% if q or mode or status or product or package %}
+  {% if q or mode or status or product or package or faction %}
     <a class="btn ghost" href="/list/{{ kind }}">清除条件</a>
   {% endif %}
 </form>
+
+{% if options.factions %}
+<p class="quick">
+  按势力：
+  {% for item in options.factions %}
+    <a href="/list/{{ kind }}?faction={{ item.value }}">{{ item.label }}</a>
+  {% endfor %}
+</p>
+{% endif %}
 
 <p class="quick">
   快速筛选：
@@ -67,7 +84,12 @@
     {% for row in rows %}
       <tr>
         <td>
-          <a href="/view/{{ row.kind }}/{{ row.id }}">{{ row.name }}</a>
+          {% if row.kind == 'general_variant' and row.general_id %}
+            <a href="/edit/general/{{ row.general_id }}?variant={{ row.id }}"
+               title="直接编辑这个版本">{{ row.name }}</a>
+          {% else %}
+            <a href="/view/{{ row.kind }}/{{ row.id }}">{{ row.name }}</a>
+          {% endif %}
           <div class="sub">{{ row.subtitle }}</div>
           <code class="id">{{ row.id }}</code>
         </td>
@@ -88,8 +110,13 @@
         <td>{{ status_badge(row.verification_status) }}</td>
         <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>
         <td class="nowrap">
-          <a href="/edit/{{ row.kind }}/{{ row.id }}">编辑</a> ·
-          <a href="/delete/{{ row.kind }}/{{ row.id }}">删除</a>
+          {% if row.kind == 'general_variant' and row.general_id %}
+            <a href="/edit/general/{{ row.general_id }}?variant={{ row.id }}">编辑</a> ·
+            <a href="/view/general/{{ row.general_id }}">看武将</a>
+          {% else %}
+            <a href="/edit/{{ row.kind }}/{{ row.id }}">编辑</a> ·
+            <a href="/delete/{{ row.kind }}/{{ row.id }}">删除</a>
+          {% endif %}
         </td>
       </tr>
     {% endfor %}

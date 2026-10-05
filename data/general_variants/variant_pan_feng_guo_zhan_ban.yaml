@@ -1,0 +1,24 @@
+id: variant_pan_feng_guo_zhan_ban
+general_id: general_pan_feng
+variant: 群狼环鼎
+title: 联军上将
+general_number: G.QUN 017
+illustrator: 凡果
+image: variant_pan_feng_guo_zhan_ban.jpg
+mode: guozhan
+faction: 群
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_kuang_fu
+    version_id: skill_kuang_fu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.QUN 017
+verification_status: unverified
+notes: ''

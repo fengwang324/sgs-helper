@@ -1,0 +1,21 @@
+id: skill_bao_lie_guozhan_qlhd_v1
+skill_id: skill_bao_lie
+mode: guozhan
+text: |-
+  锁定技，出牌阶段开始时，你选择所有攻击范围内含有你的其他势力角色，令这些角色各需对你使用一张【杀】，否则你弃置其一张牌：你对体力值不小于你的其他角色使用【杀】无次数和距离限制。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

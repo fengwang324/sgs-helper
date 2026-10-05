@@ -1,0 +1,25 @@
+id: variant_jia_chong_guo_zhan_jin
+general_id: general_jia_chong
+variant: 群狼环鼎
+title: 情迎篡弑
+general_number: G.JIN 021
+illustrator: 游漫美绘
+image: variant_jia_chong_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_chu_jue
+    version_id: skill_chu_jue_guozhan_qlhd_v1
+  - skill_id: skill_jian_zhi
+    version_id: skill_jian_zhi_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 021
+verification_status: unverified
+notes: Paddle 读出的称号为「情迎篡弑」；三国杀 WIKI 该武将称号为「始作俑者」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

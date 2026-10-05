@@ -1,0 +1,26 @@
+id: variant_ma_su_guo_zhan_ban
+general_id: general_ma_su
+variant: 群狼环鼎
+title: 帷幄经谋
+general_number: G.SHU 022
+illustrator: 蚂蚁君
+image: variant_ma_su_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 君临天下·变
+zhulianbihe: []
+skills:
+  - skill_id: skill_san_yao
+    version_id: skill_san_yao_guozhan_qlhd_v1
+  - skill_id: skill_zhi_man
+    version_id: skill_zhi_man_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 022
+verification_status: unverified
+notes: Paddle 读出的称号为「惟幄里谋马证」；三国杀 WIKI 该武将称号为「军略之才器」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

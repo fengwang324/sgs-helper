@@ -1,8 +1,6 @@
 id: faq_ruling_skill_gu_huo_3
-question: |-
-  【蛊惑】声明使用/打出【杀】时须同时声明此【杀】的属性，即你可以声明使用/打出下列三种【杀】里的一种：普通【杀】，火【杀】和雷【杀】
-answer: |-
-  你发动【蛊惑】声明使用/打出【杀】时须同时声明此【杀】的属性，即你可以声明使用/打出下列三种【杀】里的一种：普通【杀】，火【杀】和雷【杀】。
+question: 【蛊惑】声明使用/打出【杀】时须同时声明此【杀】的属性，即你可以声明使用/打出下列三种【杀】里的一种：普通【杀】，火【杀】和雷【杀】
+answer: 你发动【蛊惑】声明使用/打出【杀】时须同时声明此【杀】的属性，即你可以声明使用/打出下列三种【杀】里的一种：普通【杀】，火【杀】和雷【杀】。
 mode: identity
 related_general_ids: []
 related_skill_ids:
@@ -15,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【于吉】技能【蛊惑】的裁定原文；问题栏取自原文首个分句

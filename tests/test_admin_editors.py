@@ -7,7 +7,7 @@
 3. 武将编号允许大小写字母/数字/-/_
 4. Product 简洁表单正确保存 general_sets / card_sets
 5. 编辑旧 Product 时没展示的字段不会丢
-6. 编辑旧 General 时 aliases/source/notes 不会丢
+6. 编辑旧 General 时 source/notes 不会丢
 7. 已有 Skill 可以搜索并绑定
 8. General 能显式绑定 SkillVersion
 9. version_id 必须属于对应 skill_id
@@ -87,7 +87,6 @@ def general_payload(app, **overrides) -> dict:
         "gender": "unknown",
         "product_id": "",
         "general_set": "",
-        "aliases": "",
         "variant": "标准版",
         "_variant_id": "",
         "_variant_sha": "",
@@ -323,12 +322,12 @@ def test_product_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
 
 
 def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, store) -> None:
-    """6) 编辑旧武将：General 的 aliases、Variant 的 source / notes 都必须保留。"""
+    """6) 编辑旧武将：Variant 的 source / notes 必须保留。"""
     general_path = entity_file(workdir, "general", "general_zhu_ge_liang")
     variant_path = variant_file(workdir, "general_zhu_ge_liang")
     general_before = load_yaml(general_path)
     variant_before = load_yaml(variant_path)
-    assert general_before["aliases"] and variant_before["source"]
+    assert variant_before["source"]
 
     payload = general_edit(
         client.app,
@@ -346,7 +345,7 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
         skill_1_version_id="skill_kong_cheng_identity_v1",
     )
     for key in (
-        "aliases", "notes", "general_notes", "verification_status",
+        "notes", "general_notes", "verification_status",
         "source.type", "source.title", "source.reference", "source.notes",
     ):
         payload.pop(key)
@@ -354,7 +353,6 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, workdir: Path, sto
     assert response.status_code == 303, response.text
     after_general = load_yaml(general_path)
     after_variant = load_yaml(variant_path)
-    assert after_general["aliases"] == general_before["aliases"]
     assert after_variant["source"] == variant_before["source"]
     assert after_variant["notes"] == variant_before["notes"]
     assert after_variant["hp"] == 3.0

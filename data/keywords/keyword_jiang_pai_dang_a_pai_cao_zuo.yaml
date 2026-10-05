@@ -21,7 +21,6 @@ definition: |-
   例如：杨修对一名角色发动【鸡肋】选择一种牌的类别，该角色不能发动武器或武将技能将任意手牌当该类别的牌使用或打出，但能发动技能将任意手牌当非该类别的牌使用或打出。
   例如：赵云于回合外发动【丈八蛇矛】打出一张【杀】时，只能发动一次【涯角】。
   例如：诸葛恪不能发动【朱雀羽扇①】将其发动【傲才①】观看到的一张普通【杀】当火【杀】使用，因为【傲才①】的效果是诸葛恪可以使用此牌，而不是可以将此牌当其他牌使用。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -30,5 +29,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

@@ -5,7 +5,6 @@ definition: |-
   ◆角色减体力上限后，若其体力值超过体力上限，其须将体力调整至等同于体力上限。
   ◆体力上限较多的武将可以用数张3/4阴阳鱼体力牌或1/2阴阳鱼体力牌来表示。
   例如：主公董卓用两张4阴阳鱼体力牌和一张1阴阳鱼体力牌表示初始体力上限；当他减体力上限时，通过将一张合适的体力牌翻面或移走的方式来调整。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -14,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「数值」

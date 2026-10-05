@@ -8,7 +8,7 @@
 
 - **只有武将名字必填**；其余都可以先空着，以后再补。
 - 内部 ``id`` 由后端生成（用户不填也能保存），已存在的记录绝不无故重生 id。
-- 页面没展示的字段（aliases / source / verification_status / notes…）在编辑时**保留原值**：
+- 页面没展示的字段（source / verification_status / notes…）在编辑时**保留原值**：
   解析时以“已存在实体的 dump”为底，只覆盖表单里真的出现的字段。
 - 一次提交可以同时产生 General + 0..N Skill + 0..N SkillVersion，交给
   ``AdminStore.save_batch`` 一次性事务保存。
@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Mapping
@@ -56,7 +57,6 @@ PRODUCT_DEFAULTS: dict[str, Any] = {
 GENERAL_DEFAULTS: dict[str, Any] = {
     "id": "",
     "name": "",
-    "aliases": [],
     "notes": "",
 }
 
@@ -318,6 +318,9 @@ class SkillRow:
     add_version_text: str = ""
     add_version_label: str = ""
     add_version_from: str = ""
+    #: 就地修改某条已存在 SkillVersion 的文本
+    edit_version_id: str = ""
+    edit_text: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -332,6 +335,8 @@ class SkillRow:
             "add_version_text": self.add_version_text,
             "add_version_label": self.add_version_label,
             "add_version_from": self.add_version_from,
+            "edit_version_id": self.edit_version_id,
+            "edit_text": self.edit_text,
         }
 
 
@@ -361,6 +366,8 @@ def parse_skill_rows(form: Mapping[str, Any]) -> list[SkillRow]:
                 add_version_text=_text(form, f"{prefix}add_version_text"),
                 add_version_label=_text(form, f"{prefix}add_version_label"),
                 add_version_from=_text(form, f"{prefix}add_version_from"),
+                edit_version_id=_text(form, f"{prefix}edit_version_id"),
+                edit_text=_text(form, f"{prefix}edit_text"),
             )
         )
     return rows
@@ -387,6 +394,9 @@ def rows_from_variant(store, variant: Any | None) -> list[dict]:
             | {
                 "skill_name": skill.name if skill else ref.skill_id,
                 "version_label": (version.version_label or version.id) if version else "",
+                "version_display": store.version_display_label(version) if version else "",
+                "edit_version_id": ref.version_id or "",
+                "version_text": version.text if version else "",
                 "version_options": store.skill_version_options(
                     ref.skill_id, mode=variant.mode, product_id=variant.product_id
                 ),
@@ -448,6 +458,27 @@ def _new_version_change(
     return version_id, Change(kind="skill_version", candidate=candidate)
 
 
+def normalize_faction(value: str) -> str:
+    """势力归一化：允许用空格 / 斜杠 / 顿号 / 逗号分隔多个（双势力），统一存成「魏/蜀」。"""
+    toks = [t for t in re.split(r"[\s/、，,|]+", value or "") if t]
+    out: list[str] = []
+    for t in toks:
+        if t not in out:
+            out.append(t)
+    return "/".join(out)
+
+
+def _name_list(form: Mapping[str, Any], name: str) -> list[str]:
+    """多值文本 -> list（珠联璧合可以写多个，也可以是「男性武将」这类类别值）。"""
+    raw = _text(form, name) or ""
+    toks = [t for t in re.split(r"[\s、,，/|]+", raw) if t]
+    out: list[str] = []
+    for t in toks:
+        if t not in out:
+            out.append(t)
+    return out
+
+
 def parse_general_form(
     form: Mapping[str, Any],
     *,
@@ -479,8 +510,6 @@ def parse_general_form(
         general_data["id"] = make_entity_id(
             "general_", str(general_data.get("name") or "general"), store.bundle.ids("general")
         )
-    if "aliases" in form:
-        general_data["aliases"] = _multi(form, "aliases")
     if "general_notes" in form:
         general_data["notes"] = _text(form, "general_notes")
 
@@ -489,10 +518,18 @@ def parse_general_form(
     variant_data["general_id"] = str(general_data.get("id") or "")
 
     if "variant" in form:
-        variant_data["variant"] = _text(form, "variant") or "标准版"
-    for name in ("title", "faction"):
-        if name in form:
-            variant_data[name] = _text(form, name)
+        raw_variant = _text(form, "variant") or ""
+        if raw_variant.startswith("variant_") and variant is not None:
+            raw_variant = ""          # 防御：误填了内部 ID，保留原标签
+        variant_data["variant"] = raw_variant or (variant.variant if variant else "") or "标准版"
+    if "title" in form:
+        variant_data["title"] = _text(form, "title")
+    if "faction" in form:
+        variant_data["faction"] = normalize_faction(_text(form, "faction"))
+    if "illustrator" in form:
+        variant_data["illustrator"] = _text(form, "illustrator")
+    if "zhulianbihe" in form:
+        variant_data["zhulianbihe"] = _name_list(form, "zhulianbihe")
     if "general_number" in form:
         variant_data["general_number"] = _optional_text(form, "general_number")
     if "general_set" in form:
@@ -513,6 +550,7 @@ def parse_general_form(
     if "notes" in form:
         variant_data["notes"] = _text(form, "notes")
     if "verification_status" in form:
+        # 编辑页是一个复选框：勾上=physical_verified，不勾=unverified
         _apply_enum(
             variant_data, form, "verification_status", VerificationStatus, errors, nullable=False
         )
@@ -592,6 +630,23 @@ def parse_general_form(
                     info.append(f"将为技能 {skill_id} 新增版本 {new_version_id}")
                 if new_version_id:
                     version_id = new_version_id
+            if row.edit_version_id and row.edit_text.strip():
+                target = store.entity("skill_version", row.edit_version_id)
+                if target is not None and target.text.strip() != row.edit_text.strip():
+                    candidate = target.model_dump()
+                    candidate["text"] = row.edit_text.strip()
+                    result.changes.append(
+                        Change(kind="skill_version", candidate=candidate, old_id=target.id)
+                    )
+                    info.append(
+                        f"将就地修改技能版本 {target.id} 的文本"
+                        f"（{len(target.text)} 字 → {len(candidate['text'])} 字）"
+                    )
+                elif target is None:
+                    errors.append(
+                        FieldError(f"{prefix}edit_version_id",
+                                   f"要修改的技能版本不存在：{row.edit_version_id}")
+                    )
             refs.append({"skill_id": skill_id, "version_id": version_id})
             rendered["skill_name"] = store.name_of("skill", skill_id)
             rendered["version_label"] = store.name_of("skill_version", version_id) if version_id else ""
@@ -619,7 +674,6 @@ def parse_general_form(
                 candidate={
                     "id": skill_id,
                     "name": row.new_name,
-                    "aliases": [],
                     "notes": "",
                     "source": dict(DEFAULT_SOURCE),
                 },
@@ -685,7 +739,6 @@ def general_values(
     values: dict[str, str] = {}
     if general is not None:
         values.update(values_from_entity("general", general))
-        values["aliases"] = "\n".join(general.aliases or [])
         values["general_notes"] = general.notes or ""
     if variant is not None:
         variant_values = values_from_entity("general_variant", variant)

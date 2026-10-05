@@ -1,0 +1,27 @@
+id: variant_xun_you_guo_zhan_ban
+general_id: general_xun_you
+variant: 群狼环鼎
+title: 曹魏的谋主
+general_number: G.WEI 020
+illustrator: 心中一凛
+image: variant_xun_you_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 君临天下·变
+zhulianbihe:
+  - 荀彧
+skills:
+  - skill_id: skill_qi_ce
+    version_id: skill_qi_ce_guozhan_qlhd_v1
+  - skill_id: skill_zhi_yu
+    version_id: skill_zhi_yu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 020
+verification_status: unverified
+notes: ''

@@ -1,0 +1,27 @@
+id: variant_zhu_ge_ke_guo_zhan_ban
+general_id: general_zhu_ge_ke
+variant: 群狼环鼎
+title: 兴家赤族
+general_number: G.WU 042
+illustrator: 猎枭
+image: variant_zhu_ge_ke_guo_zhan_ban.jpg
+mode: guozhan
+faction: 吴
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe:
+  - 丁奉
+skills:
+  - skill_id: skill_ao_cai
+    version_id: skill_ao_cai_guozhan_qlhd_v1
+  - skill_id: skill_du_wu
+    version_id: skill_du_wu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WU 042
+verification_status: unverified
+notes: ''

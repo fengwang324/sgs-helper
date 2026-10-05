@@ -4,7 +4,6 @@ definition: |-
   游戏牌的左上角的一个数字或字母，从A到K。数字2代表2点、3代表3点……依此类推。字母A、J、Q、K分别代表1、11、12和13点。A是最小的点数，K是最大的点数。
   ◆一张牌的点数若大于K则视为K，若小于A则视为A。
   例如：发动【丈八蛇矛】将一张点数为7的牌和一张点数为9的牌当【杀】使用，此【杀】的点数为13。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -13,5 +12,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「数值」

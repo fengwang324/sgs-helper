@@ -1,0 +1,23 @@
+id: variant_wang_xiang_guo_zhan_jin
+general_id: general_wang_xiang
+variant: 群狼环鼎
+title: 沂川跃鲤
+general_number: G.JIN 032
+illustrator: KY
+image: variant_wang_xiang_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_bing_xin
+    version_id: skill_bing_xin_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 032
+verification_status: unverified
+notes: ''

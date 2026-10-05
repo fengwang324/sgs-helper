@@ -1,8 +1,6 @@
 id: keyword_pan_ding
 name: 判定
-definition: |-
-  判断技能或效果起到何种作用的动作，执行的方法是亮出牌堆顶的一张牌（称为“判定牌”），等待生效。生效后的判定牌的花色、点数、名称等信息即为此次判定的结果。当判定牌生效后须将之置入弃牌堆。你进行判定亮出的牌堆顶的一张牌称为“你的判定牌”，但此牌并不是你拥有的牌。
-aliases: []
+definition: 判断技能或效果起到何种作用的动作，执行的方法是亮出牌堆顶的一张牌（称为“判定牌”），等待生效。生效后的判定牌的花色、点数、名称等信息即为此次判定的结果。当判定牌生效后须将之置入弃牌堆。你进行判定亮出的牌堆顶的一张牌称为“你的判定牌”，但此牌并不是你拥有的牌。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

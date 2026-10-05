@@ -1,0 +1,20 @@
+id: skill_zhen_te_guozhan_qlhd_v1
+skill_id: skill_zhen_te
+mode: guozhan
+text: 每回合限一次，当你成为其他角色使用黑色普通锦囊牌或黑色基本牌的目标后，你可以令使用者选择一项：1.本回合其不能使用与之颜色相同的牌：2.此牌对你无效。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

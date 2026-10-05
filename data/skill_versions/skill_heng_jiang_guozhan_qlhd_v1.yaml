@@ -1,0 +1,21 @@
+id: skill_heng_jiang_guozhan_qlhd_v1
+skill_id: skill_heng_jiang
+mode: guozhan
+text: |-
+  当你受到1点伤害后，若当前回合角色手牌上限大于0，则你可以令其于此回合内手牌上限-X。然后此回合结束时，若其未于此回合的弃牌阶段内弃置过其牌，则你将手牌摸至体力上限(X为其装备区内的牌数且至少为1）。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

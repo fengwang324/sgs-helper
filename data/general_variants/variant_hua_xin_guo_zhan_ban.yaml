@@ -1,0 +1,26 @@
+id: variant_hua_xin_guo_zhan_ban
+general_id: general_hua_xin
+variant: 群狼环鼎
+title: 淵清玉潔
+general_number: G.WEI 084
+illustrator: 秋呆呆
+image: variant_hua_xin_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+zhulianbihe: []
+skills:
+  - skill_id: skill_wang_gui
+    version_id: skill_wang_gui_guozhan_qlhd_v1
+  - skill_id: skill_xi_bing
+    version_id: skill_xi_bing_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 084
+verification_status: unverified
+notes: Paddle 读出的称号为「牌玉紫华歌」；三国杀 WIKI 该武将称号为「渊清玉洁」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

@@ -1,0 +1,24 @@
+id: variant_tang_zi_guo_zhan_ban
+general_id: general_tang_zi
+variant: 群狼环鼎
+title: 得时识风
+general_number: G.WEI 072
+illustrator: 凝聚永恒
+image: variant_tang_zi_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_n11d7f74b
+    version_id: skill_n11d7f74b_guozhan_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 072
+verification_status: unverified
+notes: Paddle 读出的称号为「得时麟国」；三国杀 WIKI 该武将称号为「工学之奇才」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

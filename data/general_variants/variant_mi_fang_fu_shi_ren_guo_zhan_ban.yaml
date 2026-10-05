@@ -1,0 +1,24 @@
+id: variant_mi_fang_fu_shi_ren_guo_zhan_ban
+general_id: general_mi_fang_fu_shi_ren
+variant: 群狼环鼎
+title: 逐驾迎尘
+general_number: G.SHU&WU 071
+illustrator: 木美人
+image: variant_mi_fang_fu_shi_ren_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀/吴
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_feng_shi_2
+    version_id: skill_feng_shi_2_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU&WU 071
+verification_status: unverified
+notes: ''

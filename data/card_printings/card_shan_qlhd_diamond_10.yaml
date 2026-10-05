@@ -1,0 +1,23 @@
+id: card_shan_qlhd_diamond_10
+card_id: card_shan
+name_printed: 闪
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: diamond
+rank: 10
+quantity: 1
+printed_text: ''
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_shan_qlhd_diamond_10.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

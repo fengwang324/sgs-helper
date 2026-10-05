@@ -13,7 +13,6 @@ definition: |-
   ◆角色拥有的技能既能被使用，也能失去；角色视为拥有的技能只能被使用，无法失去。
   将牌面信息为A的牌看作牌面信息为B的牌，操作操作此牌即操作一张牌面信息为B的牌。
   例如：刘禅在成为关羽（神）使用【杀】的目标时触发【享乐】，关羽（神）受到【武神①】的影响可以弃置一张红桃手牌（视为【杀】）进行响应。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -22,5 +21,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

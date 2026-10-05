@@ -381,10 +381,12 @@
       var current = select.value;
       var html = '<option value="">（不指定：按模式+生效区间自动推导当前有效版本）</option>';
       versions.forEach(function (version) {
-        var label =
-          (version.version_label || version.id) + " · " + version.mode_label +
-          (version.product_name ? " · " + version.product_name : "") +
-          " · " + version.text_excerpt;
+        // 版本标签与产品名/模式重复时不再重复显示（避免「群狼环鼎 · 国战 · 群狼环鼎」）
+        var head = [];
+        if (version.display_label) head.push(version.display_label);
+        head.push(version.mode_label);
+        if (version.product_name) head.push(version.product_name);
+        var label = head.join(" · ") + " · " + version.text_excerpt;
         var preview =
           version.mode_label + " · " + (version.product_name || "未绑定产品") + " · " +
           (version.effective_from || "不限") + " ~ " + (version.effective_to || "至今") + "\n" +
@@ -497,6 +499,13 @@
         });
       }
 
+      var textToggle = row.querySelector(".toggle-skill-text");
+      if (textToggle) {
+        textToggle.addEventListener("click", function () {
+          var box = row.querySelector(".skill-text-box");
+          if (box) box.hidden = !box.hidden;
+        });
+      }
       var toggle = row.querySelector(".toggle-add-version");
       if (toggle) {
         toggle.addEventListener("click", function () {
@@ -657,7 +666,11 @@
             "/api/suggest?field=" + field + "&q=" + encodeURIComponent(query)
           ).then(function (items) {
             return items.map(function (item) {
-              return { value: item.value, label: item.value, sub: "已用 " + item.count + " 次" };
+              var bits = [];
+            if (item.parent) bits.push("属于 " + item.parent);
+            if (item.children && item.children.length) bits.push("子系列 " + item.children.join("、"));
+            bits.push("已用 " + item.count + " 次");
+            return { value: item.value, label: item.value, sub: bits.join(" · ") };
             });
           });
         },

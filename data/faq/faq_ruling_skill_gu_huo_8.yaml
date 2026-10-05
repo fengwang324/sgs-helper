@@ -1,6 +1,5 @@
 id: faq_ruling_skill_gu_huo_8
-question: |-
-  用A发动【蛊惑】使用/打出B牌没有角色质疑或被质疑但亮出验明为红桃且为真，你使用/打出的是B牌而不是A牌
+question: 用A发动【蛊惑】使用/打出B牌没有角色质疑或被质疑但亮出验明为红桃且为真，你使用/打出的是B牌而不是A牌
 answer: |-
   你用A发动【蛊惑】使用/打出B牌没有角色质疑或被质疑但亮出验明为红桃且为真，你使用/打出的是B牌而不是A牌。
   例如：杨修对于吉发动【鸡肋】选择一种牌的类别，于吉不能用任何手牌发动【蛊惑】使用或打出该类别的牌，但是能用该类别的手牌发动【蛊惑】使用或打出非该类别的牌。
@@ -16,5 +15,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【于吉】技能【蛊惑】的裁定原文；问题栏取自原文首个分句

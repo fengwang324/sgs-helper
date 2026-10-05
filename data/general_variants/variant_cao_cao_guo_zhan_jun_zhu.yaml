@@ -1,0 +1,28 @@
+id: variant_cao_cao_guo_zhan_jun_zhu
+general_id: general_cao_cao
+variant: 群狼环鼎·君主
+title: 电模
+general_number: G.EM 004
+illustrator: 波子
+image: variant_cao_cao_guo_zhan_jun_zhu.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·权
+zhulianbihe: []
+skills:
+  - skill_id: skill_n431e5b51
+    version_id: skill_n431e5b51_guozhan_v1
+  - skill_id: skill_hui_bian
+    version_id: skill_hui_bian_guozhan_qlhd_v1
+  - skill_id: skill_zong_yu
+    version_id: skill_zong_yu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.EM 004
+verification_status: unverified
+notes: Paddle 读出的称号为「电模」；三国杀 WIKI 该武将称号为「魏武帝」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

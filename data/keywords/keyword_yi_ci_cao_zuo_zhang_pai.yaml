@@ -11,7 +11,6 @@ definition: |-
   孙尚香不发动【枭姬】，则【寒冰剑】使用结算完毕。
   ◆依次使用X张牌，则每使用一张都须进行一次使用结算。
   例如：吕布对张角使用【杀】，在指定目标后触发【无双①】，张角使用第一张【闪】进行响应，在使用此【闪】时可以发动【雷击】，【雷击】结算完毕后继续进行【闪】的使用结算，在该【闪】结算完毕后如果张角再使用第二张【闪】进行响应，在使用此【闪】时可以再次发动【雷击】。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -20,5 +19,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

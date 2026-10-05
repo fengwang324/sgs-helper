@@ -3,7 +3,6 @@ name: 锁定技
 definition: |-
   一种特殊的技能，其特点是：1.非状态类锁定技若能发动则必须发动（“必须发动”于此规则集内简称为“触发”）；2.状态类锁定技若能产生影响则必须产生影响。
   注意：拥有上述特点的技能未必是锁定技，亦即“锁定技”三个字只是表示一个标记，并非技能的类型。要想确定一个技能是否拥有上述特点，应看技能描述中是否有“可以”二字，而非去看是否有“锁定技”三个字，因为没有“锁定技”三个字的技能一样可以拥有上述特点。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -12,5 +11,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

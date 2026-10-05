@@ -8,7 +8,6 @@ definition: |-
   例如：左慈在回合结束后发动【化身②】拥有【当先】，在下回合开始时为左慈发动【当先】和【化身②】的时机：
   左慈选择先发动【当先】执行一个额外的出牌阶段，此出牌阶段结束，依然为回合开始时，左慈可以发动【化身②】。
   左慈选择先发动【化身②】拥有【称象】，则因为【当先】无效而无法再发动之。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -17,5 +16,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏流程」

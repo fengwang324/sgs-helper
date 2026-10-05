@@ -1,8 +1,6 @@
 id: faq_ruling_skill_duan_chang_1
-question: |-
-  【断肠】若你选择令杀死你的角色失去一张暗置的武将牌的技能，该武将牌只能在回合开始时明置，明置后只有势力和性别，没有武将技能
-answer: |-
-  若你选择令杀死你的角色失去一张暗置的武将牌的技能，该武将牌只能在回合开始时明置，明置后只有势力和性别，没有武将技能。
+question: 【断肠】若你选择令杀死你的角色失去一张暗置的武将牌的技能，该武将牌只能在回合开始时明置，明置后只有势力和性别，没有武将技能
+answer: 若你选择令杀死你的角色失去一张暗置的武将牌的技能，该武将牌只能在回合开始时明置，明置后只有势力和性别，没有武将技能。
 mode: guozhan
 related_general_ids: []
 related_skill_ids:
@@ -15,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【蔡文姬】技能【断肠】的裁定原文；问题栏取自原文首个分句

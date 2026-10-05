@@ -1,0 +1,25 @@
+id: variant_si_ma_jiong_guo_zhan_jin
+general_id: general_si_ma_jiong
+variant: 群狼环鼎
+title: 餐宝香司马阁
+general_number: G.JIN 044
+illustrator: 张油菜
+image: variant_si_ma_jiong_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_chu_chong
+    version_id: skill_chu_chong_guozhan_qlhd_v1
+  - skill_id: skill_du_fu
+    version_id: skill_du_fu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 044
+verification_status: unverified
+notes: ''

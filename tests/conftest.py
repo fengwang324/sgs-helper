@@ -58,8 +58,6 @@ release_year: 2020
     # 武将：General（个体，只有名字/别名）+ GeneralVariant（模式/势力/体力/技能…）
     "generals/demo_alpha.yaml": """id: general_demo_alpha
 name: 演示武将甲
-aliases:
-  - 演示甲
 """,
     "generals/demo_beta.yaml": """id: general_demo_beta
 name: 演示武将乙
@@ -104,8 +102,6 @@ skills:
 """,
     "skills/demo.yaml": f"""id: skill_demo
 name: 演示技能
-aliases:
-  - 演示技
 {SOURCE_YAML}""",
     "skills/demo_other.yaml": f"""id: skill_demo_other
 name: 另一个演示技能
@@ -156,8 +152,6 @@ change_note: 演示用变更说明
 name: 演示卡牌
 card_type: basic
 subtype: normal
-aliases:
-  - 演示牌
 related_keywords:
   - keyword_demo
 """,
@@ -202,8 +196,6 @@ related_timing_ids:
     "keywords/demo.yaml": f"""id: keyword_demo
 name: 演示关键词
 definition: 演示用规则关键词定义
-aliases:
-  - 演示词
 related_timing_ids:
   - timing_demo
 {SOURCE_YAML}verification_status: unverified

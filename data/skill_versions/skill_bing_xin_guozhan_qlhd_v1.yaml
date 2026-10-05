@@ -1,0 +1,20 @@
+id: skill_bing_xin_guozhan_qlhd_v1
+skill_id: skill_bing_xin
+mode: guozhan
+text: 每回合每种牌名限一次，当你需要使用一张基本牌时，你可以展示所有手牌（无牌则跳过）若颜色均相同且数量等于你的体力值，你可以摸一张牌，然后视为使用此基本牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

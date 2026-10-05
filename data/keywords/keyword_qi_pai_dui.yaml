@@ -6,7 +6,6 @@ definition: |-
   例如：诸葛亮（标）发动【观星】需要观看牌堆顶的五张牌时，牌堆里有四张牌，弃牌堆里有四张牌，则先由系统将弃牌堆里的四张牌以随机顺序置于牌堆底，然后诸葛亮（标）执行【观星】的效果观看牌堆顶的五张牌。
   例如：诸葛亮（标）发动【观星】需要观看牌堆顶的五张牌时，牌堆里有四张牌，弃牌堆里没有牌，则游戏结束，游戏以平局结束。
   例如：诸葛亮（标）发动【观星】需要观看牌堆顶的五张牌时，牌堆里有五张牌，弃牌堆里有牌，则诸葛亮（标）执行【观星】的效果观看牌堆顶的五张牌但不需要由系统将弃牌堆里的所有牌以随机顺序置于牌堆底。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -15,5 +14,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「区域」

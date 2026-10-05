@@ -1,6 +1,5 @@
 id: faq_ruling_skill_wei_di_1
-question: |-
-  【伪帝】若主公拥有主公技，你也视为拥有该技能且该技能有效；若主公失去主公技，你也不再视为拥有该技能
+question: 【伪帝】若主公拥有主公技，你也视为拥有该技能且该技能有效；若主公失去主公技，你也不再视为拥有该技能
 answer: |-
   若主公拥有主公技，你也视为拥有该技能且该技能有效；若主公失去主公技，你也不再视为拥有该技能。
   例如：主公为刘禅时，袁术视为拥有【若愚】且【若愚】有效：
@@ -18,5 +17,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【袁术】技能【伪帝】的裁定原文；问题栏取自原文首个分句

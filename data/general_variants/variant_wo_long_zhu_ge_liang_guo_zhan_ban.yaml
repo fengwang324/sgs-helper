@@ -1,0 +1,30 @@
+id: variant_wo_long_zhu_ge_liang_guo_zhan_ban
+general_id: general_wo_long_zhu_ge_liang
+variant: 群狼环鼎
+title: 卧龙
+general_number: G.SHU 011
+illustrator: 绘聚艺堂
+image: variant_wo_long_zhu_ge_liang_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe:
+  - 庞统
+  - 黄月英
+skills:
+  - skill_id: skill_ba_zhen
+    version_id: skill_ba_zhen_guozhan_qlhd_v1
+  - skill_id: skill_huo_ji
+    version_id: skill_huo_ji_guozhan_qlhd_v1
+  - skill_id: skill_kan_po
+    version_id: skill_kan_po_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 011
+verification_status: unverified
+notes: ''

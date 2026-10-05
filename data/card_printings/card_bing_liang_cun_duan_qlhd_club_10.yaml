@@ -1,0 +1,23 @@
+id: card_bing_liang_cun_duan_qlhd_club_10
+card_id: card_bing_liang_cun_duan
+name_printed: 兵粮寸断
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 10
+quantity: 1
+printed_text: 对距离为1的一名其他角色使用。目标角色的判定阶段进行判定：若判定结果不为梅花，则跳过其出牌阶段。
+normalized_text: ''
+bottom_right_mark: 桌游志
+card_number: ''
+illustrator: ''
+image: card_bing_liang_cun_duan_qlhd_club_10.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

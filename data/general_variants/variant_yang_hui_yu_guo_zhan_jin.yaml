@@ -1,0 +1,27 @@
+id: variant_yang_hui_yu_guo_zhan_jin
+general_id: general_yang_hui_yu
+variant: 群狼环鼎
+title: 克明礼都羊征瑜
+general_number: G.JIN 017
+illustrator: Jzeo
+image: variant_yang_hui_yu_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_ci_wei
+    version_id: skill_ci_wei_guozhan_qlhd_v1
+  - skill_id: skill_cai_yuan
+    version_id: skill_cai_yuan_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 017
+verification_status: unverified
+notes: ''
+zhulianbihe:
+  - 司马师

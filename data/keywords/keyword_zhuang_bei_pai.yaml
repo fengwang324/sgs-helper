@@ -16,7 +16,6 @@ definition: |-
   例如：其他角色与装备【+1坐骑】的曹操（神）的距离+2。
   例如：太史慈使用【杀】在选择目标时受到【天义】和【方天画戟】的影响，至多可以选择四个目标。
   ◆角色使用装备牌的目标默认为该角色。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -25,5 +24,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「牌」

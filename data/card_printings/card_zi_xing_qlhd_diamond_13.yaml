@@ -1,0 +1,23 @@
+id: card_zi_xing_qlhd_diamond_13
+card_id: card_zi_xing
+name_printed: 紫骍
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: diamond
+rank: 13
+quantity: 1
+printed_text: “怀夏后之九代，想陈王之紫骍。”《梁书·张率传》
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_zi_xing_qlhd_diamond_13.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

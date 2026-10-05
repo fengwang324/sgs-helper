@@ -1,0 +1,23 @@
+id: variant_si_ma_yi_guo_zhan_jin
+general_id: general_si_ma_yi_2
+variant: 群狼环鼎
+title: 孤擎页
+general_number: G.JIN 045
+illustrator: 张油菜
+image: variant_si_ma_yi_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_feng_guo
+    version_id: skill_feng_guo_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 045
+verification_status: unverified
+notes: ''

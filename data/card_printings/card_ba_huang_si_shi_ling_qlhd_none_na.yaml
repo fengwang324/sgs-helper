@@ -1,0 +1,23 @@
+id: card_ba_huang_si_shi_ling_qlhd_none_na
+card_id: card_ba_huang_si_shi_ling
+name_printed: 八荒死士令
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 指示物
+suit: none
+rank: null
+quantity: 1
+printed_text: 每轮共计限一次，所有本轮明置过武将牌的势力角色可以于对应时机移除其副将牌来发动下述一个技能（每个技能每局游戏限选择一次）：“辟疆”、“乱武”、“将略”、“勇进”、“奉迎”。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: 小罗没想好
+image: card_ba_huang_si_shi_ling_qlhd_none_na.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

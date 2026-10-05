@@ -56,7 +56,6 @@ class _ReadableDumper(yaml.SafeDumper):
 
     def increase_indent(self, flow=False, indentless=False):  # noqa: D102
         # 让列表项相对键缩进（YAML 官方风格），例如：
-        #   aliases:
         #     - 集智
         return super().increase_indent(flow, False)
 

@@ -1,0 +1,21 @@
+id: skill_jin_fa_guozhan_qlhd_v1
+skill_id: skill_jin_fa
+mode: guozhan
+text: |-
+  出牌阶段限一次，你可以弃置一张牌并选择一名有牌的其他角色，然后令其选择一项：1.令你获得其一张牌；2.交给你一张装备牌，若此装备牌花色为♠，则其视为对你使用一张无距离限制的【杀】。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

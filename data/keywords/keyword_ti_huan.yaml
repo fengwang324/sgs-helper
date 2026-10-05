@@ -3,7 +3,6 @@ name: 替换
 definition: |-
   角色用/打出A牌替换B牌即将A牌置入B牌所在区域同时获得B牌 。
   例如：黄月英发动【集智】展示牌堆顶的一张牌为基本牌，然后黄月英选择执行用一张手牌替换之的效果即将一张手牌置于牌堆顶（由于牌堆顶的牌都是背面朝上放置的，因此黄月英是将手牌扣置于牌堆顶）同时获得此基本牌。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -12,5 +11,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

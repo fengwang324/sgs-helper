@@ -18,7 +18,6 @@ definition: |-
   角色声明检测要发动的武将技能是否满足发动条件，同时明置武将牌，触发珠联璧合，然后继续游戏流程。
   例如：马超（暗置）-魏延（暗置）对距离为2的一名角色造成伤害，马超-魏延须在该角色扣减体力前声明要检测【狂骨】的触发条件是否满足明置魏延，同时声明用到【马术】的效果明置马超，然后在造成伤害后马超-魏延已受伤方能触发【狂骨】。
   ◆当一名角色的两张武将牌第一次均明置时，若存在珠联璧合的关系，且其武将牌上有单独的阴阳鱼没有组成1点体力，则其须先决定是否触发珠联璧合，若触发则进行选择执行的效果，然后须决定是否执行摸一张牌的效果。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -27,5 +26,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「国战」

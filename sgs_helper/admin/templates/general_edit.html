@@ -28,7 +28,7 @@
       </div>
       <p class="help combo-help">
         {% if row.skill_id %}
-          已选中 {{ row.skill_id }}{% if row.version_label %}，绑定版本 {{ row.version_label }}{% endif %}
+          已选中 {{ row.skill_id }}{% if row.version_display %}，绑定版本 {{ row.version_display }}{% endif %}
         {% else %}
           输入后从下拉里选择已有技能；没有匹配时可以“+ 新建技能”。
         {% endif %}
@@ -46,10 +46,23 @@
           <option value="{{ option.id }}"
                   {{ 'selected' if row.version_id == option.id else '' }}
                   data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }} · {{ option.effective_from or '不限' }} ~ {{ option.effective_to or '至今' }}
-{{ option.text_excerpt }}">{{ option.version_label or option.id }} · {{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
+{{ option.text_excerpt }}">{% if option.display_label %}{{ option.display_label }} · {% endif %}{{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
         {% endfor %}
       </select>
       <div class="version-preview"></div>
+      {% if row.edit_version_id %}
+        <div class="skill-text-edit">
+          <button type="button" class="link-btn toggle-skill-text">✎ 查看 / 修改这个技能版本的描述</button>
+          <div class="skill-text-box">
+            <p class="help">
+              直接改下面的文字 → 保存后**就地更新**技能版本
+              <code>{{ row.edit_version_id }}</code>（不新建版本）。
+            </p>
+            <textarea name="skill_{{ index }}_edit_text" rows="6">{{ row.version_text }}</textarea>
+            <input type="hidden" name="skill_{{ index }}_edit_version_id" value="{{ row.edit_version_id }}">
+          </div>
+        </div>
+      {% endif %}
       {% for message in error_map.get('skill_' ~ index ~ '_version_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
 
@@ -190,10 +203,34 @@
   </div>
 
   <h2 class="section-title">版本信息（{{ variant_label }}）</h2>
+  <div class="edit-card-panel">
+    {% if variant and variant.image %}
+      <img src="/card-images/{{ variant.image }}" alt="{{ values.get('name') }} {{ variant_label }} 卡图">
+      <div class="muted">
+        卡图 · 画师 {{ variant.illustrator or '—' }}<br>
+        {{ variant.general_number or '' }}
+      </div>
+    {% endif %}
+    {# 核验：复选框 + 同名的 hidden —— 勾上=实体卡已核验，不勾=未核验（未勾时也一定会提交） #}
+    <label class="inline-check verify-check {{ 'is-verified' if values.get('verification_status') == 'physical_verified' else '' }}"
+           for="f-verification">
+      <input type="checkbox" id="f-verification" name="verification_status"
+             value="physical_verified"
+             {{ 'checked' if values.get('verification_status') == 'physical_verified' else '' }}>
+      已对照实体卡核验
+    </label>
+    <input type="hidden" name="verification_status" value="unverified">
+    {% for message in error_map.get('verification_status', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+  </div>
   <div class="field-grid">
     <div class="field">
       <label for="f-title">称号</label>
       <input id="f-title" name="title" value="{{ values.get('title', '') }}" placeholder="例如 迟暮的丞相">
+    </div>
+    <div class="field">
+      <label for="f-illustrator">画师</label>
+      <input id="f-illustrator" name="illustrator" value="{{ values.get('illustrator', '') }}"
+             placeholder="卡面版权行 Illustration: 后面的名字">
     </div>
     <div class="field">
       <label for="f-general_number">编号</label>
@@ -202,6 +239,13 @@
       <p class="help">实体卡上的编号；和内部 ID 无关。</p>
       {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
+  </div>
+
+  <div class="field">
+    <label for="f-zhulianbihe">珠联璧合（可以写多个，一行一个或用空格/顿号分隔）</label>
+    <textarea id="f-zhulianbihe" name="zhulianbihe" rows="2"
+              placeholder="例如：关羽 张飞 甘夫人；也支持类别值，如 男性武将 / 群势力武将 / 君主">{{ values.get('zhulianbihe', '') }}</textarea>
+    <p class="help">卡面中部那行小字；同一张卡的多个伙伴都写上。</p>
   </div>
 
   <div class="field-grid">
@@ -282,7 +326,7 @@
     <span class="muted">技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行技能。</span>
   </p>
 
-  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') or error_map.get('aliases') else '' }}>
+  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') else '' }}>
     <summary>高级信息（内部 ID / 别名 / 来源 / 备注）</summary>
 
     <h3>武将个体（General）</h3>
@@ -291,11 +335,6 @@
       <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按名字自动生成">
       <p class="help">YAML 文件名 / URL / 外键都用它；已存在的武将不会被重新生成 ID。</p>
       {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-    <div class="field">
-      <label for="f-aliases">别名（一行一个）</label>
-      <textarea id="f-aliases" name="aliases" rows="2">{{ values.get('aliases', '') }}</textarea>
-      <p class="help">例如 老诸葛、空城诸葛；用于检索。</p>
     </div>
     <div class="field">
       <label for="f-general_notes">武将个体备注</label>
@@ -329,14 +368,6 @@
       </div>
     </fieldset>
 
-    <div class="field">
-      <label for="f-verification">核验状态</label>
-      <select id="f-verification" name="verification_status">
-        {% for value, label in verification_choices %}
-          <option value="{{ value }}" {{ 'selected' if values.get('verification_status', 'unverified') == value else '' }}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
     <div class="field">
       <label for="f-notes">版本备注</label>
       <textarea id="f-notes" name="notes" rows="2">{{ values.get('notes', '') }}</textarea>

@@ -1,0 +1,21 @@
+id: skill_cong_jian_guozhan_qlhd_v1
+skill_id: skill_cong_jian
+mode: guozhan
+text: |-
+  锁定技，当你于回合外造成伤害时或当你于回合内受到伤害时，你令此伤害值+1。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

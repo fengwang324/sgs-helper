@@ -3,7 +3,6 @@ id: keyword_change_me
 name: 关键词名
 definition: >
   规则定义……
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []

@@ -1,0 +1,26 @@
+id: variant_gong_sun_yuan_guo_zhan_ye_xin_jia
+general_id: general_gong_sun_yuan
+variant: 群狼环鼎
+title: 狡黠的投机者
+general_number: G.AM 004
+illustrator: 猎枭
+image: variant_gong_sun_yuan_guo_zhan_ye_xin_jia.jpg
+mode: guozhan
+faction: 野心家
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe: []
+skills:
+  - skill_id: skill_huai_yi
+    version_id: skill_huai_yi_guozhan_qlhd_v1
+  - skill_id: skill_zi_sui
+    version_id: skill_zi_sui_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.AM 004
+verification_status: unverified
+notes: Paddle 读出的称号为「狡黠的投者」；三国杀 WIKI 该武将称号为「狡徒悬海」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验

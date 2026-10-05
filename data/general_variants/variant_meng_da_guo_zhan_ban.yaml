@@ -1,0 +1,26 @@
+id: variant_meng_da_guo_zhan_ban
+general_id: general_meng_da
+variant: 群狼环鼎
+title: 怠军反复
+general_number: G.WEI&SHU 079
+illustrator: 张帅&zoo
+image: variant_meng_da_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏/蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_qiu_an
+    version_id: skill_qiu_an_guozhan_qlhd_v1
+  - skill_id: skill_liang_fan
+    version_id: skill_liang_fan_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI/SHU 079
+verification_status: unverified
+notes: Paddle 读出的称号为「总军月复孟逢」；三国杀 WIKI 该武将称号为「据国向己」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

@@ -1,0 +1,23 @@
+id: card_huo_gong_qlhd_heart_3
+card_id: card_huo_gong
+name_printed: 火攻
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: heart
+rank: 3
+quantity: 1
+printed_text: 出牌阶段，对一名有手牌的角色使用。该角色展示一张手牌，然后若你弃置一张与所展示牌相同花色的手牌，则【火攻】对其造成1点火焰伤害。
+normalized_text: ''
+bottom_right_mark: 锦囊
+card_number: ''
+illustrator: ''
+image: card_huo_gong_qlhd_heart_3.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

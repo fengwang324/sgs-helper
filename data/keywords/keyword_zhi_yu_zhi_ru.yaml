@@ -11,7 +11,6 @@ definition: |-
   ◆“置入弃牌堆”有两个含义：
   角色将一张牌移动到弃牌堆的操作，一般用于表示效果、消耗等。
   执行某一操作的结果是将一张牌移动到弃牌堆，即将此牌置入弃牌堆，亦即此牌因此操作而置入弃牌堆，一般用于表示条件、时机等。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -20,5 +19,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

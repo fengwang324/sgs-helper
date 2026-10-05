@@ -1,0 +1,27 @@
+id: variant_cao_hong_guo_zhan_ban
+general_id: general_cao_hong
+variant: 群狼环鼎
+title: 魏之福将
+general_number: G.WEI 018
+illustrator: Yellowkiss
+image: variant_cao_hong_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·阵
+zhulianbihe:
+  - 曹仁
+skills:
+  - skill_id: skill_hu_yuan
+    version_id: skill_hu_yuan_guozhan_qlhd_v1
+  - skill_id: skill_he_yi
+    version_id: skill_he_yi_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 018
+verification_status: unverified
+notes: ''

@@ -1,0 +1,20 @@
+id: skill_diao_gui_guozhan_qlhd_v1
+skill_id: skill_diao_gui
+mode: guozhan
+text: 出牌阶段限一次，你可以将一张装备牌当【调虎离山】使用，然后若你的势力因此而形成队列，则你摸X张牌（X为此队列中的角色数）
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

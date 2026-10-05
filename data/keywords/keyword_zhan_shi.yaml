@@ -9,7 +9,6 @@ definition: |-
   ◆展示角色的手牌时，此牌依然为该角色的手牌，并未失去。。
   例如：角色对小乔使用【火攻】，小乔展示的黑桃手牌受到【红颜】的影响视为红桃手牌，因此该角色需要弃置一张红桃手牌才能对小乔造成伤害。
   例如：吕蒙（神）对小乔发动【攻心】，可以展示小乔的一张印刷花色为黑桃的手牌（受到【红颜】的影响视为红桃牌），然后弃置之或将之置于牌堆顶。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -18,5 +17,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

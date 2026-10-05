@@ -1,0 +1,26 @@
+id: variant_mi_heng_guo_zhan_ban
+general_id: general_mi_heng
+variant: 群狼环鼎
+title: 狂傲奇人
+general_number: G.QUN 060
+illustrator: 鬼画府
+image: variant_mi_heng_guo_zhan_ban.jpg
+mode: guozhan
+faction: 群
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+zhulianbihe: []
+skills:
+  - skill_id: skill_kuang_cai
+    version_id: skill_kuang_cai_guozhan_qlhd_v1
+  - skill_id: skill_she_jian
+    version_id: skill_she_jian_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.QUN 060
+verification_status: unverified
+notes: Paddle 读出的称号为「狂傲奇人称衡」；三国杀 WIKI 该武将称号为「狂傲奇人」（逐位相同 4 字），疑似 OCR 误读，请对照卡图核验

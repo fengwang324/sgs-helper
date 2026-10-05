@@ -4,7 +4,6 @@ definition: |-
   角色的手牌上限为其体力值。手牌上限通常只于角色的弃牌阶段提及，角色能保留的手牌数不能超过其手牌上限。
   ◆手牌上限经过修正后最小值为0。
   例如：臧霸受到2点伤害后，对体力值为1的来源连续发动两次【横江】，此时来源的手牌上限-2，为0。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -13,5 +12,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「数值」

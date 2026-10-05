@@ -1,0 +1,23 @@
+id: card_yu_xi_qlhd_club_1
+card_id: card_yu_xi
+name_printed: 玉玺
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 1
+quantity: 1
+printed_text: 锁定技，若你有已明置的武将牌，你获得以下效果：你的势力成为场上唯一的大势力，其他势力均为小势力；摸牌阶段，你多摸一张牌；出牌阶段开始时，你视为使用一张【知己知彼】。
+normalized_text: ''
+bottom_right_mark: 周
+card_number: ''
+illustrator: ''
+image: card_yu_xi_qlhd_club_1.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

@@ -1,0 +1,23 @@
+id: card_ba_gua_zhen_qlhd_spade_2
+card_id: card_ba_gua_zhen
+name_printed: 八卦阵
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 2
+quantity: 1
+printed_text: ◆每当你需要使用或打出一张【闪】时，你可以进行一次判定：若判定结果为红色，则视为你使用或打出了一张【闪】。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_ba_gua_zhen_qlhd_spade_2.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

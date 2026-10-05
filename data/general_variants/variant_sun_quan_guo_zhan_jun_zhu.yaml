@@ -1,0 +1,29 @@
+id: variant_sun_quan_guo_zhan_jun_zhu
+general_id: general_sun_quan
+variant: 群狼环鼎·君主
+title: 虎据江东
+general_number: G.EM 003
+illustrator: 殖造一休
+image: variant_sun_quan_guo_zhan_jun_zhu.jpg
+mode: guozhan
+faction: 吴
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·变
+zhulianbihe:
+  - 吴势力武将
+skills:
+  - skill_id: skill_n16441918
+    version_id: skill_n16441918_guozhan_v1
+  - skill_id: skill_lian_zi
+    version_id: skill_lian_zi_guozhan_qlhd_v1
+  - skill_id: skill_ju_bao
+    version_id: skill_ju_bao_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.EM 003
+verification_status: unverified
+notes: Paddle 读出的称号为「家关」；三国杀 WIKI 该武将称号为「年轻的贤君」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

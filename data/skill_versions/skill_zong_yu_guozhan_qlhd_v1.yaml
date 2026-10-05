@@ -1,0 +1,21 @@
+id: skill_zong_yu_guozhan_qlhd_v1
+skill_id: skill_zong_yu
+mode: guozhan
+text: |-
+  当【六龙骖驾】进入其他角色的装备区后，若你装备区里有坐骑牌，则你可以与其交换装备区里所有的坐骑牌。当你使用一张坐骑牌时，若弃牌堆中或场上存在【六龙骖驾】，则你可以将此次使用的坐骑牌放入弃牌堆，然后将该【六龙骏驾】放入你的装备区。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

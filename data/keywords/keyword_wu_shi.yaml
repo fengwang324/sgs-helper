@@ -16,7 +16,6 @@ definition: |-
   ◆角色无视的防具依然是存在的。
   例如：装备【青釭剑】的角色对装备【八卦阵】的于禁使用黑色的【杀】，在指定目标后该角色触发【青釭剑】无视于禁装备区里的【八卦阵】，但是于禁的装备区里有防具牌，因此此【杀】不会受到【毅重】的影响。
   例如：高顺对装备【藤甲】的角色发动【陷阵】，拼点赢后，高顺无视其装备区里的【藤甲】，但是高顺可以对其使用【顺手牵羊】获得其装备区里的【藤甲】。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -25,5 +24,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「事件、响应与结算」

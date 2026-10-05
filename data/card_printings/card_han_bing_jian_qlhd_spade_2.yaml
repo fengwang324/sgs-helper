@@ -1,0 +1,23 @@
+id: card_han_bing_jian_qlhd_spade_2
+card_id: card_han_bing_jian
+name_printed: 寒冰剑
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 2
+quantity: 1
+printed_text: 当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，改为依次弃置其两张牌。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_han_bing_jian_qlhd_spade_2.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

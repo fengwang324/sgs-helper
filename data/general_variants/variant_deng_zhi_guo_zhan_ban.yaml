@@ -1,0 +1,26 @@
+id: variant_deng_zhi_guo_zhan_ban
+general_id: general_deng_zhi
+variant: 群狼环鼎
+title: 绝境的外交家
+general_number: G.SHU 073
+illustrator: 凝聚永恒
+image: variant_deng_zhi_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+zhulianbihe: []
+skills:
+  - skill_id: skill_jian_liang
+    version_id: skill_jian_liang_guozhan_qlhd_v1
+  - skill_id: skill_wei_meng
+    version_id: skill_wei_meng_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 073
+verification_status: unverified
+notes: ''

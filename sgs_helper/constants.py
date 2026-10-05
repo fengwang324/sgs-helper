@@ -156,6 +156,7 @@ class KindSpec:
 
 KINDS: tuple[KindSpec, ...] = (
     KindSpec("product", "products", "products", "实体产品", "product_"),
+    KindSpec("general_set", "general_sets", "general_sets", "武将牌系列", "set_"),
     KindSpec("general", "generals", "generals", "武将", "general_"),
     KindSpec("general_variant", "general_variants", "general_variants", "武将版本", "variant_"),
     KindSpec("skill", "skills", "skills", "技能本体", "skill_"),

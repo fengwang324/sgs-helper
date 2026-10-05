@@ -1,0 +1,20 @@
+id: skill_feng_shi_2_guozhan_qlhd_v1
+skill_id: skill_feng_shi_2
+mode: guozhan
+text: 当你使用牌指定唯一目标后，若你与目标角色均有牌且其手牌数小于你，则你可以弃置你与其各一张牌，然后令此牌伤害+1。当你成为其他角色使用牌的唯一目标后，若你与其均有牌且你的手牌数小于其，则其可以令你弃置你与其各一张牌，然后令此牌伤害+1。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

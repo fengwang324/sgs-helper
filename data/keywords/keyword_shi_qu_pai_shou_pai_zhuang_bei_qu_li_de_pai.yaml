@@ -8,7 +8,6 @@ definition: |-
   例如：诸葛瑾在回合外打出一张黑桃牌（此牌在失去前是黑桃牌）发动【缓释】代替小乔的原判定牌，此时虽然此黑桃牌受到【红颜】的影响视为红桃牌，但诸葛瑾是失去了一张黑桃牌，不可以发动【明哲】。
   注意：“失去牌”默认表示失去一次牌。
   例如：凌统因执行主公杀死忠臣的奖惩，以及执行【贯石斧】/【英魂】/【甘露】的效果弃置/交换装备区里的牌时，都是失去一次装备区里的牌，可以发动一次【旋风①】；对凌统发动【寒冰剑】依次弃置凌统装备区里的两张牌是一张一张弃置的，凌统每失去一张时就可以发动一次【旋风①】。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -17,5 +16,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

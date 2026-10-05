@@ -1,0 +1,28 @@
+id: variant_deng_ai_guo_zhan_ban
+general_id: general_deng_ai
+variant: 群狼环鼎
+title: 矫然的壮士
+general_number: G.WEI 015
+illustrator: amo
+image: variant_deng_ai_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·阵
+zhulianbihe: []
+skills:
+  - skill_id: skill_tun_tian
+    version_id: skill_tun_tian_guozhan_qlhd_v1
+  - skill_id: skill_ji_xi
+    version_id: skill_ji_xi_guozhan_qlhd_v1
+  - skill_id: skill_zi_liang
+    version_id: skill_zi_liang_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 015
+verification_status: unverified
+notes: Paddle 读出的称号为「矫的壮士」；三国杀 WIKI 该武将称号为「矫然的壮士」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验

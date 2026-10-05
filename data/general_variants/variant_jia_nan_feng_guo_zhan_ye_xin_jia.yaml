@@ -1,0 +1,29 @@
+id: variant_jia_nan_feng_guo_zhan_ye_xin_jia
+general_id: general_jia_nan_feng
+variant: 群狼环鼎
+title: 窥鼎的司晨雉
+general_number: G.AM 005
+illustrator: 小罗没想好
+image: variant_jia_nan_feng_guo_zhan_ye_xin_jia.jpg
+mode: guozhan
+faction: 野心家
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: 群狼环鼎限定
+zhulianbihe:
+  - 男性武将
+skills:
+  - skill_id: skill_liao_ye
+    version_id: skill_liao_ye_guozhan_qlhd_v1
+  - skill_id: skill_fang_zi
+    version_id: skill_fang_zi_guozhan_qlhd_v1
+  - skill_id: skill_liu_du
+    version_id: skill_liu_du_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.AM 005
+verification_status: unverified
+notes: ''

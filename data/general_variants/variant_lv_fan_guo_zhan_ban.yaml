@@ -1,0 +1,26 @@
+id: variant_lv_fan_guo_zhan_ban
+general_id: general_lv_fan
+variant: 群狼环鼎
+title: 忠笃亮直
+general_number: G.WU 022
+illustrator: 銘zmy
+image: variant_lv_fan_guo_zhan_ban.jpg
+mode: guozhan
+faction: 吴
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 君临天下·变
+zhulianbihe: []
+skills:
+  - skill_id: skill_diao_du
+    version_id: skill_diao_du_guozhan_qlhd_v1
+  - skill_id: skill_dian_cai
+    version_id: skill_dian_cai_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WU 022
+verification_status: unverified
+notes: Paddle 读出的称号为「忠第亮直」；三国杀 WIKI 该武将称号为「忠笃亮直」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

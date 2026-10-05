@@ -1,0 +1,23 @@
+id: card_jiu_qlhd_club_9
+card_id: card_jiu
+name_printed: 酒
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 9
+quantity: 1
+printed_text: ''
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_jiu_qlhd_club_9.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

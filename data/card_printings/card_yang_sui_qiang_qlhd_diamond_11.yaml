@@ -1,0 +1,23 @@
+id: card_yang_sui_qiang_qlhd_diamond_11
+card_id: card_yang_sui_qiang
+name_printed: 阳燧枪
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 九变篇
+suit: diamond
+rank: 11
+quantity: 1
+printed_text: 锁定技，当你使用【杀】对目标造成伤害后，其再受到1点无来源火焰伤害。
+normalized_text: ''
+bottom_right_mark: 九
+card_number: ''
+illustrator: ''
+image: card_yang_sui_qiang_qlhd_diamond_11.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

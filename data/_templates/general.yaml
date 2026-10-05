@@ -11,5 +11,4 @@
 #   官方名相同、玩法不同（标准版诸葛亮 / 国战诸葛亮）=> 同一个 General 的不同 Variant。
 id: general_change_me
 name: 武将名
-aliases: []              # 别名，例如 [老诸葛, 空城诸葛]；用于检索
 notes: ""

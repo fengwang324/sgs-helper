@@ -1,0 +1,26 @@
+id: variant_ma_chao_guo_zhan_ban
+general_id: general_ma_chao
+variant: 群狼环鼎
+title: 一骑当千
+general_number: G.SHU 006
+illustrator: 木美人&张帅&KayaK
+image: variant_ma_chao_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_ma_shu
+    version_id: skill_ma_shu_guozhan_qlhd_v1
+  - skill_id: skill_tie_qi
+    version_id: skill_tie_qi_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 006
+verification_status: unverified
+notes: Paddle 读出的称号为「一当千马越」；三国杀 WIKI 该武将称号为「一骑当千」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验

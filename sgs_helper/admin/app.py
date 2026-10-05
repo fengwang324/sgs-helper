@@ -23,7 +23,8 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
@@ -38,7 +39,7 @@ from ..constants import (
     VERIFICATION_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
-from . import editors, forms
+from . import editors, forms, ocr_test
 from .store import (
     REVIEW_STATUSES,
     AdminStore,
@@ -74,13 +75,17 @@ def default_db_path() -> Path:
 
 
 def build_templates() -> Jinja2Templates:
-    templates = Jinja2Templates(
-        directory=str(ADMIN_DIR / "templates"),
+    # starlette 1.0 起 Jinja2Templates 不再接受 autoescape/trim_blocks 等
+    # 环境参数，改为自行构造 jinja2.Environment 传进去（旧版本同样支持 env=）。
+    import jinja2
+
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(ADMIN_DIR / "templates")),
         autoescape=True,
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    env = templates.env
+    templates = Jinja2Templates(env=env)
     env.filters.update(
         {
             "rank_label": rank_label,
@@ -115,6 +120,24 @@ templates = build_templates()
 # ---------------------------------------------------------------- 应用
 
 
+def _ocr_image_index(live: AdminStore) -> list[dict]:
+    """data/card_images 下的卡图，配上可读标签，方便在 OCR 页里直接挑一张试。"""
+    out: list[dict] = []
+    for kind, prefix in (("general_variant", "武将"), ("card_printing", "游戏牌")):
+        for entity in live.bundle.all(kind).values():
+            image = getattr(entity, "image", "") or ""
+            if not image:
+                continue
+            if kind == "general_variant":
+                general = live.bundle.get("general", getattr(entity, "general_id", ""))
+                name = getattr(general, "name", "") or entity.id
+                label = f"{prefix}：{name}（{getattr(entity, 'variant', '')}）"
+            else:
+                label = f"{prefix}：{getattr(entity, 'name_printed', '') or entity.id}"
+            out.append({"file": image, "label": label, "id": entity.id})
+    out.sort(key=lambda r: (r["label"], r["file"]))
+    return out
+
 def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> FastAPI:
     store = AdminStore(data_dir or default_data_dir(), db_path or default_db_path())
 
@@ -130,6 +153,33 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     static_dir = ADMIN_DIR / "static"
     if static_dir.is_dir():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+    # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
+    images_dir = store.data_dir / "card_images"
+    try:
+        images_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:  # pragma: no cover
+        pass
+    if images_dir.is_dir():
+        app.mount("/card-images", StaticFiles(directory=str(images_dir)), name="card-images")
+
+    # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
+    images_dir = store.data_dir / "card_images"
+    try:
+        images_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:  # pragma: no cover
+        pass
+    if images_dir.is_dir():
+        app.mount("/card-images", StaticFiles(directory=str(images_dir)), name="card-images")
+
+    # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
+    images_dir = store.data_dir / "card_images"
+    try:
+        images_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:  # pragma: no cover
+        pass
+    if images_dir.is_dir():
+        app.mount("/card-images", StaticFiles(directory=str(images_dir)), name="card-images")
 
     # ------------------------------------------------------------ 上下文
 
@@ -260,11 +310,13 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         status: str = "",
         product: str = "",
         package: str = "",
+        faction: str = "",
         page: int = 1,
     ) -> HTMLResponse:
         require_kind(kind)
         live: AdminStore = request.app.state.store
-        rows = live.filter_rows(kind, q=q, mode=mode, status=status, product=product, package=package)
+        rows = live.filter_rows(kind, q=q, mode=mode, status=status, product=product,
+                                package=package, faction=faction)
         total = len(rows)
         pages = max(1, math.ceil(total / PER_PAGE))
         page = min(max(1, page), pages)
@@ -286,6 +338,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 status=status,
                 product=product,
                 package=package,
+                faction=faction,
                 options=live.filter_options(kind),
                 spec=KIND_BY_NAME[kind],
             ),
@@ -312,6 +365,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         detail: dict[str, Any] = {}
         if kind == "skill":
             detail = live.skill_view(entity_id) or {}
+        elif kind == "general_set":
+            detail = live.set_view(entity_id) or {}
         elif kind == "general":
             detail = live.general_view(entity_id) or {}
         elif kind == "card":
@@ -338,6 +393,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             ),
         )
 
+
     @app.get("/raw/{kind}/{entity_id}", response_class=PlainTextResponse)
     def raw_page(request: Request, kind: str, entity_id: str) -> PlainTextResponse:
         require_kind(kind)
@@ -345,6 +401,71 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         if live.entity(kind, entity_id) is None:
             raise HTTPException(status_code=404, detail="记录不存在")
         return PlainTextResponse(live.file_text(kind, entity_id), media_type="text/plain; charset=utf-8")
+
+    # ------------------------------------------------------------ OCR 试跑
+
+    @app.get("/ocr", response_class=HTMLResponse)
+    def ocr_page(request: Request) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        return render(
+            request,
+            "ocr.html",
+            **ctx(
+                request,
+                title="OCR 试跑",
+                current_kind="_ocr",
+                models=list(ocr_test.MODELS),
+                default_model=ocr_test.DEFAULT_MODEL,
+                token_tail=(ocr_test.token() or "")[-6:],
+                token_from_env=bool(os.environ.get("PADDLEOCR_ACCESS_TOKEN")),
+                images=_ocr_image_index(live),
+            ),
+        )
+
+    @app.post("/ocr/token")
+    async def ocr_save_token(request: Request):
+        form = await request.form()
+        if form.get("_csrf") != request.app.state.csrf:
+            raise HTTPException(status_code=403, detail="CSRF token 不匹配")
+        value = str(form.get("token") or "").strip()
+        if value:
+            ocr_test.save_token(value)
+        return RedirectResponse("/ocr?saved=1", status_code=303)
+
+    @app.post("/api/ocr-test")
+    async def ocr_api(request: Request):
+        if request.headers.get("x-csrf-token") != request.app.state.csrf:
+            raise HTTPException(status_code=403, detail="CSRF token 不匹配")
+        form = await request.form()
+        model = str(form.get("model") or ocr_test.DEFAULT_MODEL)
+        if model not in ocr_test.MODELS:
+            return JSONResponse({"ok": False, "error": f"不支持的模型：{model}"})
+        token_override = str(form.get("token") or "").strip()
+        if token_override:
+            os.environ["PADDLEOCR_ACCESS_TOKEN"] = token_override
+        upload = form.get("file")
+        name = str(form.get("image_name") or "").strip()
+        live: AdminStore = request.app.state.store
+        if upload is not None and getattr(upload, "filename", ""):
+            data = await upload.read()
+            fname = upload.filename or "image.png"
+        elif name:
+            safe = os.path.basename(name)
+            path = live.data_dir / "card_images" / safe
+            if not path.is_file():
+                return JSONResponse({"ok": False, "error": f"找不到卡图：{safe}"})
+            data = path.read_bytes()
+            fname = safe
+        else:
+            return JSONResponse({"ok": False, "error": "没有收到图片（可以粘贴截图或选一张卡图）"})
+        # 调 PaddleOCR 是阻塞 IO（提交 + 轮询），必须丢到线程池，
+        # 否则会卡住 uvicorn 的事件循环、整站无响应。
+        try:
+            result = await run_in_threadpool(ocr_test.run, data, fname, model)
+        except Exception as exc:  # pragma: no cover
+            result = {"ok": False, "error": f"识别异常：{exc}", "model": model}
+        result["image"] = name or fname
+        return JSONResponse(result)
 
     # ------------------------------------------------------------ 专用录入页：实体产品
 
@@ -549,9 +670,11 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         }
 
     def _general_params(request: Request) -> dict[str, str]:
+        # 注意：这里**不能**包含 "variant" —— URL 上的 ?variant=<版本ID> 是用来选中
+        # 哪个版本的，如果当成初值会把它覆盖到「版本标签」输入框里（保存后标签变成 ID）。
         allowed = {
             "name", "title", "general_number", "mode", "faction", "hp", "gender",
-            "product_id", "general_set", "id", "variant", "notes", "general_notes",
+            "product_id", "general_set", "id", "notes", "general_notes",
         }
         return {
             key: value

@@ -1,0 +1,25 @@
+id: variant_ma_long_guo_zhan_jin
+general_id: general_ma_long
+variant: 群狼环鼎
+title: 困局诡阵
+general_number: G.JIN 037
+illustrator: 荆芥
+image: variant_ma_long_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_zhuan_zhan
+    version_id: skill_zhuan_zhan_guozhan_qlhd_v1
+  - skill_id: skill_xun_ji
+    version_id: skill_xun_ji_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 037
+verification_status: unverified
+notes: ''

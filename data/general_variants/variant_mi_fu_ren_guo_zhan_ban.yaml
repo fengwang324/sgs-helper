@@ -1,0 +1,26 @@
+id: variant_mi_fu_ren_guo_zhan_ban
+general_id: general_mi_fu_ren
+variant: 群狼环鼎
+title: 乱世沉香
+general_number: G.SHU 021
+illustrator: 木美人
+image: variant_mi_fu_ren_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: 君临天下·势
+zhulianbihe: []
+skills:
+  - skill_id: skill_gui_xiu
+    version_id: skill_gui_xiu_guozhan_qlhd_v1
+  - skill_id: skill_cun_si
+    version_id: skill_cun_si_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 021
+verification_status: unverified
+notes: Paddle 读出的称号为「乱世界香」；三国杀 WIKI 该武将称号为「乱世沉香」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

@@ -1,0 +1,26 @@
+id: variant_guo_jia_guo_zhan_ban
+general_id: general_guo_jia
+variant: 群狼环鼎
+title: 早终的先知
+general_number: G.WEI 006
+illustrator: 绘聚艺堂
+image: variant_guo_jia_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_tian_du
+    version_id: skill_tian_du_guozhan_qlhd_v1
+  - skill_id: skill_yi_ji
+    version_id: skill_yi_ji_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 006
+verification_status: unverified
+notes: Paddle 读出的称号为「早的先知」；三国杀 WIKI 该武将称号为「早终的先知」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验

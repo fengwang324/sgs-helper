@@ -1,0 +1,23 @@
+id: variant_dian_wei_guo_zhan_ban
+general_id: general_dian_wei
+variant: 群狼环鼎
+title: 古之恶来
+general_number: G.WEI 012
+illustrator: 凡果
+image: variant_dian_wei_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 国战标准
+skills:
+  - skill_id: skill_qiang_xi
+    version_id: skill_qiang_xi_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 012
+verification_status: unverified
+notes: ''

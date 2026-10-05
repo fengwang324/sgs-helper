@@ -33,8 +33,9 @@ Id = Annotated[str, Field(pattern=ID_PATTERN, min_length=2, max_length=120)]
 Name = Annotated[str, Field(min_length=1, max_length=200)]
 #: 规则文本：不允许为空
 RuleText = Annotated[str, Field(min_length=1)]
-#: 实体卡上的编号（**不是**内部 id）：允许大小写字母、数字、``-``、``_``
-NUMBER_PATTERN = r"^[A-Za-z0-9_-]+$"
+#: 实体卡上的编号（**不是**内部 id）：允许大小写字母、数字、``-``/``_``/``.``/``/`` 和空格，
+#: 以便与卡面完全一致（国战编号形如 ``G.WEI 075``、``G.WEI/SHU 079``）
+NUMBER_PATTERN = r"^[A-Za-z0-9_\-./& ]+$"
 
 
 class StrictModel(BaseModel):
@@ -134,7 +135,6 @@ class General(StrictModel):
 
     id: Id
     name: Name
-    aliases: list[str] = Field(default_factory=list)
     notes: str = ""
 
 
@@ -155,12 +155,16 @@ class GeneralVariant(StrictModel):
     variant: str = "标准版"
     title: str = ""
     general_number: str | None = None
+    illustrator: str = ""
+    image: str = ""
     mode: Mode | None = None
     faction: str = ""
     hp: float | None = Field(default=None, gt=0, le=10)
     gender: Gender = Gender.unknown
     product_id: Id | None = None
     general_set: str | None = None
+    #: 珠联璧合：可写多个武将名，也可以是类别值（如 男性武将 / 群势力武将 / 君主）
+    zhulianbihe: list[str] = Field(default_factory=list)
     #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
     skills: list[GeneralSkillRef] = Field(default_factory=list)
     source: Source | None = None
@@ -185,8 +189,8 @@ class GeneralVariant(StrictModel):
             return None
         if not re.fullmatch(NUMBER_PATTERN, text):
             raise ValueError(
-                "编号只能包含字母、数字、- 和 _（例如 WEI001、shu-01）；"
-                "内部 id 是另一回事，会自动生成"
+                "编号只能包含字母、数字、- _ . / & 和空格（例如 WEI001、G.WEI 075、"
+                "G.WEI/SHU 079）；内部 id 是另一回事，会自动生成"
             )
         return text
 
@@ -202,7 +206,6 @@ class Skill(StrictModel):
 
     id: Id
     name: Name
-    aliases: list[str] = Field(default_factory=list)
     notes: str = ""
     source: Source | None = None
 
@@ -254,7 +257,6 @@ class Card(StrictModel):
     name: Name
     card_type: CardType
     subtype: str = ""
-    aliases: list[str] = Field(default_factory=list)
     related_keywords: list[Id] = Field(default_factory=list)
     notes: str = ""
 
@@ -281,6 +283,10 @@ class CardPrinting(StrictModel):
     #: 右下角角标，单独保存，不写进 notes
     bottom_right_mark: str = ""
     card_number: str = ""
+    #: 卡面插画师（卡面左下 / 编号左边那行小字）
+    illustrator: str = ""
+    #: 卡图相对路径（相对 data/ 目录）
+    image: str = ""
     source: Source
     verification_status: VerificationStatus = VerificationStatus.unverified
     notes: str = ""
@@ -327,7 +333,6 @@ class Keyword(StrictModel):
     id: Id
     name: Name
     definition: RuleText
-    aliases: list[str] = Field(default_factory=list)
     mode: Mode = Mode.common
     related_keyword_ids: list[Id] = Field(default_factory=list)
     related_timing_ids: list[Id] = Field(default_factory=list)
@@ -354,9 +359,30 @@ class Timing(StrictModel):
     notes: str = ""
 
 
+class GeneralSet(StrictModel):
+    """**武将牌系列 / 包**，支持层级。
+
+    例：``君临天下`` 是父系列，``君临天下·变`` 是它的子系列；
+    武将版本只关联**最具体**的那个（``general_set: 君临天下·变``），
+    上层系列靠 ``parent_id`` 推出来，不用在武将上重复写。
+    """
+
+    id: Id
+    name: Name
+    #: 上级系列（顶层留空）
+    parent_id: Id | None = None
+    product_id: Id | None = None
+    #: 同级排序用（数字小的排前面）
+    sort_order: int = 0
+    notes: str = ""
+    source: Source | None = None
+    verification_status: VerificationStatus = VerificationStatus.unverified
+
+
 #: kind -> 模型类
 MODEL_BY_KIND: dict[str, type[StrictModel]] = {
     "product": Product,
+    "general_set": GeneralSet,
     "general": General,
     "general_variant": GeneralVariant,
     "skill": Skill,

@@ -1,0 +1,20 @@
+id: skill_an_yong_guozhan_qlhd_v1
+skill_id: skill_an_yong
+mode: guozhan
+text: 每回合限一次，与你势力相同的角色造成伤害时，你可以令此伤害加倍，然后若受伤角色武将牌均明置，你失去1点体力并失去“暗涌”，若其仅明置一张武将牌，你弃置两张手牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

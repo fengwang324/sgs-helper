@@ -1,8 +1,6 @@
 id: keyword_hua_se
 name: 花色
-definition: |-
-  标识于游戏牌的左上角，分为红桃♥、方块♦、黑桃♠、梅花♣四种。
-aliases: []
+definition: 标识于游戏牌的左上角，分为红桃♥、方块♦、黑桃♠、梅花♣四种。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「牌面信息」

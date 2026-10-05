@@ -1,0 +1,25 @@
+id: variant_tian_feng_guo_zhan_ban
+general_id: general_tian_feng
+variant: 群狼环鼎
+title: 河北瑰杰
+general_number: G.QUN 016
+illustrator: 地狱许
+image: variant_tian_feng_guo_zhan_ban.jpg
+mode: guozhan
+faction: 群
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+skills:
+  - skill_id: skill_si_jian
+    version_id: skill_si_jian_guozhan_qlhd_v1
+  - skill_id: skill_sui_shi
+    version_id: skill_sui_shi_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.QUN 016
+verification_status: unverified
+notes: ''

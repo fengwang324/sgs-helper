@@ -1,0 +1,23 @@
+id: card_huo_shao_lian_ying_qlhd_club_11
+card_id: card_huo_shao_lian_ying
+name_printed: 火烧连营
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 11
+quantity: 1
+printed_text: 出牌阶段，对你的下家和所有与其处于同一队列的角色使用。每人受到1点火焰伤害。
+normalized_text: ''
+bottom_right_mark: 周
+card_number: ''
+illustrator: ''
+image: card_huo_shao_lian_ying_qlhd_club_11.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

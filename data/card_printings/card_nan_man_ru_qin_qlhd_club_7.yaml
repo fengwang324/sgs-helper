@@ -1,0 +1,23 @@
+id: card_nan_man_ru_qin_qlhd_club_7
+card_id: card_nan_man_ru_qin
+name_printed: 南蛮入侵
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 7
+quantity: 1
+printed_text: 出牌阶段，对所有其他角色使用。每名目标角色需打出一张【杀】，否则受到1点伤害。
+normalized_text: ''
+bottom_right_mark: 无名氏
+card_number: ''
+illustrator: ''
+image: card_nan_man_ru_qin_qlhd_club_7.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

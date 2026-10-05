@@ -1,0 +1,25 @@
+id: variant_si_ma_lun_guo_zhan_jin
+general_id: general_si_ma_lun
+variant: 群狼环鼎
+title: 螭吻裂冠
+general_number: G.JIN 011
+illustrator: 荆芥
+image: variant_si_ma_lun_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_zhu_lan
+    version_id: skill_zhu_lan_guozhan_qlhd_v1
+  - skill_id: skill_luan_chang
+    version_id: skill_luan_chang_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 011
+verification_status: unverified
+notes: ''

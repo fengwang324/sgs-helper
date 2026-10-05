@@ -1,8 +1,6 @@
 id: keyword_shi_jian
 name: 事件
-definition: |-
-  角色使用或打出牌、发动技能或处于某些状态时，都是在发生一个事件。事件是若干个相关的结算过程的总和，可能被其他事件响应。
-aliases: []
+definition: 角色使用或打出牌、发动技能或处于某些状态时，都是在发生一个事件。事件是若干个相关的结算过程的总和，可能被其他事件响应。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「事件、响应与结算」

@@ -1,0 +1,20 @@
+id: skill_gu_zheng_guozhan_qlhd_v1
+skill_id: skill_gu_zheng
+mode: guozhan
+text: 其他角色的弃牌阶段结束时，你可以将此阶段内其弃置的一张手牌返还给其，然后你可以获得其余此阶段内弃置的牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

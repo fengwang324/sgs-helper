@@ -1,0 +1,23 @@
+id: card_shou_lin_qian_yi_qlhd_spade_6
+card_id: card_shou_lin_qian_yi
+name_printed: 兽鳞潜翼
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: spade
+rank: 6
+quantity: 1
+printed_text: 你使用【杀】的结算过程中，你攻击范围内的非目标角色不能使用牌（X为你的已损失体力值）。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_shou_lin_qian_yi_qlhd_spade_6.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

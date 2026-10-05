@@ -3,7 +3,6 @@ name: 扣减体力
 definition: |-
   失去体力和受到伤害都会导致角色扣减体力。
   ◆失去体力与受到伤害不同：失去体力没有来源，不需要进行伤害结算，角色因失去体力死亡也没有角色需要执行奖惩；受到伤害会产生伤害事件，要进行伤害事件的结算，角色受到伤害死亡，需要对来源执行奖惩。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -12,5 +11,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

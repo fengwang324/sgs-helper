@@ -1,0 +1,26 @@
+id: variant_xu_shu_guo_zhan_ban
+general_id: general_xu_shu
+variant: 群狼环鼎
+title: 难为完臣
+general_number: G.SHU 017
+illustrator: YanBai
+image: variant_xu_shu_guo_zhan_ban.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_qian_ce
+    version_id: skill_qian_ce_guozhan_qlhd_v1
+  - skill_id: skill_ju_jian
+    version_id: skill_ju_jian_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.SHU 017
+verification_status: unverified
+notes: Paddle 读出的称号为「难为完臣」；三国杀 WIKI 该武将称号为「化剑为犁」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

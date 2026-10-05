@@ -1,0 +1,23 @@
+id: card_wu_hu_jiang_da_qi_qlhd_none_na
+card_id: card_wu_hu_jiang_da_qi
+name_printed: 五虎将大旗
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 指示物
+suit: none
+rank: null
+quantity: 1
+printed_text: ''
+normalized_text: ''
+bottom_right_mark: 陣
+card_number: ''
+illustrator: LiuHeng
+image: card_wu_hu_jiang_da_qi_qlhd_none_na.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: 原本的牌堆归属是「阵」

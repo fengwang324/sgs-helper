@@ -3,7 +3,6 @@ id: card_change_me
 name: 卡牌名
 card_type: trick        # basic/trick/delayed_trick/equipment/other
 subtype: instant
-aliases: []
 related_keywords:
   - keyword_use_card
 notes: ""

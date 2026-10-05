@@ -32,6 +32,8 @@ from .schema import MODEL_BY_KIND
 #:
 #: 这张表同时驱动校验器的引用检查与本地管理页的删除保护，只声明一次。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
+    ("general_set", "parent_id", "general_set", False),
+    ("general_set", "product_id", "product", False),
     ("general_variant", "general_id", "general", False),
     ("general_variant", "product_id", "product", False),
     ("general_variant", "skills[].skill_id", "skill", True),
@@ -200,6 +202,7 @@ def validate_entities(
     _check_kind_consistency(bundle, result)
     _check_version_consistency(bundle, result)
     _check_timing_consistency(bundle, result)
+    _check_general_set_consistency(bundle, result)
 
     result.errors.sort(key=_issue_sort_key)
     result.warnings.sort(key=_issue_sort_key)
@@ -377,6 +380,43 @@ def _mode_label(mode: Any) -> str:
     if not mode:
         return "（未填模式）"
     return MODE_LABELS.get(mode, str(mode))
+
+
+def _check_general_set_consistency(bundle: DataBundle, result: ValidationResult) -> None:
+    """武将牌系列：字符串引用必须对得上系列实体；产品声明的系列也要有对应实体。"""
+    sets = bundle.all("general_set")
+    if not sets:
+        return
+    by_name = {s.name: s for s in sets.values()}
+    for entity_id, variant in bundle.all("general_variant").items():
+        name = (getattr(variant, "general_set", "") or "").strip()
+        if name and name not in by_name:
+            origin = bundle.origin_of("general_variant", entity_id)
+            result.warnings.append(
+                Issue(
+                    "warning",
+                    origin.path,
+                    "general_set",
+                    f"武将牌系列「{name}」没有对应的系列实体（data/general_sets/），"
+                    "请先建这个系列，或改成已有系列",
+                    line=origin.line,
+                    entity_id=entity_id,
+                )
+            )
+    for entity_id, product in bundle.all("product").items():
+        for name in (product.general_sets or []):
+            if name not in by_name:
+                origin = bundle.origin_of("product", entity_id)
+                result.warnings.append(
+                    Issue(
+                        "warning",
+                        origin.path,
+                        "general_sets",
+                        f"产品声明的武将牌系列「{name}」没有对应的系列实体（data/general_sets/）",
+                        line=origin.line,
+                        entity_id=entity_id,
+                    )
+                )
 
 
 def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> None:

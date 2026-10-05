@@ -4,7 +4,6 @@ definition: |-
   你观看相应的牌时，不能让其他玩家看见这些牌且这些牌并没有移动。
   例如：郭嘉（标）发动【遗计】观看牌堆顶的两张牌时，这两张牌并未被郭嘉获得，并非郭嘉的手牌，依然处于牌堆顶。
   ◆观看一名角色的手牌默认观看其所有手牌。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -13,5 +12,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

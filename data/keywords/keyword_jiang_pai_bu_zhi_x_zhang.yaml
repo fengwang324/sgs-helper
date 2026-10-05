@@ -1,8 +1,6 @@
 id: keyword_jiang_pai_bu_zhi_x_zhang
 name: 将…牌补至X张
-definition: |-
-  若该角色的…牌数小于X，则摸（X－该角色的…牌数）张牌；若该角色的…牌数不小于X，则不执行此操作。
-aliases: []
+definition: 若该角色的…牌数小于X，则摸（X－该角色的…牌数）张牌；若该角色的…牌数不小于X，则不执行此操作。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

@@ -1,6 +1,5 @@
 id: faq_rule_rule_classification
-question: |-
-  技能、技能/牌的效果的分类对各种情况下技能/牌的效果是否继续执行的重要性是什么？
+question: 技能、技能/牌的效果的分类对各种情况下技能/牌的效果是否继续执行的重要性是什么？
 answer: |-
   专题：论技能、技能/牌的效果的分类对各种情况下技能/牌的效果是否继续执行的重要性
   首先我们要明白的一个基本原则就是，一个事件只要开始结算，就必须按规定流程进行，执行能执行的操作，不执行无法执行的操作（例如在结算过程中参与结算的牌对应的实体牌发生变化或相关角色死亡导致某操作无法执行）。
@@ -77,5 +76,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》专题章节：技能、技能/牌的效果的分类对各种情况下技能/牌的效果是否继续执行的重要性

@@ -1,8 +1,6 @@
 id: keyword_lian_huan_shang_hai
 name: 连环伤害
-definition: |-
-  不会触发连环传导的属性伤害。判断一个属性伤害是否为连环伤害的方法：1.因连环传导而造成的伤害是连环伤害；2.因转移一个连环伤害而造成的伤害是连环伤害。除此之外的属性伤害都不是连环伤害。
-aliases: []
+definition: 不会触发连环传导的属性伤害。判断一个属性伤害是否为连环伤害的方法：1.因连环传导而造成的伤害是连环伤害；2.因转移一个连环伤害而造成的伤害是连环伤害。除此之外的属性伤害都不是连环伤害。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

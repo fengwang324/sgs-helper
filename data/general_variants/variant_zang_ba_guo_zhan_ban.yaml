@@ -1,0 +1,25 @@
+id: variant_zang_ba_guo_zhan_ban
+general_id: general_zang_ba
+variant: 群狼环鼎
+title: 节度寿徐
+general_number: G.WEI 023
+illustrator: HOOO
+image: variant_zang_ba_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·势
+zhulianbihe:
+  - 张辽
+skills:
+  - skill_id: skill_heng_jiang
+    version_id: skill_heng_jiang_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 023
+verification_status: unverified
+notes: Paddle 读出的称号为「节度寿徐」；三国杀 WIKI 该武将称号为「节度青徐」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

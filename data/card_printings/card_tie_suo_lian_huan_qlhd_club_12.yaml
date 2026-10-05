@@ -1,0 +1,23 @@
+id: card_tie_suo_lian_huan_qlhd_club_12
+card_id: card_tie_suo_lian_huan
+name_printed: 铁索连环
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: club
+rank: 12
+quantity: 1
+printed_text: 出牌阶段，指定一至两名角色。分别横置或重置其副的武将牌。（被横置副将武将牌的角色处于“连环状态”）重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_tie_suo_lian_huan_qlhd_club_12.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

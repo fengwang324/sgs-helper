@@ -1,0 +1,23 @@
+id: card_tu_qiong_bi_xian_qlhd_club_2
+card_id: card_tu_qiong_bi_xian
+name_printed: 图穷匕见
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 九变篇
+suit: club
+rank: 2
+quantity: 1
+printed_text: 出牌阶段，对一名其他角色使用；你选择弃牌堆中一张奇珍牌，目标使用之；目标本回合视为在你攻击范围内。
+normalized_text: ''
+bottom_right_mark: 九
+card_number: ''
+illustrator: ''
+image: card_tu_qiong_bi_xian_qlhd_club_2.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

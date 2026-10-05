@@ -1,8 +1,6 @@
 id: faq_ruling_skill_niao_xiang_1
-question: |-
-  【鸟翔】该被围攻角色依次使用的第一张【闪】对此【杀】无效，第二张【闪】对此【杀】有效
-answer: |-
-  该被围攻角色依次使用的第一张【闪】对此【杀】无效，第二张【闪】对此【杀】有效。
+question: 【鸟翔】该被围攻角色依次使用的第一张【闪】对此【杀】无效，第二张【闪】对此【杀】有效
+answer: 该被围攻角色依次使用的第一张【闪】对此【杀】无效，第二张【闪】对此【杀】有效。
 mode: guozhan
 related_general_ids: []
 related_skill_ids:
@@ -15,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【蒋钦】技能【鸟翔】的裁定原文；问题栏取自原文首个分句

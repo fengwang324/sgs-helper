@@ -1,8 +1,6 @@
 id: keyword_shou_shang
 name: 受伤
-definition: |-
-  若一名角色的体力值小于其体力上限，称为该角色已受伤；若一名角色的体力值等于其体力上限，称为该角色未受伤。
-aliases: []
+definition: 若一名角色的体力值小于其体力上限，称为该角色已受伤；若一名角色的体力值等于其体力上限，称为该角色未受伤。
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -11,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

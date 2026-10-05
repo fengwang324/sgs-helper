@@ -1,0 +1,23 @@
+id: card_bu_jin_ze_tui_qlhd_none_na
+card_id: card_bu_jin_ze_tui
+name_printed: 不进则退
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 指示物
+suit: none
+rank: null
+quantity: 1
+printed_text: ◇本轮内：每名角色回合结束时，若其于本回合未造成过伤害，其失去1点体力。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_bu_jin_ze_tui_qlhd_none_na.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

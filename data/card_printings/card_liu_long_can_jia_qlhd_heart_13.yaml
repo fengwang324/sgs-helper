@@ -1,0 +1,23 @@
+id: card_liu_long_can_jia_qlhd_heart_13
+card_id: card_liu_long_can_jia
+name_printed: 六龙骖驾
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 君临天下-权包
+suit: heart
+rank: 13
+quantity: 1
+printed_text: ◆锁定技，当此牌进入你的装备区时，弃置你装备区里其他坐骑牌。只要此牌在你的装备区里，你的装备区便不能放入其他坐骑牌。
+normalized_text: ''
+bottom_right_mark: 權
+card_number: ''
+illustrator: ''
+image: card_liu_long_can_jia_qlhd_heart_13.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

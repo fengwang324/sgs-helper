@@ -1,7 +1,6 @@
 id: keyword_xu_yao_shi_yong_pai
 name: 需要使用牌
 definition: 包含在此牌的使用时机和非使用时机使用此牌这两种情况。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -10,5 +9,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

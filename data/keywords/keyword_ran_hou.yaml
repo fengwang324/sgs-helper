@@ -3,7 +3,6 @@ name: 然后
 definition: |-
   用于两个非延时类效果之间的连词，表示这两个效果执行的先后顺序。
   例如：【涅槃】的描述为：限定技，当你处于濒死状态时，你可以弃置你的区域里的所有牌，然后将武将牌恢复至游戏开始时的状态，摸三张牌，将体力值回复至3点。 其中“弃置你区域里的所有牌”跟后面的一样，都是【涅槃】的效果，因此发动【涅槃】是不需要执行消耗的，即区域里没有牌的庞统处于濒死状态时可以发动【涅槃】。
-aliases: []
 mode: common
 related_keyword_ids: []
 related_timing_ids: []
@@ -12,5 +11,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

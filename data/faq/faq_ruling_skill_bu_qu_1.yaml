@@ -1,8 +1,6 @@
 id: faq_ruling_skill_bu_qu_1
-question: |-
-  【不屈】若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆
-answer: |-
-  若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆。每当你将最后一张“创”置入弃牌堆后，即你将体力值回复至1点。
+question: 【不屈】若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆
+answer: 若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆。每当你将最后一张“创”置入弃牌堆后，即你将体力值回复至1点。
 mode: identity
 related_general_ids: []
 related_skill_ids:
@@ -15,5 +13,5 @@ source:
   title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
   notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
-verification_status: community
+verification_status: unverified
 notes: 《三国杀官方规则集 3.0》中武将【周泰】技能【不屈】的裁定原文；问题栏取自原文首个分句

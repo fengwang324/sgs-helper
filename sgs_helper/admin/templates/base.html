@@ -27,6 +27,7 @@
   {% for item in kinds %}
     <a href="/list/{{ item.kind }}" class="{{ 'active' if current_kind == item.kind else '' }}">{{ item.label }}<span class="count">{{ item.count }}</span></a>
   {% endfor %}
+  <a href="/ocr" class="{{ 'active' if request.url.path == '/ocr' else '' }}">OCR 试跑</a>
   <a href="/review" class="{{ 'active' if request.url.path == '/review' else '' }}">待核验<span class="count warn-count">{{ review_count }}</span></a>
   <a href="/help" class="{{ 'active' if request.url.path == '/help' else '' }}">说明</a>
 </nav>

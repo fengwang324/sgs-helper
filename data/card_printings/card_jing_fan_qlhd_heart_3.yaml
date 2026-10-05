@@ -1,0 +1,23 @@
+id: card_jing_fan_qlhd_heart_3
+card_id: card_jing_fan
+name_printed: 惊帆
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: 君主游戏牌
+suit: heart
+rank: 3
+quantity: 1
+printed_text: “曹真有駃马，名为惊帆，言其驰骤如烈风之举帆疾也。”——裴松之《古令注·杂记》
+normalized_text: ''
+bottom_right_mark: 君
+card_number: ''
+illustrator: ''
+image: card_jing_fan_qlhd_heart_3.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

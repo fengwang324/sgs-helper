@@ -1,0 +1,23 @@
+id: card_mu_niu_liu_ma_qlhd_diamond_5
+card_id: card_mu_niu_liu_ma
+name_printed: 木牛流马
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: diamond
+rank: 5
+quantity: 1
+printed_text: ◆出牌阶段限一次，你可以将一张手牌扣置于装备区里的【木牛流马】下，然后可以将【木牛流马】放入一名其他角色的装备区；你可以如手牌般使用或打出【木牛流马】下的牌。
+normalized_text: ''
+bottom_right_mark: 周
+card_number: ''
+illustrator: ''
+image: card_mu_niu_liu_ma_qlhd_diamond_5.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

@@ -398,3 +398,48 @@ details.advanced {
 details.advanced > summary { font-weight: 600; cursor: pointer; }
 .copy-panel label { margin-right: 10px; }
 .warn-line { color: var(--warn); }
+
+/* ---- 卡图预览 ---- */
+.card-preview { margin: 8px 0 16px; }
+.card-preview img {
+  max-width: 260px; max-height: 380px; border-radius: 8px;
+  border: 1px solid #d8d3c8; box-shadow: 0 2px 8px rgba(0,0,0,.12); background: #fff;
+}
+.card-thumb {
+  display: block; max-width: 180px; max-height: 260px; margin: 6px 0;
+  border-radius: 6px; border: 1px solid #d8d3c8; background: #fff;
+}
+
+/* ---- OCR 试跑页 ---- */
+.dropzone {
+  border: 2px dashed #c9c2b4; border-radius: 10px; padding: 18px;
+  background: #fbfaf6; text-align: center;
+}
+.dropzone.over { border-color: #7a6a4f; background: #f3efe4; }
+.dropzone input[type=file] { margin: 8px 0; }
+
+/* ---- 武将编辑页：卡图 + 技能描述就地编辑 ---- */
+.edit-card-panel {
+  float: right; width: 190px; margin: 0 0 12px 18px; text-align: center;
+}
+.edit-card-panel img {
+  width: 100%; border-radius: 8px; border: 1px solid #d8d3c8;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12); background: #fff;
+}
+.edit-card-panel .muted { font-size: 12px; margin-top: 4px; }
+.skill-text-edit { margin-top: 6px; }
+.skill-text-box { margin-top: 6px; }
+.skill-text-box textarea {
+  width: 100%; font-family: inherit; font-size: 14px; line-height: 1.6;
+  border: 1px solid #cfc7b6; border-radius: 6px; padding: 8px; background: #fffdf8;
+}
+
+/* 卡图面板里的核验勾选 */
+.verify-check {
+  display: block; margin-top: 10px; padding: 8px 6px; cursor: pointer;
+  border: 1px solid #d8d3c8; border-radius: 8px; background: #fbfaf6;
+  font-weight: 600; text-align: center; user-select: none;
+}
+.verify-check input { margin-right: 4px; transform: scale(1.15); }
+.verify-check:hover { border-color: #a89a7c; background: #f5f1e6; }
+.verify-check.is-verified { border-color: #4a7c59; background: #eef6ef; color: #2f5d3a; }

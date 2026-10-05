@@ -38,22 +38,25 @@ COLUMNS: dict[str, tuple[str, ...]] = {
         "name", "series", "mode", "publisher", "release_year", "release_date",
         "edition", "general_sets", "card_sets", "notes", "verification_status",
     ),
-    "general": ("name", "aliases", "notes"),
+    "general_set": ("name", "parent_id", "product_id", "sort_order", "notes",
+                    "verification_status"),
+    "general": ("name", "notes"),
     "general_variant": (
         "general_id", "variant", "title", "general_number", "mode", "faction", "hp",
-        "gender", "product_id", "general_set", "notes", "verification_status",
+        "gender", "product_id", "general_set", "illustrator", "image", "zhulianbihe",
+        "notes", "verification_status",
     ),
-    "skill": ("name", "aliases", "notes"),
+    "skill": ("name", "notes"),
     "skill_version": (
         "skill_id", "mode", "text", "version_label", "product_id", "package",
         "effective_from", "effective_to", "previous_version_id", "change_note",
         "related_keywords", "related_timing_ids", "notes", "verification_status",
     ),
-    "card": ("name", "card_type", "subtype", "aliases", "related_keywords", "notes"),
+    "card": ("name", "card_type", "subtype", "related_keywords", "notes"),
     "card_printing": (
         "card_id", "name_printed", "mode", "product_id", "package", "card_set",
         "suit", "rank", "quantity", "printed_text", "normalized_text",
-        "bottom_right_mark", "card_number", "notes", "verification_status",
+        "bottom_right_mark", "card_number", "illustrator", "image", "notes", "verification_status",
     ),
     "faq": (
         "question", "answer", "mode", "related_general_ids", "related_skill_ids",
@@ -61,7 +64,7 @@ COLUMNS: dict[str, tuple[str, ...]] = {
         "verification_status",
     ),
     "keyword": (
-        "name", "definition", "aliases", "mode", "related_keyword_ids",
+        "name", "definition", "mode", "related_keyword_ids",
         "related_timing_ids", "notes", "verification_status",
     ),
     "timing": (
@@ -74,14 +77,14 @@ COLUMNS: dict[str, tuple[str, ...]] = {
 #: 以 JSON 文本落库的多值列
 JSON_COLUMNS: frozenset[str] = frozenset(
     {
-        "general_sets", "card_sets", "aliases", "related_keywords",
+        "general_sets", "card_sets", "related_keywords",
         "related_timing_ids", "related_general_ids", "related_skill_ids",
         "related_card_ids", "related_keyword_ids", "previous_ids", "next_ids",
-        "related_faq_ids",
+        "related_faq_ids", "zhulianbihe",
     }
 )
 
-_INT_COLUMNS = frozenset({"rank", "release_year", "quantity", "yaml_line"})
+_INT_COLUMNS = frozenset({"rank", "release_year", "quantity", "sort_order", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
 
 #: 每个实体表都会追加的可追溯性列
@@ -290,7 +293,7 @@ def _names_of(bundle: DataBundle, kind: str, ids: list[str]) -> str:
 def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, str]:
     """返回 (name, aliases, body)，供 SQLite LIKE 与 FTS5 检索使用。"""
     name = str(getattr(entity, "name", "") or getattr(entity, "name_printed", "") or entity.id)
-    aliases = " | ".join(getattr(entity, "aliases", []) or [])
+    aliases = ""
     parts: list[str] = []
 
     if kind == "product":
@@ -301,7 +304,6 @@ def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, s
         parts.append("武将牌 " + " ".join(entity.general_sets))
         parts.append("游戏牌 " + " ".join(entity.card_sets))
     elif kind == "general":
-        parts += list(entity.aliases)
         parts.append(entity.notes)
     elif kind == "general_variant":
         general = bundle.get("general", entity.general_id)
@@ -309,13 +311,11 @@ def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, s
         name = f"{general_name}（{entity.variant}）"
         parts += [
             entity.variant, entity.title, entity.faction, entity.general_set or "",
-            entity.notes, general_name,
+            entity.notes, general_name, "、".join(entity.zhulianbihe or []),
         ]
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
         if entity.general_number:
             parts.append(entity.general_number)
-        if general is not None:
-            parts += list(getattr(general, "aliases", []) or [])
         parts.append(_names_of(bundle, "skill", [ref.skill_id for ref in entity.skills]))
     elif kind == "skill":
         parts.append(entity.notes)

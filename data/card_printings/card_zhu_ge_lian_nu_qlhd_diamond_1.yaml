@@ -1,0 +1,23 @@
+id: card_zhu_ge_lian_nu_qlhd_diamond_1
+card_id: card_zhu_ge_lian_nu
+name_printed: 诸葛连弩
+mode: guozhan
+product_id: qlhd
+package: null
+card_set: null
+suit: diamond
+rank: 1
+quantity: 1
+printed_text: 出牌阶段，你可以使用任意数量的【杀】。
+normalized_text: ''
+bottom_right_mark: ''
+card_number: ''
+illustrator: ''
+image: card_zhu_ge_lian_nu_qlhd_diamond_1.jpg
+source:
+  type: physical_card
+  title: 本人实体卡（国战·群狼环鼎）
+  reference: ''
+  notes: 由实体卡照片识别；卡面编号见各条记录
+verification_status: unverified
+notes: ''

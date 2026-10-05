@@ -1,0 +1,25 @@
+id: variant_yang_hu_guo_zhan_jin
+general_id: general_yang_hu
+variant: 群狼环鼎·晋
+title: 执德清劭
+general_number: G.JIN 022
+illustrator: 匠人绘
+image: variant_yang_hu_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+skills:
+  - skill_id: skill_huai_yuan
+    version_id: skill_huai_yuan_guozhan_qlhd_v1
+  - skill_id: skill_fu_shou
+    version_id: skill_fu_shou_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 022
+verification_status: unverified
+notes: Paddle 读出的称号为「执德劭」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

@@ -1,0 +1,23 @@
+id: variant_wen_yang_guo_zhan_jin
+general_id: general_wen_yang
+variant: 群狼环鼎
+title: 陆拔山丘
+general_number: G.JIN 042
+illustrator: 小罗没想好
+image: variant_wen_yang_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 2
+gender: male
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_duan_qiu
+    version_id: skill_duan_qiu_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 042
+verification_status: unverified
+notes: Paddle 读出的称号为「陆拼山岳」；三国杀 WIKI 该武将称号为「万将披靡」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

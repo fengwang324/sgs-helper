@@ -1,0 +1,27 @@
+id: variant_zhang_hu_le_chen_guo_zhan_jin
+general_id: general_zhang_hu_le_chen
+variant: 群狼环鼎
+title: 不辱门庭
+general_number: G.JIN 014
+illustrator: 凝聚永恒
+image: variant_zhang_hu_le_chen_guo_zhan_jin.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_xi_jue
+    version_id: skill_xi_jue_guozhan_qlhd_v1
+  - skill_id: skill_lv_xian
+    version_id: skill_lv_xian_guozhan_qlhd_v1
+  - skill_id: skill_ying_wei
+    version_id: skill_ying_wei_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.JIN 014
+verification_status: unverified
+notes: ''

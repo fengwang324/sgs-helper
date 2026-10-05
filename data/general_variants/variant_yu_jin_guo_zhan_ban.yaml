@@ -1,0 +1,24 @@
+id: variant_yu_jin_guo_zhan_ban
+general_id: general_yu_jin
+variant: 群狼环鼎
+title: 讨暴坚垒
+general_number: G.WEI 024
+illustrator: biou09
+image: variant_yu_jin_guo_zhan_ban.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·权
+zhulianbihe: []
+skills:
+  - skill_id: skill_jie_yue
+    version_id: skill_jie_yue_guozhan_qlhd_v1
+source:
+  type: physical_card
+  title: 本人实体卡（群狼环鼎）
+  reference: ''
+  notes: 卡面编号 G.WEI 024
+verification_status: unverified
+notes: Paddle 读出的称号为「计暴坚垒子禁」；三国杀 WIKI 该武将称号为「讨暴坚垒」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

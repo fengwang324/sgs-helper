@@ -22,6 +22,13 @@
 </p>
 <p class="sub">{{ row.subtitle }}</p>
 
+{% if entity.image %}
+  <div class="card-preview">
+    <img src="/card-images/{{ entity.image }}" alt="{{ row.name }} 卡图">
+    <div class="muted">卡图：data/card_images/{{ entity.image }}</div>
+  </div>
+{% endif %}
+
 {# ---------------------------------------------------------------- 技能 #}
 {% if kind == 'skill' %}
   <section>
@@ -117,12 +124,11 @@
   <section>
     <h2>General（武将个体）→ GeneralVariant（版本）→ 技能</h2>
     <p class="muted">
-      武将个体只存名字/别名；模式、势力、体力、称号、编号、系列与技能都属于**版本**。
+      武将个体只存名字；模式、势力、体力、称号、编号、系列与技能都属于**版本**。
       技能行里显式选了版本的显示那个版本（卡上印的就是它），没选的按「模式 + 生效区间」自动推导。
     </p>
     <table class="kv">
       <tr><th>名字</th><td>{{ entity.name }}</td></tr>
-      <tr><th>别名</th><td>{{ entity.aliases | join('、') or '—' }}</td></tr>
       <tr><th>版本数</th><td>{{ detail.variants | length }}</td></tr>
       <tr><th>备注</th><td>{{ entity.notes or '—' }}</td></tr>
     </table>
@@ -144,9 +150,20 @@
           体力 {{ hp_label(item.entity.hp) }} ·
           {{ item.entity.gender | gender_label }} ·
           编号 {{ item.entity.general_number or '—' }} ·
-          系列 {{ item.entity.general_set or '—' }}
+          画师 {{ item.entity.illustrator or '—' }} ·
+          系列 {{ item.set_display or item.entity.general_set or '—' }}
           {% if item.product_name %} · 产品 {{ item.product_name }}{% endif %}
+          {% if item.entity.zhulianbihe %} · 珠联璧合 {{ item.entity.zhulianbihe | join('、') }}{% endif %}
         </p>
+        {% if item.entity.notes %}
+          <p class="sub badge warn" style="display:block;padding:6px 8px;">{{ item.entity.notes }}</p>
+        {% endif %}
+        {% if item.entity.image %}
+          <div class="card-preview">
+            <img src="/card-images/{{ item.entity.image }}" alt="{{ entity.name }} {{ item.variant }} 卡图">
+            <div class="muted">卡图：data/card_images/{{ item.entity.image }}</div>
+          </div>
+        {% endif %}
         <p class="sub">
           <code class="id">{{ item.id }}</code>
           {{ status_badge(item.entity.verification_status) }}
@@ -217,7 +234,7 @@
     {% if detail.printings %}
       <table class="rows">
         <tr>
-          <th>产品</th><th>花色</th><th>点数</th><th>角标</th><th>编号</th><th>包/牌堆</th><th>数量</th><th>核验</th><th></th>
+          <th>产品</th><th>花色</th><th>点数</th><th>角标</th><th>编号</th><th>画师</th><th>包/牌堆</th><th>数量</th><th>核验</th><th></th>
         </tr>
         {% for p in detail.printings %}
           <tr>
@@ -229,6 +246,7 @@
             <td>{{ p.rank_label }}</td>
             <td>{{ p.entity.bottom_right_mark or '—' }}</td>
             <td>{{ p.entity.card_number or '—' }}</td>
+            <td>{{ p.entity.illustrator or '—' }}</td>
             <td>{{ p.entity.package or '—' }} / {{ p.entity.card_set or '—' }}</td>
             <td>{{ p.entity.quantity }}</td>
             <td>{{ status_badge(p.entity.verification_status) }}</td>
@@ -239,8 +257,11 @@
             </td>
           </tr>
           <tr class="detail-row">
-            <td colspan="9">
+            <td colspan="10">
               <div class="rule-text">{{ p.entity.printed_text or '（未填卡面文本）' }}</div>
+              {% if p.entity.image %}
+                <img class="card-thumb" src="/card-images/{{ p.entity.image }}" alt="{{ p.name_printed }} 卡图">
+              {% endif %}
               <div class="sub">
                 印刷名：{{ p.entity.name_printed }}
                 {% if p.entity.normalized_text %} · 检索文本：{{ p.entity.normalized_text }}{% endif %}
@@ -257,6 +278,42 @@
 {% endif %}
 
 {# ---------------------------------------------------------------- 产品 #}
+{% if kind == 'general_set' %}
+  <h2>系列层级</h2>
+  <p>
+    {% if detail.parent %}
+      上级系列：<a href="/view/general_set/{{ detail.parent.id }}">{{ detail.parent.name }}</a>
+    {% else %}
+      <span class="muted">顶层系列（没有上级）</span>
+    {% endif %}
+  </p>
+  {% if detail.children %}
+    <p>子系列：
+      {% for child in detail.children %}
+        <a href="/view/general_set/{{ child.id }}">{{ child.name }}</a>{% if not loop.last %}、{% endif %}
+      {% endfor %}
+    </p>
+  {% endif %}
+
+  <h2>在用这个系列的武将版本（{{ detail.users | length }}）</h2>
+  {% if detail.users %}
+    <table class="rows">
+      <tr><th>武将</th><th>称号</th><th>编号</th><th>势力</th><th>核验</th></tr>
+      {% for row in detail.users %}
+        <tr>
+          <td><a href="/edit/general/{{ row.general_id }}?variant={{ row.id }}">{{ row.name }}</a></td>
+          <td>{{ row.title or '—' }}</td>
+          <td><code>{{ row.number or '—' }}</code></td>
+          <td>{{ row.faction or '—' }}</td>
+          <td>{{ status_badge(row.status) }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="muted">还没有武将版本直接引用这个系列。{% if detail.children %}（子系列里的卡要单独看）{% endif %}</p>
+  {% endif %}
+{% endif %}
+
 {% if kind == 'product' %}
   <section>
     <h2>产品内容</h2>
@@ -267,7 +324,10 @@
       <tr><th>模式</th><td>{{ mode_badge(entity.mode) or '—' }}</td></tr>
       <tr><th>武将牌系列</th><td>
         {% if entity.general_sets %}
-          {% for value in entity.general_sets %}<span class="tag-chip">{{ value }}</span>{% endfor %}
+          {% for value in detail.set_chips or [] %}
+            {% if value.id %}<a class="tag-chip" href="/view/general_set/{{ value.id }}">{{ value.name }}</a>
+            {% else %}<span class="tag-chip">{{ value.name }}</span>{% endif %}
+          {% endfor %}
         {% else %}<span class="muted">—</span>{% endif %}
       </td></tr>
       <tr><th>游戏牌牌堆</th><td>
