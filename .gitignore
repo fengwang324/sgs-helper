@@ -4,6 +4,9 @@ __pycache__/
 *.egg-info/
 .eggs/
 .pytest_cache/
+# pytest 的 tmp_path 根目录：Windows 上会落在当前目录，跑完测试会留下
+pytest-of-*/
+/tmp*/
 .mypy_cache/
 .ruff_cache/
 .venv/
