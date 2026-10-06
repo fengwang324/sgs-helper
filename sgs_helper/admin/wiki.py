@@ -34,7 +34,6 @@ from ..constants import (
     MODE_LABELS,
     SOURCE_LABELS,
     SOURCE_TITLE_BY_REFERENCE,
-    VERIFICATION_LABELS,
 )
 from .store import AdminStore, truncate
 
@@ -168,7 +167,6 @@ class WikiRoutes:
         badge = ""
         badge_class = ""
         excerpt = ""
-
         if kind == "general":
             variants = live.variants_of(row["id"])
             if variants:
@@ -213,11 +211,6 @@ class WikiRoutes:
 
         else:
             subtitle = row.get("subtitle", "")
-
-        status = row.get("verification_status") or ""
-        if status:
-            badge = VERIFICATION_LABELS.get(status, status)
-            badge_class = f"wiki-tag--status-{status}"
 
         return {
             "id": row["id"],
@@ -544,7 +537,6 @@ class WikiRoutes:
             kind,
             q=q,
             mode=mode,
-            status=status,
             set_name=set_name,
             category_1=category_1,
             category_2=category_2,
@@ -570,7 +562,6 @@ class WikiRoutes:
         common = {
             "q": q,
             "mode": mode,
-            "status": status,
             "set_name": set_name,
             "category_2": category_2,
             "category_3": category_3,
@@ -590,7 +581,6 @@ class WikiRoutes:
                 total_pages=total_pages,
                 q=q,
                 mode=mode,
-                status=status,
                 set_name=set_name,
                 set_label="拓展包" if kind == "card" else "武将牌系列",
                 category_1=category_1,
@@ -713,10 +703,6 @@ class WikiRoutes:
                     "label": version.version_label or version.id,
                     "mode_label": MODE_LABELS.get(version.mode, version.mode),
                     "product": row["product_name"],
-                    "status": version.verification_status,
-                    "status_label": VERIFICATION_LABELS.get(
-                        version.verification_status, version.verification_status
-                    ),
                     "source": _source_label(version),
                     "previous_label": (
                         (previous.version_label or previous.id) if previous is not None else ""
@@ -781,10 +767,6 @@ class WikiRoutes:
             {"k": "三级分类", "v": card.category_3},
             {"k": "拓展包", "v": card.card_set or ""},
             {"k": "卡名", "v": card.name},
-            {
-                "k": "核验状态",
-                "v": VERIFICATION_LABELS.get(card.verification_status, card.verification_status),
-            },
             {"k": "复核备注", "v": getattr(card, "review_note", "")},
         ]
 
@@ -879,12 +861,6 @@ class WikiRoutes:
             "image_url": "",
             "tags": [
                 {"text": MODE_LABELS.get(faq.mode, faq.mode), "class": ""},
-                {
-                    "text": VERIFICATION_LABELS.get(
-                        faq.verification_status, faq.verification_status
-                    ),
-                    "class": f"wiki-tag--status-{faq.verification_status}",
-                },
             ],
             "edit_url": f"/edit/faq/{faq.id}",
             "copy_url": f"/new/faq?from={faq.id}",
@@ -894,12 +870,6 @@ class WikiRoutes:
             "fields": [
                 {"k": "模式", "v": MODE_LABELS.get(faq.mode, faq.mode)},
                 {"k": "来源", "v": _source_label(faq)},
-                {
-                    "k": "核验状态",
-                    "v": VERIFICATION_LABELS.get(
-                        faq.verification_status, faq.verification_status
-                    ),
-                },
             ],
             "prose_blocks": [
                 {
@@ -975,18 +945,11 @@ def _variant_summary(row: dict) -> str:
 
 
 def _variant_tags(variant: Any) -> list[dict]:
-    if variant is None:
-        return []
-    tags = []
-    status = getattr(variant, "verification_status", "")
-    if status:
-        tags.append(
-            {
-                "text": VERIFICATION_LABELS.get(status, status),
-                "class": f"wiki-tag--status-{status}",
-            }
-        )
-    return tags
+    """武将详情头部的标签。
+
+    核验状态已从数据模型删除，这里不再产生任何标签（保留函数便于以后加别的标签）。
+    """
+    return []
 
 
 def _source_label(entity: Any) -> str:

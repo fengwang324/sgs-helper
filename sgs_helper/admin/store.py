@@ -33,7 +33,6 @@ from ..constants import (
     KIND_ORDER,
     MODE_LABELS,
     SOURCE_LABELS,
-    VERIFICATION_LABELS,
     mode_sort_key,
 )
 from ..db import (
@@ -62,20 +61,6 @@ from ..validate import (
 )
 from . import yaml_writer
 from .yaml_writer import BlockStr  # noqa: F401  （供模板/其它模块引用）
-
-#: 待核验页面关心的三种状态
-REVIEW_STATUSES: tuple[str, ...] = ("unverified", "community", "conflict")
-
-#: 新模型里**自带** ``verification_status`` 的实体
-#: （Product / General / Skill 自己没有核验状态：General / Skill 跟着引用它的武将版本走）
-STATUS_KINDS: tuple[str, ...] = (
-    "general_variant",
-    "skill_version",
-    "card",
-    "faq",
-    "keyword",
-    "timing",
-)
 
 #: 正文里自动识别的实体类型（与 repo.mentions 的默认值一致）
 MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
@@ -527,49 +512,9 @@ class AdminStore:
                 )
         return out
 
-    #: 核验状态的优先级（合成「武将」这一层的状态时取最保守的那个）
-    STATUS_ORDER = ("unverified", "conflict", "community", "official", "physical_verified")
-
     def set_display(self, name: str | None) -> str:
         """武将牌系列的展示文本：系列层级（GeneralSet 实体）已删除，名字本身就是全部信息。"""
         return name or ""
-
-    def status_of(self, kind: str, entity: Any) -> str:
-        """核验状态的来源。
-
-        - 自带 ``verification_status`` 的实体用自己的值；
-        - ``General`` / ``Skill`` / ``SkillVersion`` 自己没有卡：状态跟着**引用它的武将版本**走，
-          于是「武将核验过 => 它的技能也算核验」，武将列表与版本列表显示一致；
-        - ``Product`` / ``Card`` 没有核验状态，返回空串（不进待核验清单）。
-        """
-        own = getattr(entity, "verification_status", None)
-        bundle = self.bundle
-        order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
-        if kind in ("skill", "skill_version"):
-            refs = []
-            for v in bundle.all("general_variant").values():
-                for ref in (v.skills or []):
-                    hit = (ref.version_id == entity.id if kind == "skill_version"
-                           else ref.skill_id == entity.id)
-                    if hit:
-                        refs.append(v)
-                        break
-            if not refs:
-                return own or "unverified"
-            return min((getattr(v, "verification_status", None) or "unverified" for v in refs),
-                       key=lambda x: order.get(x, 99))
-        if kind == "general":
-            statuses = [
-                getattr(v, "verification_status", None) or "unverified"
-                for v in bundle.all("general_variant").values()
-                if v.general_id == entity.id
-            ]
-            if not statuses:
-                return own or "unverified"
-            return min(statuses, key=lambda x: order.get(x, 99))
-        if kind not in STATUS_KINDS:
-            return ""
-        return own or "unverified"
 
     def mode_of(self, kind: str, entity: Any) -> str | None:
         """实体的模式。
@@ -581,7 +526,6 @@ class AdminStore:
     def describe(self, kind: str, entity: Any) -> dict:
         """列表/搜索结果的一行。"""
         origin = self.origin(kind, entity.id)
-        status = self.status_of(kind, entity)
         mode = self.mode_of(kind, entity)
         return {
             "kind": kind,
@@ -603,8 +547,6 @@ class AdminStore:
             "effect_text": str(getattr(getattr(entity, "effect", None), "text", "") or ""),
             "mode": mode,
             "mode_label": MODE_LABELS.get(mode, mode) if mode else "",
-            "verification_status": status,
-            "status_label": VERIFICATION_LABELS.get(status, status) if status else "",
             "source": source_dict(entity),
             "file": f"data/{origin.path}" if origin else "",
             "line": origin.line if origin else 0,
@@ -941,14 +883,13 @@ class AdminStore:
         *,
         q: str = "",
         mode: str = "",
-        status: str = "",
         product: str = "",
         set_name: str = "",
         faction: str = "",
         category_1: str = "",
         category_2: str = "",
     ) -> list[dict]:
-        """列表页筛选：q / mode / verification_status / product_id / 系列（拓展包）/ 分类。
+        """列表页筛选：q / mode / product_id / 系列（拓展包）/ 分类。
 
         ``set_name`` 在武将（版本）上表示「武将牌系列」（``general_set``），
         在卡牌上表示「拓展包」（``card_set``）——两者共用一个参数名。
@@ -964,8 +905,6 @@ class AdminStore:
             if q.strip() and entity_id not in hits:
                 continue
             if mode and self.mode_of(kind, entity) != mode:
-                continue
-            if status and self.status_of(kind, entity) != status:
                 continue
             if product and getattr(entity, "product_id", None) != product:
                 continue
@@ -1045,27 +984,15 @@ class AdminStore:
             if (getattr(card, "category_1", "") or "") == category_1
         ]
         sets: dict[str, int] = {}
-        statuses: dict[str, int] = {}
         for card in cards:
             value = (getattr(card, "card_set", None) or "").strip()
             if value:
                 sets[value] = sets.get(value, 0) + 1
-            status = getattr(card, "verification_status", "") or ""
-            if status:
-                statuses[status] = statuses.get(status, 0) + 1
 
         scoped = dict(options)
         scoped["sets"] = [
             {"value": value, "count": count}
             for value, count in sorted(sets.items(), key=lambda kv: (-kv[1], kv[0]))
-        ]
-        scoped["statuses"] = [
-            {
-                "value": value,
-                "label": VERIFICATION_LABELS.get(value, value),
-                "count": count,
-            }
-            for value, count in sorted(statuses.items(), key=lambda kv: (-kv[1], kv[0]))
         ]
         return scoped
 
@@ -1073,7 +1000,6 @@ class AdminStore:
         """当前数据里实际出现过的筛选值，避免下拉框给一堆空选项。"""
         bundle = self.bundle
         modes: dict[str, int] = {}
-        statuses: dict[str, int] = {}
         products: dict[str, int] = {}
         sets: dict[str, int] = {}
         categories_1: dict[str, int] = {}
@@ -1082,9 +1008,6 @@ class AdminStore:
             mode = self.mode_of(kind, entity)
             if mode:
                 modes[mode] = modes.get(mode, 0) + 1
-            status = self.status_of(kind, entity)
-            if status:
-                statuses[status] = statuses.get(status, 0) + 1
             product = getattr(entity, "product_id", None)
             if product:
                 products[product] = products.get(product, 0) + 1
@@ -1134,7 +1057,6 @@ class AdminStore:
 
         return {
             "modes": options(modes, lambda k: MODE_LABELS.get(k, k)),
-            "statuses": options(statuses, lambda k: VERIFICATION_LABELS.get(k, k)),
             "products": options(products, lambda k: self.name_of("product", k)),
             "sets": options(sets, lambda k: k),
             "categories_1": options(categories_1, lambda k: k),
@@ -1146,27 +1068,6 @@ class AdminStore:
                 else "系列 / 拓展包"
             ),
         }
-
-    def review_groups(self) -> list[dict]:
-        """``/review``：按 verification_status 汇总需要核验的记录。"""
-        bundle = self.bundle
-        groups: list[dict] = []
-        for status in REVIEW_STATUSES:
-            rows: list[dict] = []
-            for kind in KIND_ORDER:
-                for _eid, entity in bundle.all(kind).items():
-                    if self.status_of(kind, entity) == status:
-                        rows.append(self.describe(kind, entity))
-            rows.sort(key=lambda r: (KIND_ORDER.index(r["kind"]), r["name"], r["id"]))
-            groups.append(
-                {
-                    "status": status,
-                    "label": VERIFICATION_LABELS.get(status, status),
-                    "rows": rows,
-                    "count": len(rows),
-                }
-            )
-        return groups
 
     # ------------------------------------------------------------ 录入辅助（给前端 JSON API）
 
@@ -1260,7 +1161,6 @@ class AdminStore:
                     "product_id": version.product_id,
                     "product_name": self.name_of("product", version.product_id),
                     "previous_version_id": version.previous_version_id,
-                    "verification_status": version.verification_status,
                     "review_note": version.review_note,
                     "text": text,
                     "text_excerpt": truncate(text, 60),

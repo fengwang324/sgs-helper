@@ -8,12 +8,11 @@
 <section>
   <h2>这个页面能做什么</h2>
   <ul>
-    <li>统一搜索 {{ KIND_ORDER | length }} 类实体，看结果类型、名称、模式、来源和 <code>verification_status</code>；</li>
-    <li>逐类浏览列表，按 mode / 核验状态 / 产品 / 系列（拓展包）/ 分类 筛选，重点看 <code>community</code>、<code>unverified</code>、<code>conflict</code>；</li>
+    <li>统一搜索 {{ KIND_ORDER | length }} 类实体，看结果类型、名称、模式、来源；</li>
+    <li>逐类浏览列表，按 mode / 产品 / 系列（拓展包）/ 分类 筛选；</li>
     <li>查看详情：技能看 SkillDefinition → 当前版本 → 历史版本链；卡牌看<strong>单层 Card</strong>（一 / 二 / 三级分类 · 卡名 · 拓展包 · 效果文本 · 关联技能）；武将看关联技能及其 SkillVersion；</li>
     <li>新增与编辑：产品与武将、卡牌各有专用录入页（字段顺序固定、联动下拉、技能行）；其余低频实体用通用表单；</li>
     <li>技能更新用「新增技能版本」，旧版本永不覆盖；</li>
-    <li><a href="/review">待核验清单</a>：把所有未核验/社区来源/冲突的记录集中起来，方便拿实体卡逐条核验；</li>
     <li>删除前会检查引用关系，被引用就拒绝删除并列出引用方。</li>
   </ul>
 </section>
@@ -21,8 +20,7 @@
 <section>
   <h2>新模型下的几个约定</h2>
   <ul>
-    <li><strong>verification_status</strong> 只出现在 武将版本 / 技能版本 / 卡牌 / FAQ / 关键词 / 时点 六类表单里；
-        <strong>review_note</strong>（复核备注）只出现在 武将版本 / 技能版本 / 卡牌 / 技能 四类表单里。</li>
+    <li><strong>review_note</strong>（复核备注）只出现在 武将版本 / 技能版本 / 卡牌 / 技能 四类表单里。</li>
     <li><strong>卡牌是单层的</strong>：一 / 二 / 三级分类表达“这张卡是什么”，<code>card_set</code> 表达“它来自哪个拓展包”，两者完全独立；
         同一规则卡的不同实体印刷不在这一层建模，卡牌也<strong>没有</strong> mode / source 字段。</li>
     <li><strong>基本牌的最后一级是卡名</strong>：<code>游戏牌/基本牌/杀</code> 下面是 杀 / 火杀 / 雷杀，

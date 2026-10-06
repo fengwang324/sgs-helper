@@ -21,7 +21,6 @@ from ..constants import (
     ID_PATTERN,
     MODE_LABELS,
     SOURCE_LABELS,
-    VERIFICATION_LABELS,
 )
 from ..schema import MODEL_BY_KIND
 from ..validate import REFERENCE_FIELDS
@@ -33,7 +32,6 @@ FIELD_LABELS: dict[str, str] = {
     "name": "名称",
     "review_note": "复核备注",
     "mode": "模式",
-    "verification_status": "核验状态",
     "release_year": "发行年份",
     "general_sets": "武将牌系列",
     "card_sets": "游戏牌拓展包",
@@ -70,7 +68,6 @@ FIELD_LABELS: dict[str, str] = {
 FIELD_HELP: dict[str, str] = {
     "id": "小写字母开头，只能包含小写字母、数字、下划线；建议带业务前缀，如 general_xxx。修改 ID 会同时移动 YAML 文件。",
     "mode": "common 表示跨模式通用。",
-    "verification_status": "unverified 未核验 / community 社区资料 / official 官方依据 / physical_verified 实体卡已核验 / conflict 来源冲突。",
     "review_note": "需要人工对照卡图 / 实物复核的异常（OCR 误读、疑似错字…）。正常记录留空。",
     "category_1": "一级分类（游戏牌 / 指示物…）；用卡牌录入页的联动下拉选择，也可以自己输入新值。",
     "category_2": "二级分类（基本牌 / 锦囊牌 / 装备牌…）。",
@@ -107,7 +104,6 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
 #: 枚举字段 -> 中文标签表
 ENUM_LABELS: dict[str, dict[str, str]] = {
     "mode": MODE_LABELS,
-    "verification_status": VERIFICATION_LABELS,
     "gender": GENDER_LABELS,
     "source.type": SOURCE_LABELS,
 }
@@ -330,8 +326,6 @@ def values_from_defaults(kind: str) -> dict[str, str]:
             default = spec.default
             if spec.name == "id":
                 default = ""
-            if spec.name == "verification_status" and not default:
-                default = "unverified"
             values[spec.name] = value_to_text(spec, default)
     return values
 

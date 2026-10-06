@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge, mode_badge, entity_link, source_block, reference_list, mention_list, rich_text with context %}
+{% from "_macros.html" import mode_badge, entity_link, source_block, reference_list, mention_list, rich_text with context %}
 
 {% block content %}
 <div class="page-head">
@@ -17,7 +17,6 @@
 <p class="meta">
   <code class="id">{{ row.id }}</code>
   {{ mode_badge(row.mode) }}
-  {{ status_badge(row.verification_status) }}
   <span class="muted">来源文件</span> <code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code>
 </p>
 <p class="sub">{{ row.subtitle }}</p>
@@ -58,7 +57,7 @@
     {% if detail.versions %}
       <table class="rows">
         <tr>
-          <th>版本</th><th>模式</th><th>产品</th><th>前一版本</th><th>后继</th><th>核验</th><th></th>
+          <th>版本</th><th>模式</th><th>产品</th><th>前一版本</th><th>后继</th><th></th>
         </tr>
         {% for v in detail.versions %}
           <tr>
@@ -73,7 +72,6 @@
               {% if v.successor_ids %}{% for nid in v.successor_ids %}<a href="/view/skill_version/{{ nid }}"><code class="id">{{ nid }}</code></a>{% endfor %}
               {% else %}<span class="muted">—</span>{% endif %}
             </td>
-            <td>{{ status_badge(v.entity.verification_status) }}</td>
             <td class="nowrap">
               <a href="/new/skill_version?skill_id={{ row.id }}&mode={{ v.entity.mode }}&previous_version_id={{ v.id }}">新增版本</a> ·
               <a href="/edit/skill_version/{{ v.id }}">编辑</a> ·
@@ -154,7 +152,6 @@
         {% endif %}
         <p class="sub">
           <code class="id">{{ item.id }}</code>
-          {{ status_badge(item.entity.verification_status) }}
           {% if item.product_mode %} · 产品模式：{{ item.product_mode | mode_label }}{% endif %}
         </p>
 
@@ -187,7 +184,6 @@
                     {% if v.id == entry.version_id %}<span class="badge ok">武将绑定</span>{% endif %}
                     {{ mode_badge(v.mode) }}
                     {% if v.version_label %}<span class="muted">{{ v.version_label }}</span>{% endif %}
-                    {{ status_badge(v.verification_status) }}
                   </li>
                 {% endfor %}
               </ul>
@@ -278,7 +274,6 @@
                   {% if v.id == entry.version_id %}<span class="badge ok">卡牌绑定</span>{% endif %}
                   {{ mode_badge(v.mode) }}
                   {% if v.version_label %}<span class="muted">{{ v.version_label }}</span>{% endif %}
-                  {{ status_badge(v.verification_status) }}
                 </li>
               {% endfor %}
             </ul>
@@ -324,7 +319,6 @@
             <li>
               <a href="/view/general/{{ v.general_id }}">{{ v._display_name or v.general_id }}</a>
               <code class="id">{{ v.id }}</code>
-              {{ status_badge(v.verification_status) }}
             </li>
           {% endfor %}
         </ul>
@@ -338,7 +332,7 @@
           {% for v in detail.skill_versions %}
             <li>
               <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
-              {{ mode_badge(v.mode) }} {{ status_badge(v.verification_status) }}
+              {{ mode_badge(v.mode) }}
             </li>
           {% endfor %}
         </ul>

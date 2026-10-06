@@ -46,20 +46,11 @@
     </select>
   {% endif %}
 
-  {% if filters.statuses %}
-    <select class="wiki-select" name="status" aria-label="按核验状态筛选">
-      <option value="">全部核验状态</option>
-      {% for opt in filters.statuses %}
-        <option value="{{ opt.value }}" {{ 'selected' if status == opt.value else '' }}>{{ opt.label }}（{{ opt.count }}）</option>
-      {% endfor %}
-    </select>
-  {% endif %}
-
   {% if category_2 %}<input type="hidden" name="category_2" value="{{ category_2 }}">{% endif %}
   {% if category_3 %}<input type="hidden" name="category_3" value="{{ category_3 }}">{% endif %}
 
   {# 有筛选条件时给一个「清除」入口 #}
-  {% if q or mode or status or set_name or category_2 or category_3 %}
+  {% if q or mode or set_name or category_2 or category_3 %}
     <a class="wiki-btn" href="{{ section_url }}">清除条件</a>
   {% endif %}
 
@@ -107,7 +98,7 @@
     </nav>
   {% endif %}
 
-{% elif q or mode or status or set_name or category_2 or category_3 %}
+{% elif q or mode or set_name or category_2 or category_3 %}
   <div class="wiki-empty">
     <p class="wiki-empty__title">没有匹配的资料</p>
     <p class="wiki-empty__text">当前条件下没有找到结果，试试减少筛选条件或换一个关键词。</p>

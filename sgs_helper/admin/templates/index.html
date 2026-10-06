@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge, issue_table with context %}
+{% from "_macros.html" import issue_table with context %}
 
 {% block content %}
 <div class="page-head">
   <h1>资料总览</h1>
   <div class="actions">
-    <a class="btn" href="/review">待核验清单（{{ review_count }}）</a>
     <a class="btn ghost" href="/help">使用说明</a>
   </div>
 </div>
@@ -26,26 +25,6 @@
         </tr>
       {% endfor %}
       <tr class="total"><td>合计</td><td class="num">{{ total }}</td><td></td></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>核验状态分布</h2>
-    <table class="compact">
-      <tr><th>状态</th><th class="num">条数</th><th></th></tr>
-      {% for item in status_counts %}
-        <tr>
-          <td>{{ status_badge(item.status) }}</td>
-          <td class="num">{{ item.count }}</td>
-          <td>
-            {% if item.status in REVIEW_STATUS_SET %}
-              <a href="/review?status={{ item.status }}">筛选</a>
-            {% else %}
-              <a href="/search?status={{ item.status }}">搜索筛选</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% endfor %}
     </table>
   </div>
 

@@ -35,12 +35,10 @@ from ..constants import (
     KIND_ORDER,
     MODE_LABELS,
     SOURCE_LABELS,
-    VERIFICATION_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
 from . import editors, forms, ocr_test, wiki
 from .store import (
-    REVIEW_STATUSES,
     AdminStore,
     SaveOutcome,
     truncate,
@@ -87,7 +85,6 @@ def build_templates() -> Jinja2Templates:
     env.filters.update(
         {
             "mode_label": lambda v: MODE_LABELS.get(v, v or ""),
-            "status_label": lambda v: VERIFICATION_LABELS.get(v, v or ""),
             "source_label": lambda v: SOURCE_LABELS.get(v, v or ""),
             "gender_label": lambda v: GENDER_LABELS.get(v, v or ""),
             "short": truncate,
@@ -99,10 +96,7 @@ def build_templates() -> Jinja2Templates:
             "KIND_ORDER": KIND_ORDER,
             "KIND_BY_NAME": KIND_BY_NAME,
             "MODE_LABELS": MODE_LABELS,
-            "VERIFICATION_LABELS": VERIFICATION_LABELS,
             "SOURCE_LABELS": SOURCE_LABELS,
-            "REVIEW_STATUSES": REVIEW_STATUSES,
-            "REVIEW_STATUS_SET": set(REVIEW_STATUSES),
             "reference_fields": REFERENCE_FIELDS,
         }
     )
@@ -167,12 +161,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         live: AdminStore = request.app.state.store
         counts = live.counts()
         bundle = live.bundle
-        review_count = sum(
-            1
-            for kind in KIND_ORDER
-            for entity in bundle.all(kind).values()
-            if getattr(entity, "verification_status", None) in REVIEW_STATUSES
-        )
         payload: dict[str, Any] = {
             "request": request,
             "title": title,
@@ -185,7 +173,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             "total": bundle.total,
             "validation": live.snapshot(),
             "db_state": live.db_state(),
-            "review_count": review_count,
             "flash": _flash_from_query(request),
             "current_kind": "",
             "q": "",
@@ -227,19 +214,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     def index(request: Request) -> HTMLResponse:
         live: AdminStore = request.app.state.store
         snap = live.snapshot()
-        status_counts = [
-            {
-                "status": status,
-                "label": VERIFICATION_LABELS.get(status, status),
-                "count": sum(
-                    1
-                    for kind in KIND_ORDER
-                    for entity in snap.bundle.all(kind).values()
-                    if getattr(entity, "verification_status", None) == status
-                ),
-            }
-            for status in VERIFICATION_LABELS
-        ]
         return render(
             request,
             "index.html",
@@ -247,7 +221,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 request,
                 title="首页",
                 snap=snap,
-                status_counts=status_counts,
                 errors=snap.errors[:20],
                 warnings=snap.warnings[:20],
             ),
@@ -260,14 +233,11 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         request: Request,
         q: str = "",
         kind: str = "",
-        status: str = "",
         mode: str = "",
     ) -> HTMLResponse:
         live: AdminStore = request.app.state.store
         kinds = [kind] if kind in KIND_BY_NAME else None
         rows = live.search(q, kinds=kinds, limit=500) if q.strip() else []
-        if status:
-            rows = [row for row in rows if row["verification_status"] == status]
         if mode:
             rows = [row for row in rows if row["mode"] == mode]
         return render(
@@ -279,7 +249,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 rows=rows,
                 q=q,
                 kind=kind,
-                status=status,
                 mode=mode,
             ),
         )
@@ -292,7 +261,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         kind: str,
         q: str = "",
         mode: str = "",
-        status: str = "",
         product: str = "",
         set_name: str = "",
         faction: str = "",
@@ -302,7 +270,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     ) -> HTMLResponse:
         require_kind(kind)
         live: AdminStore = request.app.state.store
-        rows = live.filter_rows(kind, q=q, mode=mode, status=status, product=product,
+        rows = live.filter_rows(kind, q=q, mode=mode, product=product,
                                 set_name=set_name, faction=faction,
                                 category_1=category_1, category_2=category_2)
         total = len(rows)
@@ -323,7 +291,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 pages=pages,
                 q=q,
                 mode=mode,
-                status=status,
                 product=product,
                 set_name=set_name,
                 faction=faction,
@@ -492,7 +459,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 "variant_choices": editors.variant_choices(),
                 "gender_choices": editors.gender_choices(),
                 "hp_choices": editors.HP_CHOICES,
-                "verification_choices": editors.verification_choices(),
                 "source_type_choices": editors.source_type_choices(),
                 "csrf": request.app.state.csrf,
             }
@@ -1288,19 +1254,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             ),
         )
 
-    # ------------------------------------------------------------ 待核验 / 重建
-
-    @app.get("/review", response_class=HTMLResponse)
-    def review_page(request: Request, status: str = "") -> HTMLResponse:
-        live: AdminStore = request.app.state.store
-        groups = live.review_groups()
-        if status in REVIEW_STATUSES:
-            groups = [group for group in groups if group["status"] == status]
-        return render(
-            request,
-            "review.html",
-            **ctx(request, title="待核验清单", groups=groups, status=status),
-        )
+    # ------------------------------------------------------------ 重建
 
     @app.post("/rebuild")
     async def rebuild(request: Request) -> RedirectResponse:
@@ -1441,7 +1395,6 @@ def _form_error(
             "total": live.bundle.total,
             "validation": live.snapshot(),
             "db_state": live.db_state(),
-            "review_count": 0,
             "flash": [],
             "current_kind": kind,
             "q": "",

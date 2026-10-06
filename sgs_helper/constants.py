@@ -47,25 +47,6 @@ MODE_SPECIFICITY: dict[str, int] = {
 }
 
 
-class VerificationStatus(str, Enum):
-    """核验状态。不做复杂可信度评分；冲突时两边都保留并标记 conflict。"""
-
-    unverified = "unverified"                # 未核验
-    community = "community"                  # 仅来自社区资料
-    official = "official"                    # 已有官方依据
-    physical_verified = "physical_verified"  # 已按实体卡核验
-    conflict = "conflict"                    # 不同来源存在冲突
-
-
-VERIFICATION_LABELS: dict[str, str] = {
-    "unverified": "未核验",
-    "community": "社区资料",
-    "official": "官方依据",
-    "physical_verified": "实体卡已核验",
-    "conflict": "来源冲突",
-}
-
-
 class SourceType(str, Enum):
     """资料来源类型。"""
 

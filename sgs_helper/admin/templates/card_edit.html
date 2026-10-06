@@ -202,16 +202,6 @@
   </p>
 
   <div class="field-grid">
-    <div class="field {{ 'has-error' if error_map.get('verification_status') else '' }}">
-      <label for="f-verification_status">核验状态</label>
-      <select id="f-verification_status" name="verification_status">
-        {% for value, label in verification_choices %}
-          <option value="{{ value }}" {{ 'selected' if values.get('verification_status', 'unverified') == value else '' }}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      {% for message in error_map.get('verification_status', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-
     <div class="field">
       <label for="f-review_note">复核备注</label>
       <textarea id="f-review_note" name="review_note" rows="2"

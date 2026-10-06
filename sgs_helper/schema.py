@@ -29,7 +29,6 @@ from .constants import (
     Gender,
     Mode,
     SourceType,
-    VerificationStatus,
 )
 
 #: 实体 id：小写字母开头，只含小写字母/数字/下划线
@@ -145,7 +144,6 @@ class GeneralVariant(StrictModel):
     zhulianbihe: list[str] = Field(default_factory=list)
     #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
     skills: list[SkillRef] = Field(default_factory=list)
-    verification_status: VerificationStatus = VerificationStatus.unverified
     #: 需要人工对照卡图/实物复核的异常（OCR 误读、疑似错字…）
     review_note: str = ""
 
@@ -204,7 +202,6 @@ class SkillVersion(StrictModel):
     product_id: Id | None = None
     previous_version_id: Id | None = None
     source: Source
-    verification_status: VerificationStatus = VerificationStatus.unverified
     #: 需要人工复核的异常（例如文本不是来自卡面、或 OCR 结果未核验）
     review_note: str = ""
 
@@ -243,7 +240,6 @@ class Card(StrictModel):
     #: 所属拓展包；允许为空（跨多个拓展包、或暂时无法确认来源时留空）
     card_set: str | None = None
     effect: CardEffect = Field(default_factory=CardEffect)
-    verification_status: VerificationStatus = VerificationStatus.unverified
     #: 需要人工对照卡图/实物复核的异常
     review_note: str = ""
 
@@ -263,7 +259,6 @@ class Faq(StrictModel):
     answer: RuleText
     mode: Mode = Mode.common
     source: Source
-    verification_status: VerificationStatus = VerificationStatus.unverified
 
 
 class Keyword(StrictModel):
@@ -274,7 +269,6 @@ class Keyword(StrictModel):
     definition: RuleText
     mode: Mode = Mode.common
     source: Source
-    verification_status: VerificationStatus = VerificationStatus.unverified
 
 
 class Timing(StrictModel):
@@ -285,7 +279,6 @@ class Timing(StrictModel):
     description: str = ""
     mode: Mode = Mode.common
     source: Source
-    verification_status: VerificationStatus = VerificationStatus.unverified
 
 
 #: kind -> 模型类

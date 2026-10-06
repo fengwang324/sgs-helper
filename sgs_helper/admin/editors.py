@@ -8,7 +8,7 @@
 
 - **只有武将名字必填**；其余都可以先空着，以后再补。
 - 内部 ``id`` 由后端生成（用户不填也能保存），已存在的记录绝不无故重生 id。
-- 页面没展示的字段（image / verification_status / review_note…）在编辑时**保留原值**：
+- 页面没展示的字段（image / review_note…）在编辑时**保留原值**：
   解析时以“已存在实体的 dump”为底，只覆盖表单里真的出现的字段。
 - 一次提交可以同时产生 General + 0..N Skill + 0..N SkillVersion，交给
   ``AdminStore.save_batch`` 一次性事务保存。
@@ -27,7 +27,6 @@ from ..constants import (
     Gender,
     Mode,
     SourceType,
-    VerificationStatus,
 )
 from ..schema import MODEL_BY_KIND
 from .forms import FieldError
@@ -75,7 +74,6 @@ VARIANT_DEFAULTS: dict[str, Any] = {
     "general_set": None,
     "zhulianbihe": [],
     "skills": [],
-    "verification_status": "unverified",
     "review_note": "",
 }
 
@@ -95,7 +93,6 @@ CARD_DEFAULTS: dict[str, Any] = {
     "image": "",
     "card_set": None,
     "effect": {"text": "", "skills": []},
-    "verification_status": "unverified",
     "review_note": "",
 }
 
@@ -423,7 +420,6 @@ def _new_version_change(
         "product_id": product_id,
         "previous_version_id": previous_version_id or None,
         "source": dict(DEFAULT_SOURCE),
-        "verification_status": "unverified",
         "review_note": "",
     }
     generated.add(version_id)
@@ -519,11 +515,6 @@ def parse_general_form(
 
     if "review_note" in form:
         variant_data["review_note"] = _text(form, "review_note")
-    if "verification_status" in form:
-        # 编辑页是一个复选框：勾上=physical_verified，不勾=unverified
-        _apply_enum(
-            variant_data, form, "verification_status", VerificationStatus, errors, nullable=False
-        )
 
     # 版本 id：已有版本沿用；新建时生成
     variant_id = ""
@@ -790,10 +781,6 @@ def parse_card_form(
         data["card_set"] = _optional_text(form, "card_set")
     if "review_note" in form:
         data["review_note"] = _text(form, "review_note")
-    if "verification_status" in form:
-        _apply_enum(
-            data, form, "verification_status", VerificationStatus, errors, nullable=False
-        )
 
     # ---------------------------------------------------------------- 效果（嵌套映射）
     effect = dict(data.get("effect") or {})
@@ -879,7 +866,6 @@ def card_values(
         "image": "",
         "card_set": "",
         "effect_text": "",
-        "verification_status": "unverified",
         "review_note": "",
     }
     if card is not None:
@@ -938,12 +924,6 @@ def source_type_choices() -> list[tuple[str, str]]:
     from ..constants import SOURCE_LABELS
 
     return [(key, SOURCE_LABELS.get(key, key)) for key in SourceType.__members__]
-
-
-def verification_choices() -> list[tuple[str, str]]:
-    from ..constants import VERIFICATION_LABELS
-
-    return [(key, VERIFICATION_LABELS.get(key, key)) for key in VerificationStatus.__members__]
 
 
 def model_field_errors(kind: str, payload: dict, prefix: str = "") -> list[FieldError]:

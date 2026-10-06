@@ -44,20 +44,20 @@ COLUMNS: dict[str, tuple[str, ...]] = {
     "general_variant": (
         "general_id", "variant", "title", "general_number", "illustrator", "image",
         "mode", "faction", "hp", "gender", "product_id", "general_set", "zhulianbihe",
-        "verification_status", "review_note",
+        "review_note",
     ),
     "skill": ("name", "review_note"),
     "skill_version": (
         "skill_id", "mode", "text", "version_label", "product_id", "previous_version_id",
-        "verification_status", "review_note",
+        "review_note",
     ),
     "card": (
         "category_1", "category_2", "category_3", "name", "image", "card_set",
-        "effect_text", "effect_skills", "verification_status", "review_note",
+        "effect_text", "effect_skills", "review_note",
     ),
-    "faq": ("question", "answer", "mode", "verification_status"),
-    "keyword": ("name", "definition", "mode", "verification_status"),
-    "timing": ("name", "description", "mode", "verification_status"),
+    "faq": ("question", "answer", "mode"),
+    "keyword": ("name", "definition", "mode"),
+    "timing": ("name", "description", "mode"),
 }
 
 #: 以 JSON 文本落库的多值列

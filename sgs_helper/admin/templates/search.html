@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge, mode_badge with context %}
+{% from "_macros.html" import mode_badge with context %}
 
 {% block content %}
 <div class="page-head">
@@ -15,12 +15,6 @@
     <option value="">全部类型</option>
     {% for k in KIND_ORDER %}
       <option value="{{ k }}" {{ 'selected' if kind == k else '' }}>{{ KIND_BY_NAME[k].label }}</option>
-    {% endfor %}
-  </select>
-  <select name="status">
-    <option value="">全部核验状态</option>
-    {% for value, label in VERIFICATION_LABELS.items() %}
-      <option value="{{ value }}" {{ 'selected' if status == value else '' }}>{{ label }}</option>
     {% endfor %}
   </select>
   <select name="mode">
@@ -63,7 +57,6 @@
             {% endif %}
           {% else %}<span class="muted">未记录</span>{% endif %}
         </td>
-        <td>{{ status_badge(row.verification_status) }}</td>
         <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>
       </tr>
     {% endfor %}

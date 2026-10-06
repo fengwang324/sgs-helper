@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge, mode_badge with context %}
+{% from "_macros.html" import mode_badge with context %}
 
 {% block content %}
 <div class="page-head">
@@ -36,12 +36,6 @@
       {% endfor %}
     </select>
   {% endif %}
-  <select name="status">
-    <option value="">全部核验状态</option>
-    {% for item in options.statuses %}
-      <option value="{{ item.value }}" {{ 'selected' if status == item.value else '' }}>{{ item.label }}（{{ item.count }}）</option>
-    {% endfor %}
-  </select>
   {% if options.products %}
     <select name="product">
       <option value="">全部产品</option>
@@ -90,22 +84,13 @@
 </p>
 {% endif %}
 
-<p class="quick">
-  快速筛选：
-  <a href="/list/{{ kind }}?status=unverified">未核验</a>
-  <a href="/list/{{ kind }}?status=community">社区资料</a>
-  <a href="/list/{{ kind }}?status=conflict">来源冲突</a>
-  <a href="/list/{{ kind }}?status=official">官方依据</a>
-  <a href="/list/{{ kind }}?status=physical_verified">实体卡已核验</a>
-</p>
-
 {% if not rows %}
   <p class="muted">没有符合条件的记录。</p>
 {% else %}
   {% if kind == 'card' %}
     <table class="rows">
       <tr>
-        <th>分类</th><th>卡名</th><th>拓展包</th><th>核验</th><th>YAML 位置</th><th></th>
+        <th>分类</th><th>卡名</th><th>拓展包</th><th>YAML 位置</th><th></th>
       </tr>
       {% for row in rows %}
         <tr>
@@ -115,7 +100,6 @@
           </td>
           <td>
             <a href="/view/{{ row.kind }}/{{ row.id }}">{{ row.name }}</a>
-            {% if row.verification_status in REVIEW_STATUS_SET %}<span class="badge warn">待复核</span>{% endif %}
             {% if row.effect_text %}<div class="sub">{{ row.effect_text | short }}</div>{% endif %}
             <code class="id">{{ row.id }}</code>
           </td>
@@ -123,7 +107,6 @@
             {% if row.card_set %}<span class="tag-chip">{{ row.card_set }}</span>
             {% else %}<span class="muted">—</span>{% endif %}
           </td>
-          <td>{{ status_badge(row.verification_status) }}</td>
           <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>
           <td class="nowrap">
             <a href="/edit/card/{{ row.id }}">编辑</a> ·
@@ -135,7 +118,7 @@
   {% else %}
     <table class="rows">
       <tr>
-        <th>名称</th><th>模式</th><th>来源</th><th>核验</th><th>YAML 位置</th><th></th>
+        <th>名称</th><th>模式</th><th>来源</th><th>YAML 位置</th><th></th>
       </tr>
       {% for row in rows %}
         <tr>
@@ -162,7 +145,6 @@
               {% endif %}
             {% else %}<span class="muted">未记录</span>{% endif %}
           </td>
-          <td>{{ status_badge(row.verification_status) }}</td>
           <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>
           <td class="nowrap">
             {% if row.kind == 'general_variant' and row.general_id %}

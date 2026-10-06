@@ -14,7 +14,6 @@ from .constants import (
     MODE_LABELS,
     SOURCE_LABELS,
     SOURCE_TITLE_BY_REFERENCE,
-    VERIFICATION_LABELS,
 )
 
 #: 自动识别出来的相关实体：报告键 -> kind（顺序即展示顺序）
@@ -33,10 +32,6 @@ def mode_label(mode: str | None) -> str:
 
 def source_label(value: str | None) -> str:
     return SOURCE_LABELS.get(value or "", value or "未填")
-
-
-def verification_label(value: str | None) -> str:
-    return VERIFICATION_LABELS.get(value or "", value or "未核验")
 
 
 def gender_label(value: str | None) -> str:
@@ -157,7 +152,6 @@ def render_skill(report: dict) -> str:
             lines.append(head)
             lines += _block("技能文本", version.get("text"))
             lines.append(f"      来源：{fmt_source(version.get('source'))}")
-            lines.append(f"      校验状态：{verification_label(version.get('verification_status'))}")
             if version.get("product_id"):
                 product = report.get("products", {}).get(version["product_id"]) or {}
                 lines.append(
@@ -217,9 +211,6 @@ def render_general(report: dict) -> str:
             f"武将牌系列：{variant.get('general_set') or '未填'}    "
             f"所属产品：{variant.get('product_id') or '（未关联）'}"
         )
-        lines.append(
-            f"  校验状态：{verification_label(variant.get('verification_status'))}"
-        )
         lines.append(f"  源文件：{fmt_location(variant)}")
         if variant.get("review_note"):
             lines.append(f"  待复核：{variant['review_note']}")
@@ -255,9 +246,6 @@ def render_general(report: dict) -> str:
             )
             lines += _block("技能文本", version.get("text"), indent="          ")
             lines.append(f"        来源：{fmt_source(version.get('source'))}")
-            lines.append(
-                f"        校验状态：{verification_label(version.get('verification_status'))}"
-            )
             if version.get("review_note"):
                 lines.append(f"        待复核：{version['review_note']}")
     return "\n".join(lines)
@@ -278,7 +266,6 @@ def render_card(report: dict) -> str:
     )
     lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
     lines.append(f"  卡图：{card.get('image') or '未填'}")
-    lines.append(f"  核验状态：{verification_label(card.get('verification_status'))}")
     lines.append(f"  待复核：{card.get('review_note') or '无'}")
     lines.append(f"  源文件：{fmt_location(card)}")
 
@@ -335,7 +322,6 @@ def render_faq(report: dict) -> str:
     if related:
         lines.append("  关联：" + related)
     lines.append(f"  来源：{fmt_source(faq.get('source'))}")
-    lines.append(f"  校验状态：{verification_label(faq.get('verification_status'))}")
     lines.append(f"  源文件：{fmt_location(faq)}")
     return "\n".join(lines)
 
@@ -349,7 +335,6 @@ def render_keyword(report: dict) -> str:
     if related:
         lines.append("  相关：" + related)
     lines.append(f"  来源：{fmt_source(keyword.get('source'))}")
-    lines.append(f"  校验状态：{verification_label(keyword.get('verification_status'))}")
     lines.append(f"  源文件：{fmt_location(keyword)}")
     return "\n".join(lines)
 
@@ -364,7 +349,6 @@ def render_timing(report: dict) -> str:
     if related:
         lines.append("  相关：" + related)
     lines.append(f"  来源：{fmt_source(timing.get('source'))}")
-    lines.append(f"  校验状态：{verification_label(timing.get('verification_status'))}")
     lines.append(f"  源文件：{fmt_location(timing)}")
     return "\n".join(lines)
 

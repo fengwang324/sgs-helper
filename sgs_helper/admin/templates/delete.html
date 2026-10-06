@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge, reference_list, issue_table with context %}
+{% from "_macros.html" import reference_list, issue_table with context %}
 
 {% block content %}
 <div class="page-head">
@@ -18,7 +18,6 @@
     <tr><th>类型</th><td><span class="kind-chip">{{ row.kind_label }}</span></td></tr>
     <tr><th>ID</th><td><code class="id">{{ row.id }}</code></td></tr>
     <tr><th>模式</th><td>{{ row.mode | mode_label or '—' }}</td></tr>
-    <tr><th>核验状态</th><td>{{ status_badge(row.verification_status) }}</td></tr>
     <tr><th>YAML 文件</th><td><code class="file">{{ row.file }}</code></td></tr>
   </table>
 </section>

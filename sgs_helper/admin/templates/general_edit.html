@@ -211,16 +211,6 @@
         {{ variant.general_number or '' }}
       </div>
     {% endif %}
-    {# 核验：复选框 + 同名的 hidden —— 勾上=实体卡已核验，不勾=未核验（未勾时也一定会提交） #}
-    <label class="inline-check verify-check {{ 'is-verified' if values.get('verification_status') == 'physical_verified' else '' }}"
-           for="f-verification">
-      <input type="checkbox" id="f-verification" name="verification_status"
-             value="physical_verified"
-             {{ 'checked' if values.get('verification_status') == 'physical_verified' else '' }}>
-      已对照实体卡核验
-    </label>
-    <input type="hidden" name="verification_status" value="unverified">
-    {% for message in error_map.get('verification_status', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
   </div>
   <div class="field-grid">
     <div class="field">
