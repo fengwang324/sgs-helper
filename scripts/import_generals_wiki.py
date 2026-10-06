@@ -12,7 +12,7 @@
 
 结构
 ----
-- ``General``（`data/generals/`）：只有 id / name / notes。
+- ``General``（`data/generals/`）：只有 id / name。
   官方名不同 = 不同武将个体（诸葛亮 / 界诸葛亮 / 神诸葛亮）。
 - ``GeneralVariant``（`data/general_variants/`）：variant 标签 + 模式 / 势力 / 体力 /
   性别 / 称号 / 编号 / 武将牌系列 / 产品 / 技能。官方名相同、玩法不同 → 同一个 General 的多个版本。
@@ -21,7 +21,7 @@
 ----
 技能按名字挂到已有的 ``Skill`` 上（规则集导入的技能已经覆盖标准包）。
 **不新建技能版本**：技能文本继续用规则集那份，避免同一 (技能, 模式) 出现两条重叠版本；
-每个武将版本的 ``notes`` 里写明“文本与卡面用词可能不同，待按实体卡核验”。
+每个武将版本的 ``review_note`` 里写明“文本与卡面用词可能不同，待按实体卡核验”。
 
 用法（容器内、仓库根目录）
 --------------------------
@@ -116,17 +116,6 @@ def clean_title(raw: str) -> str:
         if "（" not in part:
             return part
     return re.sub(r"（[^）]*）", "", parts[0]).strip()
-
-
-def _legacy_clean_aliases(raw: str) -> list[str]:
-    value = strip_templates(raw)
-    if not value:
-        return []
-    return [
-        part.strip()
-        for part in re.split(r"[、，,；;/\s]+", value)
-        if part.strip()
-    ]
 
 
 # ---------------------------------------------------------------- 页面解析
@@ -267,7 +256,7 @@ def main() -> int:
             hp = None
 
         general = MODEL_BY_KIND["general"].model_validate(
-            {"id": general_id, "name": row["name"], "notes": ""}
+            {"id": general_id, "name": row["name"]}
         )
         variant = MODEL_BY_KIND["general_variant"].model_validate(
             {
@@ -283,17 +272,11 @@ def main() -> int:
                 "product_id": None,
                 "general_set": row["pack"],
                 "skills": refs,
-                "source": {
-                    "type": "wiki",
-                    "title": WIKI_TITLE,
-                    "reference": f"{WIKI_BASE}{row['page']}",
-                    "notes": (
-                        f"武将页「{row['page']}」的经典版本（身份局标准版）；"
-                        "社区 WIKI，未按实体卡核验；名单另见萌娘百科《三国杀》条目"
-                    ),
-                },
                 "verification_status": "community",
-                "notes": NOTE,
+                "review_note": (
+                    f"来自{WIKI_TITLE}武将页「{row['page']}」（{WIKI_BASE}{row['page']}）"
+                    "的经典版本（身份局标准版），社区 WIKI，未按实体卡核验；" + NOTE
+                ),
             }
         )
         print(

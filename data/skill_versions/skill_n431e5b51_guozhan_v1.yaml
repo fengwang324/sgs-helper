@@ -4,17 +4,8 @@ mode: guozhan
 text: 君主技，你拥有“五子良将纛”。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡
   reference: ''
-  notes: ''
 verification_status: unverified
-notes: ''

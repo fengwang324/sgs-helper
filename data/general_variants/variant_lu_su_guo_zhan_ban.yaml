@@ -17,10 +17,5 @@ skills:
     version_id: skill_hao_shi_guozhan_qlhd_v1
   - skill_id: skill_di_meng
     version_id: skill_di_meng_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WU 014
 verification_status: unverified
-notes: Paddle 读出的称号为「猴断的外交家」；三国杀 WIKI 该武将称号为「独断的外交家」（逐位相同 5 字），疑似 OCR 误读，请对照卡图核验
+review_note: Paddle 读出的称号为「猴断的外交家」；三国杀 WIKI 该武将称号为「独断的外交家」（逐位相同 5 字），疑似 OCR 误读，请对照卡图核验

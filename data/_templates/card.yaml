@@ -3,6 +3,4 @@ id: card_change_me
 name: 卡牌名
 card_type: trick        # basic/trick/delayed_trick/equipment/other
 subtype: instant
-related_keywords:
-  - keyword_use_card
-notes: ""
+review_note: ""         # 需要人工复核的异常（卡面类型标签与登记的类型不一致…）

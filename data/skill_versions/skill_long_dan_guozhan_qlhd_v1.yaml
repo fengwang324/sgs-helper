@@ -4,17 +4,8 @@ mode: guozhan
 text: 你可以将【杀】当【闪】、【闪】当【杀使用或打出；当你因发动“龙胆”而转化使用的：【杀】被目标角色使用的【闪】抵消后，你可以对另一名角色造成1点伤害；【闪】抵消了一名角色对你使用的【杀】后，你可以令另一名其他角色回复1点体力。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

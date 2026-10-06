@@ -20,11 +20,27 @@ def run_script(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess:
     )
 
 
+def _find_yaml(directory: Path, needle: str) -> Path:
+    """按内容定位真实数据文件，避免把文件名写死在测试里。"""
+    for path in sorted(directory.glob("*.yaml")):
+        if needle in path.read_text(encoding="utf-8"):
+            return path
+    raise AssertionError(f"{directory} 下找不到包含 {needle!r} 的文件")
+
+
 @pytest.fixture(scope="module")
 def cli_db(tmp_path_factory: pytest.TempPathFactory) -> Path:
     db_path = tmp_path_factory.mktemp("cli") / "sgs.db"
     result = run_script("scripts/build_db.py", "--db", str(db_path))
     assert result.returncode == 0, result.stderr
+    return db_path
+
+
+def _synth_db(synth: Path, tmp_path: Path) -> Path:
+    from sgs_helper.db import build_database
+
+    db_path = tmp_path / "synth.db"
+    build_database(synth, db_path)
     return db_path
 
 
@@ -40,11 +56,8 @@ def test_validate_script_passes() -> None:
 def test_validate_script_reports_error(tmp_path: Path, data_dir: Path) -> None:
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
-    replace_in(
-        broken / "general_variants" / "variant_zhu_ge_liang_biao_zhun_ban.yaml",
-        "skill_id: skill_guan_xing",
-        "skill_id: skill_not_exist",
-    )
+    target = _find_yaml(broken / "general_variants", "skill_id: skill_guan_xing")
+    replace_in(target, "skill_id: skill_guan_xing", "skill_id: skill_not_exist")
     result = run_script("scripts/validate_data.py", "--data-dir", str(broken))
     assert result.returncode == 1
     assert "skill_not_exist" in result.stdout
@@ -71,11 +84,8 @@ def test_build_script_creates_database(tmp_path: Path) -> None:
 def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> None:
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
-    replace_in(
-        broken / "card_printings" / "sha_sample_guozhan_spade_7.yaml",
-        "card_id: card_sha",
-        "card_id: card_not_exist",
-    )
+    target = _find_yaml(broken / "card_printings", "card_id: card_sha")
+    replace_in(target, "card_id: card_sha", "card_id: card_not_exist")
     result = run_script(
         "scripts/build_db.py", "--data-dir", str(broken), "--db", str(tmp_path / "x.db")
     )
@@ -95,7 +105,7 @@ def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> No
         ("faq", "伤害"),
         ("keyword", "濒死状态"),
         ("timing", "判定阶段"),
-        ("product", "国战示例"),
+        ("product", "群狼环鼎"),
         ("search", "集智"),
     ],
 )
@@ -109,7 +119,7 @@ def test_spec_queries_work(cli_db: Path, command: str, query: str) -> None:
 def test_query_skill_shows_versions_and_source(cli_db: Path) -> None:
     result = run_script("scripts/query.py", "--db", str(cli_db), "skill", "集智")
     assert result.returncode == 0
-    for token in ["当前有效版本", "技能文本", "来源", "校验状态", "国战", "身份局"]:
+    for token in ["技能文本", "来源", "校验状态", "国战", "群狼环鼎"]:
         assert token in result.stdout
 
 
@@ -121,35 +131,44 @@ def test_query_json_output(cli_db: Path) -> None:
     assert payload["modes"]
 
 
-def test_query_as_of_switches_version(synth: Path, tmp_path: Path) -> None:
-    """--as-of 能切换“当前有效版本”，且选项写在子命令前后都可用。
-
-    用合成数据集：真实数据里每个 (技能, 模式) 只有一条版本，演示不了“按日期切换”。
-    """
-    from sgs_helper.db import build_database
-
-    db_path = tmp_path / "synth.db"
-    build_database(synth, db_path)
-
-    # 选项写在子命令之后也要能用
+def test_query_as_of_option_is_removed(cli_db: Path) -> None:
+    """技能版本不再按日期推导：CLI 的 --as-of 已删除。"""
     result = run_script(
-        "scripts/query.py", "--db", str(db_path), "skill", "演示技能",
-        "--as-of", "2024-06-01", "--json",
+        "scripts/query.py", "--db", str(cli_db), "skill", "集智", "--as-of", "2024-06-01"
+    )
+    assert result.returncode != 0
+    assert "unrecognized arguments" in result.stderr
+
+
+def test_query_skill_lists_versions_per_mode(synth: Path, tmp_path: Path) -> None:
+    db_path = _synth_db(synth, tmp_path)
+    result = run_script("scripts/query.py", "--db", str(db_path), "--json", "skill", "演示技能")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    groups = {group["mode"]: group["version_ids"] for group in payload["modes"]}
+    assert groups == {
+        "guozhan": ["skill_demo_guozhan_v1"],
+        "identity": ["skill_demo_identity_v1", "skill_demo_identity_v2"],
+    }
+
+
+def test_query_general_shows_binding_and_fallback(synth: Path, tmp_path: Path) -> None:
+    """国战版没写 version_id -> 按 mode 回退；标准版显式绑定 v1。"""
+    db_path = _synth_db(synth, tmp_path)
+    result = run_script(
+        "scripts/query.py", "--db", str(db_path), "--json", "general", "演示武将甲"
     )
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
-    identity = next(g for g in payload["modes"] if g["mode"] == "identity")
-    assert identity["current_id"] == "skill_demo_identity_v1"
+    by_variant = {v["variant"]: v["skills"][0] for v in payload["variants"]}
 
-    # 选项写在子命令之前同样可用
-    result_before = run_script(
-        "scripts/query.py", "--db", str(db_path), "--as-of", "2025-06-01", "--json",
-        "skill", "演示技能",
-    )
-    assert result_before.returncode == 0
-    payload_before = json.loads(result_before.stdout)
-    identity_before = next(g for g in payload_before["modes"] if g["mode"] == "identity")
-    assert identity_before["current_id"] == "skill_demo_identity_v2"
+    assert by_variant["国战版"]["version_id"] is None
+    assert by_variant["国战版"]["pinned"] is False
+    assert by_variant["国战版"]["version"]["id"] == "skill_demo_guozhan_v1"
+
+    assert by_variant["标准版"]["version_id"] == "skill_demo_identity_v1"
+    assert by_variant["标准版"]["pinned"] is True
+    assert by_variant["标准版"]["version"]["id"] == "skill_demo_identity_v1"
 
 
 def test_query_stats(cli_db: Path) -> None:

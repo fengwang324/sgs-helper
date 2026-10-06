@@ -1,23 +1,13 @@
 id: card_dun_jia_tian_shu_qlhd_spade_3
 card_id: card_dun_jia_tian_shu
 name_printed: 遁甲天书
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: spade
 rank: 3
 quantity: 1
 printed_text: ◆出牌阶段限两次，你可以变更副将。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_dun_jia_tian_shu_qlhd_spade_3.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

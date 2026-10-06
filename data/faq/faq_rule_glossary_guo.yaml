@@ -46,15 +46,7 @@ answer: |-
   移除
   将被移除的武将牌置入游戏外的武将牌堆。被移除武将牌的角色用一张“士兵牌”代替被移除的武将牌。“士兵牌”的性别、势力与被移除的武将牌相同，但没有技能。移除武将牌并不会影响该角色的体力上限。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》术语章节：国战

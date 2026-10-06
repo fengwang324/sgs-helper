@@ -12,15 +12,7 @@ answer: |-
   至此打出结算完毕，将处理区里此牌对应的所有（剩余的）实体牌置入弃牌堆。
   注意：能令处理区里此牌对应的所有（剩余的）实体牌不需要置入弃牌堆的技能：【护驾】、【鬼才】、【激将】、【缓释】、【鬼道】、【极略（鬼才）】。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节：打出事件的结算流程

@@ -18,15 +18,7 @@ answer: |-
   例如：公孙瓒于曹植的回合对马岱发动【趫猛】，弃置马岱装备区里的一张梅花坐骑牌，当此牌置入弃牌堆后，曹植发动【落英②】获得之，然后由于此牌不在弃牌堆里了，公孙瓒不能执行【趫猛】的效果获得之。
   虚拟牌在相应的结算流程结束之后即消失。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》专题章节：虚拟牌及与之对应的实体牌

@@ -22,12 +22,7 @@ definition: |-
   例如：赵云于回合外发动【丈八蛇矛】打出一张【杀】时，只能发动一次【涯角】。
   例如：诸葛恪不能发动【朱雀羽扇①】将其发动【傲才①】观看到的一张普通【杀】当火【杀】使用，因为【傲才①】的效果是诸葛恪可以使用此牌，而不是可以将此牌当其他牌使用。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

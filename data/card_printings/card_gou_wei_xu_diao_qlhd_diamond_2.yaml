@@ -1,23 +1,13 @@
 id: card_gou_wei_xu_diao_qlhd_diamond_2
 card_id: card_gou_wei_xu_diao
 name_printed: 狗尾续貂
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: diamond
 rank: 2
 quantity: 1
 printed_text: 出牌阶段，对所有角色使用；每名目标依次选择并使用弃牌堆中的一张奇珍牌，没有则改为摸一张牌。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_gou_wei_xu_diao_qlhd_diamond_2.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

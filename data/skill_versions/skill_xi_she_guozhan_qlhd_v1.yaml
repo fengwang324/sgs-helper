@@ -1,21 +1,11 @@
 id: skill_xi_she_guozhan_qlhd_v1
 skill_id: skill_xi_she
 mode: guozhan
-text: |-
-  每名其他角色的准备阶段，你可以弃置你装备区里的一张牌，视为对其使用一张无距离限制的【杀】，若其体力值小于你，则此【杀】不能被响应，然后你可以重复此流程。此回合结束时，若你因此而杀死过其他角色，则你可以变更一次副将且变更后的副将武将牌处于暗置状态。
+text: 每名其他角色的准备阶段，你可以弃置你装备区里的一张牌，视为对其使用一张无距离限制的【杀】，若其体力值小于你，则此【杀】不能被响应，然后你可以重复此流程。此回合结束时，若你因此而杀死过其他角色，则你可以变更一次副将且变更后的副将武将牌处于暗置状态。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

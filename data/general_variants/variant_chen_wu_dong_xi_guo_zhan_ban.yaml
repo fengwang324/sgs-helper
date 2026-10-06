@@ -17,10 +17,4 @@ skills:
     version_id: skill_n5bdf2085_guozhan_v1
   - skill_id: skill_fen_ming
     version_id: skill_fen_ming_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WU 023
 verification_status: unverified
-notes: ''

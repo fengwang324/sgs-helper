@@ -1,23 +1,13 @@
 id: card_diao_hu_li_shan_qlhd_diamond_10
 card_id: card_diao_hu_li_shan
 name_printed: 调虎离山
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: diamond
 rank: 10
 quantity: 1
 printed_text: 出牌阶段，对一至两名其他角色使用。目标角色于此回合内体力值不会改变，不计入距离和座次的计算，不能使用牌且不是牌的合法目标。
-normalized_text: ''
 bottom_right_mark: 周
 card_number: ''
-illustrator: ''
 image: card_diao_hu_li_shan_qlhd_diamond_10.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

@@ -1,21 +1,11 @@
 id: skill_wu_shuang_guozhan_qlhd_v1
 skill_id: skill_wu_shuang
 mode: guozhan
-text: |-
-  锁定技，你的【杀】需要两张【闪】才能抵消；与你【决斗】的角色每次需要打出两张【杀】：你使用非转化的【决斗】能选择至多三名角色为目标。
+text: 锁定技，你的【杀】需要两张【闪】才能抵消；与你【决斗】的角色每次需要打出两张【杀】：你使用非转化的【决斗】能选择至多三名角色为目标。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

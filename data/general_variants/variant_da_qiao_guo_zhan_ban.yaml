@@ -18,10 +18,4 @@ skills:
     version_id: skill_guo_se_guozhan_qlhd_v1
   - skill_id: skill_liu_li
     version_id: skill_liu_li_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WU 006
 verification_status: unverified
-notes: ''

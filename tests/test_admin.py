@@ -9,7 +9,8 @@
 6. 被引用实体不能直接删除。
 
 另外补了一批“真的会毁数据”的回归测试：YAML 往返稳定性、并发冲突、CSRF、
-ID 路径穿越、反向引用声明完整性。
+ID 路径穿越、反向引用声明完整性，以及本次「数据模型精简」的字段级回归
+（被删字段必须从表单 / 模板 / 路由里彻底消失，GeneralSet 实体不存在）。
 
 所有测试都在 ``tmp_path`` 里的**副本**上操作，绝不碰仓库里真实的 ``data/``。
 """
@@ -18,7 +19,6 @@ from __future__ import annotations
 
 import shutil
 import sqlite3
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -32,6 +32,31 @@ from sgs_helper.loader import manifest_digest
 from sgs_helper.repo import faq_report, general_report, skill_report
 from sgs_helper.schema import MODEL_BY_KIND
 from sgs_helper.validate import REFERENCE_FIELDS, validate_data_dir
+
+# ---------------------------------------------------------------- 真实数据里的固定 id
+
+#: 真实数据现在只有一个产品（群狼环鼎），武将 / 技能等都挂在它下面
+PRODUCT_ID = "qlhd"
+GENERAL_ID = "general_zhu_ge_liang"
+VARIANT_ID = "variant_zhu_ge_liang_guo_zhan_ban"
+CARD_PRINTING_ID = "card_ba_gua_zhen_qlhd_spade_2"
+JI_ZHI_V1 = "skill_ji_zhi_guozhan_qlhd_v1"
+GUAN_XING_V1 = "skill_guan_xing_guozhan_qlhd_v1"
+KONG_CHENG_V1 = "skill_kong_cheng_guozhan_qlhd_v1"
+
+#: 本次精简删掉的字段：表单里不允许再有对应的输入框
+REMOVED_FORM_FIELDS = (
+    "notes",
+    "related_skill_ids",
+    "related_general_ids",
+    "related_card_ids",
+    "related_faq_ids",
+    "related_keywords",
+    "related_timing_ids",
+    "related_keyword_ids",
+    "source.title",
+    "source.notes",
+)
 
 
 # ---------------------------------------------------------------- 夹具
@@ -98,11 +123,43 @@ def general_edit(app, general_id: str, **overrides) -> dict:
     return payload
 
 
+def general_payload(app, **overrides) -> dict:
+    """构造一份“武将专用录入页会提交什么”的表单数据。
+
+    注意：实体卡类（General / GeneralVariant）**没有** source 字段，
+    也没有 ``notes``；需要留痕的异常写 ``review_note``。
+    """
+    payload = {
+        "_csrf": app.state.csrf,
+        "_base_sha": "",
+        "_action": "save",
+        "skill_count": "0",
+        "name": "",
+        "title": "",
+        "general_number": "",
+        "mode": "",
+        "faction": "",
+        "hp": "",
+        "gender": "unknown",
+        "product_id": "",
+        "general_set": "",
+        "variant": "标准版",
+        "_variant_id": "",
+        "_variant_sha": "",
+        "variant_id": "",
+        "review_note": "",
+        "verification_status": "unverified",
+    }
+    payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
 def yaml_of(workdir: Path, kind: str, entity_id: str) -> Path:
     """定位某条记录所在的 YAML 文件。
 
-    文件名不一定等于 id（真实数据里是 ``data/general_variants/variant_zhu_ge_liang_biao_zhun_ban.yaml``
-    这样的名字），所以先在磁盘上按 id 查，查不到才按新增记录的命名约定推断。
+    文件名不一定等于 id（真实数据里是
+    ``data/general_variants/variant_zhu_ge_liang_guo_zhan_ban.yaml`` 这样的名字），
+    所以先在磁盘上按 id 查，查不到才按新增记录的命名约定推断。
     """
     from sgs_helper.constants import KIND_BY_NAME
     from sgs_helper.loader import load_data_dir
@@ -135,22 +192,26 @@ def post(client: TestClient, url: str, **kwargs):
 # ---------------------------------------------------------------- 1. 页面能启动
 
 
-def test_pages_start(client: TestClient, store) -> None:
+def test_pages_start(client: TestClient, workdir: Path) -> None:
     """首页 / 列表 / 详情 / 新增 / 编辑 / 待核验 / 说明 / 健康检查全部能打开。"""
     seed = {
-        "product": "product_guozhan_sample_2024",
-        "general": "general_zhu_ge_liang",
+        "product": PRODUCT_ID,
+        "general": GENERAL_ID,
+        "general_variant": VARIANT_ID,
         "skill": "skill_ji_zhi",
-        "skill_version": "skill_ji_zhi_identity_v1",
+        "skill_version": JI_ZHI_V1,
         "card": "card_sha",
-        "card_printing": "card_sha_sample_guozhan_spade_7",
+        "card_printing": CARD_PRINTING_ID,
         "faq": "faq_rule_flow_damage",
         "keyword": "keyword_shi_yong",
         "timing": "timing_hui_he_jie_shu_shi",
     }
     urls = ["/", "/search?q=集智", "/review", "/help", "/healthz"]
-    for kind in seed:
-        urls += [f"/list/{kind}", f"/view/{kind}/{seed[kind]}", f"/new/{kind}"]
+    for kind, entity_id in seed.items():
+        urls += [f"/list/{kind}", f"/view/{kind}/{entity_id}"]
+        if kind != "general_variant":
+            # 武将版本走「武将录入页」，没有独立的新增页
+            urls += [f"/new/{kind}"]
     for url in urls:
         response = client.get(url)
         assert response.status_code == 200, url
@@ -161,6 +222,9 @@ def test_pages_start(client: TestClient, store) -> None:
     # 未知类型 / 未知记录
     assert client.get("/list/nope").status_code == 404
     assert client.get("/view/skill/nope").status_code == 404
+    # GeneralSet 实体已删除：没有列表页
+    assert client.get("/list/general_set").status_code == 404
+    assert not (workdir / "data" / "general_sets").exists()
 
     health = client.get("/healthz").json()
     assert health["ok"] is True
@@ -194,10 +258,10 @@ def test_search_supports_kind_and_status_filters(client: TestClient) -> None:
     only_skill = client.get("/search?q=集智&kind=skill")
     assert only_skill.status_code == 200
     assert "skill_ji_zhi" in only_skill.text
-    assert "skill_ji_zhi_identity_v1" not in only_skill.text
+    assert JI_ZHI_V1 not in only_skill.text
 
     only_version = client.get("/search?q=集智&kind=skill_version")
-    assert "skill_ji_zhi_identity_v1" in only_version.text
+    assert JI_ZHI_V1 in only_version.text
     assert '<code class="id">skill_ji_zhi</code>' not in only_version.text
 
     empty = client.get("/search?q=集智&status=physical_verified")
@@ -262,67 +326,10 @@ def test_manual_rebuild_endpoint(client: TestClient, app, workdir: Path) -> None
 # ---------------------------------------------------------------- 4. 非法修改被拦截且不落盘
 
 
-def general_payload(app, **overrides) -> dict:
-    """构造一份“武将专用录入页会提交什么”的表单数据。"""
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "_action": "save",
-        "skill_count": "0",
-        "name": "",
-        "title": "",
-        "general_number": "",
-        "mode": "",
-        "faction": "",
-        "hp": "",
-        "gender": "unknown",
-        "product_id": "",
-        "general_set": "",
-        "variant": "标准版",
-        "_variant_id": "",
-        "_variant_sha": "",
-        "variant_id": "",
-        "general_notes": "",
-        "source.type": "",
-        "source.title": "",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "unverified",
-        "notes": "",
-    }
-    payload.update({key: str(value) for key, value in overrides.items()})
-    return payload
-
-
-def product_payload(app, **overrides) -> dict:
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "name": "",
-        "release_year": "",
-        "mode": "",
-        "general_sets": "",
-        "card_sets": "",
-        "id": "",
-        "series": "",
-        "publisher": "",
-        "edition": "",
-        "release_date": "",
-        "source.type": "",
-        "source.title": "",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "unverified",
-        "notes": "",
-    }
-    payload.update({key: str(value) for key, value in overrides.items()})
-    return payload
-
-
 def test_invalid_edit_is_blocked_and_nothing_written(
     client: TestClient, app, workdir: Path
 ) -> None:
-    path = yaml_of(workdir, "general", "general_zhu_ge_liang")
+    path = yaml_of(workdir, "general", GENERAL_ID)
     before = path.read_text(encoding="utf-8")
     db_path = workdir / "build" / "sgs.db"
     build_database(workdir / "data", db_path)
@@ -334,9 +341,9 @@ def test_invalid_edit_is_blocked_and_nothing_written(
         mode="guozhan",
         skill_count="1",
         skill_0_skill_id="skill_does_not_exist",
-        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
+        _base_sha=app.state.store.entity_sha("general", GENERAL_ID),
     )
-    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
+    response = post(client, f"/edit/general/{GENERAL_ID}", data=payload)
 
     assert response.status_code == 400
     assert "skill_does_not_exist" in response.text
@@ -354,9 +361,9 @@ def test_invalid_model_field_is_blocked(client: TestClient, app, workdir: Path) 
         app,
         name="诸葛亮",
         hp="abc",
-        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
+        _base_sha=app.state.store.entity_sha("general", GENERAL_ID),
     )
-    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
+    response = post(client, f"/edit/general/{GENERAL_ID}", data=payload)
     assert response.status_code == 400
     assert "勾玉要写数字" in response.text
 
@@ -366,33 +373,38 @@ def test_unknown_field_cannot_be_injected(client: TestClient, app, workdir: Path
     payload = general_payload(
         app,
         name="诸葛亮",
-        _base_sha=app.state.store.entity_sha("general", "general_zhu_ge_liang"),
+        _base_sha=app.state.store.entity_sha("general", GENERAL_ID),
     )
     payload["totally_bogus"] = "1"
-    response = post(client, "/edit/general/general_zhu_ge_liang", data=payload)
+    response = post(client, f"/edit/general/{GENERAL_ID}", data=payload)
     assert response.status_code == 303
-    text = yaml_of(workdir, "general", "general_zhu_ge_liang").read_text(encoding="utf-8")
+    text = yaml_of(workdir, "general", GENERAL_ID).read_text(encoding="utf-8")
     assert "totally_bogus" not in text
 
 
-def test_duplicate_id_is_blocked(client: TestClient, app, workdir: Path) -> None:
+def keyword_payload(app, **overrides) -> dict:
+    """规则类实体的表单：source 只剩 type + reference。"""
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
-        "id": "keyword_shi_yong",
-        "name": "重复 id 测试",
-        "definition": "测试",
+        "id": "",
+        "name": "",
+        "definition": "",
         "mode": "common",
-        "related_keyword_ids": "",
-        "related_timing_ids": "",
         "source.type": "community_db",
-        "source.title": "测试",
         "source.reference": "",
-        "source.notes": "",
         "verification_status": "unverified",
-        "notes": "",
     }
-    response = post(client, "/new/keyword", data=payload)
+    payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
+def test_duplicate_id_is_blocked(client: TestClient, app) -> None:
+    response = post(
+        client,
+        "/new/keyword",
+        data=keyword_payload(app, id="keyword_shi_yong", name="重复 id 测试", definition="测试"),
+    )
     assert response.status_code == 400
     assert "id 重复" in response.text
 
@@ -409,97 +421,205 @@ def test_bad_id_is_rejected_without_touching_disk(
     assert not Path("/etc/passwd.yaml").exists()
 
 
+# ---------------------------------------------------------------- 被删字段的字段级回归
+
+
+def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
+    """被删字段在表单里**彻底消失**（不是隐藏），source 只剩 type + reference。"""
+    faq = client.get("/edit/faq/faq_rule_flow_damage").text
+    for needle in REMOVED_FORM_FIELDS:
+        assert f'name="{needle}"' not in faq, needle
+    assert 'name="source.type"' in faq
+    assert 'name="source.reference"' in faq
+
+    skill = client.get("/edit/skill/skill_ji_zhi").text
+    assert 'name="notes"' not in skill
+    assert 'name="source.type"' not in skill  # 技能本体没有 source
+
+    version = client.get(f"/edit/skill_version/{JI_ZHI_V1}").text
+    for needle in (
+        "package", "effective_from", "effective_to", "change_note",
+        "related_keywords", "related_timing_ids", "notes",
+    ):
+        assert f'name="{needle}"' not in version, needle
+    assert 'name="review_note"' in version  # review_note 取代了 notes
+
+    card_printing = client.get(f"/edit/card_printing/{CARD_PRINTING_ID}").text
+    for needle in ("mode", "package", "normalized_text", "illustrator", "notes", "source.type"):
+        assert f'name="{needle}"' not in card_printing, needle
+
+    timing = client.get("/edit/timing/timing_hui_he_jie_shu_shi").text
+    for needle in ("parent_id", "previous_ids", "next_ids", "related_timing_ids", "notes"):
+        assert f'name="{needle}"' not in timing, needle
+
+    product = client.get("/new/product").text
+    for needle in (
+        "series", "publisher", "edition", "release_date",
+        "source.type", "verification_status", "notes",
+    ):
+        assert f'name="{needle}"' not in product, needle
+
+
+def test_timing_detail_is_flat_and_has_no_relations(client: TestClient) -> None:
+    """时点页变成平铺速查：没有父子 / 前后关系。"""
+    body = client.get("/view/timing/timing_hui_he_jie_shu_shi").text
+    assert "回合结束时" in body
+    for needle in ("父子", "上一时点", "下一时点"):
+        assert needle not in body
+
+
+def test_faq_detail_auto_links_mentions(client: TestClient) -> None:
+    """FAQ 的手工 related_* 没了：关联实体按名称自动识别并渲染成可点击链接。"""
+    body = client.get("/view/faq/faq_ruling_skill_bu_qu_1").text
+    assert "自动识别到的关联实体" in body
+    assert 'href="/view/skill/skill_bu_qu"' in body
+    assert 'href="/view/keyword/keyword_ti_li"' in body
+    assert 'href="/view/keyword/keyword_qi_pai_dui"' in body
+
+
+def test_skill_version_text_auto_links_entities(client: TestClient) -> None:
+    """技能文本里的技能名 / 关键词名 / 卡牌名 / 时点名自动变成链接。"""
+    body = client.get(f"/view/skill_version/{KONG_CHENG_V1}").text
+    assert 'href="/view/keyword/keyword_suo_ding_ji"' in body
+    assert 'href="/view/card/card_jue_dou"' in body
+    assert 'href="/view/timing/timing_mo_pai_jie_duan_kai_shi_shi"' in body
+
+
+def test_card_printing_mode_is_derived_from_product(app, store, client: TestClient) -> None:
+    """CardPrinting 没有 mode 字段：mode 一律由 product_id -> Product.mode 推导。"""
+    printing = store.entity("card_printing", CARD_PRINTING_ID)
+    assert not hasattr(printing, "mode")
+    assert store.mode_of("card_printing", printing) == "guozhan"
+    # 列表页也是推导后显示
+    assert "国战" in client.get("/list/card_printing", params={"product": PRODUCT_ID}).text
+
+
+def test_skill_binding_display(client: TestClient, store) -> None:
+    """显式绑定优先；为空时按 mode 回退到唯一一条版本。"""
+    body = client.get(f"/view/general/{GENERAL_ID}").text
+    assert "显式绑定" in body
+    assert "按卡面指定" in body
+    assert GUAN_XING_V1 in body
+
+    # 没有 version_id 的版本：按 mode 回退
+    created = store.save("general", {"id": "general_fallback_demo", "name": "回退演示"})
+    assert created.ok, created.error
+    created = store.save(
+        "general_variant",
+        {
+            "id": "variant_fallback_demo",
+            "general_id": "general_fallback_demo",
+            "variant": "演示版",
+            "mode": "guozhan",
+            "skills": [{"skill_id": "skill_ji_zhi"}],
+        },
+    )
+    assert created.ok, created.error
+    body = client.get("/view/general/general_fallback_demo").text
+    assert "按模式回退" in body
+    assert JI_ZHI_V1 in body
+
+
 # ---------------------------------------------------------------- 5. SkillVersion 不覆盖旧版本
 
 
 def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path) -> None:
-    old_path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v1")
+    old_id = JI_ZHI_V1
+    new_id = "skill_ji_zhi_guozhan_v3"
+    old_path = yaml_of(workdir, "skill_version", old_id)
     old_before = old_path.read_text(encoding="utf-8")
     db_path = workdir / "build" / "sgs.db"
     post(client, "/rebuild", data={"_csrf": app.state.csrf})
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    before_versions = len(skill_report(conn, "skill_ji_zhi")["versions"])
+    before_ids = {v["id"] for v in skill_report(conn, "skill_ji_zhi")["versions"]}
     conn.close()
 
-    today = date.today().isoformat()
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
-        "id": "skill_ji_zhi_identity_v3",
+        "id": new_id,
         "skill_id": "skill_ji_zhi",
-        "mode": "identity",
+        "mode": "guozhan",
         "text": "【测试】第三次调整后的技能文本",
         "version_label": "测试新版",
-        "product_id": "",
-        "package": "",
-        "effective_from": today,
-        "effective_to": "",
-        "previous_version_id": "skill_ji_zhi_identity_v1",
-        "change_note": "【测试】新增版本，旧版本保留",
+        "product_id": PRODUCT_ID,
+        "previous_version_id": old_id,
+        # 已删除字段：即使被提交上来也必须被忽略（表单里根本不该有它们）
+        "package": "旧包",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-12-31",
+        "change_note": "【测试】",
         "related_keywords": "keyword_shi_yong",
-        "related_timing_ids": "",
+        "related_timing_ids": "timing_hui_he_jie_shu_shi",
+        "notes": "旧备注",
         "source.type": "official_rule",
-        "source.title": "【测试】公告",
         "source.reference": "https://example.com/notice",
-        "source.notes": "",
         "verification_status": "official",
-        "notes": "",
     }
     response = post(client, "/new/skill_version", data=payload)
     assert response.status_code == 303, response.text
-    assert response.headers["location"].startswith("/view/skill_version/skill_ji_zhi_identity_v3")
+    assert response.headers["location"].startswith(f"/view/skill_version/{new_id}")
 
     # 旧版本原样保留
     assert old_path.read_text(encoding="utf-8") == old_before
-    new_path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v3")
-    assert new_path.exists()
+    new_path = yaml_of(workdir, "skill_version", new_id)
+    new_doc = yaml.safe_load(new_path.read_text(encoding="utf-8"))
+    assert new_doc["previous_version_id"] == old_id
+    assert new_doc["source"] == {
+        "type": "official_rule",
+        "reference": "https://example.com/notice",
+    }
+    for removed in (
+        "package", "effective_from", "effective_to", "change_note",
+        "related_keywords", "related_timing_ids", "notes",
+    ):
+        assert removed not in new_doc, removed
+    assert set(new_doc["source"]) == {"type", "reference"}
 
     # 数据库里新增了一条版本，旧版本还在
-    db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    reports = skill_report(conn, "skill_ji_zhi")
+    report = skill_report(conn, "skill_ji_zhi")
     conn.close()
-    assert len(reports["versions"]) == before_versions + 1
-    ids = {v["id"] for v in reports["versions"]}
-    assert {"skill_ji_zhi_identity_v1", "skill_ji_zhi_identity_v3"} <= ids
-    current_ids = [
-        v["id"] for v in reports["versions"] if "identity" in v["current_for_modes"]
-    ]
-    assert current_ids == ["skill_ji_zhi_identity_v3"]
+    ids = {v["id"] for v in report["versions"]}
+    assert ids == before_ids | {new_id}
+    modes = {group["mode"]: group["version_ids"] for group in report["modes"]}
+    assert new_id in modes["guozhan"]
+    assert any(chain[:2] == [new_id, old_id] for chain in report["history_chains"])
 
     # 技能详情页显示历史版本链
     page = client.get("/view/skill/skill_ji_zhi")
-    assert "skill_ji_zhi_identity_v1" in page.text
-    assert "skill_ji_zhi_identity_v3" in page.text
+    assert old_id in page.text
+    assert new_id in page.text
 
 
 def test_new_skill_version_prefilled_from_current(client: TestClient) -> None:
     response = client.get(
-        "/new/skill_version?skill_id=skill_ji_zhi&mode=identity"
-        "&previous_version_id=skill_ji_zhi_identity_v1"
+        f"/new/skill_version?skill_id=skill_ji_zhi&mode=guozhan"
+        f"&previous_version_id={JI_ZHI_V1}"
     )
     assert response.status_code == 200
     assert 'name="skill_id" value="skill_ji_zhi"' in response.text
-    assert "skill_ji_zhi_identity_v1" in response.text
+    assert JI_ZHI_V1 in response.text
 
 
 # ---------------------------------------------------------------- 6. 被引用实体不能删除
 
 
 def test_delete_blocked_when_referenced(client: TestClient, app, workdir: Path) -> None:
-    path = yaml_of(workdir, "product", "product_guozhan_sample_2024")
+    path = yaml_of(workdir, "product", PRODUCT_ID)
     before = path.read_text(encoding="utf-8")
 
-    response = post(client, 
-        "/delete/product/product_guozhan_sample_2024",
-        data={"_csrf": app.state.csrf, "_base_sha": app.state.store.entity_sha("product", "product_guozhan_sample_2024")},
+    response = post(
+        client,
+        f"/delete/product/{PRODUCT_ID}",
+        data={"_csrf": app.state.csrf, "_base_sha": app.state.store.entity_sha("product", PRODUCT_ID)},
     )
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    # 列出引用它的对象（武将数据不再强制关联产品，这里看实体卡）
-    assert "card_sha_sample_guozhan_spade_7" in response.text
+    # 列出引用它的对象（实体卡 reference product_id）
+    assert CARD_PRINTING_ID in response.text
     assert path.exists()
     assert path.read_text(encoding="utf-8") == before
 
@@ -509,54 +629,46 @@ def test_delete_blocked_for_skill_version_with_successor(
 ) -> None:
     """旧版本只要被“更新的版本”用 previous_version_id 指着，就不能删。"""
     store = app.state.store
-    base = store.entity("skill_version", "skill_ji_zhi_identity_v1")
+    base = store.entity("skill_version", GUAN_XING_V1)
     created = store.save(
         "skill_version",
         {
-            "id": "skill_ji_zhi_identity_v9",
-            "skill_id": "skill_ji_zhi",
-            "mode": "identity",
+            "id": "skill_guan_xing_guozhan_v9",
+            "skill_id": "skill_guan_xing",
+            "mode": "guozhan",
             "text": "【测试】更新的版本",
-            "previous_version_id": "skill_ji_zhi_identity_v1",
-            "source": dict(base.source.model_dump(mode="json")) if base.source else None,
+            "previous_version_id": GUAN_XING_V1,
+            "source": dict(base.source.model_dump(mode="json")),
         },
     )
     assert created.ok, created.error
 
-    path = yaml_of(workdir, "skill_version", "skill_ji_zhi_identity_v1")
+    path = yaml_of(workdir, "skill_version", GUAN_XING_V1)
     payload = {
         "_csrf": app.state.csrf,
-        "_base_sha": app.state.store.entity_sha("skill_version", "skill_ji_zhi_identity_v1"),
+        "_base_sha": app.state.store.entity_sha("skill_version", GUAN_XING_V1),
     }
-    response = post(client, "/delete/skill_version/skill_ji_zhi_identity_v1", data=payload)
+    response = post(client, f"/delete/skill_version/{GUAN_XING_V1}", data=payload)
     assert response.status_code == 200
     assert "previous_version_id" in response.text
     assert path.exists()
 
 
 def test_unreferenced_record_can_be_deleted(client: TestClient, app, workdir: Path) -> None:
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "id": "keyword_temp_test",
-        "name": "【测试】临时关键词",
-        "definition": "测试用，随后删除",
-        "mode": "common",
-        "related_keyword_ids": "",
-        "related_timing_ids": "",
-        "source.type": "discussion",
-        "source.title": "测试",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "unverified",
-        "notes": "",
-    }
-    created = post(client, "/new/keyword", data=payload)
+    created = post(
+        client,
+        "/new/keyword",
+        data=keyword_payload(
+            app, id="keyword_temp_test", name="【测试】临时关键词",
+            definition="测试用，随后删除", **{"source.type": "discussion"},
+        ),
+    )
     assert created.status_code == 303
     path = yaml_of(workdir, "keyword", "keyword_temp_test")
     assert path.exists()
 
-    deleted = post(client, 
+    deleted = post(
+        client,
         "/delete/keyword/keyword_temp_test",
         data={"_csrf": app.state.csrf, "_base_sha": app.state.store.entity_sha("keyword", "keyword_temp_test")},
     )
@@ -566,10 +678,10 @@ def test_unreferenced_record_can_be_deleted(client: TestClient, app, workdir: Pa
 
 
 def test_delete_confirm_page_lists_references(client: TestClient) -> None:
-    response = client.get("/delete/product/product_guozhan_sample_2024")
+    response = client.get(f"/delete/product/{PRODUCT_ID}")
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    assert "card_sha_sample_guozhan_spade_7" in response.text
+    assert CARD_PRINTING_ID in response.text
 
 
 # ---------------------------------------------------------------- 7. 安全与并发回归
@@ -702,11 +814,11 @@ def test_multi_entity_file_keeps_other_records(tmp_path: Path) -> None:
     (data_dir / "keywords" / "group.yaml").write_text(
         "# 顶部注释\n\n"
         "- id: keyword_a\n  name: 甲\n  definition: 甲的说明\n  mode: common\n"
-        "  source:\n    type: wiki\n    title: 来源\n    reference: ''\n    notes: ''\n"
-        "  verification_status: unverified\n  notes: ''\n"
+        "  source:\n    type: wiki\n    reference: ''\n"
+        "  verification_status: unverified\n"
         "- id: keyword_b\n  name: 乙\n  definition: 乙的说明\n  mode: common\n"
-        "  source:\n    type: wiki\n    title: 来源\n    reference: ''\n    notes: ''\n"
-        "  verification_status: unverified\n  notes: ''\n",
+        "  source:\n    type: wiki\n    reference: ''\n"
+        "  verification_status: unverified\n",
         encoding="utf-8",
     )
     path = data_dir / "keywords" / "group.yaml"
@@ -720,7 +832,7 @@ def test_multi_entity_file_keeps_other_records(tmp_path: Path) -> None:
             "name": "甲（改）",
             "definition": "甲的说明",
             "mode": "common",
-            "source": {"type": "wiki", "title": "来源"},
+            "source": {"type": "wiki", "reference": ""},
         }
     )
     yaml_writer.upsert_entity(path, "keyword", entity)
@@ -738,7 +850,9 @@ def test_remove_only_entity_deletes_file(tmp_path: Path) -> None:
     data_dir.mkdir(parents=True)
     path = data_dir / "solo.yaml"
     path.write_text(
-        "id: keyword_solo\nname: 单条\ndefinition: 说明\nmode: common\n", encoding="utf-8"
+        "id: keyword_solo\nname: 单条\ndefinition: 说明\nmode: common\n"
+        "source:\n  type: wiki\n  reference: ''\n",
+        encoding="utf-8",
     )
     assert yaml_writer.remove_entity(path, "keyword_solo") is True
     assert not path.exists()
@@ -750,11 +864,11 @@ def test_remove_only_entity_deletes_file(tmp_path: Path) -> None:
 def test_reference_fields_cover_every_id_field() -> None:
     """任何 ``*_id`` / ``*_ids`` 模型字段都必须在 REFERENCE_FIELDS 里声明。
 
-    包括嵌在关系结构里的字段（例如 ``General.skills[].skill_id``）。
+    包括嵌在关系结构里的字段（例如 ``GeneralVariant.skills[].skill_id``）。
     新增引用字段却忘了更新声明表时，删除保护与引用校验会静默失效 —— 这条测试就是为了
     让那种情况在 CI 里立刻炸出来。
     """
-    from sgs_helper.schema import GeneralSkillRef, StrictModel
+    from sgs_helper.schema import GeneralSkillRef
 
     declared = {(kind, field) for kind, field, _target, _is_list in REFERENCE_FIELDS}
     missing: list[tuple[str, str]] = []
@@ -822,12 +936,11 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
         faction="群",
         hp="2.5",
         gender="male",
-        product_id="product_guozhan_sample_2024",
-        general_set="sample_jiubian",
+        product_id=PRODUCT_ID,
+        general_set="国战标准",
         skill_count="1",
         skill_0_skill_id="skill_ji_zhi",
-        skill_0_version_id="skill_ji_zhi_guozhan_v1",
-        **{"source.type": "physical_card", "source.title": "本人实体卡"},
+        skill_0_version_id=JI_ZHI_V1,
         verification_status="physical_verified",
     )
     response = post(client, "/new/general", data=payload)
@@ -836,22 +949,22 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     general = yaml.safe_load(
         yaml_of(workdir, "general", "general_test_new").read_text(encoding="utf-8")
     )
-    assert "aliases" not in general          # 别名字段已彻底移除
+    assert set(general) == {"id", "name"}   # 武将个体只存名字
     # 模式/体力/称号/编号/系列/技能这些“版本属性”写在 GeneralVariant 里
-    variant_id = f"variant_{general['id']}"
     variant = yaml.safe_load(
         find_variant_yaml(workdir, "general_test_new").read_text(encoding="utf-8")
     )
+    assert "source" not in variant           # 实体卡类没有 source
+    assert "notes" not in variant
     assert variant["hp"] == 2.5
     assert variant["general_number"] == "qq-001"
-    assert variant["general_set"] == "sample_jiubian"
+    assert variant["general_set"] == "国战标准"
     assert variant["title"] == "测试称号"
     assert variant["variant"] == "标准版"
     assert variant["skills"] == [
-        {"skill_id": "skill_ji_zhi", "version_id": "skill_ji_zhi_guozhan_v1"}
+        {"skill_id": "skill_ji_zhi", "version_id": JI_ZHI_V1}
     ]
     assert variant["verification_status"] == "physical_verified"
-    assert variant["source"]["type"] == "physical_card"
 
     db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
@@ -862,46 +975,43 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert report["variants"][0]["hp"] == 2.5
     assert report["variants"][0]["variant"] == "标准版"
     assert "aliases" not in report["general"]
-    assert report["product"]["id"] == "product_guozhan_sample_2024"
-    assert report["variants"][0]["skills"][0]["version_id"] == "skill_ji_zhi_guozhan_v1"
-    assert report["variants"][0]["skills"][0]["pinned"]["id"] == "skill_ji_zhi_guozhan_v1"
+    assert report["product"]["id"] == PRODUCT_ID
+    entry = report["variants"][0]["skills"][0]
+    assert entry["skill_id"] == "skill_ji_zhi"
+    assert entry["version_id"] == JI_ZHI_V1
+    assert entry["pinned"] is True
+    assert entry["version"]["id"] == JI_ZHI_V1
 
 
-def test_create_general_without_source_uses_model_default(client: TestClient, app, workdir: Path) -> None:
-    """source 可选的实体：全部留空就写 null，而不是空结构。"""
-    payload = general_payload(app, id="general_test_nosource", name="【测试】无来源武将", hp="3")
+def test_create_general_with_defaults(client: TestClient, app, workdir: Path) -> None:
+    """可空字段全部留空时写 null / 空列表，而不是空结构。"""
+    payload = general_payload(app, id="general_test_minimal", name="【测试】最简武将")
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
     general = yaml.safe_load(
-        yaml_of(workdir, "general", "general_test_nosource").read_text(encoding="utf-8")
+        yaml_of(workdir, "general", "general_test_minimal").read_text(encoding="utf-8")
     )
-    assert general["name"] == "【测试】无来源武将"
+    assert general["name"] == "【测试】最简武将"
     variant = yaml.safe_load(
-        find_variant_yaml(workdir, "general_test_nosource").read_text(encoding="utf-8")
+        find_variant_yaml(workdir, "general_test_minimal").read_text(encoding="utf-8")
     )
-    assert variant["source"] is None
+    assert "source" not in variant
     assert variant["skills"] == []
     assert variant["mode"] is None
     assert variant["general_number"] is None
+    assert variant["product_id"] is None
+    assert variant["general_set"] is None
+    assert variant["hp"] is None
 
 
 def test_source_required_entity_needs_source(client: TestClient, app, workdir: Path) -> None:
-    payload = {
-        "_csrf": app.state.csrf,
-        "_base_sha": "",
-        "id": "keyword_test_nosource",
-        "name": "【测试】缺来源关键词",
-        "definition": "测试",
-        "mode": "common",
-        "related_keyword_ids": "",
-        "related_timing_ids": "",
-        "source.type": "",
-        "source.title": "",
-        "source.reference": "",
-        "source.notes": "",
-        "verification_status": "unverified",
-        "notes": "",
-    }
+    payload = keyword_payload(
+        app,
+        id="keyword_test_nosource",
+        name="【测试】缺来源关键词",
+        definition="测试",
+        **{"source.type": ""},
+    )
     response = post(client, "/new/keyword", data=payload)
     assert response.status_code == 400
     assert "来源类型必填" in response.text
@@ -909,7 +1019,9 @@ def test_source_required_entity_needs_source(client: TestClient, app, workdir: P
 
 
 def test_edit_source_reference_url_is_clickable(client: TestClient, app) -> None:
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", **{"source.reference": "https://example.com/faq"})
+    payload = form_payload(
+        app, "faq", "faq_rule_flow_damage", **{"source.reference": "https://example.com/faq"}
+    )
     response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
     assert response.status_code == 303
     page = client.get("/view/faq/faq_rule_flow_damage")
@@ -922,9 +1034,11 @@ def test_edit_source_reference_url_is_clickable(client: TestClient, app) -> None
 
 def test_list_filters(client: TestClient) -> None:
     assert client.get("/list/product?status=unverified").status_code == 200
-    assert client.get("/list/skill_version?mode=identity").status_code == 200
-    assert client.get("/list/card_printing?product=product_guozhan_sample_2024").status_code == 200
-    filtered = client.get("/list/card_printing?product=product_guozhan_sample_2024")
-    assert "product_guozhan_sample_2024" in filtered.text
-    empty = client.get("/list/card_printing?product=product_nonexistent")
+    assert client.get("/list/skill_version?mode=guozhan").status_code == 200
+    filtered = client.get(
+        "/list/card_printing", params={"product": PRODUCT_ID, "q": CARD_PRINTING_ID}
+    )
+    assert filtered.status_code == 200
+    assert CARD_PRINTING_ID in filtered.text
+    empty = client.get("/list/card_printing", params={"product": "product_nonexistent"})
     assert "没有符合条件" in empty.text

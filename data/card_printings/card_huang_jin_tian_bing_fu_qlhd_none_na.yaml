@@ -1,9 +1,7 @@
 id: card_huang_jin_tian_bing_fu_qlhd_none_na
 card_id: card_huang_jin_tian_bing_fu
 name_printed: 黄巾天兵符
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 指示物
 suit: none
 rank: null
@@ -12,15 +10,8 @@ printed_text: |-
   你计算的群势力角色数可以至多+X。（X为你的“天兵”数）
   当你失去体力前，若你有“天兵”，你可以终止此次失去体力流程，然后选择一张“天兵”移去之。
   势力与你相同的角色可以将任意一张“天兵”当【杀】使用或打出。
-normalized_text: ''
 bottom_right_mark: 勢
 card_number: ''
-illustrator: 青骑士
 image: card_huang_jin_tian_bing_fu_qlhd_none_na.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 原本的牌堆归属是「势备篇」
+review_note: 原本的牌堆归属是「势备篇」

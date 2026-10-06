@@ -17,10 +17,4 @@ skills:
     version_id: skill_yu_sui_guozhan_qlhd_v1
   - skill_id: skill_bo_yan
     version_id: skill_bo_yan_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WU 089
 verification_status: unverified
-notes: ''

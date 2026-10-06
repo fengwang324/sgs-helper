@@ -4,12 +4,7 @@ definition: |-
   一张牌的使用者即使用此牌的角色。
   ◆若A使用的牌的使用者改为B，则之后进行的使用结算流程中，此牌都算作是B使用而非A使用的。另外，在这种情况下，A和B都使用过此牌。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

@@ -14,10 +14,4 @@ general_set: null
 skills:
   - skill_id: skill_po_jing
     version_id: skill_po_jing_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.JIN 005
 verification_status: unverified
-notes: ''

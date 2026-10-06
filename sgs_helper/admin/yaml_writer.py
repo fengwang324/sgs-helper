@@ -31,17 +31,16 @@ BLOCK_TEXT_FIELDS: frozenset[str] = frozenset(
     {
         "text",
         "printed_text",
-        "normalized_text",
         "question",
         "answer",
         "definition",
         "description",
-        "change_note",
+        "review_note",
     }
 )
 
-#: source 内嵌结构的固定键序
-SOURCE_KEY_ORDER: tuple[str, ...] = ("type", "title", "reference", "notes")
+#: source 内嵌结构的固定键序（Source 只保留 type + reference）
+SOURCE_KEY_ORDER: tuple[str, ...] = ("type", "reference")
 
 #: 一个文件最多放多少条实体（防止误把大列表塞进单文件；超过给出警告由调用方处理）
 YAML_SUFFIX = ".yaml"

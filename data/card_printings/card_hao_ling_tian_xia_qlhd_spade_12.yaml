@@ -1,23 +1,13 @@
 id: card_hao_ling_tian_xia_qlhd_spade_12
 card_id: card_hao_ling_tian_xia
 name_printed: 号令天下
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: spade
 rank: 12
 quantity: 1
 printed_text: 出牌阶段，对体力值不是最少的一名角色使用。除其外的每名角色各可以选择一项：1. 弃置一张手牌，视为对其使用一张【杀】；2. 弃置其一张牌。魏：魏势力角色选择1时无需弃牌，选择2时可获得其弃置的牌。
-normalized_text: ''
 bottom_right_mark: 民
 card_number: ''
-illustrator: ''
 image: card_hao_ling_tian_xia_qlhd_spade_12.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

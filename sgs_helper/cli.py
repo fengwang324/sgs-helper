@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import json
 import os
 import sys
@@ -192,9 +191,6 @@ def _add_query_options(
         "--json", action="store_true", default=default(False),
         help="输出结构化 JSON（便于接 API）",
     )
-    parser.add_argument(
-        "--as-of", default=default(None), help="推导“当前有效版本”的基准日期 YYYY-MM-DD"
-    )
     parser.add_argument("--limit", type=int, default=default(10), help="列表类查询的最大条数")
 
 
@@ -208,10 +204,10 @@ def query_main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
 
     labels = {
-        "skill": "查询技能：各模式、当前有效版本、历史版本、来源、变更说明",
-        "general": "查询武将：体力、势力、所属产品、技能当前有效版本与完整说明",
+        "skill": "查询技能：各模式、各版本文本、历史版本、来源",
+        "general": "查询武将：体力、势力、所属产品、技能绑定版本与完整说明",
         "card": "查询卡牌：定义 + 各产品实体卡印刷（花色/点数/角标/卡面文本）",
-        "faq": "查询 FAQ / 裁定：按问题、回答或关联对象搜索",
+        "faq": "查询 FAQ / 裁定：按问题、回答或自动识别出的关联对象搜索",
         "keyword": "查询规则关键词",
         "timing": "查询时点与结算顺序",
         "product": "查询实体产品：收录武将、实体卡、角标分布",
@@ -222,7 +218,7 @@ def query_main(argv: list[str] | None = None) -> int:
         sub_parser = sub.add_parser(command, help=help_text)
         _add_query_options(sub_parser, suppress_defaults=True)
         if command != "stats":
-            sub_parser.add_argument("query", help="名称 / 别名 / id / 关键词")
+            sub_parser.add_argument("query", help="名称 / id / 关键词")
     args = parser.parse_args(argv)
 
     db_path = Path(args.db) if args.db else default_db_path()
@@ -263,8 +259,6 @@ def query_main(argv: list[str] | None = None) -> int:
                 print(render.render_search(args.query, results))
             return 0 if results else 1
 
-        as_of = dt.date.fromisoformat(args.as_of) if args.as_of else None
-
         if args.command == "faq":
             reports = faq_search(conn, args.query, limit=args.limit)
             if not reports:
@@ -279,9 +273,9 @@ def query_main(argv: list[str] | None = None) -> int:
 
         kind = QUERY_KINDS[args.command]
         if args.command == "skill":
-            report = skill_report(conn, args.query, as_of)
+            report = skill_report(conn, args.query)
         elif args.command == "general":
-            report = general_report(conn, args.query, as_of)
+            report = general_report(conn, args.query)
         elif args.command == "card":
             report = card_report(conn, args.query)
         elif args.command == "keyword":

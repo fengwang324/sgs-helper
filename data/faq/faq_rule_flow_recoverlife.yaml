@@ -7,15 +7,7 @@ answer: |-
   （2）回复体力后：能发动的技能：【伤逝】、【淑慎】、【恩怨（旧将）①】。
   至此回复体力结算完毕。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节：回复体力事件的结算流程

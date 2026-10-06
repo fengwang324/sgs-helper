@@ -5,6 +5,13 @@
 - 可以从零完整重建：每次构建都**删掉旧库重新建**，不存在“增量残留”。
 - 重复执行不会产生重复数据。
 - 记录构建元信息（schema 版本、Git commit、YAML 清单指纹、警告数），便于追溯。
+
+模型精简后这里承担两件“构建期自动推导”的事：
+
+- ``CardPrinting.mode`` 由 ``product_id -> Product.mode`` 推导（不落库、按需算）；
+- FAQ / 技能文本等正文里的**关联实体**按名称自动识别，拼进 ``search_index.body``，
+  不再要求人工维护 ``related_*``；
+- 检索用的规范化正文（原 ``normalized_text``）只在这里生成，不写回 YAML。
 """
 
 from __future__ import annotations
@@ -30,65 +37,50 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
-    "product": (
-        "name", "series", "mode", "publisher", "release_year", "release_date",
-        "edition", "general_sets", "card_sets", "notes", "verification_status",
-    ),
-    "general_set": ("name", "parent_id", "product_id", "sort_order", "notes",
-                    "verification_status"),
-    "general": ("name", "notes"),
+    "product": ("name", "release_year", "mode", "general_sets", "card_sets"),
+    "general": ("name",),
     "general_variant": (
-        "general_id", "variant", "title", "general_number", "mode", "faction", "hp",
-        "gender", "product_id", "general_set", "illustrator", "image", "zhulianbihe",
-        "notes", "verification_status",
+        "general_id", "variant", "title", "general_number", "illustrator", "image",
+        "mode", "faction", "hp", "gender", "product_id", "general_set", "zhulianbihe",
+        "verification_status", "review_note",
     ),
-    "skill": ("name", "notes"),
+    "skill": ("name", "review_note"),
     "skill_version": (
-        "skill_id", "mode", "text", "version_label", "product_id", "package",
-        "effective_from", "effective_to", "previous_version_id", "change_note",
-        "related_keywords", "related_timing_ids", "notes", "verification_status",
+        "skill_id", "mode", "text", "version_label", "product_id", "previous_version_id",
+        "verification_status", "review_note",
     ),
-    "card": ("name", "card_type", "subtype", "related_keywords", "notes"),
+    "card": ("name", "card_type", "subtype", "review_note"),
     "card_printing": (
-        "card_id", "name_printed", "mode", "product_id", "package", "card_set",
-        "suit", "rank", "quantity", "printed_text", "normalized_text",
-        "bottom_right_mark", "card_number", "illustrator", "image", "notes", "verification_status",
+        "card_id", "name_printed", "product_id", "card_set", "suit", "rank", "quantity",
+        "printed_text", "bottom_right_mark", "card_number", "image",
+        "verification_status", "review_note",
     ),
-    "faq": (
-        "question", "answer", "mode", "related_general_ids", "related_skill_ids",
-        "related_card_ids", "related_keywords", "related_timing_ids", "notes",
-        "verification_status",
-    ),
-    "keyword": (
-        "name", "definition", "mode", "related_keyword_ids",
-        "related_timing_ids", "notes", "verification_status",
-    ),
-    "timing": (
-        "name", "description", "mode", "parent_id", "previous_ids", "next_ids",
-        "related_keywords", "related_skill_ids", "related_faq_ids", "notes",
-        "verification_status",
-    ),
+    "faq": ("question", "answer", "mode", "verification_status"),
+    "keyword": ("name", "definition", "mode", "verification_status"),
+    "timing": ("name", "description", "mode", "verification_status"),
 }
 
 #: 以 JSON 文本落库的多值列
-JSON_COLUMNS: frozenset[str] = frozenset(
-    {
-        "general_sets", "card_sets", "related_keywords",
-        "related_timing_ids", "related_general_ids", "related_skill_ids",
-        "related_card_ids", "related_keyword_ids", "previous_ids", "next_ids",
-        "related_faq_ids", "zhulianbihe",
-    }
-)
+JSON_COLUMNS: frozenset[str] = frozenset({"general_sets", "card_sets", "zhulianbihe"})
 
-_INT_COLUMNS = frozenset({"rank", "release_year", "quantity", "sort_order", "yaml_line"})
+_INT_COLUMNS = frozenset({"rank", "release_year", "quantity", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
 
+#: 还会保存来源的实体（其余实体的来源由 product_id 定位）
+SOURCE_KINDS: frozenset[str] = frozenset({"skill_version", "faq", "keyword", "timing"})
+
+#: source_key 列（只有 SOURCE_KINDS 有）
+SOURCE_TRACE_COLUMN = "source_key"
+
 #: 每个实体表都会追加的可追溯性列
-TRACE_COLUMNS: tuple[str, ...] = ("source_key", "yaml_file", "yaml_line")
+TRACE_COLUMNS: tuple[str, ...] = ("yaml_file", "yaml_line")
+
+#: 用于“按名称自动识别关联”的实体类型
+NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
 
 #: 索引：(名称, 定义)
 INDEXES: tuple[tuple[str, str], ...] = (
@@ -99,7 +91,6 @@ INDEXES: tuple[tuple[str, str], ...] = (
     ("idx_variant_skills_skill", "variant_skills(skill_id)"),
     ("idx_skill_versions_skill", "skill_versions(skill_id, mode)"),
     ("idx_skill_versions_prev", "skill_versions(previous_version_id)"),
-    ("idx_skill_versions_window", "skill_versions(skill_id, effective_from, effective_to)"),
     ("idx_card_printings_card", "card_printings(card_id)"),
     ("idx_card_printings_product", "card_printings(product_id)"),
     ("idx_card_printings_mark", "card_printings(bottom_right_mark)"),
@@ -156,12 +147,11 @@ class BuildResult:
 
 
 def source_key(source: Any) -> str | None:
-    """把内嵌 source 结构规范化为可去重的 key。"""
+    """把精简后的 source 结构（type + reference）规范化为可去重的 key。"""
     if source is None:
         return None
     payload = "|".join(
-        [str(getattr(source, "type", "")), str(getattr(source, "title", "")),
-         str(getattr(source, "reference", ""))]
+        [str(getattr(source, "type", "")), str(getattr(source, "reference", ""))]
     )
     return "src_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
@@ -219,6 +209,48 @@ def _column_value(entity: Any, column: str) -> Any:
     return value
 
 
+def _trace_columns(kind: str) -> tuple[str, ...]:
+    if kind in SOURCE_KINDS:
+        return (SOURCE_TRACE_COLUMN, *TRACE_COLUMNS)
+    return TRACE_COLUMNS
+
+
+def mode_of_product(bundle: DataBundle, product_id: str | None) -> str | None:
+    """``CardPrinting.mode`` 由 ``product_id -> Product.mode`` 推导。"""
+    if not product_id:
+        return None
+    product = bundle.get("product", product_id)
+    return getattr(product, "mode", None) if product is not None else None
+
+
+# ---------------------------------------------------------------- 按名称自动识别
+
+
+def build_name_index(bundle: DataBundle) -> list[tuple[str, str, str]]:
+    """``(name, kind, id)`` 列表，名称长的在前，用于正文里的实体名识别。
+
+    单字名字（例如「杀」）不参与，避免把整段规则文本刷成链接。
+    """
+    rows: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for kind in NAME_KINDS:
+        for entity_id, entity in bundle.all(kind).items():
+            name = str(getattr(entity, "name", "") or "").strip()
+            if len(name) < 2 or name in seen:
+                continue
+            seen.add(name)
+            rows.append((name, kind, entity_id))
+    rows.sort(key=lambda row: (-len(row[0]), row[0]))
+    return rows
+
+
+def detect_mentions(text: str, index: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    """在文本里按名称做最长优先匹配，返回 ``[(name, kind, id)]``，去重且名称长的在前。"""
+    if not text:
+        return []
+    return [(name, kind, entity_id) for name, kind, entity_id in index if name in text]
+
+
 # ---------------------------------------------------------------- 建表
 
 
@@ -228,7 +260,7 @@ def _create_schema(conn: sqlite3.Connection, with_fts: bool) -> bool:
         columns = ["id TEXT PRIMARY KEY"]
         for column in COLUMNS[kind]:
             columns.append(f"{column} {_column_type(column)}")
-        for column in TRACE_COLUMNS:
+        for column in _trace_columns(kind):
             columns.append(f"{column} {_column_type(column)}")
         conn.execute(f"CREATE TABLE {spec.table} (\n  " + ",\n  ".join(columns) + "\n)")
 
@@ -245,14 +277,14 @@ def _create_schema(conn: sqlite3.Connection, with_fts: bool) -> bool:
     conn.execute(
         "CREATE TABLE sources (\n"
         "  source_key TEXT PRIMARY KEY,\n"
-        "  type TEXT, title TEXT, reference TEXT, notes TEXT\n"
+        "  type TEXT, reference TEXT\n"
         ")"
     )
     conn.execute(
         "CREATE TABLE search_index (\n"
         "  kind TEXT NOT NULL,\n"
         "  entity_id TEXT NOT NULL,\n"
-        "  name TEXT, aliases TEXT, body TEXT,\n"
+        "  name TEXT, body TEXT,\n"
         "  PRIMARY KEY (kind, entity_id)\n"
         ")"
     )
@@ -290,81 +322,90 @@ def _names_of(bundle: DataBundle, kind: str, ids: list[str]) -> str:
     return " ".join(x for x in names if x)
 
 
-def _search_row(bundle: DataBundle, kind: str, entity: Any) -> tuple[str, str, str]:
-    """返回 (name, aliases, body)，供 SQLite LIKE 与 FTS5 检索使用。"""
+def _search_row(
+    bundle: DataBundle,
+    kind: str,
+    entity: Any,
+    index: list[tuple[str, str, str]],
+) -> tuple[str, str]:
+    """返回 ``(name, body)``，供 SQLite LIKE 与 FTS5 检索使用。
+
+    ``body`` 里包含“按名称自动识别出来的关联实体名”，这正是原来 ``related_*``
+    手工字段想解决的问题。
+    """
     name = str(getattr(entity, "name", "") or getattr(entity, "name_printed", "") or entity.id)
-    aliases = ""
     parts: list[str] = []
 
+    def mention_names(text: str) -> list[str]:
+        return [hit[0] for hit in detect_mentions(text, index)]
+
     if kind == "product":
-        parts += [entity.series, entity.publisher, entity.edition, entity.notes]
         parts += list(entity.general_sets)
         parts += list(entity.card_sets)
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
         parts.append("武将牌 " + " ".join(entity.general_sets))
         parts.append("游戏牌 " + " ".join(entity.card_sets))
     elif kind == "general":
-        parts.append(entity.notes)
+        pass
     elif kind == "general_variant":
         general = bundle.get("general", entity.general_id)
         general_name = str(getattr(general, "name", entity.general_id))
         name = f"{general_name}（{entity.variant}）"
         parts += [
             entity.variant, entity.title, entity.faction, entity.general_set or "",
-            entity.notes, general_name, "、".join(entity.zhulianbihe or []),
+            general_name, "、".join(entity.zhulianbihe or []), entity.review_note,
         ]
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
         if entity.general_number:
             parts.append(entity.general_number)
         parts.append(_names_of(bundle, "skill", [ref.skill_id for ref in entity.skills]))
     elif kind == "skill":
-        parts.append(entity.notes)
+        parts.append(entity.review_note)
         for version in bundle.all("skill_version").values():
             if version.skill_id == entity.id:
-                parts += [version.text, version.version_label, version.change_note,
-                          MODE_LABELS.get(version.mode, version.mode)]
+                parts += [
+                    version.text, version.version_label,
+                    MODE_LABELS.get(version.mode, version.mode),
+                ]
     elif kind == "skill_version":
         skill = bundle.get("skill", entity.skill_id)
         skill_name = str(getattr(skill, "name", entity.skill_id))
         name = f"{skill_name} {entity.version_label}".strip()
-        parts += [entity.text, entity.version_label, entity.change_note, entity.notes,
-                  MODE_LABELS.get(entity.mode, entity.mode), entity.skill_id]
-        parts.append(_names_of(bundle, "keyword", entity.related_keywords))
-        parts.append(_names_of(bundle, "timing", entity.related_timing_ids))
+        parts += [
+            entity.text, entity.version_label, entity.review_note,
+            MODE_LABELS.get(entity.mode, entity.mode), entity.skill_id,
+        ]
+        parts += mention_names(entity.text)
     elif kind == "card":
-        parts += [entity.subtype, entity.notes, CARD_TYPE_LABELS.get(entity.card_type, "")]
-        parts.append(_names_of(bundle, "keyword", entity.related_keywords))
+        parts += [
+            entity.subtype, entity.review_note,
+            CARD_TYPE_LABELS.get(entity.card_type, ""),
+        ]
     elif kind == "card_printing":
         product = bundle.get("product", entity.product_id)
+        product_name = str(getattr(product, "name", entity.product_id))
+        mode = mode_of_product(bundle, entity.product_id)
         parts += [
-            entity.name_printed, entity.printed_text, entity.normalized_text,
-            entity.bottom_right_mark, entity.card_number, entity.notes,
-            entity.package or "", entity.card_set or "",
+            entity.name_printed, entity.printed_text, entity.bottom_right_mark,
+            entity.card_number, entity.card_set or "", entity.review_note,
             SUIT_LABELS.get(entity.suit, entity.suit),
             str(entity.rank) if entity.rank is not None else "",
-            MODE_LABELS.get(entity.mode, entity.mode),
-            str(getattr(product, "name", entity.product_id)),
+            MODE_LABELS.get(mode, mode or ""),
+            product_name,
         ]
+        parts += mention_names(entity.printed_text)
     elif kind == "faq":
         name = entity.question if len(entity.question) <= 60 else entity.question[:60] + "…"
-        parts += [entity.question, entity.answer, entity.notes,
-                  MODE_LABELS.get(entity.mode, entity.mode)]
-        parts.append(_names_of(bundle, "general", entity.related_general_ids))
-        parts.append(_names_of(bundle, "skill", entity.related_skill_ids))
-        parts.append(_names_of(bundle, "card", entity.related_card_ids))
-        parts.append(_names_of(bundle, "keyword", entity.related_keywords))
-        parts.append(_names_of(bundle, "timing", entity.related_timing_ids))
+        parts += [entity.question, entity.answer, MODE_LABELS.get(entity.mode, entity.mode)]
+        parts += mention_names(f"{entity.question}\n{entity.answer}")
     elif kind == "keyword":
-        parts += [entity.definition, entity.notes, MODE_LABELS.get(entity.mode, entity.mode)]
-        parts.append(_names_of(bundle, "keyword", entity.related_keyword_ids))
-        parts.append(_names_of(bundle, "timing", entity.related_timing_ids))
+        parts += [entity.definition, MODE_LABELS.get(entity.mode, entity.mode)]
+        parts += mention_names(entity.definition)
     elif kind == "timing":
-        parts += [entity.description, entity.notes, MODE_LABELS.get(entity.mode, entity.mode)]
-        parts.append(_names_of(bundle, "keyword", entity.related_keywords))
-        parts.append(_names_of(bundle, "skill", entity.related_skill_ids))
-        parts.append(_names_of(bundle, "faq", entity.related_faq_ids))
+        parts += [entity.description, MODE_LABELS.get(entity.mode, entity.mode)]
+        parts += mention_names(entity.description)
 
-    return name, aliases, " ".join(str(p) for p in parts if p)
+    return name, " ".join(str(p) for p in parts if p)
 
 
 # ---------------------------------------------------------------- 写入
@@ -376,7 +417,8 @@ def _insert_entities(conn: sqlite3.Connection, bundle: DataBundle) -> dict[str, 
         spec = KIND_BY_NAME[kind]
         entity_map = bundle.all(kind)
         counts[kind] = len(entity_map)
-        columns = ["id", *COLUMNS[kind], *TRACE_COLUMNS]
+        trace = _trace_columns(kind)
+        columns = ["id", *COLUMNS[kind], *trace]
         placeholders = ", ".join("?" for _ in columns)
         sql = f"INSERT INTO {spec.table} ({', '.join(columns)}) VALUES ({placeholders})"
         rows = []
@@ -384,8 +426,9 @@ def _insert_entities(conn: sqlite3.Connection, bundle: DataBundle) -> dict[str, 
             origin = bundle.origin_of(kind, entity_id) or Origin("?", 0, "")
             values = [entity.id]
             values += [_column_value(entity, column) for column in COLUMNS[kind]]
-            values += [source_key(getattr(entity, "source", None)),
-                       f"data/{origin.path}", origin.line]
+            if SOURCE_TRACE_COLUMN in trace:
+                values.append(source_key(getattr(entity, "source", None)))
+            values += [f"data/{origin.path}", origin.line]
             rows.append(values)
         conn.executemany(sql, rows)
     return counts
@@ -402,12 +445,10 @@ def _insert_sources(conn: sqlite3.Connection, bundle: DataBundle) -> int:
             rows[key] = (
                 key,
                 str(getattr(source, "type", "")),
-                str(getattr(source, "title", "")),
                 str(getattr(source, "reference", "")),
-                str(getattr(source, "notes", "")),
             )
     conn.executemany(
-        "INSERT INTO sources (source_key, type, title, reference, notes) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO sources (source_key, type, reference) VALUES (?, ?, ?)",
         list(rows.values()),
     )
     return len(rows)
@@ -428,15 +469,16 @@ def _insert_relations(conn: sqlite3.Connection, bundle: DataBundle) -> None:
 
 
 def _insert_search_index(conn: sqlite3.Connection, bundle: DataBundle) -> None:
+    index = build_name_index(bundle)
     rows = []
     fts_rows = []
     for kind in KIND_ORDER:
         for entity_id, entity in sorted(bundle.all(kind).items()):
-            name, aliases, body = _search_row(bundle, kind, entity)
-            rows.append((kind, entity_id, name, aliases, body))
-            fts_rows.append((kind, entity_id, cjk_spaced(f"{name} {aliases} {body}")))
+            name, body = _search_row(bundle, kind, entity, index)
+            rows.append((kind, entity_id, name, body))
+            fts_rows.append((kind, entity_id, cjk_spaced(f"{name} {body}")))
     conn.executemany(
-        "INSERT INTO search_index (kind, entity_id, name, aliases, body) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO search_index (kind, entity_id, name, body) VALUES (?, ?, ?, ?)",
         rows,
     )
     try:

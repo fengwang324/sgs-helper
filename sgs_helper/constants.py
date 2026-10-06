@@ -15,10 +15,6 @@ from enum import Enum
 #: 约定带业务前缀：product_ / general_ / skill_ / card_ / faq_ / keyword_ / timing_
 ID_PATTERN = r"^[a-z][a-z0-9_]*$"
 
-#: 日期在 YAML 中写成 ``2025-06-01``；生效区间按**日期闭区间**处理
-#: （effective_from <= as_of <= effective_to），未填写的一端视为无穷。
-DATE_FORMAT = "YYYY-MM-DD"
-
 
 class Mode(str, Enum):
     """游戏模式。``common`` 表示跨模式通用（例如基础规则关键词）。"""
@@ -92,6 +88,13 @@ SOURCE_LABELS: dict[str, str] = {
     "discussion": "玩家讨论",
 }
 
+#: Source 只保存 type + reference；展示用的来源名在这里按 reference 推导，
+#: 认不出来的就退化成 type 标签（+ reference 原文）。
+SOURCE_TITLE_BY_REFERENCE: dict[str, str] = {
+    "https://gltjk.com/sanguosha/rules/": "三国杀官方规则集 3.0",
+    "https://www.sanguosha.cn/index.php/pc/hero-detail-83.html": "三国杀移动版官网·武将介绍·曹昂",
+}
+
 
 class CardType(str, Enum):
     basic = "basic"                  # 基本牌
@@ -156,7 +159,6 @@ class KindSpec:
 
 KINDS: tuple[KindSpec, ...] = (
     KindSpec("product", "products", "products", "实体产品", "product_"),
-    KindSpec("general_set", "general_sets", "general_sets", "武将牌系列", "set_"),
     KindSpec("general", "generals", "generals", "武将", "general_"),
     KindSpec("general_variant", "general_variants", "general_variants", "武将版本", "variant_"),
     KindSpec("skill", "skills", "skills", "技能本体", "skill_"),

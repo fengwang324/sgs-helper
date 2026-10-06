@@ -7,12 +7,7 @@ definition: |-
   例如：刘禅进行【乐不思蜀】的判定，结果不为红桃，刘禅摸牌阶段结束后已经跳过出牌阶段，无法再次跳过出牌阶段作为发动【放权】的消耗，因此不可以发动【放权】。
   ◆角色跳过一个回合，“此回合结束后”也被跳过，直接进入下回合的“回合开始前”。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏流程」

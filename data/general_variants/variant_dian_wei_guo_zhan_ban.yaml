@@ -14,10 +14,4 @@ general_set: 国战标准
 skills:
   - skill_id: skill_qiang_xi
     version_id: skill_qiang_xi_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WEI 012
 verification_status: unverified
-notes: ''

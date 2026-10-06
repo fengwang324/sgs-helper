@@ -2,12 +2,7 @@ id: keyword_jue_se_de_ji_neng
 name: 角色的技能
 definition: 仅指角色的武将技能。角色的装备技能是角色拥有的技能，但非角色的技能。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

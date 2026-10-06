@@ -51,15 +51,7 @@ answer: |-
   凌天翼按：补充一个结算原则混合运用的案例：
   例如：装备【雌雄双股剑】的伏完对伏皇后使用【杀】，伏皇后在成为目标时发动【求援】令关银屏也成为此【杀】的目标。当伏完指定伏皇后、关银屏（按行动顺序排列）为目标后，根据单角色结算原则，伏完须先选择是否各对伏皇后和关银屏发动武将技能【谋溃】，再选择是否各对伏皇后和关银屏发动装备技能【雌雄双股剑】。其中：当伏完需要发动【谋溃】时，根据多角色结算原则，其须先选择是否对伏皇后发动【谋溃】，再选择是否对关银屏发动【谋溃】；当伏完需要发动【雌雄双股剑】时，根据多角色结算原则，其须先选择是否对伏皇后发动【雌雄双股剑】，再选择是否对关银屏发动【雌雄双股剑】。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》规则章节：结算的原则

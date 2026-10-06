@@ -1,21 +1,11 @@
 id: skill_jue_jue_guozhan_qlhd_v1
 skill_id: skill_jue_jue
 mode: guozhan
-text: |-
-  你杀死势力与你相同的角色不执行奖惩。弃牌阶段开始时，你可以失去1点体力，然后此阶段结束时，若你于此阶段内弃置过手牌，则你令所有其他角色各选择一项：1.令你对其造成1点伤害：2.将×张手牌放入弃牌堆（X为你于此阶段内弃置的牌数)。
+text: 你杀死势力与你相同的角色不执行奖惩。弃牌阶段开始时，你可以失去1点体力，然后此阶段结束时，若你于此阶段内弃置过手牌，则你令所有其他角色各选择一项：1.令你对其造成1点伤害：2.将×张手牌放入弃牌堆（X为你于此阶段内弃置的牌数)。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

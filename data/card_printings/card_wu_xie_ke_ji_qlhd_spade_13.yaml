@@ -1,23 +1,13 @@
 id: card_wu_xie_ke_ji_qlhd_spade_13
 card_id: card_wu_xie_ke_ji
 name_printed: 无懈可击
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: spade
 rank: 13
 quantity: 1
 printed_text: 当一张锦囊牌对一名角色生效前，抵消此牌对该角色的效果；或抵消另一张【无懈可击】的效果。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_wu_xie_ke_ji_qlhd_spade_13.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

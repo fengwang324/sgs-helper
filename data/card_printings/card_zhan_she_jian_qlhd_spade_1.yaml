@@ -1,23 +1,13 @@
 id: card_zhan_she_jian_qlhd_spade_1
 card_id: card_zhan_she_jian
 name_printed: 斩蛇剑
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: spade
 rank: 1
 quantity: 1
 printed_text: 你使用【杀】对目标造成伤害后，你回复1点体力，若其为君主或野心家，杀死该角色。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_zhan_she_jian_qlhd_spade_1.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

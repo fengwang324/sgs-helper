@@ -5,16 +5,7 @@ description: |-
   会影响手牌上限的技能/技能效果：【太平要术②】、【横江】、【权计②】、【英姿②】、【慎拒】、【不屈②】、【血裔】、【妄尊】、【宗室】、【绝境②】、【神威②】。
   能对弃置手牌产生影响的技能有：【鸡肋】。
 mode: common
-parent_id: null
-previous_ids: []
-next_ids: []
-related_keywords: []
-related_skill_ids: []
-related_faq_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

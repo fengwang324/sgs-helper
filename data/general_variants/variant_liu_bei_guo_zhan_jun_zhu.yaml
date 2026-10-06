@@ -20,10 +20,5 @@ skills:
     version_id: skill_zhang_wu_guozhan_qlhd_v1
   - skill_id: skill_ji_zhao
     version_id: skill_ji_zhao_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.EM 001
 verification_status: unverified
-notes: Paddle 读出的称号为「美蜀糕」；三国杀 WIKI 该武将称号为「乱世的枭雄」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验
+review_note: Paddle 读出的称号为「美蜀糕」；三国杀 WIKI 该武将称号为「乱世的枭雄」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

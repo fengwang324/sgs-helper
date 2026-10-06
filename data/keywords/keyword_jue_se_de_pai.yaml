@@ -9,12 +9,7 @@ definition: |-
   ◆处理区里的牌不为任何角色所拥有。
   例如：对华佗使用【借刀杀人】选择对一名角色使用【杀】，华佗对该角色使用红色的【杀】进行响应，该角色受到1点伤害进入濒死状态，进行濒死结算，此时此【杀】不为任何角色所拥有，华佗不可以发动【急救】将此【杀】当【桃】对该角色使用。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「区域」

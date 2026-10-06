@@ -85,15 +85,7 @@ answer: |-
   能发动的武将技能：【博图】、【化身②】、【戚乱】、【连破】。此时机过后，便是下个回合的“回合开始前”。
   注意：任何时候，一旦满足了游戏结束的条件，则终止一切结算，结束游戏，宣布胜利方。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节：游戏的流程

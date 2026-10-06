@@ -4,16 +4,7 @@ answer: |-
   【祸首②】的效果的本质即你将此【南蛮入侵】的效果改为：每名目标角色需打出【杀】，否则受到发动此次【祸首②】的角色造成的1点伤害。
   例如：孟获在张春华使用【南蛮入侵】指定目标后会触发【祸首②】，轮到对曹操进行结算时，曹操没有打出【杀】进行响应，则受到孟获造成的1点伤害，在受到1点伤害后可以发动【奸雄】获得该【南蛮入侵】。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_huo_shou
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【孟获】技能【祸首】的裁定原文；问题栏取自原文首个分句

@@ -1,19 +1,12 @@
 # 模板：FAQ / 裁定。答案必须带来源。
+# 关联的武将 / 技能 / 卡牌 / 关键词不手写：构建索引与详情页会按实体名称自动识别。
 id: faq_0000
 question: >
   问题……
 answer: >
   结论……（并说明依据）
 mode: common                     # common/guozhan/identity/ol/mobile/other
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
-  type: official_faq
-  title: 官方 FAQ 第 N 版
+  type: official_faq             # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
   reference: ""
-  notes: ""
 verification_status: official     # unverified/community/official/physical_verified/conflict
-notes: ""

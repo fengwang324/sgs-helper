@@ -7,16 +7,7 @@ answer: |-
   例如：左慈在回合开始时发动【化身②】拥有周泰（旧风）的【不屈】，于出牌阶段内发动【不屈】，武将牌上共有X张不同点数的牌（体力为1-X），在回合结束后发动【化身②】拥有【急救】，进入濒死状态（体力未变化），进行濒死结算，此时不属于任何角色的回合，轮到左慈进行响应时，左慈可以发动【急救】对自己使用【桃】。
   例如：左慈发动【化身②】不能拥有【孝德】/【伪帝】。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_hua_shen
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【左慈】技能【化身】的裁定原文；问题栏取自原文首个分句

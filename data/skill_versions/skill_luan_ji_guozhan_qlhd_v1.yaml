@@ -1,21 +1,11 @@
 id: skill_luan_ji_guozhan_qlhd_v1
 skill_id: skill_luan_ji
 mode: guozhan
-text: |-
-  出牌阶段，你可以将两张手牌当【万箭齐发】使用（不能使用此回合内你发动本技能使用过的花色），然后势力与你相同的角色打出的【闪】结算结束后，其可以摸一张牌。
+text: 出牌阶段，你可以将两张手牌当【万箭齐发】使用（不能使用此回合内你发动本技能使用过的花色），然后势力与你相同的角色打出的【闪】结算结束后，其可以摸一张牌。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

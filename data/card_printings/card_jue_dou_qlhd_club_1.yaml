@@ -1,23 +1,13 @@
 id: card_jue_dou_qlhd_club_1
 card_id: card_jue_dou
 name_printed: 决斗
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: club
 rank: 1
 quantity: 1
 printed_text: 出牌阶段，对一名其他角色使用。由该角色开始，你与其轮流打出一张【杀】，首先不出【杀】的一方受到另一方造成的1点伤害。
-normalized_text: ''
 bottom_right_mark: 锦囊
 card_number: ''
-illustrator: ''
 image: card_jue_dou_qlhd_club_1.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

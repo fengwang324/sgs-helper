@@ -1,23 +1,13 @@
 id: card_bing_liang_cun_duan_qlhd_spade_10
 card_id: card_bing_liang_cun_duan
 name_printed: 兵粮寸断
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: spade
 rank: 10
 quantity: 1
 printed_text: 出牌阶段，你可将此牌置入一名其他角色的判定区。若【兵粮寸断】成为其判定牌且判定结果不为梅花，则跳过其下一个摸牌阶段。
-normalized_text: ''
 bottom_right_mark: D
 card_number: ''
-illustrator: ''
 image: card_bing_liang_cun_duan_qlhd_spade_10.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

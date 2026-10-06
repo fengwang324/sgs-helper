@@ -20,7 +20,7 @@
       <label for="f-skill-{{ index }}-combo">技能</label>
       <div class="combo" data-combo="skill">
         <input id="f-skill-{{ index }}-combo" class="combo-input" autocomplete="off"
-               placeholder="搜索技能名称 / 别名 / id，或输入新技能名"
+               placeholder="搜索技能名称 / id，或输入新技能名"
                value="{{ row.skill_name if row.skill_id else row.new_name }}">
         <input type="hidden" class="combo-value" name="skill_{{ index }}_skill_id" value="{{ row.skill_id }}">
         <input type="hidden" class="combo-new-name" name="skill_{{ index }}_new_name" value="{{ row.new_name }}">
@@ -41,11 +41,11 @@
     <div class="field version-field" {{ 'hidden' if not row.skill_id else '' }}>
       <label for="f-skill-{{ index }}-version">版本</label>
       <select id="f-skill-{{ index }}-version" name="skill_{{ index }}_version_id" class="version-select">
-        <option value="">（不指定：按模式+生效区间自动推导当前有效版本）</option>
+        <option value="">（不指定：按该技能的 mode 匹配唯一一条版本）</option>
         {% for option in row.version_options or [] %}
           <option value="{{ option.id }}"
                   {{ 'selected' if row.version_id == option.id else '' }}
-                  data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }} · {{ option.effective_from or '不限' }} ~ {{ option.effective_to or '至今' }}
+                  data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }}
 {{ option.text_excerpt }}">{% if option.display_label %}{{ option.display_label }} · {% endif %}{{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
         {% endfor %}
       </select>
@@ -165,7 +165,7 @@
 
 <section class="hint">
   <p>
-    两层结构：<strong>武将个体（General）</strong>只存名字/别名这类稳定信息；
+    两层结构：<strong>武将个体（General）</strong>只存名字这类稳定信息；
     <strong>模式 / 势力 / 体力 / 性别 / 称号 / 编号 / 武将牌系列 / 技能</strong>都属于
     <strong>版本（GeneralVariant）</strong>——「标准版诸葛亮」和「国战版诸葛亮」是同一个武将的两个版本，
     而「界诸葛亮」「神诸葛亮」因为官方名不同，是另外的武将个体。
@@ -301,7 +301,7 @@
         <input type="hidden" class="combo-value" name="general_set" value="{{ values.get('general_set', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">选择产品后会优先给该产品的 general_sets；也可以直接输入别的值。</p>
+      <p class="help">候选来自所选产品的 <code>general_sets</code>；选择产品后会立刻更新，也可以自己输入。</p>
     </div>
     <div class="field {{ 'has-error' if error_map.get('product_id') else '' }}">
       <label for="f-product-combo">产品（可空）</label>
@@ -326,8 +326,8 @@
     <span class="muted">技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行技能。</span>
   </p>
 
-  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') else '' }}>
-    <summary>高级信息（内部 ID / 别名 / 来源 / 备注）</summary>
+  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('review_note') else '' }}>
+    <summary>高级信息（内部 ID / 复核备注）</summary>
 
     <h3>武将个体（General）</h3>
     <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
@@ -336,41 +336,13 @@
       <p class="help">YAML 文件名 / URL / 外键都用它；已存在的武将不会被重新生成 ID。</p>
       {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
-    <div class="field">
-      <label for="f-general_notes">武将个体备注</label>
-      <textarea id="f-general_notes" name="general_notes" rows="2">{{ values.get('general_notes', '') }}</textarea>
-    </div>
 
     <h3>当前版本（{{ variant_label }}）</h3>
-    <fieldset class="source-group">
-      <legend>资料来源 source</legend>
-      <p class="help">可以留空（默认 unverified，会进入待核验页面）；也可以现在就填。</p>
-      <div class="field">
-        <label for="f-source-type">来源类型</label>
-        <select id="f-source-type" name="source.type">
-          <option value="">（不记录来源）</option>
-          {% for value, label in source_type_choices %}
-            <option value="{{ value }}" {{ 'selected' if values.get('source.type') == value else '' }}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="field">
-        <label for="f-source-title">来源标题</label>
-        <input id="f-source-title" name="source.title" value="{{ values.get('source.title', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-source-reference">来源引用（URL / 页码）</label>
-        <input id="f-source-reference" name="source.reference" value="{{ values.get('source.reference', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-source-notes">来源备注</label>
-        <textarea id="f-source-notes" name="source.notes" rows="2">{{ values.get('source.notes', '') }}</textarea>
-      </div>
-    </fieldset>
-
     <div class="field">
-      <label for="f-notes">版本备注</label>
-      <textarea id="f-notes" name="notes" rows="2">{{ values.get('notes', '') }}</textarea>
+      <label for="f-review_note">复核备注（review_note）</label>
+      <textarea id="f-review_note" name="review_note" rows="2"
+                placeholder="需要人工对照卡图 / 实物复核的异常；正常记录留空">{{ values.get('review_note', '') }}</textarea>
+      <p class="help">实体卡类没有 source；需要留痕的异常（OCR 误读、疑似错字…）写在这里。</p>
     </div>
   </details>
 

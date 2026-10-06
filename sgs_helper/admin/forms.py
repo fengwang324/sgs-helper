@@ -2,7 +2,7 @@
 
 不做复杂动态表单系统：字段类型由 ``model_json_schema()`` 推导，
 枚举渲染成下拉框、日期渲染成 date 输入、列表渲染成“一行一项”的 textarea、
-内嵌 ``Source`` 渲染成一组固定的四个字段。
+内嵌 ``Source`` 渲染成 ``type`` + ``reference`` 两个字段。
 
 解析阶段只做“格式级”转换与友好报错；语义校验（值域、交叉引用、一致性）一律交给
 ``validate_entities``，避免两套规则各说各话。
@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from enum import Enum
 from typing import Any, Mapping
 
 from ..constants import (
@@ -26,21 +27,17 @@ from ..constants import (
 )
 from ..schema import MODEL_BY_KIND
 from ..validate import REFERENCE_FIELDS
-from .yaml_writer import BLOCK_TEXT_FIELDS, SOURCE_KEY_ORDER
+from .yaml_writer import SOURCE_KEY_ORDER
 
-#: 字段 -> 中文标签（9 类实体共用；个别字段的语义在各 kind 下一致）
+#: 字段 -> 中文标签（按新模型：只保留真实存在的字段）
 FIELD_LABELS: dict[str, str] = {
     "id": "记录 ID",
     "name": "名称",
     "name_printed": "卡面印刷名",
-    "notes": "备注",
+    "review_note": "复核备注",
     "mode": "模式",
     "verification_status": "核验状态",
-    "series": "系列",
-    "publisher": "出版方",
     "release_year": "发行年份",
-    "release_date": "发行日期",
-    "edition": "版本/版次",
     "general_sets": "武将牌系列",
     "card_sets": "游戏牌牌堆",
     "faction": "势力",
@@ -48,7 +45,6 @@ FIELD_LABELS: dict[str, str] = {
     "gender": "性别",
     "product_id": "所属产品",
     "general_set": "武将牌系列",
-    "package": "包/分包",
     "title": "称号",
     "general_number": "编号",
     "variant": "版本标签",
@@ -57,12 +53,7 @@ FIELD_LABELS: dict[str, str] = {
     "skill_id": "所属技能",
     "text": "规则文本",
     "version_label": "版本标签",
-    "effective_from": "生效起始日",
-    "effective_to": "生效结束日",
     "previous_version_id": "前一版本",
-    "change_note": "变更说明",
-    "related_keywords": "相关关键词",
-    "related_timing_ids": "相关时点",
     "card_type": "卡牌类型",
     "subtype": "子类型",
     "card_id": "所属卡牌定义",
@@ -71,26 +62,15 @@ FIELD_LABELS: dict[str, str] = {
     "rank": "点数",
     "quantity": "数量",
     "printed_text": "卡面文本（逐字）",
-    "normalized_text": "检索用文本",
     "bottom_right_mark": "右下角角标",
     "card_number": "卡牌编号",
     "question": "问题",
     "answer": "回答/裁定",
     "definition": "定义",
     "description": "说明",
-    "parent_id": "父时点",
-    "previous_ids": "前序时点",
-    "next_ids": "后续时点",
-    "related_keyword_ids": "相关关键词",
-    "related_general_ids": "相关武将",
-    "related_skill_ids": "相关技能",
-    "related_card_ids": "相关卡牌",
-    "related_faq_ids": "相关 FAQ",
     "source": "资料来源",
     "source.type": "来源类型",
-    "source.title": "来源标题",
     "source.reference": "来源引用（URL / 页码）",
-    "source.notes": "来源备注",
 }
 
 #: 字段 -> 说明（放在输入框下方）
@@ -98,14 +78,15 @@ FIELD_HELP: dict[str, str] = {
     "id": "小写字母开头，只能包含小写字母、数字、下划线；建议带业务前缀，如 general_xxx。修改 ID 会同时移动 YAML 文件。",
     "mode": "common 表示跨模式通用。",
     "verification_status": "unverified 未核验 / community 社区资料 / official 官方依据 / physical_verified 实体卡已核验 / conflict 来源冲突。",
+    "review_note": "需要人工对照卡图 / 实物复核的异常（OCR 误读、疑似错字…）。正常记录留空。",
     "text": "技能规则原文。更新技能请新增一条 SkillVersion，不要改旧版本。",
     "printed_text": "照抄卡面文字，不要改写、不要补全。",
-    "bottom_right_mark": "单独保存右下角角标，不要写进 notes。",
+    "bottom_right_mark": "单独保存右下角角标，不要写进复核备注。",
     "rank": "支持 1-13，也接受 A/J/Q/K 写法。",
     "source.reference": "如果是 URL，页面上可以直接点击打开。",
     "previous_version_id": "指向被本版本取代的旧版本；旧版本保持原样。",
     "product_id": "填 null 或不填表示不绑定具体产品。",
-    "general_set": "武将牌系列 / 武将牌组名称（可搜索已有值，也可以直接输入新值）。",
+    "general_set": "武将牌系列 / 武将牌组名称；候选来自所选产品的 general_sets，也可以直接输入新值。",
     "general_sets": "一行一项：这个产品里的武将牌系列（国战标准、势备篇…）。",
     "card_sets": "一行一项：这个产品里的游戏牌牌堆（标准牌堆、九变牌堆…）。",
     "title": "武将卡上的称号，例如“独眼的罗刹”。",
@@ -121,14 +102,11 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
     {
         "text",
         "printed_text",
-        "normalized_text",
         "question",
         "answer",
         "definition",
         "description",
-        "change_note",
-        "notes",
-        "source.notes",
+        "review_note",
     }
 )
 
@@ -154,14 +132,6 @@ REFERENCE_TARGET_BY_FIELD: dict[str, str] = {
     "skill_ids": "skill",
     "card_id": "card",
     "previous_version_id": "skill_version",
-    "parent_id": "timing",
-    "related_keywords": "keyword",
-    "related_keyword_ids": "keyword",
-    "related_timing_ids": "timing",
-    "related_skill_ids": "skill",
-    "related_general_ids": "general",
-    "related_card_ids": "card",
-    "related_faq_ids": "faq",
 }
 
 #: 带 0.5 步进的数值字段
@@ -172,7 +142,7 @@ STEP_FIELDS: dict[str, str] = {"hp": "0.5"}
 class FieldSpec:
     name: str
     label: str
-    widget: str = "text"          # text | textarea | number | date | select | list | source
+    widget: str = "text"          # text | textarea | number | date | select | list | source | object
     required: bool = False
     choices: list[tuple[str, str]] = field(default_factory=list)
     default: Any = None
@@ -227,7 +197,11 @@ def _default_of(model: Any, name: str) -> Any:
 
 
 def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
-    """按模型定义生成字段规格（顺序 = 模型字段顺序）。"""
+    """按模型定义生成字段规格（顺序 = 模型字段顺序）。
+
+    字段集合完全由 ``schema.py`` 决定：模型里删掉的字段这里自然就消失了，
+    不需要（也不允许）在模板里留隐藏 input。
+    """
     model = MODEL_BY_KIND[kind]
     schema = model.model_json_schema()
     props: dict = schema.get("properties", {})
@@ -296,8 +270,7 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
                 spec.widget = "list"
                 spec.help = spec.help or "一行一项；留空表示没有。"
         elif type_name == "object":
-            # 内嵌对象（例如武将的 skills 关系列表）：由专用录入页负责，
-            # generic 表单既渲染不了也不该瞎猜，直接跳过。
+            # 内嵌对象：由专用录入页负责，generic 表单既渲染不了也不该瞎猜，直接跳过。
             spec.widget = "object"
         elif type_name == "integer":
             spec.widget = "number"
@@ -314,21 +287,6 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
         if name == "id":
             spec.help = FIELD_HELP["id"]
         specs.append(spec)
-
-        if name == "source":
-            for sub in SOURCE_KEY_ORDER:
-                key = f"source.{sub}"
-                specs.append(
-                    FieldSpec(
-                        name=key,
-                        label=FIELD_LABELS.get(key, sub),
-                        widget="textarea" if key in TEXTAREA_FIELDS else "text",
-                        required=sub == "type",
-                        default="" if sub != "type" else None,
-                        help=FIELD_HELP.get(key, ""),
-                        group="source",
-                    )
-                )
     return specs
 
 
@@ -350,6 +308,9 @@ def value_to_text(spec: FieldSpec, value: Any) -> str:
         return ""
     if spec.widget == "list":
         return "\n".join(str(item) for item in value)
+    if isinstance(value, Enum):
+        # use_enum_values 只影响校验结果；模型默认值可能仍是枚举成员
+        return str(value.value)
     if isinstance(value, date):
         return value.isoformat()
     if isinstance(value, bool):
@@ -379,7 +340,7 @@ def values_from_defaults(kind: str) -> dict[str, str]:
             default = spec.default
             if spec.name == "id":
                 default = ""
-            if isinstance(default, str) and spec.name == "verification_status" and not default:
+            if spec.name == "verification_status" and not default:
                 default = "unverified"
             values[spec.name] = value_to_text(spec, default)
     return values
@@ -413,7 +374,7 @@ def _convert_scalar(spec: FieldSpec, raw: str, errors: list[FieldError]) -> Any:
             return spec.default if spec.default is not None else None
         if spec.widget == "number" or spec.nullable:
             return None
-        # 普通的非 Optional 字符串字段（notes / version_label / change_note …）：留空就是空串
+        # 普通的非 Optional 字符串字段（version_label / subtitle / definition …）：留空就是空串
         return ""
     if spec.widget == "number":
         try:
@@ -429,6 +390,7 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
     errors: list[FieldError] = []
     candidate: dict[str, Any] = {}
     source: dict[str, Any] = {}
+    model = MODEL_BY_KIND[kind]
 
     for spec in form_specs(kind):
         raw = str(form.get(spec.name, "") or "").strip()
@@ -438,7 +400,7 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
         if spec.name in {"source", "skills"} or spec.widget in {"source", "object"}:
             continue  # 内嵌结构由专用录入页 / source.* 子字段处理
         if spec.widget == "list":
-            # 一行一项。**不做逗号切分**：别名里完全可能带逗号。
+            # 一行一项。**不做逗号切分**：系列名里完全可能带逗号。
             items = [line.strip() for line in raw.splitlines()]
             candidate[spec.name] = [item for item in items if item]
             continue
@@ -450,18 +412,18 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
             FieldError("id", "ID 只能使用小写字母、数字、下划线，且必须以小写字母开头")
         )
 
-    source_required = "source" in set(MODEL_BY_KIND[kind].model_json_schema().get("required", []))
-    if any(source.values()) or source_required:
-        if not source.get("type"):
-            errors.append(FieldError("source.type", "来源类型必填（资料来源是长期维护的关键）"))
-        candidate["source"] = {
-            "type": source.get("type", ""),
-            "title": source.get("title", ""),
-            "reference": source.get("reference", ""),
-            "notes": source.get("notes", ""),
-        }
-    else:
-        candidate["source"] = None
+    if "source" in model.model_fields:
+        # 只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才有 source 字段
+        source_required = "source" in set(model.model_json_schema().get("required", []))
+        if any(source.values()) or source_required:
+            if not source.get("type"):
+                errors.append(FieldError("source.type", "来源类型必填（资料来源是长期维护的关键）"))
+            candidate["source"] = {
+                "type": source.get("type", ""),
+                "reference": source.get("reference", ""),
+            }
+        else:
+            candidate["source"] = None
 
     return candidate, errors
 

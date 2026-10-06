@@ -1,23 +1,13 @@
 id: card_huo_qi_qlhd_none_na
 card_id: card_huo_qi
 name_printed: 祸起
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 指示物
 suit: none
 rank: null
 quantity: 1
 printed_text: 本轮内：所有角色受到的伤害+1。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_huo_qi_qlhd_none_na.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

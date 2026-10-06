@@ -19,10 +19,5 @@ skills:
     version_id: skill_ji_xi_guozhan_qlhd_v1
   - skill_id: skill_zi_liang
     version_id: skill_zi_liang_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WEI 015
 verification_status: unverified
-notes: Paddle 读出的称号为「矫的壮士」；三国杀 WIKI 该武将称号为「矫然的壮士」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验
+review_note: Paddle 读出的称号为「矫的壮士」；三国杀 WIKI 该武将称号为「矫然的壮士」（逐位相同 1 字），国战称号与身份局称号不同属正常，请对照卡图核验

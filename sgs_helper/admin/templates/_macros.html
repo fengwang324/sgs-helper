@@ -1,4 +1,4 @@
-{# 共用小宏：状态徽章、模式徽章、来源块、实体链接 #}
+{# 共用小宏：状态徽章、模式徽章、来源块、实体链接、自动关联 #}
 
 {% macro status_badge(status) -%}
   {%- if status -%}
@@ -22,11 +22,11 @@
   {%- endif -%}
 {%- endmacro %}
 
+{# source 只剩 type + reference #}
 {% macro source_block(source) -%}
   {%- if source -%}
     <table class="kv source">
       <tr><th>source.type</th><td><code>{{ source.type }}</code> {{ source.type_label }}</td></tr>
-      <tr><th>source.title</th><td>{{ source.title or '（空）' }}</td></tr>
       <tr><th>source.reference</th><td>
         {%- if source.reference -%}
           {%- if source.reference | is_url -%}
@@ -36,10 +36,35 @@
           {%- endif -%}
         {%- else -%}（空）{%- endif -%}
       </td></tr>
-      <tr><th>source.notes</th><td>{{ source.notes or '（空）' }}</td></tr>
     </table>
   {%- else -%}
-    <p class="muted">这条记录没有填写 source。资料来源是长期维护的关键，建议补上。</p>
+    <p class="muted">这条记录没有填写 source。</p>
+  {%- endif -%}
+{%- endmacro %}
+
+{# 自动识别出来的关联实体（repo.mentions 的返回值）：渲染成可点击链接 #}
+{% macro mention_list(mentions, empty='正文里没有识别到对应的武将 / 技能 / 卡牌 / 关键词 / 时点。') -%}
+  {%- if mentions -%}
+    <ul class="inline-list mentions">
+      {%- for item in mentions -%}
+        <li>
+          <span class="kind-chip small">{{ KIND_BY_NAME[item.kind].label if item.kind in KIND_BY_NAME else item.kind }}</span>
+          <a href="/view/{{ item.kind }}/{{ item.id }}">{{ item.name }}</a>
+          <code class="id">{{ item.id }}</code>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- else -%}
+    <p class="muted">{{ empty }}</p>
+  {%- endif -%}
+{%- endmacro %}
+
+{# 正文片段（store.annotate 的结果）：实体名变成可点击链接，其余按原文转义输出 #}
+{% macro rich_text(segments, empty='（空）') -%}
+  {%- if segments -%}
+    <div class="rule-text">{% for seg in segments %}{% if seg.kind %}<a class="elink mention" href="/view/{{ seg.kind }}/{{ seg.id }}" title="{{ seg.kind }} {{ seg.id }}">{{ seg.label }}</a>{% else %}{{ seg.text }}{% endif %}{% endfor %}</div>
+  {%- else -%}
+    <span class="muted">{{ empty }}</span>
   {%- endif -%}
 {%- endmacro %}
 

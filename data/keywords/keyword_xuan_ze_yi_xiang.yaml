@@ -17,12 +17,7 @@ definition: |-
   例如：邓艾和装备【寒冰剑】的张角（按座次排列）的攻击范围内都有A，且张角与A的距离为2。韩当对A发动【解烦】，确定邓艾、张角须依次选择一项。首先对邓艾进行结算，邓艾选择弃置一张武器牌，在此牌置入处理区后发动【屯田】，在判定牌生效前张角发动【鬼道】打出装备区里的【寒冰剑】。然后轮到对张角进行结算时，虽然此时A已经不在张角的攻击范围内，但张角依然需要执行选择一项的效果。
   注意：“选择一项”本身就是一个操作。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

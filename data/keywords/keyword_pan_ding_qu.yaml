@@ -8,12 +8,7 @@ definition: |-
   曹仁使用一张装备牌，然后可以弃置场上的一张装备牌，但不能弃置A的判定区里被视为【乐不思蜀】的【贯石斧】。
   曹仁使用一张锦囊牌，然后可以弃置A的判定区里被视为【乐不思蜀】的【贯石斧】。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「区域」

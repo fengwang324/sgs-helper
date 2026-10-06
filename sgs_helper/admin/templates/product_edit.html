@@ -29,7 +29,8 @@
 
 <section class="hint">
   <p>
-    日常只需要填 <strong>名称 / 发行年份 / 模式 / 武将牌 / 游戏牌</strong>，其余都可以留空以后再补。
+    产品只有 <strong>名称 / 发行年份 / 模式 / 武将牌系列 / 游戏牌牌堆</strong> 这几个字段
+    （系列、出版方、版次、发行日期、来源、核验状态、备注都已从模型里删除）。
     保存流程仍然是：<strong>写回 YAML → 校验 → 重建 SQLite</strong>；校验不过一个字都不会落盘。
   </p>
 </section>
@@ -61,13 +62,14 @@
           <option value="{{ value }}" {{ 'selected' if values.get('mode') == value else '' }}>{{ label }}</option>
         {% endfor %}
       </select>
+      <p class="help">这个产品的模式；实体卡（CardPrinting）的 mode 由这里推导。</p>
       {% for message in error_map.get('mode', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
 
   <fieldset class="tag-fieldset">
     <legend>武将牌</legend>
-    <p class="help">这个产品包含的<strong>武将牌系列 / 武将牌组名称</strong>（例如 国战标准、势备篇、九变篇、不臣篇）。可以有多个。</p>
+    <p class="help">这个产品包含的<strong>武将牌系列 / 武将牌组名称</strong>（例如 国战标准、势备篇、九变篇、不臣篇）。可以有多个；它同时是武将版本 <code>general_set</code> 的候选全集。</p>
     <input type="hidden" name="general_sets" id="f-general_sets" value="{{ values.get('general_sets', '') }}">
     <div class="tag-input"
          data-target="f-general_sets"
@@ -88,72 +90,13 @@
     {% for message in error_map.get('card_sets', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
   </fieldset>
 
-  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('source.type') or error_map.get('verification_status') else '' }}>
+  <details class="advanced" {{ 'open' if error_map.get('id') else '' }}>
     <summary>高级信息（可选，日常不用填）</summary>
     <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
       <label for="f-id">内部 ID</label>
       <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按名称自动生成">
       <p class="help">用于 YAML 文件名 / URL / 外键引用；留空时由后端生成合法且唯一的 ID。修改它会同时移动文件。</p>
       {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-    <div class="field-grid">
-      <div class="field">
-        <label for="f-series">系列</label>
-        <input id="f-series" name="series" value="{{ values.get('series', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-publisher">出版方</label>
-        <input id="f-publisher" name="publisher" value="{{ values.get('publisher', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-edition">版本 / 版次</label>
-        <input id="f-edition" name="edition" value="{{ values.get('edition', '') }}">
-      </div>
-      <div class="field {{ 'has-error' if error_map.get('release_date') else '' }}">
-        <label for="f-release_date">发行日期</label>
-        <input id="f-release_date" name="release_date" type="date" value="{{ values.get('release_date', '') }}">
-        {% for message in error_map.get('release_date', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-      </div>
-    </div>
-
-    <fieldset class="source-group">
-      <legend>资料来源 source</legend>
-      <div class="field {{ 'has-error' if error_map.get('source.type') else '' }}">
-        <label for="f-source-type">来源类型</label>
-        <select id="f-source-type" name="source.type">
-          <option value="">（不记录来源）</option>
-          {% for value, label in source_type_choices %}
-            <option value="{{ value }}" {{ 'selected' if values.get('source.type') == value else '' }}>{{ label }}</option>
-          {% endfor %}
-        </select>
-        {% for message in error_map.get('source.type', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-      </div>
-      <div class="field">
-        <label for="f-source-title">来源标题</label>
-        <input id="f-source-title" name="source.title" value="{{ values.get('source.title', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-source-reference">来源引用（URL / 页码）</label>
-        <input id="f-source-reference" name="source.reference" value="{{ values.get('source.reference', '') }}">
-      </div>
-      <div class="field">
-        <label for="f-source-notes">来源备注</label>
-        <textarea id="f-source-notes" name="source.notes" rows="2">{{ values.get('source.notes', '') }}</textarea>
-      </div>
-    </fieldset>
-
-    <div class="field {{ 'has-error' if error_map.get('verification_status') else '' }}">
-      <label for="f-verification">核验状态</label>
-      <select id="f-verification" name="verification_status">
-        {% for value, label in verification_choices %}
-          <option value="{{ value }}" {{ 'selected' if values.get('verification_status') == value else '' }}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      {% for message in error_map.get('verification_status', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-    <div class="field">
-      <label for="f-notes">备注</label>
-      <textarea id="f-notes" name="notes" rows="2">{{ values.get('notes', '') }}</textarea>
     </div>
   </details>
 

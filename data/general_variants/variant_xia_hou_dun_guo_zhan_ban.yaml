@@ -16,10 +16,4 @@ zhulianbihe:
 skills:
   - skill_id: skill_gang_lie
     version_id: skill_gang_lie_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WEI 003
 verification_status: unverified
-notes: ''

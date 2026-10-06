@@ -1,23 +1,17 @@
 # 模板：CardPrinting（某个实体产品里实际印刷的一张卡）
+# mode 不在这里存：由 product_id -> Product.mode 推导；检索用文本在构建 SQLite 时动态生成。
 id: card_change_me_product_change_me_spade_7
 card_id: card_change_me
 name_printed: 卡面印的名字
-mode: guozhan
 product_id: product_change_me     # 必填：这张实体卡来自哪个产品
-package: standard
 card_set: standard
 suit: spade                       # spade/heart/club/diamond/none
 rank: 7                           # 1..13，也可以写 A/J/Q/K
 quantity: 1
 printed_text: >
   卡面原文，逐字照抄。
-normalized_text: 检索用规范化文本（可为空；不会覆盖 printed_text）
 bottom_right_mark: 君              # 右下角角标，单独保存
 card_number: ""
-source:
-  type: physical_card
-  title: 本人实体卡
-  reference: ""
-  notes: ""
-verification_status: physical_verified
-notes: ""
+image: ""
+verification_status: physical_verified   # unverified/community/official/physical_verified/conflict
+review_note: ""                   # 需要人工对照卡图/实物复核的异常（OCR 误读、牌堆归属待定…）

@@ -1,23 +1,13 @@
 id: card_wu_gu_feng_deng_qlhd_heart_3
 card_id: card_wu_gu_feng_deng
 name_printed: 五谷丰登
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: heart
 rank: 3
 quantity: 1
 printed_text: 出牌阶段，对所有角色使用。你从牌堆亮出等同于现存角色数量的牌，每名目标角色选择并获得其中的一张。
-normalized_text: ''
 bottom_right_mark: 锦囊
 card_number: ''
-illustrator: ''
 image: card_wu_gu_feng_deng_qlhd_heart_3.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

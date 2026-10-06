@@ -31,15 +31,7 @@ answer: |-
   锦囊牌
   锦囊牌上带有“锦囊”标识。锦囊牌分为两类，带有沙漏标识的为“延时类锦囊牌”，没有沙漏标识的为“非延时类锦囊牌”。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》术语章节：牌

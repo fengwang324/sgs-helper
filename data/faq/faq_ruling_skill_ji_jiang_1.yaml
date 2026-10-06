@@ -6,16 +6,7 @@ answer: |-
   例如：主公刘备发动【激将】需要对手牌数为1的诸葛亮（标）使用【杀】，此时诸葛亮（标）是刘备使用【杀】的合法目标，诸葛亮（标）打出【杀】进行响应，会受到刘备造成的伤害。
   例如：李儒（旧将）对主公刘备使用【借刀杀人】选择对一名体力为1的蜀势力角色A使用【杀】时，刘备发动【激将】进行响应，A打出最后的手牌【杀】进行响应，在此【杀】置入处理区后李儒对A发动【绝策】，A受到1点伤害死亡，由于此【杀】的目标数量减为0，在此【杀】的打出结算完毕后终止此【杀】的使用流程，将之置入弃牌堆， 但视为刘备已经对【借刀杀人】响应成功，不需要把其武器交给李儒。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_ji_jiang
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【刘备】技能【激将】的裁定原文；问题栏取自原文首个分句

@@ -7,12 +7,7 @@ definition: |-
   ◆角色执行一次弃置X张牌的技能效果时，若该角色拥有的牌数小于X，则全部弃置。
   例如：已损失的体力值为3的孙坚发动【英魂】令只有一张手牌且装备区里没有牌的陆逊摸一张牌，然后弃置三张牌。陆逊摸一张牌后须弃置全部两张手牌，然后陆逊可以发动【连营】摸一张牌（不可以再弃置此牌）。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

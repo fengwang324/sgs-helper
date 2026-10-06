@@ -2,9 +2,10 @@
 
 两个数据来源：
 
-1. ``data_dir`` / ``built_db`` / ``conn`` —— 使用仓库里真实的 ``data/``（当前是 SAMPLE 数据）；
+1. ``data_dir`` / ``built_db`` / ``conn`` —— 使用仓库里真实的 ``data/``；
 2. ``synth`` / ``synth_db`` / ``synth_conn`` —— 测试自带的**合成数据集**，
-   用固定 id 和固定日期验证“当前有效版本”等行为，不依赖真实数据的增删。
+   用固定 id 验证引用完整性、技能版本绑定、按名称自动识别等行为，
+   不依赖真实数据的增删。
 """
 
 from __future__ import annotations
@@ -24,59 +25,66 @@ from sgs_helper.repo import connect  # noqa: E402
 
 DATA_DIR = ROOT / "data"
 
+#: 精简后的来源：只有 type + reference（展示名由渲染层推导）
 SOURCE_YAML = """source:
   type: community_db
-  title: 演示来源
   reference: ""
-  notes: 测试用
 """
 
 # ---------------------------------------------------------------- 合成数据集
-# 设计要点：3 条 skill_demo 版本覆盖「国战 / 身份局两代版本」，
-# 身份局 v1 于 2024-12-31 过期、v2 自 2025-01-01 生效，便于验证日期推导。
+# 设计要点：
+# - variant_demo_alpha_guozhan 的技能**不写 version_id**，靠 mode 回退匹配国战版本；
+# - variant_demo_alpha_identity 显式绑定 skill_demo_identity_v1；
+# - variant_demo_beta_identity 同样不写 version_id，但身份局有两代版本 → 绑定不上；
+# - FAQ / 技能文本里的关联实体靠名称自动识别，不再有 related_* 字段。
 
 SYNTHETIC: dict[str, str] = {
-    "products/demo_a.yaml": f"""id: product_demo_a
+    "products/demo_a.yaml": """id: product_demo_a
 name: 演示产品A
-series: 演示系列
 mode: guozhan
-publisher: 演示
 release_year: 2024
-edition: 初版
 general_sets:
   - 演示武将牌系列
 card_sets:
   - 演示牌堆
-{SOURCE_YAML}verification_status: unverified
 """,
-    "products/demo_b.yaml": f"""id: product_demo_b
+    "products/demo_b.yaml": """id: product_demo_b
 name: 演示产品B
 mode: identity
 release_year: 2020
-{SOURCE_YAML}verification_status: unverified
+general_sets:
+  - 演示武将牌系列
+card_sets:
+  - 演示牌堆
 """,
-    # 武将：General（个体，只有名字/别名）+ GeneralVariant（模式/势力/体力/技能…）
+    # 武将个体：只有 id + name
     "generals/demo_alpha.yaml": """id: general_demo_alpha
 name: 演示武将甲
 """,
     "generals/demo_beta.yaml": """id: general_demo_beta
 name: 演示武将乙
 """,
-    "general_variants/demo_alpha_guozhan.yaml": f"""id: variant_demo_alpha_guozhan
+    "general_variants/demo_alpha_guozhan.yaml": """id: variant_demo_alpha_guozhan
 general_id: general_demo_alpha
 variant: 国战版
 title: 演示称号甲
+general_number: G.WEI 001
+illustrator: 演示画师
+image: variant_demo_alpha_guozhan.jpg
 mode: guozhan
 faction: 群
 hp: 1.5
 gender: male
 product_id: product_demo_a
 general_set: 演示武将牌系列
+zhulianbihe:
+  - 演示武将乙
 skills:
   - skill_id: skill_demo
-{SOURCE_YAML}verification_status: unverified
+verification_status: unverified
+review_note: 演示用待复核说明
 """,
-    "general_variants/demo_alpha_identity.yaml": f"""id: variant_demo_alpha_identity
+    "general_variants/demo_alpha_identity.yaml": """id: variant_demo_alpha_identity
 general_id: general_demo_alpha
 variant: 标准版
 mode: identity
@@ -86,9 +94,9 @@ gender: male
 skills:
   - skill_id: skill_demo
     version_id: skill_demo_identity_v1
-{SOURCE_YAML}verification_status: unverified
+verification_status: unverified
 """,
-    "general_variants/demo_beta_identity.yaml": f"""id: variant_demo_beta_identity
+    "general_variants/demo_beta_identity.yaml": """id: variant_demo_beta_identity
 general_id: general_demo_beta
 variant: 标准版
 mode: identity
@@ -98,20 +106,21 @@ gender: female
 product_id: product_demo_b
 skills:
   - skill_id: skill_demo
-{SOURCE_YAML}verification_status: unverified
+verification_status: unverified
 """,
-    "skills/demo.yaml": f"""id: skill_demo
+    "skills/demo.yaml": """id: skill_demo
 name: 演示技能
-{SOURCE_YAML}""",
-    "skills/demo_other.yaml": f"""id: skill_demo_other
+""",
+    "skills/demo_other.yaml": """id: skill_demo_other
 name: 另一个演示技能
-{SOURCE_YAML}""",
+review_note: 演示用技能名待复核
+""",
     "skill_versions/demo_other_v1.yaml": f"""id: skill_demo_other_v1
 skill_id: skill_demo_other
 mode: guozhan
 text: 另一个技能的演示文本
+version_label: 演示初版
 product_id: product_demo_a
-effective_from: 2024-01-01
 {SOURCE_YAML}verification_status: unverified
 """,
     "skill_versions/demo_guozhan_v1.yaml": f"""id: skill_demo_guozhan_v1
@@ -120,11 +129,7 @@ mode: guozhan
 text: 国战版演示技能文本
 version_label: 国战初版
 product_id: product_demo_a
-effective_from: 2024-01-01
-related_keywords:
-  - keyword_demo
-related_timing_ids:
-  - timing_demo
+previous_version_id: null
 {SOURCE_YAML}verification_status: unverified
 """,
     "skill_versions/demo_identity_v1.yaml": f"""id: skill_demo_identity_v1
@@ -133,8 +138,6 @@ mode: identity
 text: 身份局一代演示技能文本
 version_label: 身份局初版
 product_id: product_demo_b
-effective_from: 2020-01-01
-effective_to: 2024-12-31
 {SOURCE_YAML}verification_status: unverified
 """,
     "skill_versions/demo_identity_v2.yaml": f"""id: skill_demo_identity_v2
@@ -143,22 +146,19 @@ mode: identity
 text: 身份局二代演示技能文本
 version_label: 平衡调整后
 product_id: null
-effective_from: 2025-01-01
 previous_version_id: skill_demo_identity_v1
-change_note: 演示用变更说明
 {SOURCE_YAML}verification_status: unverified
+review_note: 演示用待复核说明
 """,
-    "cards/demo_card.yaml": f"""id: card_demo
+    "cards/demo_card.yaml": """id: card_demo
 name: 演示卡牌
 card_type: basic
 subtype: normal
-related_keywords:
-  - keyword_demo
+review_note: 演示用待复核说明
 """,
-    "card_printings/demo_a_spade_1.yaml": f"""id: card_demo_a_spade_1
+    "card_printings/demo_a_spade_1.yaml": """id: card_demo_a_spade_1
 card_id: card_demo
 name_printed: 演示卡牌
-mode: guozhan
 product_id: product_demo_a
 card_set: base
 suit: spade
@@ -166,62 +166,48 @@ rank: 1
 printed_text: A 产品演示卡面原文
 bottom_right_mark: 君
 card_number: "001"
-{SOURCE_YAML}verification_status: unverified
+image: card_demo_a_spade_1.jpg
+verification_status: unverified
+review_note: 演示用待复核说明
 """,
-    "card_printings/demo_b_heart_5.yaml": f"""id: card_demo_b_heart_5
+    "card_printings/demo_b_heart_5.yaml": """id: card_demo_b_heart_5
 card_id: card_demo
 name_printed: 演示卡牌
-mode: identity
 product_id: product_demo_b
 card_set: base
 suit: heart
 rank: 5
 printed_text: B 产品演示卡面原文
-{SOURCE_YAML}verification_status: unverified
+verification_status: unverified
 """,
     "faq/demo_1.yaml": f"""id: faq_demo_1
-question: 演示问题：技能如何结算？
-answer: 演示答案（非真实裁定）
+question: 演示问题：演示技能的结算？
+answer: 演示答案：演示技能与演示卡牌一起结算。
 mode: identity
-related_skill_ids:
-  - skill_demo
-related_card_ids:
-  - card_demo
-related_keywords:
-  - keyword_demo
-related_timing_ids:
-  - timing_demo
 {SOURCE_YAML}verification_status: community
 """,
     "keywords/demo.yaml": f"""id: keyword_demo
 name: 演示关键词
 definition: 演示用规则关键词定义
-related_timing_ids:
-  - timing_demo
+mode: common
 {SOURCE_YAML}verification_status: unverified
 """,
     "timings/demo.yaml": f"""id: timing_demo
 name: 演示时点
 description: 演示用时点说明
-next_ids:
-  - timing_demo_next
-related_keywords:
-  - keyword_demo
-  - keyword_demo2
-related_skill_ids:
-  - skill_demo
+mode: common
 {SOURCE_YAML}verification_status: unverified
 """,
     "timings/demo_next.yaml": f"""id: timing_demo_next
 name: 演示后续时点
 description: 演示用的后续时点
-previous_ids:
-  - timing_demo
+mode: common
 {SOURCE_YAML}verification_status: unverified
 """,
     "keywords/demo2.yaml": f"""id: keyword_demo2
 name: 演示关键词二
 definition: 第二个演示关键词
+mode: common
 {SOURCE_YAML}verification_status: unverified
 """,
 }
@@ -259,7 +245,7 @@ def copy_of_data(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def synth(tmp_path: Path) -> Path:
-    """合成数据集（固定 id / 固定日期）。"""
+    """合成数据集（固定 id）。"""
     return write_dataset(tmp_path / "data", SYNTHETIC)
 
 

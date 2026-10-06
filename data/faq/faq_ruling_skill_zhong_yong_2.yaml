@@ -2,16 +2,7 @@ id: faq_ruling_skill_zhong_yong_2
 question: 若你发动【忠勇】选择执行的是第二项效果，为了简化结算，你于此次发动【忠勇】的时机不能发动【青龙偃月刀】
 answer: 若你发动【忠勇】选择执行的是第二项效果，为了简化结算，你于此次发动【忠勇】的时机不能发动【青龙偃月刀】。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_zhong_yong
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【周仓】技能【忠勇】的裁定原文；问题栏取自原文首个分句

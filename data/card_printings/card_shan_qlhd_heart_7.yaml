@@ -1,23 +1,13 @@
 id: card_shan_qlhd_heart_7
 card_id: card_shan
 name_printed: 闪
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 君主游戏牌
 suit: heart
 rank: 7
 quantity: 1
 printed_text: ''
-normalized_text: ''
 bottom_right_mark: 君
 card_number: ''
-illustrator: ''
 image: card_shan_qlhd_heart_7.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

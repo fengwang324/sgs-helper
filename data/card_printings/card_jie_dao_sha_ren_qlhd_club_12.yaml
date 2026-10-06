@@ -1,23 +1,13 @@
 id: card_jie_dao_sha_ren_qlhd_club_12
 card_id: card_jie_dao_sha_ren
 name_printed: 借刀杀人
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: club
 rank: 12
 quantity: 1
 printed_text: 出牌阶段，对装备区里有武器牌的一名其他角色使用。该角色需对其攻击范围内，由你指定的另一名角色使用一张【杀】，否则将装备区里的武器牌交给你。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_jie_dao_sha_ren_qlhd_club_12.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

@@ -13,12 +13,7 @@ definition: |-
   >
   例如：体力为0且装备【白银狮子】的步练师死亡时，曹丕对其发动【行殇】获得其所有牌，步练师在失去其装备区里的【白银狮子】时由于唯一的效果不能执行而不能触发【白银狮子②】。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏流程」

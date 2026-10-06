@@ -1,23 +1,13 @@
 id: card_jiu_zhou_ding_qlhd_heart_13
 card_id: card_jiu_zhou_ding
 name_printed: 九州鼎
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: heart
 rank: 13
 quantity: 1
 printed_text: ◆分发手牌前或洗牌后，将此牌从牌堆内置于弃牌堆。锁定技，若你装备区内有四张或以上奇珍牌，你当前阵营获得游戏胜利。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_jiu_zhou_ding_qlhd_heart_13.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

@@ -1,23 +1,13 @@
 id: card_teng_jia_qlhd_club_2
 card_id: card_teng_jia
 name_printed: 藤甲
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: club
 rank: 2
 quantity: 1
 printed_text: ◆锁定技，【南蛮入侵】、【万箭齐发】和普通【杀】对你无效。当你受到火焰伤害时，此伤害+1。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_teng_jia_qlhd_club_2.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

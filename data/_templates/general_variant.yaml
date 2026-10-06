@@ -1,32 +1,28 @@
 # 模板：武将版本（GeneralVariant）——同一个武将的某个玩法/版本下的数据。
 # 复制到 data/general_variants/ 下并改 id 即可（或者用管理页：详情页 →「+ 新增版本」）。
 #
-# 模式 / 势力 / 体力 / 性别 / 称号 / 编号 / 产品 / 武将牌系列 / 技能 都属于这里，
-# **不要**写进 General。
+# 来源由 product_id 决定，这里**不再**保存 source。
+# general_set 的候选值来自所属产品的 Product.general_sets。
 #
 # skills 是「技能关系」列表，顺序就是卡面上的技能顺序：
 #   skill_id   必填，指向 data/skills/ 里的 SkillDefinition
-#   version_id 可空。为空 => 详情页按 mode + 生效区间自动推导当前有效版本；
-#              不为空 => 必须属于同一个 skill_id，表示“这张卡印的就是这一版”。
+#   version_id 这张卡面上印的技能文本；为空时按 mode 匹配该技能唯一的一条版本。
 # 想更新技能文本时**新增** SkillVersion，不要改旧版本。
 id: variant_change_me
 general_id: general_change_me    # 指向 data/generals/ 里的武将个体
 variant: 标准版                   # 版本标签：标准版 / 国战版 / 界限突破 / OL / 手卡（手杀）…
 title: ""                        # 称号，例如“独眼的罗刹”
 general_number: null             # 实体卡上的编号，例如 WEI001 / shu-01（可空；不是内部 id）
+illustrator: ""                  # 卡面插画师（可空）
+image: ""                        # 卡图文件名，相对 data/card_images/
 mode: identity                   # common/guozhan/identity/ol/mobile/other；允许留空
 faction: 群                       # 势力：自由文本（魏/蜀/吴/群/晋…）
 hp: 3                            # 体力：身份局标准版记 3/4/5；国战按阴阳鱼记 1.5/2/2.5
 gender: male                     # male/female/unknown；允许留空
 product_id: null                 # 所属产品，可空（武将数据不要求关联产品）
-general_set: 标准-灵心慧性         # 武将牌系列 / 武将牌包（可空）
+general_set: 标准-灵心慧性         # 武将牌系列 / 武将牌包（可空；候选来自 Product.general_sets）
 skills:
   - skill_id: skill_change_me
     version_id: null
-source:
-  type: physical_card
-  title: 本人实体卡
-  reference: ""
-  notes: ""
 verification_status: unverified
-notes: ""
+review_note: ""                  # 需要人工对照卡图复核的异常（OCR 误读…）

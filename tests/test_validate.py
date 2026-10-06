@@ -1,10 +1,14 @@
-"""校验器测试：交叉引用、重复 id、版本链、时点关系等。"""
+"""校验器测试：交叉引用、重复 id、版本链、武将牌系列归属、一致性警告。
+
+精简后 ``related_*`` / ``parent_id`` / ``previous_ids`` / ``next_ids`` / ``effective_*``
+等字段全部删除：写了就是未知字段（error），而不是走原来的关系校验。
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from conftest import SOURCE_YAML, error_text, replace_in, warning_text, write_dataset
+from conftest import error_text, replace_in, warning_text, write_dataset
 
 from sgs_helper.validate import validate_data_dir
 
@@ -18,8 +22,23 @@ def test_synth_dataset_is_clean(synth: Path) -> None:
 def test_real_dataset_is_clean(data_dir: Path) -> None:
     result = validate_data_dir(data_dir)
     assert result.ok, error_text(result)
+    assert result.bundle.total > 1000
     assert result.counts()["skill_version"] >= 1
     assert result.counts_line()
+
+
+def test_real_dataset_warnings_are_the_known_kinds(data_dir: Path) -> None:
+    """真实数据的警告只应来自两个已知来源：
+
+    - ``suit/rank``：同一产品 / 牌堆下存在多张同花色点数的实体卡（指示物等）；
+    - ``id``：技能本体没有任何 SkillVersion。
+
+    新增 / 改动校验规则时，这条会立刻暴露未预期的警告。
+    """
+    result = validate_data_dir(data_dir)
+    assert result.ok, error_text(result)
+    assert result.warnings, "真实数据应当仍有警告，用来验证警告通道没坏"
+    assert {issue.field for issue in result.warnings} <= {"suit/rank", "id"}
 
 
 # ---------------------------------------------------------------- 错误
@@ -82,10 +101,24 @@ def test_empty_reference_element_is_detected(synth: Path) -> None:
     assert "skills[0].skill_id" in error_text(result)
 
 
-def test_self_reference_is_detected(synth: Path) -> None:
+def test_explicit_version_must_belong_to_same_skill(synth: Path) -> None:
+    """绑定到别的技能的版本必须报错（文本由它决定，不能张冠李戴）。"""
     replace_in(
-        synth / "keywords" / "demo2.yaml", "definition: 第二个演示关键词\n",
-        "definition: 第二个演示关键词\nrelated_keyword_ids:\n  - keyword_demo2\n",
+        synth / "general_variants" / "demo_alpha_identity.yaml",
+        "version_id: skill_demo_identity_v1",
+        "version_id: skill_demo_other_v1",
+    )
+    result = validate_data_dir(synth)
+    assert not result.ok
+    assert "绑定" in error_text(result)
+    assert "skill_demo_other" in error_text(result)
+
+
+def test_self_reference_is_detected(synth: Path) -> None:
+    path = synth / "skill_versions" / "demo_identity_v1.yaml"
+    path.write_text(
+        path.read_text(encoding="utf-8") + "previous_version_id: skill_demo_identity_v1\n",
+        encoding="utf-8",
     )
     result = validate_data_dir(synth)
     assert not result.ok
@@ -104,28 +137,27 @@ def test_previous_version_must_belong_to_same_skill(synth: Path) -> None:
 
 
 def test_previous_version_cycle_is_detected(synth: Path) -> None:
-    replace_in(
-        synth / "skill_versions" / "demo_identity_v1.yaml",
-        "effective_to: 2024-12-31",
-        "effective_to: 2024-12-31\nprevious_version_id: skill_demo_identity_v2",
+    path = synth / "skill_versions" / "demo_identity_v1.yaml"
+    path.write_text(
+        path.read_text(encoding="utf-8") + "previous_version_id: skill_demo_identity_v2\n",
+        encoding="utf-8",
     )
     result = validate_data_dir(synth)
     assert not result.ok
     assert "版本链成环" in error_text(result)
 
 
-def test_timing_parent_cycle_is_detected(synth: Path) -> None:
+def test_removed_fields_are_rejected_not_ignored(synth: Path) -> None:
+    """旧字段必须报未知字段，不能静默丢弃（Timing.parent_id 只是其中一个代表）。"""
     replace_in(
         synth / "timings" / "demo_next.yaml", "id: timing_demo_next\n",
         "id: timing_demo_next\nparent_id: timing_demo\n",
     )
-    replace_in(
-        synth / "timings" / "demo.yaml", "id: timing_demo\n",
-        "id: timing_demo\nparent_id: timing_demo_next\n",
-    )
     result = validate_data_dir(synth)
     assert not result.ok
-    assert "parent 链成环" in error_text(result)
+    text = error_text(result)
+    assert "parent_id" in text
+    assert "未知字段" in text
 
 
 # ---------------------------------------------------------------- 警告
@@ -141,15 +173,18 @@ def test_duplicate_reference_in_list_is_warned(synth: Path) -> None:
     assert "列表内重复引用" in warning_text(result)
 
 
-def test_overlapping_effective_range_is_warned(synth: Path) -> None:
+def test_general_set_must_come_from_product(synth: Path) -> None:
+    """GeneralSet 实体删除后新增的对账：系列名必须出现在所属产品的 general_sets 里。"""
     replace_in(
-        synth / "skill_versions" / "demo_identity_v2.yaml",
-        "product_id: null\neffective_from: 2025-01-01",
-        "product_id: product_demo_b\neffective_from: 2024-06-01",
+        synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "general_set: 演示武将牌系列",
+        "general_set: 不存在的系列",
     )
     result = validate_data_dir(synth)
     assert result.ok
-    assert "生效区间重叠" in warning_text(result)
+    text = warning_text(result)
+    assert "不在所属产品" in text
+    assert "不存在的系列" in text
 
 
 def test_hp_step_is_warned(synth: Path) -> None:
@@ -169,31 +204,29 @@ def test_duplicate_card_combo_is_warned(synth: Path) -> None:
     assert "存在多张" in warning_text(result)
 
 
+def test_rank_without_suit_is_warned(synth: Path) -> None:
+    replace_in(synth / "card_printings" / "demo_b_heart_5.yaml", "suit: heart", "suit: none")
+    result = validate_data_dir(synth)
+    assert result.ok
+    assert "漏填花色" in warning_text(result)
+
+
 def test_skill_without_version_is_warned(synth: Path) -> None:
     (synth / "skills" / "lonely.yaml").write_text(
-        f"id: skill_lonely\nname: 无版本技能\n{SOURCE_YAML}", encoding="utf-8"
+        "id: skill_lonely\nname: 无版本技能\n", encoding="utf-8"
     )
     result = validate_data_dir(synth)
     assert result.ok
     assert "没有任何 SkillVersion" in warning_text(result)
 
 
-def test_missing_source_is_warned(synth: Path) -> None:
-    path = synth / "general_variants" / "demo_beta_identity.yaml"
-    text = path.read_text(encoding="utf-8")
-    path.write_text(text.replace(SOURCE_YAML, ""), encoding="utf-8")
-    result = validate_data_dir(synth)
-    assert result.ok
-    assert "未记录来源" in warning_text(result)
-
-
-def test_timing_previous_next_asymmetry_is_warned(synth: Path) -> None:
-    replace_in(
-        synth / "timings" / "demo_next.yaml", "previous_ids:\n  - timing_demo\n", ""
+def test_general_without_variant_is_warned(synth: Path) -> None:
+    (synth / "generals" / "lonely.yaml").write_text(
+        "id: general_lonely\nname: 孤儿武将\n", encoding="utf-8"
     )
     result = validate_data_dir(synth)
     assert result.ok
-    assert "未反向包含" in warning_text(result)
+    assert "还没有任何版本" in warning_text(result)
 
 
 def test_mode_mismatch_with_product_is_warned(synth: Path) -> None:
@@ -211,6 +244,21 @@ def test_skill_without_version_in_general_mode_is_warned(synth: Path) -> None:
     result = validate_data_dir(synth)
     assert result.ok
     assert "没有任何 SkillVersion" in warning_text(result)
+
+
+def test_common_version_counts_as_available_text(synth: Path) -> None:
+    """common 版本是回退候选：只要有一条，就不再报“没有可用文本”。"""
+    from conftest import SOURCE_YAML
+
+    replace_in(synth / "general_variants" / "demo_beta_identity.yaml", "mode: identity", "mode: ol")
+    (synth / "skill_versions" / "demo_common_v1.yaml").write_text(
+        f"id: skill_demo_common_v1\nskill_id: skill_demo\nmode: common\n"
+        f"text: 通用版演示技能文本\n{SOURCE_YAML}verification_status: unverified\n",
+        encoding="utf-8",
+    )
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    assert "没有任何 SkillVersion" not in warning_text(result)
 
 
 # ---------------------------------------------------------------- 汇总输出

@@ -17,10 +17,4 @@ skills:
     version_id: skill_heng_zheng_guozhan_qlhd_v1
   - skill_id: skill_bao_ling
     version_id: skill_bao_ling_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.QUN 006
 verification_status: unverified
-notes: ''

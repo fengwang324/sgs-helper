@@ -4,17 +4,8 @@ mode: guozhan
 text: 锁定技，其他角色不能获得你装备区里的宝物牌。结束阶段，若弃牌堆中或场上存在【定澜夜明珠】，则你摸一张牌，然后你获得装备区里有【定澜夜明珠】的角色一张牌。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

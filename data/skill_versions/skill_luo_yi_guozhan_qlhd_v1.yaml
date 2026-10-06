@@ -1,21 +1,11 @@
 id: skill_luo_yi_guozhan_qlhd_v1
 skill_id: skill_luo_yi
 mode: guozhan
-text: |-
-  摸牌阶段结束时，你可以弃置一张牌，然后于此回合内，当你为伤害来源的【杀】或【决斗】造成伤害时，此伤害+1。
+text: 摸牌阶段结束时，你可以弃置一张牌，然后于此回合内，当你为伤害来源的【杀】或【决斗】造成伤害时，此伤害+1。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

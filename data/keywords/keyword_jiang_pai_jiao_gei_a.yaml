@@ -4,12 +4,7 @@ definition: |-
   将不是A拥有的牌移动到A的手牌。
   ◆“将…牌交给其他角色”是指你选择X张…牌，同时选择Y名其他角色作为目标（1≤Y≤X），同时确定分配方式（即将哪些牌交给哪名角色，须确保交给每名目标角色至少一张牌，且合计交给所有目标角色X张牌），然后将这些牌按照确定好的分配方式同时交给这些目标角色。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

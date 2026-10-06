@@ -1,23 +1,13 @@
 id: card_hu_xin_jing_qlhd_club_2
 card_id: card_hu_xin_jing
 name_printed: 护心镜
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: club
 rank: 2
 quantity: 1
 printed_text: 当你受到大于等于你体力值的伤害时，你可以将装备区里的【护心镜】放入弃牌堆防止此伤害。
-normalized_text: ''
 bottom_right_mark: 周
 card_number: ''
-illustrator: ''
 image: card_hu_xin_jing_qlhd_club_2.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

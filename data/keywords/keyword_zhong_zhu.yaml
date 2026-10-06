@@ -2,12 +2,7 @@ id: keyword_zhong_zhu
 name: 重铸
 definition: 角色在出牌阶段的空闲时间点可以重铸一张带有“重铸”标识的牌，即声明此牌并将之置入处理区，然后将之置入弃牌堆，最后摸一张牌。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

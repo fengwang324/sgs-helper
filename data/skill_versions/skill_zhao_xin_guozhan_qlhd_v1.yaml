@@ -1,21 +1,11 @@
 id: skill_zhao_xin_guozhan_qlhd_v1
 skill_id: skill_zhao_xin
 mode: guozhan
-text: |-
-  当你受到伤害后，你可以展示你的所有手牌，然后选择一名手牌数不大于你的其他角色，与其交换所有的手牌。
+text: 当你受到伤害后，你可以展示你的所有手牌，然后选择一名手牌数不大于你的其他角色，与其交换所有的手牌。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

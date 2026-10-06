@@ -10,12 +10,7 @@ definition: |-
   例如：装备【古锭刀】的太史慈发动【天义】拼点赢后，对都处于连环状态且没有手牌的A和B使用火【杀】（按行动顺序排列）。首先对A进行结算，A没有使用【闪】进行响应，太史慈在造成伤害时触发【古锭刀】，A受到2点火焰伤害，重置，触发连环，由于此【杀】当前的结算目标是A不是B，太史慈对B造成2点火焰伤害时不会触发【古锭刀】，B受到2点火焰伤害，重置。然后对B进行结算，太史慈在造成伤害时触发【古锭刀】，B受到2点火焰伤害。
   例如：徐盛（将）对小乔使用【杀】，小乔在受到伤害时发动【天香】将此伤害转移给另一名角色，徐盛在造成伤害后不可以对该角色发动【破军】。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

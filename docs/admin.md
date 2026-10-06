@@ -37,8 +37,8 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | 路由 | 作用 |
 | --- | --- |
 | `GET /` | 首页：统一搜索框、各类型条数、核验状态分布、SQLite 状态、当前校验错误与警告 |
-| `GET /search?q=&kind=&status=&mode=` | 跨 10 类实体检索，显示类型 / 名称 / 模式 / 来源 / 核验状态 / YAML 位置 |
-| `GET /list/{kind}?q=&mode=&status=&product=&package=&page=` | 分类列表 + 筛选 + 分页 |
+| `GET /search?q=&kind=&status=&mode=` | 跨 10 类实体检索，显示类型 / 名称 / 模式 / 来源（规则类才有）/ 核验状态 / YAML 位置 |
+| `GET /list/{kind}?q=&mode=&status=&product=&page=` | 分类列表 + 筛选 + 分页 |
 | `GET /view/{kind}/{id}` | 详情页（技能 / 卡牌 / 武将有专门的分层展示） |
 | **`GET|POST /new/product`、`/edit/product/{id}`** | **产品专用录入页**（见第 3 节） |
 | **`GET|POST /new/general`、`/edit/general/{id}[?variant=…]`** | **武将专用录入页**（General + GeneralVariant，见第 3、4、5 节） |
@@ -54,8 +54,8 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 | 路由 | 作用 |
 | --- | --- |
-| `GET /api/skills?q=&limit=` | 技能搜索（名称 / 别名 / id），返回 `version_count` |
-| `GET /api/skills/{id}/versions?mode=&product_id=` | 某技能的可选版本，按「产品匹配 > 模式匹配 > common > 其它」排序；每项带版本标签、模式、产品、生效时间、文本摘要/全文 |
+| `GET /api/skills?q=&limit=` | 技能搜索（名称 / id），返回 `version_count` |
+| `GET /api/skills/{id}/versions?mode=&product_id=` | 某技能的可选版本，按「产品匹配 > 模式匹配 > common > 其它」排序；每项带版本标签、模式、产品、文本摘要/全文 |
 | `GET /api/products?q=` | 产品搜索（名称 / ID / 年份） |
 | `GET /api/suggest?field=faction|general_set&q=` | 势力 / 武将牌系列的已有值（带使用次数） |
 | `GET /api/generals?name=` | 同名武将提醒（版本 / 模式 / 产品 / 系列 / 编号） |
@@ -88,8 +88,9 @@ python scripts/admin.py --port 8000 --reload # 开发用
 （旧字段 `included_sets` 把“武将牌系列”和“游戏牌牌堆”混在一起，已删除）。
 填入的标签会去重并保序；`general_sets` 会作为武将录入页的候选值。
 
-出版方、版次、系列、发行日期、来源、核验状态、备注都收进折叠的「高级信息」，
-编辑已有产品时它们照常提交、不会因为主流程没展示就被清空。
+出版方、版次、系列、发行日期、来源、核验状态、备注这些旧字段都已从模型删除，
+产品就只剩上面这 5 个字段（`release_year` / `mode` 也可以留空）。
+`general_sets` 里的值会成为武将录入页「武将牌系列」下拉的候选全集。
 
 ### 武将录入页
 
@@ -109,7 +110,7 @@ python scripts/admin.py --port 8000 --reload # 开发用
 ┌─────────────────────────────────────────┐
 │ 技能 [ 突袭 ✕ ]            ↑ ↓  删除此技能 │
 │ 版本 [ 初版 · 国战 · 群狼环鼎 · … ▼ ]      │
-│      （选中版本后显示：模式 · 产品 · 生效时间 + 文本摘要）
+│      （选中版本后显示：模式 · 产品 · 文本摘要） │
 │ + 为这个技能新增版本                        │
 └─────────────────────────────────────────┘
 + 添加技能
@@ -122,10 +123,12 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 两层怎么分：
 
-- **武将个体（General）**：`name` + `aliases` + `notes`。官方武将名不同就是不同的武将
+- **武将个体（General）**：`id` / `name`。官方武将名不同就是不同的武将
   （诸葛亮 / 界诸葛亮 / 神诸葛亮）。
 - **版本（GeneralVariant）**：`variant`（版本标签）+ `mode` + `faction` + `hp` + `gender`
-  + `title` + `general_number` + `general_set` + `product_id` + `skills` + 来源。
+  + `title` + `general_number` + `general_set` + `product_id` + `skills`
+  + `verification_status` / `review_note`。
+  来源不在这里存：由 `product_id` 定位到具体产品。
   「标准版诸葛亮」和「国战诸葛亮」是同一个武将的两个版本，不是两个武将。
 - 给同一个武将再加一个版本：详情页点「+ 新增版本」（= `/edit/general/<id>?variant=new`），
   或者直接在版本标签里写 `国战版` 再保存；编辑页顶部有版本切换按钮。
@@ -142,7 +145,8 @@ python scripts/admin.py --port 8000 --reload # 开发用
 - **勾玉**：底层是 `hp`（体力），下拉 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5，可空。
 - **性别**：男 / 女 / 未知。
 - **武将牌系列**：`general_set`，可搜索已有值、也可直接输入新值；
-  选择产品后会优先给该产品 `general_sets` 里的值，但仍然允许输入别的值。
+  选择产品后会把该产品 `general_sets` 里的值作为候选（产品声明过、暂时没有卡在用的系列也能选到），
+  但仍然允许输入别的值（不在产品候选里会告警提醒）。
 - **产品**：搜索式下拉，支持按 名称 / ID / 年份 搜索。
   选中后只会给**当前为空**的字段带入模式与武将牌系列，不覆盖你已经填的内容。
 
@@ -160,7 +164,7 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 一行技能 = 一个「搜索式组合框 + 版本选择 + （必要时）新建区域」。
 
-1. **绑定已有技能**：在技能框里输入名称 / 别名 / id，用 ↑ ↓ 选择、Enter 确认（Esc 关闭）。
+1. **绑定已有技能**：在技能框里输入名称 / id，用 ↑ ↓ 选择、Enter 确认（Esc 关闭）。
    候选项会显示「已有 N 个版本 · skill_xxx」。搜索优先展示已有技能，减少重复创建。
 2. **新建技能**：没有匹配时下拉里会出现 `+ 新建技能「xxx」`，点它就会展开
    新技能区域（**技能描述 / 技能版本 / 内部 ID**），不需要离开武将页面。
@@ -169,9 +173,10 @@ python scripts/admin.py --port 8000 --reload # 开发用
    - 新技能与已有技能**同名**时会提示「仍然新建一个独立技能，请确认」。
 3. **指定版本**：选中已有技能后，版本下拉里按「产品匹配 > 模式匹配 > common > 其它」排序。
    选项文本形如 `国战版 · 国战 · 群狼环鼎 · 锁定技，当……`，选中后下面还会显示
-   「模式 · 产品 · 生效时间」与文本摘要，方便判断是哪一版。
+   「模式 · 产品」与文本摘要，方便判断是哪一版。
    如果筛完只剩一个明显匹配的版本，会自动选中。留空表示「不指定」，
-   详情页按 `mode + effective_from/effective_to` 自动推导。
+   这个武将版本上的技能文本就按它的 `mode` 去匹配该技能唯一一条同模式（或 `common`）版本；
+   匹配不到就表示这个技能在这里没有文本，绝不会按日期“推导当前版本”。
 4. **为已有技能新增版本**：展开「+ 为这个技能新增版本」，填版本名称（可空）与技能描述即可；
    「基于当前版本新增」会把当前版本的文本复制过来，并把当前版本填进 `previous_version_id`。
    保存时是**新增**一条 SkillVersion，旧版本文件字节不变。
@@ -276,7 +281,7 @@ AdminStore.save_batch()
   例如 `skills[0].version_id`）；
 - 无引用 → 先做一次「删掉这条之后数据集是否仍然合法」的预校验，通过才删；
 - 删技能版本时，如果它被某个武将显式绑定、或有后继版本（`previous_version_id`），会被拒绝；
-  只是历史版本时可以删，删除确认页会说明它是不是「当前有效版本」。
+  只是历史版本时可以删，删除确认页会说明它有没有被武将绑定。
 
 另有一条测试保证：任何新增的 `*_id` / `*_ids` 字段（包括嵌在关系结构里的
 `skills[].skill_id` / `skills[].version_id`）都必须在 `REFERENCE_FIELDS` 里声明，
@@ -289,19 +294,19 @@ AdminStore.save_batch()
 武将不再用平行的 `skill_ids: [...]`，而是显式的关系统构：
 
 ```yaml
-# data/generals/xxx.yaml
+# data/general_variants/xxx.yaml
 skills:
   - skill_id: skill_mingshi
     version_id: skill_mingshi_guozhan_v1   # 这张卡印的就是这一版
   - skill_id: skill_lirang
-    version_id: null                       # 暂不指定 -> 详情页自动推导
+    version_id: null                       # 不指定 -> 按 mode 匹配该技能唯一一条版本
 ```
 
 - `skill_id` 必填，指向 `SkillDefinition`；
 - `version_id` 可空；不为空时**必须属于同一个 skill_id**（校验器强制）；
 - 不用两个平行数组，避免顺序错位；
-- 详情页：显式绑定优先显示指定版本（标记「按卡面指定」），否则按
-  `mode + effective_from/effective_to` 推导当前有效版本（标记「自动推导」）；
+- 详情页：显式绑定优先显示指定版本（标记「按卡面指定」），否则按 `mode` 匹配唯一一条
+  同模式（或 `common`）版本（标记「按模式回退」）；0 条或多条并列就显示“没有文本”；
 - SQLite 侧落到 `variant_skills(variant_id, general_id, skill_id, version_id, position)`，
   `position` 就是卡面上的技能顺序。
 
@@ -310,10 +315,10 @@ skills:
 ## 10. 待核验流程
 
 `/review` 按 `verification_status` 汇总 `unverified` / `community` / `conflict`。
-逐条打开 → 对着实体卡核验 → 改核验状态、把 `source.type` 换成 `physical_card`
-并填 `source.title` / `source.reference` → 保存。
-source 与核验状态都在录入页的「高级信息」里，日常录卡可以先不管（默认 `unverified`，
-会进待核验页面）。
+逐条打开 → 对着实体卡核验 → 改核验状态 → 保存。
+实体卡类实体（GeneralVariant / CardPrinting）没有 `source`：它们的来源由 `product_id` 定位；
+只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才填 `source`（只有 `type` + `reference`，
+展示名由 `reference` 推导）。日常录卡可以先不管核验状态（默认 `unverified`，会进待核验页面）。
 
 ---
 
@@ -328,8 +333,9 @@ source 与核验状态都在录入页的「高级信息」里，日常录卡可�
 4. **版本选择是原生 `<select>`**：选项文本里带了版本标签 / 模式 / 产品 / 文本摘要，
    选中后下面还有一段预览。没有做成两行富文本下拉（保持键盘与无 JS 可用）。
 5. **并发保护是记录级哈希**：只改注释不会触发冲突（这是刻意的，避免同文件多记录互相干扰）。
-6. **旧字段不再兼容**：`included_sets` / `skill_ids` / `package`(武将) 已从模型里删除，
-   旧 YAML 会直接报“未知字段”，需要按第 9 节的新结构迁移（示例数据已经迁移过）。
+6. **旧字段不再兼容**：`included_sets` / `skill_ids` / `package` / 通用备注 / 别名 /
+   手工关联 / 生效区间 / 存库的检索正文 都已从模型里删除，
+   旧 YAML 会直接报“未知字段”，需要按第 9 节的新结构迁移（数据已经迁移过）。
 7. **列表字段是“一行一项”文本**：空行忽略、首尾空格去除。
 8. 本地工具：没有登录/权限/审计；`--host 0.0.0.0` 时请只放在可信网络。
 9. 不做并发写入合并：同一记录被两处同时改，后提交方被拒绝并要求刷新。

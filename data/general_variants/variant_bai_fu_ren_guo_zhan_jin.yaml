@@ -16,12 +16,6 @@ skills:
     version_id: skill_xia_ce_guozhan_qlhd_v1
   - skill_id: skill_li_meng
     version_id: skill_li_meng_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.JIN 040
 verification_status: unverified
-notes: ''
 zhulianbihe:
   - 司马懿

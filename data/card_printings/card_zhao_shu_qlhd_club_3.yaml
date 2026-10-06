@@ -1,23 +1,13 @@
 id: card_zhao_shu_qlhd_club_3
 card_id: card_zhao_shu
 name_printed: 诏书
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 不臣篇
 suit: club
 rank: 3
 quantity: 1
 printed_text: ●当【决令】移出游戏后，将【诏书】置入牌堆底。●当你使用【诏书】后，将此牌放置在你的武将牌上，势力与你相同的角色出牌阶段限一次，该角色可以将一张手牌（小势力角色改为至多两张手牌）置于【诏书】上；出牌阶段限一次，若【诏书】上有四张花色均不同的牌，你可以将【诏书】上所有的牌放入弃牌堆，然后随机获得一张势力锦囊。"破除浊流，书论伊尹，再四稽之，勿负朕意！"——刘协
-normalized_text: ''
 bottom_right_mark: 不臣
 card_number: ''
-illustrator: ''
 image: card_zhao_shu_qlhd_club_3.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

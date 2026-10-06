@@ -1,21 +1,11 @@
 id: skill_tian_xiang_guozhan_qlhd_v1
 skill_id: skill_tian_xiang
 mode: guozhan
-text: |-
-  当你受到伤害时，你可以弃置一张♥手牌并选择一名其他角色，然后防止此次伤害并选择一项：1.令伤害来源对其造成1点伤害，然后其摸X张牌（X为其已损失的体力值且至多为5）；2.令其失去1点体力，然后其获得你弃置的牌。每项于一个回合内各限一次。
+text: 当你受到伤害时，你可以弃置一张♥手牌并选择一名其他角色，然后防止此次伤害并选择一项：1.令伤害来源对其造成1点伤害，然后其摸X张牌（X为其已损失的体力值且至多为5）；2.令其失去1点体力，然后其获得你弃置的牌。每项于一个回合内各限一次。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

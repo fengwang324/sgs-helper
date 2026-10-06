@@ -1,23 +1,13 @@
 id: card_duo_duo_bi_ren_qlhd_club_13
 card_id: card_duo_duo_bi_ren
 name_printed: 咄咄逼人
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: club
 rank: 13
 quantity: 1
 printed_text: 出牌阶段，对一名确定势力的角色使用；目标可以变更副将，然后你对目标造成1点伤害。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_duo_duo_bi_ren_qlhd_club_13.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

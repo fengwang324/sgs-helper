@@ -8,13 +8,26 @@
 <section>
   <h2>这个页面能做什么</h2>
   <ul>
-    <li>统一搜索 9 类实体，看结果类型、名称、模式、来源和 <code>verification_status</code>；</li>
+    <li>统一搜索 {{ KIND_ORDER | length }} 类实体，看结果类型、名称、模式、来源和 <code>verification_status</code>；</li>
     <li>逐类浏览列表，按 mode / 核验状态 / 产品 / 包 筛选，重点看 <code>community</code>、<code>unverified</code>、<code>conflict</code>；</li>
     <li>查看详情：技能看 SkillDefinition → 当前版本 → 历史版本链；卡牌看 CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）；武将看关联技能及其 SkillVersion；</li>
     <li>新增与编辑：表单字段由现有 Pydantic 模型生成，不需要记 YAML 字段名；</li>
     <li>技能更新用「新增技能版本」，旧版本永不覆盖；</li>
     <li><a href="/review">待核验清单</a>：把所有未核验/社区来源/冲突的记录集中起来，方便拿实体卡逐条核验；</li>
     <li>删除前会检查引用关系，被引用就拒绝删除并列出引用方。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>新模型下的几个约定</h2>
+  <ul>
+    <li><strong>verification_status</strong> 只出现在 武将版本 / 技能版本 / 实体卡 / FAQ / 关键词 / 时点 六类表单里；
+        <strong>review_note</strong>（复核备注）只出现在 武将版本 / 技能版本 / 实体卡 / 技能 / 卡牌 五类表单里。</li>
+    <li><strong>实体卡（CardPrinting）没有 mode 字段</strong>：列表与详情里的模式一律由它所属产品的 <code>Product.mode</code> 推导。</li>
+    <li><strong>自动关联</strong>：FAQ 详情页对 <code>question + answer</code>、技能详情页对技能文本调用
+        <code>repo.mentions(conn, text)</code>，按实体名称自动识别武将 / 技能 / 卡牌 / 关键词 / 时点并渲染成可点击链接；
+        手工维护的关联 id 字段已全部删除。</li>
+    <li><strong>武将牌系列只维护两处</strong>：产品里的 <code>general_sets</code>（候选全集）与武将版本的 <code>general_set</code>（具体归属）。</li>
   </ul>
 </section>
 
@@ -30,7 +43,7 @@
 </section>
 
 <section>
-  <h2>9 类实体</h2>
+  <h2>实体类型</h2>
   <table class="compact">
     <tr><th>类型</th><th>目录</th><th>说明</th></tr>
     {% for spec in specs %}
@@ -58,7 +71,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000   # 本页面</pre
     <li>写 YAML 时会<strong>规范化格式</strong>：字段顺序按模型顺序、长文本改成块状标量（<code>|-</code>），
         记录内部的行内注释、锚点/别名不会被保留；文件顶部的注释块会保留。</li>
     <li>一个文件里放了多条记录时（例如 <code>data/keywords/core_keywords.yaml</code>），编辑其中一条会<strong>整文件重写</strong>（其他记录内容不变，格式会被规范化）。</li>
-    <li>列表字段（别名、关联 id 等）用“一行一项”的文本框，空行会被忽略，前后空格会被去掉。</li>
+    <li>列表字段（武将牌系列、游戏牌牌堆等）用“一行一项”的文本框，空行会被忽略，前后空格会被去掉。</li>
     <li>本地工具：没有登录和权限控制，默认只监听 127.0.0.1。如果用 <code>--host 0.0.0.0</code> 暴露到局域网，请自行确保网络环境可信（表单带 CSRF token，但这不是完整的认证）。</li>
     <li>不是正式微信小程序，也不提供 API 给小程序的鉴权/限流。</li>
   </ul>

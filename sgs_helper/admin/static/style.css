@@ -293,6 +293,15 @@ pre.flow { background: #eef2f7; color: #26303d; }
 .pager { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
 .elink { margin-right: 4px; }
 
+/* 正文里自动识别出来的实体名（FAQ / 技能文本）：做成一眼可点的链接 */
+.elink.mention {
+  border-bottom: 1px dashed #7aa2d4;
+  text-decoration: none;
+  margin: 0;
+}
+.elink.mention:hover { border-bottom-style: solid; }
+ul.mentions li { padding: 4px 0; }
+
 /* ------------------------------------------------------------- 专用录入页 */
 
 .editor-form { max-width: 900px; }

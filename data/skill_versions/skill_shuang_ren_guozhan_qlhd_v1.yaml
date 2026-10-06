@@ -4,17 +4,8 @@ mode: guozhan
 text: 出牌阶段开始时，你可以与一名角色拼点：若你赢，你视为对任意名势力与其相同的角色使用一张不计入使用次数的【杀】；若你没赢，你于此回合内不能对其他角色使用牌。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

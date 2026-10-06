@@ -4,17 +4,8 @@ mode: guozhan
 text: 当你首次明置此武将牌后，你将两张未加入游戏的武将牌扣置于你的武将牌上，称为“魂”牌。当你需要使用你于此回合内未以此法使用过的任意基本牌或普通锦囊牌时，你可以移去一张“魂”牌，然后视为使用之，且此牌的目标必须为与此“魂”牌势力相同或未确定势力的角色。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

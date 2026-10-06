@@ -1,23 +1,14 @@
 id: card_jun_ling_qlhd_na_na_4
 card_id: card_jun_ling
 name_printed: 军令
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 指示物
 suit: none
 rank: null
 quantity: 1
 printed_text: ◆本回合不能使用或打出手牌且所有非锁定技失效。
-normalized_text: ''
 bottom_right_mark: 军
 card_number: ''
-illustrator: ''
 image: card_jun_ling_qlhd_na_na_4.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 卡面无牌名，只有盾形“军”字令牌与效果文字；按「军令」登记，它是国战君主/相关技能的**衍生指示物**，以效果文字区分。；原本的牌堆归属是「势备篇」
+review_note: 卡面无牌名，只有盾形“军”字令牌与效果文字；按「军令」登记，它是国战君主/相关技能的**衍生指示物**，以效果文字区分。；原本的牌堆归属是「势备篇」

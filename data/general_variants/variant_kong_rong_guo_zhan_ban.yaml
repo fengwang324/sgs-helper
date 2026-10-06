@@ -17,10 +17,4 @@ skills:
     version_id: skill_ming_shi_guozhan_qlhd_v1
   - skill_id: skill_li_rang
     version_id: skill_li_rang_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.QUN 014
 verification_status: unverified
-notes: ''

@@ -1,11 +1,7 @@
 id: qlhd
 name: 群狼环鼎
-series: ''
 mode: guozhan
-publisher: 游卡桌游
 release_year: 2026
-release_date: '2026-08-04'
-edition: ''
 general_sets:
   - 紫凤衔佩
   - 金印紫绶
@@ -28,10 +24,3 @@ card_sets:
   - 君主游戏牌
   - 阵
   - 指示物
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 系列清单按本批实体卡识别结果补全；卡面编号形如 G.WEI 075
-verification_status: unverified
-notes: 国战大合集盒：含国战标准、君临天下（阵/势/变/权）、势备篇、九变篇、不臣篇、纵横捭阖等武将牌系列。

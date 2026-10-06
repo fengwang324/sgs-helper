@@ -1,23 +1,13 @@
 id: card_lian_jun_sheng_yan_qlhd_heart_1
 card_id: card_lian_jun_sheng_yan
 name_printed: 联军盛宴
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: heart
 rank: 1
 quantity: 1
 printed_text: 出牌阶段，对你和你选择的一个其他势力的所有角色使用，你选择一项：1. 回复X点体力；2. 摸X张牌。然后其他每名目标角色各摸一张牌且重置其武将牌。（X为该势力存活角色数）
-normalized_text: ''
 bottom_right_mark: 周
 card_number: ''
-illustrator: ''
 image: card_lian_jun_sheng_yan_qlhd_heart_1.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

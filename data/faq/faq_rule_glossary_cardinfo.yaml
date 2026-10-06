@@ -21,15 +21,7 @@ answer: |-
   凌天翼按：吴势力角色在其出牌阶段可以对主公孙策和袁术各发动一次【制霸】，孙策如果已经触发【魂姿】可以拒绝此拼点，袁术由于没有【魂姿】技能无法拒绝此拼点。
   例如：庞德-马腾会受到【马术（庞德）】和【马术（马腾）】效果叠加的影响，与其他角色的距离-2。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》术语章节：牌面信息

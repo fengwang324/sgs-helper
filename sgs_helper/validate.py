@@ -5,14 +5,13 @@
 输出格式固定为三段：**文件路径 / 字段 / 原因**，例如::
 
     ✗ data/generals/kongrong.yaml:12
-        general_kongrong_sample_guozhan.skill_ids[1]
+        general_kongrong_sample_guozhan.skills[1].skill_id
         引用的 技能(skill_not_exist) 不存在：data/skills/ 下没有该 id
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -27,13 +26,16 @@ from .schema import MODEL_BY_KIND
 #: 字段支持两种写法：
 #:
 #: - ``product_id``               普通标量字段；
-#: - ``related_keyword_ids``      普通列表字段；
 #: - ``skills[].skill_id``        嵌套结构里的字段（``[]`` 表示“逐项展开列表”）。
 #:
 #: 这张表同时驱动校验器的引用检查与本地管理页的删除保护，只声明一次。
+#:
+#: 实体卡类（Product / GeneralVariant / CardPrinting）不再有 ``source``，
+#: 规则类的 ``related_*`` / ``parent_id`` / ``previous_ids`` / ``next_ids`` 也已
+#: 全部删除，所以这里只剩真正的结构化引用。``GeneralVariant.general_set`` 是字符串，
+#: 它到 ``Product.general_sets`` 的归属关系由 :func:`_check_general_set_consistency`
+#: 单独对账（不再是实体引用，``GeneralSet`` 实体已删除）。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
-    ("general_set", "parent_id", "general_set", False),
-    ("general_set", "product_id", "product", False),
     ("general_variant", "general_id", "general", False),
     ("general_variant", "product_id", "product", False),
     ("general_variant", "skills[].skill_id", "skill", True),
@@ -41,24 +43,8 @@ REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("skill_version", "skill_id", "skill", False),
     ("skill_version", "product_id", "product", False),
     ("skill_version", "previous_version_id", "skill_version", False),
-    ("skill_version", "related_keywords", "keyword", True),
-    ("skill_version", "related_timing_ids", "timing", True),
-    ("card", "related_keywords", "keyword", True),
     ("card_printing", "card_id", "card", False),
     ("card_printing", "product_id", "product", False),
-    ("faq", "related_general_ids", "general", True),
-    ("faq", "related_skill_ids", "skill", True),
-    ("faq", "related_card_ids", "card", True),
-    ("faq", "related_keywords", "keyword", True),
-    ("faq", "related_timing_ids", "timing", True),
-    ("keyword", "related_keyword_ids", "keyword", True),
-    ("keyword", "related_timing_ids", "timing", True),
-    ("timing", "parent_id", "timing", False),
-    ("timing", "previous_ids", "timing", True),
-    ("timing", "next_ids", "timing", True),
-    ("timing", "related_keywords", "keyword", True),
-    ("timing", "related_skill_ids", "skill", True),
-    ("timing", "related_faq_ids", "faq", True),
 )
 
 
@@ -66,7 +52,7 @@ REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
 class ReferenceValue:
     """一条具体的引用值。"""
 
-    #: 可读字段路径，例如 ``skills[0].version_id`` 或 ``related_skill_ids[2]``
+    #: 可读字段路径，例如 ``skills[0].version_id`` 或 ``skills[2].skill_id``
     path: str
     value: Any
     #: 这个值所属的列表路径（标量字段为 None）；用于“列表内重复引用”检查
@@ -116,9 +102,6 @@ def iter_reference_values(entity: Any, field: str) -> list[ReferenceValue]:
 
     walk(entity, 0, "", None)
     return found
-
-#: source 允许为空的 kind（其余 kind 的 source 由模型层强制必填）
-SOURCE_OPTIONAL_KINDS = ("product", "general_variant", "skill")
 
 
 @dataclass
@@ -199,10 +182,9 @@ def validate_entities(
 
     _validate_models(list(raws), bundle, result)
     _check_references(bundle, result)
+    _check_general_set_consistency(bundle, result)
     _check_kind_consistency(bundle, result)
     _check_version_consistency(bundle, result)
-    _check_timing_consistency(bundle, result)
-    _check_general_set_consistency(bundle, result)
 
     result.errors.sort(key=_issue_sort_key)
     result.warnings.sort(key=_issue_sort_key)
@@ -269,22 +251,6 @@ def _validate_models(
             continue
         seen[entity.id] = raw.origin
         bundle.add(raw.kind, entity.id, entity, raw.origin)
-
-    # 来源缺失提示（source 本身是可选的 kind 才需要提示）
-    for kind in SOURCE_OPTIONAL_KINDS:
-        for entity_id, entity in bundle.all(kind).items():
-            if getattr(entity, "source", None) is None:
-                origin = bundle.origin_of(kind, entity_id)
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "source",
-                        "未记录来源(source)；资料来源是长期维护的关键，建议补上",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
 
 
 # ---------------------------------------------------------------- 交叉引用
@@ -383,40 +349,35 @@ def _mode_label(mode: Any) -> str:
 
 
 def _check_general_set_consistency(bundle: DataBundle, result: ValidationResult) -> None:
-    """武将牌系列：字符串引用必须对得上系列实体；产品声明的系列也要有对应实体。"""
-    sets = bundle.all("general_set")
-    if not sets:
-        return
-    by_name = {s.name: s for s in sets.values()}
+    """武将牌系列归属：``GeneralVariant.general_set`` 必须出现在所属产品的 ``general_sets`` 里。
+
+    ``GeneralSet`` 实体已删除：系列名只在两处维护 —— ``Product.general_sets``（候选全集）
+    与 ``GeneralVariant.general_set``（具体归属），所以这里只对这两处对账，不再有系列实体。
+    """
+    products = bundle.all("product")
     for entity_id, variant in bundle.all("general_variant").items():
         name = (getattr(variant, "general_set", "") or "").strip()
-        if name and name not in by_name:
-            origin = bundle.origin_of("general_variant", entity_id)
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "general_set",
-                    f"武将牌系列「{name}」没有对应的系列实体（data/general_sets/），"
-                    "请先建这个系列，或改成已有系列",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
+        if not name:
+            continue
+        product = products.get(variant.product_id) if variant.product_id else None
+        if product is None:
+            # product_id 缺失 / 不存在：引用检查已经报错，这里不重复报
+            continue
+        if name in (product.general_sets or []):
+            continue
+        origin = bundle.origin_of("general_variant", entity_id)
+        declared = "、".join(product.general_sets or []) or "（空）"
+        result.warnings.append(
+            Issue(
+                "warning",
+                origin.path,
+                "general_set",
+                f'武将牌系列 "{name}" 不在所属产品 {product.id} 的 general_sets'
+                f"（{declared}）里，请确认是不是录错了产品，或该产品的 general_sets 需要补上这个系列",
+                line=origin.line,
+                entity_id=entity_id,
             )
-    for entity_id, product in bundle.all("product").items():
-        for name in (product.general_sets or []):
-            if name not in by_name:
-                origin = bundle.origin_of("product", entity_id)
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "general_sets",
-                        f"产品声明的武将牌系列「{name}」没有对应的系列实体（data/general_sets/）",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
+        )
 
 
 def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> None:
@@ -454,19 +415,6 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                         entity_id=entity_id,
                     )
                 )
-            if product.general_sets and variant.general_set:
-                if variant.general_set not in product.general_sets:
-                    result.warnings.append(
-                        Issue(
-                            "warning",
-                            origin.path,
-                            "general_set",
-                            f'武将牌系列 "{variant.general_set}" 不在所属产品 {product.id} 的 '
-                            f"general_sets（{'、'.join(product.general_sets)}）里，请确认是不是录错了产品",
-                            line=origin.line,
-                            entity_id=entity_id,
-                        )
-                    )
 
         versions = bundle.all("skill_version")
         seen_skills: dict[str, int] = {}
@@ -491,7 +439,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             if skill is None:
                 continue  # 引用不存在已在引用检查里报错
 
-            # 显式绑定的版本必须属于同一个技能
+            # 显式绑定的版本必须属于同一个技能；文本由它决定，不再按日期推导
             if ref.version_id:
                 version = bundle.get("skill_version", ref.version_id)
                 if version is not None and version.skill_id != ref.skill_id:
@@ -506,7 +454,10 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                             entity_id=entity_id,
                         )
                     )
+                continue
 
+            # version_id 为空：按模式回退到该技能唯一的一条版本；
+            # 找不到与 variant.mode（或 common）匹配的版本，就表示这个武将版本上的技能没有文本
             hit = [
                 sv
                 for sv in versions.values()
@@ -517,10 +468,10 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                     Issue(
                         "warning",
                         origin.path,
-                        field_path,
-                        f'技能 "{skill.name}"({ref.skill_id}) 在模式 '
+                        f"skills[{position}].version_id",
+                        f'该武将版本的技能没有可用文本：技能 "{skill.name}"({ref.skill_id}) 在模式 '
                         f"{_mode_label(variant.mode)} 下没有任何 SkillVersion，"
-                        "查询时拿不到技能文本",
+                        "且 version_id 为空，查询时拿不到技能文本",
                         line=origin.line,
                         entity_id=entity_id,
                     )
@@ -565,23 +516,10 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                 seen_labels[key] = variant_id
 
     # 卡牌印刷：产品模式一致 / 花色点数组合 / 同产品重复
+    # 卡牌印刷：花色点数组合 / 同产品重复（``mode`` 由 product_id -> Product.mode 推导，不再单独校验）
     combos: dict[tuple, list[str]] = {}
     for entity_id, printing in bundle.all("card_printing").items():
         origin = bundle.origin_of("card_printing", entity_id)
-        if printing.product_id in products:
-            product = products[printing.product_id]
-            if product.mode != printing.mode:
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "mode",
-                        f"实体卡模式 {MODE_LABELS.get(printing.mode, printing.mode)} 与所属产品 "
-                        f"{product.id} 的模式 {_mode_label(product.mode)} 不一致",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
         if printing.suit == "none" and printing.rank is not None:
             result.warnings.append(
                 Issue(
@@ -630,33 +568,8 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             )
         )
 
-    # FAQ 模式与关联武将模式
-    for entity_id, faq in bundle.all("faq").items():
-        origin = bundle.origin_of("faq", entity_id)
-        if faq.mode == "common":
-            continue
-        for general_id in faq.related_general_ids:
-            general = bundle.get("general", general_id)
-            if general is None:
-                continue
-            modes = {
-                variant.mode
-                for variant in bundle.all("general_variant").values()
-                if variant.general_id == general_id
-            }
-            if modes and faq.mode not in modes and "common" not in modes:
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "related_general_ids",
-                        f"FAQ 模式 {MODE_LABELS.get(faq.mode, faq.mode)} 与关联武将 "
-                        f"{general_id} 的版本模式（{'、'.join(sorted(m or '未填' for m in modes))}）"
-                        "都不一致",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
+    # FAQ 的关联关系不再手工维护：构建索引 / 渲染详情时按实体名称从 question/answer 自动识别，
+    # 因此这里不再校验 related_general_ids 与 FAQ 模式是否一致。
 
     # 技能本体：没有任何版本
     for entity_id, skill in bundle.all("skill").items():
@@ -674,28 +587,15 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             )
 
 
-#: 未填写的生效区间端点按“无穷”处理（日期闭区间）
-_MIN_DATE = date.min
-_MAX_DATE = date.max
-
-
-def _interval(value_from, value_to) -> tuple[Any, Any]:
-    """把 None 端点替换为可比较的边界；日期闭区间。"""
-    low = value_from or _MIN_DATE
-    high = value_to or _MAX_DATE
-    return low, high
-
-
-def _overlaps(a_from, a_to, b_from, b_to) -> bool:
-    a_low, a_high = _interval(a_from, a_to)
-    b_low, b_high = _interval(b_from, b_to)
-    return max(a_low, b_low) <= min(a_high, b_high)
-
-
 def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> None:
+    """技能版本链：``previous_version_id`` 必须同技能、不能成环。
+
+    ``effective_from/effective_to`` 已删除，技能版本不再按日期推导“当前版本”，
+    因此这里不做任何生效区间的重叠 / 顺序校验，只保留结构性的版本链检查。
+    """
     versions = bundle.all("skill_version")
 
-    # previous_version_id：必须同技能、不能成环、时间上不能倒退
+    # previous_version_id：必须同技能、不能成环
     for entity_id, version in versions.items():
         origin = bundle.origin_of("skill_version", entity_id)
         previous_id = version.previous_version_id
@@ -712,22 +612,6 @@ def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> 
                     "previous_version_id",
                     f'前一版本 {previous_id} 属于技能 {previous.skill_id}，'
                     f"与当前版本技能 {version.skill_id} 不一致",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
-        if (
-            previous.effective_from is not None
-            and version.effective_from is not None
-            and previous.effective_from > version.effective_from
-        ):
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "previous_version_id",
-                    f"前一版本 {previous_id} 的 effective_from({previous.effective_from}) "
-                    f"晚于当前版本({version.effective_from})，请确认版本顺序",
                     line=origin.line,
                     entity_id=entity_id,
                 )
@@ -751,105 +635,3 @@ def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> 
             walked.add(cursor)
             node = versions.get(cursor)
             cursor = node.previous_version_id if node is not None else None
-
-    # 同一技能 + 同一模式 + 同一产品范围：生效区间不应重叠，业务键不应重复
-    groups: dict[tuple, list[Any]] = {}
-    for version in versions.values():
-        key = (version.skill_id, version.mode, version.product_id or "*")
-        groups.setdefault(key, []).append(version)
-
-    for key, group in groups.items():
-        skill_id, mode, product_scope = key
-        for index, left in enumerate(group):
-            for right in group[index + 1 :]:
-                origin = bundle.origin_of("skill_version", right.id)
-                same_key = (left.effective_from, left.effective_to) == (
-                    right.effective_from,
-                    right.effective_to,
-                )
-                if same_key:
-                    result.warnings.append(
-                        Issue(
-                            "warning",
-                            origin.path,
-                            "effective_from/effective_to",
-                            f"{left.id} 与 {right.id} 的生效区间完全相同，疑似重复版本"
-                            "（同一技能同一模式同一产品范围只应有一条同时有效的版本）",
-                            line=origin.line,
-                            entity_id=right.id,
-                        )
-                    )
-                elif _overlaps(
-                    left.effective_from, left.effective_to, right.effective_from, right.effective_to
-                ):
-                    result.warnings.append(
-                        Issue(
-                            "warning",
-                            origin.path,
-                            "effective_from/effective_to",
-                            f"{left.id} 与 {right.id} 的生效区间重叠"
-                            f"（技能 {skill_id} / 模式 {MODE_LABELS.get(mode, mode)} / "
-                            f"产品范围 {product_scope}），"
-                            "推导“当前有效版本”时会出现歧义",
-                            line=origin.line,
-                            entity_id=right.id,
-                        )
-                    )
-
-
-def _check_timing_consistency(bundle: DataBundle, result: ValidationResult) -> None:
-    timings = bundle.all("timing")
-
-    # parent 链成环
-    for entity_id, timing in timings.items():
-        origin = bundle.origin_of("timing", entity_id)
-        walked = {entity_id}
-        cursor = timing.parent_id
-        while cursor:
-            if cursor in walked:
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        "parent_id",
-                        f"parent 链成环：{entity_id} -> … -> {cursor}",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
-                break
-            walked.add(cursor)
-            node = timings.get(cursor)
-            cursor = node.parent_id if node is not None else None
-
-    # previous_ids / next_ids 双向一致
-    for entity_id, timing in timings.items():
-        origin = bundle.origin_of("timing", entity_id)
-        for next_id in timing.next_ids:
-            node = timings.get(next_id)
-            if node is not None and entity_id not in node.previous_ids:
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "next_ids",
-                        f"{entity_id}.next_ids 含 {next_id}，"
-                        f"但 {next_id}.previous_ids 未反向包含 {entity_id}",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
-        for previous_id in timing.previous_ids:
-            node = timings.get(previous_id)
-            if node is not None and entity_id not in node.next_ids:
-                result.warnings.append(
-                    Issue(
-                        "warning",
-                        origin.path,
-                        "previous_ids",
-                        f"{entity_id}.previous_ids 含 {previous_id}，"
-                        f"但 {previous_id}.next_ids 未反向包含 {entity_id}",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )

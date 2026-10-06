@@ -1,23 +1,13 @@
 id: card_gu_guo_an_bang_qlhd_heart_1
 card_id: card_gu_guo_an_bang
 name_printed: 固国安邦
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 不臣篇
 suit: heart
 rank: 1
 quantity: 1
 printed_text: 出牌阶段，对你使用。你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
-normalized_text: ''
 bottom_right_mark: 不臣
 card_number: ''
-illustrator: ''
 image: card_gu_guo_an_bang_qlhd_heart_1.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

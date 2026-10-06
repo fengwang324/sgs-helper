@@ -12,7 +12,8 @@
       └─ 通过：写 YAML → build_database() 全量重建 SQLite
                  └─ 若重建意外失败：用备份内容回滚 YAML，磁盘不残留半成品
 
-搜索复用 ``db._search_row`` 与 ``repo._score``，不另写一套匹配规则。
+搜索复用 ``db._search_row``（正文里已经包含自动识别出的关联实体名），
+匹配排序与 ``repo.search`` 保持一致，不另写一套规则。
 """
 
 from __future__ import annotations
@@ -24,7 +25,6 @@ import sqlite3
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import date
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -37,7 +37,14 @@ from ..constants import (
     VERIFICATION_LABELS,
     mode_sort_key,
 )
-from ..db import BuildResult, DataValidationError, build_database, _search_row
+from ..db import (
+    BuildResult,
+    DataValidationError,
+    _search_row,
+    build_database,
+    build_name_index,
+    detect_mentions,
+)
 from ..loader import (
     DataBundle,
     Issue,
@@ -46,7 +53,6 @@ from ..loader import (
     load_data_dir,
     manifest_digest,
 )
-from ..repo import _score, pick_current, _status
 from ..schema import MODEL_BY_KIND
 from ..validate import (
     REFERENCE_FIELDS,
@@ -61,6 +67,20 @@ from .yaml_writer import BlockStr  # noqa: F401  （供模板/其它模块引用
 #: 待核验页面关心的三种状态
 REVIEW_STATUSES: tuple[str, ...] = ("unverified", "community", "conflict")
 
+#: 新模型里**自带** ``verification_status`` 的实体
+#: （Product / General / Skill / Card 没有核验状态）
+STATUS_KINDS: tuple[str, ...] = (
+    "general_variant",
+    "skill_version",
+    "card_printing",
+    "faq",
+    "keyword",
+    "timing",
+)
+
+#: 正文里自动识别的实体类型（与 repo.mentions 的默认值一致）
+MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
+
 
 # ---------------------------------------------------------------- 展示辅助
 
@@ -74,21 +94,76 @@ def rank_label(rank: int | None) -> str:
 
 
 def source_dict(entity: Any) -> dict | None:
+    """展示用的 source：新模型只有 ``type`` + ``reference``。"""
     source = getattr(entity, "source", None)
     if source is None:
         return None
+    source_type = getattr(source, "type", "")
     return {
-        "type": getattr(source, "type", ""),
-        "type_label": SOURCE_LABELS.get(str(getattr(source, "type", "")), str(getattr(source, "type", ""))),
-        "title": getattr(source, "title", "") or "",
+        "type": source_type,
+        "type_label": SOURCE_LABELS.get(str(source_type), str(source_type)),
         "reference": getattr(source, "reference", "") or "",
-        "notes": getattr(source, "notes", "") or "",
     }
 
 
 def truncate(text: str, limit: int = 60) -> str:
     text = (text or "").strip().replace("\n", " ")
     return text if len(text) <= limit else text[:limit] + "…"
+
+
+def _score_query(query: str, name: str, body: str) -> int | None:
+    """与 ``repo.search`` 同一套排序规则（别名概念已彻底移除）：
+
+    精确名称 0 > 名称前缀 2 > 名称包含 3 > 正文包含 5。
+    """
+    name = name or ""
+    body = body or ""
+    if name == query:
+        return 0
+    if name.startswith(query):
+        return 2
+    if query in name:
+        return 3
+    if query in body:
+        return 5
+    return None
+
+
+def _search_row_pair(bundle: DataBundle, kind: str, entity: Any, name_index) -> tuple[str, str]:
+    """调用 ``db._search_row`` 并归一化成 ``(name, body)``。"""
+    try:
+        row = _search_row(bundle, kind, entity, name_index)
+    except TypeError:  # pragma: no cover - 兼容旧的 3 元组签名
+        row = _search_row(bundle, kind, entity)  # type: ignore[call-arg]
+    if len(row) >= 3:
+        return str(row[0] or ""), str(row[-1] or "")
+    return str(row[0] or ""), str(row[1] or "")
+
+
+def _detect_mentions(
+    text: str, index: list[tuple[str, str, str]], kinds: tuple[str, ...], limit: int
+) -> list[tuple[str, str, str]]:
+    """只保留指定 kind 的自动识别结果（``db.detect_mentions`` 已按名称长度降序）。"""
+    allowed = set(kinds)
+    return [row for row in detect_mentions(text, index) if row[1] in allowed][:limit]
+
+
+def _history_chains(rows: list[dict]) -> list[list[str]]:
+    """按 ``previous_id`` 串出历史版本链（返回 id 列表，只保留真正成链的）。"""
+    by_id = {row["id"]: row for row in rows}
+    referenced = {row["previous_id"] for row in rows if row.get("previous_id")}
+    chains: list[list[str]] = []
+    for start in sorted(by_id.values(), key=lambda row: row["id"]):
+        if start["id"] in referenced:
+            continue
+        chain: list[str] = []
+        cursor: str | None = start["id"]
+        while cursor and cursor in by_id and cursor not in chain:
+            chain.append(cursor)
+            cursor = by_id[cursor].get("previous_id")
+        if len(chain) > 1:
+            chains.append(chain)
+    return chains
 
 
 @dataclass
@@ -241,7 +316,7 @@ class AdminStore:
         self._snapshot: ValidationResult | None = None
         self._fingerprint: str = ""
         self._fingerprint_at: float = 0.0
-        self._index: dict[str, dict[str, tuple[str, str, str]]] = {}
+        self._index: dict[str, dict[str, tuple[str, str]]] = {}
         self._digest: str = ""
         self._digest_fingerprint: str = ""
 
@@ -345,7 +420,7 @@ class AdminStore:
                 str(getattr(entity, "release_year", "") or ""),
                 f"武将牌：{'、'.join(entity.general_sets)}" if entity.general_sets else "",
                 f"游戏牌：{'、'.join(entity.card_sets)}" if entity.card_sets else "",
-                getattr(entity, "publisher", ""),
+                MODE_LABELS.get(getattr(entity, "mode", "") or "", getattr(entity, "mode", "") or ""),
             ]
             return " · ".join(b for b in bits if b)
         if kind == "general":
@@ -382,13 +457,11 @@ class AdminStore:
             return f"{count} 个 SkillVersion"
         if kind == "skill_version":
             mode = MODE_LABELS.get(getattr(entity, "mode", ""), getattr(entity, "mode", ""))
-            start = getattr(entity, "effective_from", None) or "不限"
-            end = getattr(entity, "effective_to", None) or "至今"
             product = self.name_of("product", getattr(entity, "product_id", None))
             label = self._display_label(entity, product, mode)
             if not label and product:
                 label = product          # 标签与产品名重复时，用产品名占这个位置
-            return f"{mode} · {label} · {start} ~ {end}".strip(" ·")
+            return f"{mode} · {label}".strip(" ·")
         if kind == "card":
             from ..constants import CARD_TYPE_LABELS
 
@@ -397,27 +470,14 @@ class AdminStore:
             )
             bits = [CARD_TYPE_LABELS.get(getattr(entity, "card_type", ""), ""), getattr(entity, "subtype", "")]
             return " · ".join(b for b in bits if b) + f"　{count} 种印刷"
-        if kind == "general_set":
-            bundle = self.bundle
-            parent = bundle.get("general_set", entity.parent_id) if entity.parent_id else None
-            kids = sorted((s for s in bundle.all("general_set").values()
-                           if s.parent_id == entity.id), key=lambda s: (s.sort_order, s.name))
-            used = sum(1 for v in bundle.all("general_variant").values()
-                       if (getattr(v, "general_set", "") or "") == entity.name)
-            bits = []
-            if parent is not None:
-                bits.append("属于 " + parent.name)
-            if kids:
-                bits.append("子系列 " + "、".join(k.name for k in kids))
-            bits.append("%d 个武将版本在用" % used)
-            return " · ".join(bits)
         if kind == "card_printing":
             product = self.display_name("product", bundle.get("product", entity.product_id))
             suit = SUIT_LABELS.get(getattr(entity, "suit", ""), getattr(entity, "suit", ""))
             rank = rank_label(getattr(entity, "rank", None))
             mark = getattr(entity, "bottom_right_mark", "") or ""
-            cs = getattr(entity, "card_set", "") or getattr(entity, "package", "") or ""
-            bits = [product, f"{suit}{rank}", f"牌堆 {cs}" if cs else "",
+            cs = getattr(entity, "card_set", "") or ""
+            mode = MODE_LABELS.get(self.mode_of(kind, entity) or "", self.mode_of(kind, entity) or "")
+            bits = [product, mode, f"{suit}{rank}", f"牌堆 {cs}" if cs else "",
                     f"角标 {mark}" if mark else ""]
             return " · ".join(b for b in bits if b)
         if kind == "faq":
@@ -439,33 +499,39 @@ class AdminStore:
             key=lambda v: (v.variant, v.id),
         )
 
-    def _product_id_of_variant(self, variant: Any) -> str | None:
-        return getattr(variant, "product_id", None)
+    def variants_using_version(self, version_id: str) -> list[dict]:
+        """显式绑定了某个 SkillVersion 的武将版本（详情页 / 删除影响都用它）。"""
+        out: list[dict] = []
+        for variant in self.bundle.all("general_variant").values():
+            if any(ref.version_id == version_id for ref in (variant.skills or [])):
+                out.append(
+                    {
+                        "id": variant.id,
+                        "general_id": variant.general_id,
+                        "name": self.display_name("general_variant", variant),
+                    }
+                )
+        return out
 
     #: 核验状态的优先级（合成「武将」这一层的状态时取最保守的那个）
     STATUS_ORDER = ("unverified", "conflict", "community", "official", "physical_verified")
 
     def set_display(self, name: str | None) -> str:
-        """系列的展示文本：带上上级（君临天下·变（君临天下））。"""
-        if not name:
-            return ""
-        bundle = self.bundle
-        me = next((s for s in bundle.all("general_set").values() if s.name == name), None)
-        if me is not None and me.parent_id:
-            parent = bundle.get("general_set", me.parent_id)
-            if parent is not None:
-                return f"{name}（{parent.name}）"
-        return name
+        """武将牌系列的展示文本：系列层级（GeneralSet 实体）已删除，名字本身就是全部信息。"""
+        return name or ""
 
     def status_of(self, kind: str, entity: Any) -> str:
-        """General 自己没有核验状态：用它的各个版本推导出来，
-        这样「武将列表」和「武将版本列表」显示的是一致的。"""
+        """核验状态的来源。
+
+        - 自带 ``verification_status`` 的实体用自己的值；
+        - ``General`` / ``Skill`` / ``SkillVersion`` 自己没有卡：状态跟着**引用它的武将版本**走，
+          于是「武将核验过 => 它的技能也算核验」，武将列表与版本列表显示一致；
+        - ``Product`` / ``Card`` 没有核验状态，返回空串（不进待核验清单）。
+        """
         own = getattr(entity, "verification_status", None)
         bundle = self.bundle
+        order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
         if kind in ("skill", "skill_version"):
-            # 技能 / 技能版本没有「自己的卡」：状态跟着**引用它的武将版本**走，
-            # 于是「武将核验过 => 它的技能也算核验」。
-            order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
             refs = []
             for v in bundle.all("general_variant").values():
                 for ref in (v.skills or []):
@@ -478,23 +544,34 @@ class AdminStore:
                 return own or "unverified"
             return min((getattr(v, "verification_status", None) or "unverified" for v in refs),
                        key=lambda x: order.get(x, 99))
-        if kind != "general":
-            return own or "unverified"
-        statuses = [
-            getattr(v, "verification_status", None) or "unverified"
-            for v in bundle.all("general_variant").values()
-            if v.general_id == entity.id
-        ]
-        if not statuses:
-            return own or "unverified"
-        order = {name: i for i, name in enumerate(self.STATUS_ORDER)}
-        return min(statuses, key=lambda x: order.get(x, 99))
+        if kind == "general":
+            statuses = [
+                getattr(v, "verification_status", None) or "unverified"
+                for v in bundle.all("general_variant").values()
+                if v.general_id == entity.id
+            ]
+            if not statuses:
+                return own or "unverified"
+            return min(statuses, key=lambda x: order.get(x, 99))
+        if kind not in STATUS_KINDS:
+            return ""
+        return own or "unverified"
+
+    def mode_of(self, kind: str, entity: Any) -> str | None:
+        """实体的模式。
+
+        ``CardPrinting`` 已经没有 ``mode`` 字段：需要时一律由 ``product_id -> Product.mode`` 推导。
+        """
+        if kind == "card_printing":
+            product = self.bundle.get("product", getattr(entity, "product_id", None))
+            return getattr(product, "mode", None) if product is not None else None
+        return getattr(entity, "mode", None)
 
     def describe(self, kind: str, entity: Any) -> dict:
         """列表/搜索结果的一行。"""
         origin = self.origin(kind, entity.id)
         status = self.status_of(kind, entity)
-        mode = getattr(entity, "mode", None)
+        mode = self.mode_of(kind, entity)
         return {
             "kind": kind,
             "kind_label": KIND_BY_NAME[kind].label,
@@ -532,17 +609,138 @@ class AdminStore:
             "total": snap.bundle.total,
         }
 
+    # ------------------------------------------------------------ 自动关联
+
+    def mentions(
+        self,
+        text: str,
+        kinds: tuple[str, ...] = MENTION_KINDS,
+        limit: int = 12,
+    ) -> list[dict]:
+        """按实体名称在正文里自动识别关联实体，返回 ``[{"kind","id","name"}]``。
+
+        这是 ``repo.mentions(conn, text, kinds=..., limit=...)`` 的薄封装：
+        默认借用 SQLite 生成物（与 CLI / 小程序同一套识别逻辑）。数据库还没建好、
+        或者 repo.py 还处在半迁移状态时，退回内存里的 YAML 快照，页面照常可用。
+        """
+        body = text or ""
+        if not body.strip():
+            return []
+        hits = self._mentions_from_repo(body, kinds, limit)
+        if hits is None:
+            hits = self._mentions_from_bundle(body, kinds, limit)
+        return hits[:limit]
+
+    def _mentions_from_repo(
+        self, text: str, kinds: tuple[str, ...], limit: int
+    ) -> list[dict] | None:
+        if not self.db_path.exists():
+            return None
+        try:
+            from .. import repo
+        except Exception:  # pragma: no cover - repo 导入失败时退回内存
+            return None
+        mentions_fn = getattr(repo, "mentions", None)
+        index_fn = getattr(repo, "name_index", None)
+        if mentions_fn is None and index_fn is None:
+            return None
+        try:
+            conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
+        except sqlite3.Error:  # pragma: no cover
+            return None
+        try:
+            conn.row_factory = sqlite3.Row
+            if mentions_fn is not None:
+                found = mentions_fn(conn, text, kinds=tuple(kinds), limit=limit) or []
+                return [
+                    {
+                        "kind": str(hit["kind"] if isinstance(hit, dict) else hit[0]),
+                        "id": str(hit["id"] if isinstance(hit, dict) else hit[1]),
+                        "name": str(hit["name"] if isinstance(hit, dict) else hit[2]),
+                    }
+                    for hit in found
+                ]
+            # 只有 name_index：自己按“最长名称优先”匹配
+            index = index_fn(conn) or {}
+            rows = sorted(
+                ((str(name), str(value[0]), str(value[1])) for name, value in index.items()),
+                key=lambda row: (-len(row[0]), row[0]),
+            )
+            return [
+                {"kind": kind, "id": entity_id, "name": name}
+                for name, kind, entity_id in _detect_mentions(text, rows, kinds, limit)
+            ]
+        except Exception:  # pragma: no cover - 生成物与 YAML 不同步时不阻塞页面
+            return None
+        finally:
+            conn.close()
+
+    def _mentions_from_bundle(
+        self, text: str, kinds: tuple[str, ...], limit: int
+    ) -> list[dict]:
+        index = build_name_index(self.bundle)
+        return [
+            {"kind": kind, "id": entity_id, "name": name}
+            for name, kind, entity_id in _detect_mentions(text, index, kinds, limit)
+        ]
+
+    def annotate(self, text: str, mentions: list[dict] | None = None) -> list[dict]:
+        """把正文切成片段：普通文本 ``{"text": ...}`` 或可点击实体 ``{"kind","id","label"}``。
+
+        模板按顺序渲染即可：既不需要 ``|safe``，也不会有 HTML 注入。
+        """
+        body = text or ""
+        if not body:
+            return []
+        hits = mentions if mentions is not None else self.mentions(body)
+        by_name: dict[str, dict] = {}
+        for hit in hits or []:
+            name = str(hit.get("name") or "")
+            if len(name) >= 2 and name not in by_name:
+                by_name[name] = hit
+
+        matches: list[tuple[int, int, dict]] = []
+        for name, hit in by_name.items():
+            start = body.find(name)
+            while start != -1:
+                matches.append((start, start + len(name), hit))
+                start = body.find(name, start + len(name))
+        matches.sort(key=lambda item: (item[0], -(item[1] - item[0])))
+
+        segments: list[dict] = []
+        cursor = 0
+        for start, end, hit in matches:
+            if start < cursor:
+                continue  # 与更长的匹配重叠，跳过
+            if start > cursor:
+                segments.append({"text": body[cursor:start]})
+            segments.append(
+                {"kind": hit.get("kind"), "id": hit.get("id"), "label": body[start:end]}
+            )
+            cursor = end
+        if cursor < len(body):
+            segments.append({"text": body[cursor:]})
+        return segments
+
+    def product_general_sets(self, product_id: str | None) -> list[str]:
+        """某个产品声明的武将牌系列（武将编辑页 general_set 的候选来源）。"""
+        product = self.entity("product", product_id)
+        if product is None:
+            return []
+        return [str(value) for value in (product.general_sets or []) if str(value).strip()]
+
     # ------------------------------------------------------------ 检索
 
-    def _build_index(self) -> dict[str, dict[str, tuple[str, str, str]]]:
+    def _build_index(self) -> dict[str, dict[str, tuple[str, str]]]:
         if self._index:
             return self._index
         bundle = self.bundle
-        index: dict[str, dict[str, tuple[str, str, str]]] = {}
+        index: dict[str, dict[str, tuple[str, str]]] = {}
+        name_index = build_name_index(bundle)
         for kind in KIND_ORDER:
-            rows: dict[str, tuple[str, str, str]] = {}
+            rows: dict[str, tuple[str, str]] = {}
             for entity_id, entity in bundle.all(kind).items():
-                rows[entity_id] = _search_row(bundle, kind, entity)
+                rows[entity_id] = _search_row_pair(bundle, kind, entity, name_index)
             index[kind] = rows
         self._index = index
         return index
@@ -550,7 +748,7 @@ class AdminStore:
     def search(
         self, query: str, kinds: Iterable[str] | None = None, limit: int = 50
     ) -> list[dict]:
-        """跨类型检索。复用 ``repo._score`` 的排序规则，另外支持按 id 命中。"""
+        """跨类型检索。复用 ``repo`` 同样的排序规则，另外支持按 id 命中。"""
         text = (query or "").strip()
         if not text:
             return []
@@ -560,8 +758,8 @@ class AdminStore:
 
         scored: list[tuple] = []
         for kind in kind_list:
-            for entity_id, (name, aliases, body) in index.get(kind, {}).items():
-                score = _score(text, {"name": name, "aliases": aliases, "body": body})
+            for entity_id, (name, body) in index.get(kind, {}).items():
+                score = _score_query(text, name, body)
                 if score is None and entity_id == text:
                     score = -1  # id 精确命中排最前
                 if score is None and lowered in entity_id.lower():
@@ -589,10 +787,11 @@ class AdminStore:
         package: str = "",
         faction: str = "",
     ) -> list[dict]:
-        """列表页筛选：q / mode / verification_status / product_id / general_set（package）。
+        """列表页筛选：q / mode / verification_status / product_id / 系列。
 
-        ``package`` 现在只对武将表示「武将牌系列」（``general_set``）；
-        card_printing / skill_version 仍然用它们自己的 ``package`` 字段。
+        ``package`` 在武将（版本）上表示「武将牌系列」（``general_set``），
+        在实体卡上表示「牌堆 / 套牌」（``card_set``）。
+        ``CardPrinting`` 已经没有 ``mode`` 字段：mode 一律由产品推导后再比较。
         """
         bundle = self.bundle
         hits: dict[str, int] = {}
@@ -604,7 +803,7 @@ class AdminStore:
         for entity_id, entity in self.entries(kind):
             if q.strip() and entity_id not in hits:
                 continue
-            if mode and getattr(entity, "mode", None) != mode:
+            if mode and self.mode_of(kind, entity) != mode:
                 continue
             if status and self.status_of(kind, entity) != status:
                 continue
@@ -615,10 +814,9 @@ class AdminStore:
                     if getattr(entity, "general_set", None) != package:
                         continue
                 elif kind == "card_printing":
-                    if package not in {getattr(entity, "card_set", None),
-                                       getattr(entity, "package", None)}:
+                    if getattr(entity, "card_set", None) != package:
                         continue
-                elif getattr(entity, "package", None) != package:
+                else:
                     continue
             if faction:
                 if kind == "general_variant":
@@ -648,13 +846,6 @@ class AdminStore:
         elif kind == "general_variant":
             rows.sort(key=lambda r: (_number_sort_key(getattr(r["entity"], "general_number", "") or ""),
                                      r["name"], r["id"]))
-        elif kind == "general_set":
-            def set_key(r):
-                e = r["entity"]
-                parent = bundle.get("general_set", e.parent_id) if e.parent_id else None
-                return ("" if parent is None else parent.name,
-                        getattr(e, "sort_order", 0), r["name"])
-            rows.sort(key=set_key)
         elif kind == "general":
             first: dict[str, str] = {}
             for v in bundle.all("general_variant").values():
@@ -674,7 +865,7 @@ class AdminStore:
         products: dict[str, int] = {}
         packages: dict[str, int] = {}
         for _eid, entity in bundle.all(kind).items():
-            mode = getattr(entity, "mode", None)
+            mode = self.mode_of(kind, entity)
             if mode:
                 modes[mode] = modes.get(mode, 0) + 1
             status = self.status_of(kind, entity)
@@ -686,9 +877,9 @@ class AdminStore:
             if kind in {"general", "general_variant"}:
                 values = [getattr(entity, "general_set", None)]
             elif kind == "card_printing":
-                values = [getattr(entity, "card_set", None), getattr(entity, "package", None)]
+                values = [getattr(entity, "card_set", None)]
             else:
-                values = [getattr(entity, "package", None)]
+                values = []
             for value in values:
                 if value:
                     packages[value] = packages.get(value, 0) + 1
@@ -726,7 +917,11 @@ class AdminStore:
             "products": options(products, lambda k: self.name_of("product", k)),
             "packages": options(packages, lambda k: k),
             "factions": options(factions, lambda k: k),
-            "package_label": "武将牌系列" if kind in {"general", "general_variant"} else "包/堆",
+            "package_label": (
+                "武将牌系列" if kind in {"general", "general_variant"}
+                else "牌堆" if kind == "card_printing"
+                else "包/堆"
+            ),
         }
 
     def review_groups(self) -> list[dict]:
@@ -753,14 +948,13 @@ class AdminStore:
     # ------------------------------------------------------------ 录入辅助（给前端 JSON API）
 
     def skill_search(self, query: str, limit: int = 20) -> list[dict]:
-        """技能搜索式组合框：按 名称 / id 匹配，名称命中优先。"""
+        """技能搜索式组合框：按 名称 / id 匹配，名称命中优先（别名概念已删除）。"""
         text = (query or "").strip()
         bundle = self.bundle
         lowered = text.lower()
         scored: list[tuple] = []
         for skill_id, skill in bundle.all("skill").items():
             name = skill.name or ""
-            aliases: list[str] = []
             version_count = sum(
                 1 for v in bundle.all("skill_version").values() if v.skill_id == skill_id
             )
@@ -768,8 +962,6 @@ class AdminStore:
                 score = (5, 0)
             elif name == text:
                 score = (0, 0)
-            elif text in aliases:
-                score = (1, 0)
             elif name.startswith(text):
                 score = (2, 0)
             elif lowered in skill_id.lower():
@@ -777,11 +969,8 @@ class AdminStore:
             elif text in name:
                 score = (4, 0)
             else:
-                hit = next((a for a in aliases if text in a), None)
-                if hit is None:
-                    continue
-                score = (5, 0)
-            scored.append((score[0], name, skill_id, name, aliases, version_count))
+                continue
+            scored.append((score[0], name, skill_id, name, version_count))
         scored.sort(key=lambda item: (item[0], item[1], item[2]))
         return [
             {
@@ -790,7 +979,7 @@ class AdminStore:
                 "version_count": version_count,
                 "exact": bool(text) and name == text,
             }
-            for _score, _n, skill_id, name, aliases, version_count in scored[:limit]
+            for _score, _n, skill_id, name, version_count in scored[:limit]
         ]
 
     def version_display_label(self, version: Any) -> str:
@@ -818,7 +1007,7 @@ class AdminStore:
     ) -> list[dict]:
         """某技能的可选版本，按“产品匹配 > 模式匹配 > common > 其它”排序。
 
-        每项带上足够人判断的信息（版本标签/模式/产品/生效时间/文本摘要/文本哈希），
+        每项带上足够人判断的信息（版本标签/模式/产品/文本摘要/文本哈希），
         前端不仅能显示得像人话，还能据此判断“是不是已经有完全相同的版本”。
         """
         bundle = self.bundle
@@ -847,10 +1036,9 @@ class AdminStore:
                     "mode_label": MODE_LABELS.get(version.mode, version.mode),
                     "product_id": version.product_id,
                     "product_name": self.name_of("product", version.product_id),
-                    "effective_from": version.effective_from.isoformat() if version.effective_from else "",
-                    "effective_to": version.effective_to.isoformat() if version.effective_to else "",
                     "previous_version_id": version.previous_version_id,
                     "verification_status": version.verification_status,
+                    "review_note": version.review_note,
                     "text": text,
                     "text_excerpt": truncate(text, 60),
                     "text_sha": hashlib.sha1(text.strip().encode("utf-8")).hexdigest(),
@@ -859,7 +1047,7 @@ class AdminStore:
                     "same_mode": bool(mode and version.mode == mode),
                 }
             )
-        rows.sort(key=lambda r: (r["rank"], r["effective_from"] or "", r["id"]))
+        rows.sort(key=lambda r: (r["rank"], r["version_label"], r["id"]))
         return rows
 
     def version_by_content(
@@ -915,10 +1103,21 @@ class AdminStore:
         return rows[:limit]
 
     def suggest_values(self, field_name: str, query: str = "", limit: int = 40) -> list[dict]:
-        """势力 / 武将牌系列这类“自由文本但希望复用已有值”的字段的候选值。"""
+        """势力 / 武将牌系列这类“自由文本但希望复用已有值”的字段的候选值。
+
+        武将牌系列的**权威来源是 Product.general_sets**：产品里声明过的系列都能选到，
+        另外把已经在武将版本上使用的值也一并列出。
+        """
         text = (query or "").strip()
         counter: dict[str, int] = {}
-        # 势力 / 武将牌系列现在属于 GeneralVariant
+        if field_name == "general_set":
+            for product in self.bundle.all("product").values():
+                for value in (product.general_sets or []):
+                    value = str(value).strip()
+                    if not value or (text and text not in value):
+                        continue
+                    counter.setdefault(value, 0)
+        # 势力 / 武将牌系列现在都属于 GeneralVariant
         for variant in self.bundle.all("general_variant").values():
             value = (
                 getattr(variant, "faction", "") if field_name == "faction"
@@ -930,31 +1129,10 @@ class AdminStore:
             if text and text not in str(value):
                 continue
             counter[str(value)] = counter.get(str(value), 0) + 1
-        if field_name == "general_set":
-            # 产品里声明过的系列也要能选到（哪怕当前还没有任何卡用它）
-            for product in self.bundle.all("product").values():
-                for value in (product.general_sets or []):
-                    value = str(value)
-                    if text and text not in value:
-                        continue
-                    counter.setdefault(value, 0)
-        out = []
-        for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]:
-            item: dict = {"value": value, "count": counter[value]}
-            if field_name == "general_set":
-                me = next((s for s in self.bundle.all("general_set").values()
-                           if s.name == value), None)
-                if me is not None:
-                    kids = [s.name for s in self.bundle.all("general_set").values()
-                            if s.parent_id == me.id]
-                    if me.parent_id:
-                        parent = self.bundle.get("general_set", me.parent_id)
-                        if parent is not None:
-                            item["parent"] = parent.name
-                    if kids:
-                        item["children"] = sorted(kids)
-            out.append(item)
-        return out
+        return [
+            {"value": value, "count": counter[value]}
+            for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]
+        ]
 
     def generals_named(self, name: str, limit: int = 8) -> list[dict]:
         """同名武将提醒（同名在不同产品/版本下是合法的，所以只提醒、不阻止）。"""
@@ -1043,24 +1221,24 @@ class AdminStore:
         if kind == "skill_version":
             version = self.entity("skill_version", entity_id)
             if version is not None:
-                payload = version.model_dump(mode="json")
-                status = _status(payload, date.today().isoformat())
-                impact["status"] = status
-                view = self.skill_view(version.skill_id) or {}
-                for row in view.get("versions", []):
-                    if row["id"] == entity_id:
-                        impact["is_current"] = bool(row["current_for_modes"])
-                        impact["current_for_modes"] = row["current_for_modes"]
-                label = {"active": "当前生效中", "expired": "已过期", "future": "尚未生效"}.get(status, status)
-                impact["lines"].append(f"该版本状态：{label}。")
-                if impact["is_current"]:
+                bound = [item["name"] for item in self.variants_using_version(entity_id)]
+                successors = [
+                    v.id
+                    for v in self.bundle.all("skill_version").values()
+                    if v.previous_version_id == entity_id
+                ]
+                impact["is_current"] = bool(bound)
+                impact["bound_by"] = bound
+                if bound:
                     impact["lines"].append(
-                        "它当前仍是某些模式下推导出的“当前有效版本”，删除后这些模式会失去技能文本。"
+                        "有武将版本显式绑定这一版：" + "、".join(bound) + "；删除后它们会失去技能文本。"
                     )
-                if not impact["is_current"] and not any(
-                    v.previous_version_id == entity_id for v in self.bundle.all("skill_version").values()
-                ):
-                    impact["lines"].append("它既不是当前有效版本，也没有后继版本引用它，删除属于历史清理。")
+                if successors:
+                    impact["lines"].append(
+                        "有更新的版本把它当作前一版本：" + "、".join(successors) + "。"
+                    )
+                if not bound and not successors:
+                    impact["lines"].append("既没有武将版本绑定它，也没有后继版本引用它，删除属于历史清理。")
         elif kind == "skill":
             versions = [v.id for v in self.bundle.all("skill_version").values() if v.skill_id == entity_id]
             impact["lines"].append(
@@ -1129,54 +1307,24 @@ class AdminStore:
         if entity is None:
             return None
         bundle = self.bundle
-        as_of = date.today().isoformat()
         versions = [
             v for v in bundle.all("skill_version").values() if v.skill_id == skill_id
         ]
-        versions.sort(
-            key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id)
-        )
-        as_dict = {v.id: v.model_dump(mode="json") for v in versions}
-        for version_id, payload in as_dict.items():
-            payload["status"] = _status(payload, as_of)
-            payload["current_for_modes"] = []
-            payload["ambiguous_for_modes"] = []
-
-        modes_present = sorted({v.mode for v in versions}, key=mode_sort_key)
-        mode_groups: list[dict] = []
-        for mode in modes_present:
-            current, ambiguous = pick_current(list(as_dict.values()), mode, as_of)
-            if current is not None:
-                as_dict[current["id"]]["current_for_modes"].append(mode)
-            for version in ambiguous:
-                as_dict[version["id"]]["ambiguous_for_modes"].append(mode)
-            mode_groups.append(
-                {
-                    "mode": mode,
-                    "label": MODE_LABELS.get(mode, mode),
-                    "current_id": current["id"] if current else None,
-                    "current_mode": current["mode"] if current else None,
-                    "ambiguous_ids": [v["id"] for v in ambiguous],
-                }
-            )
+        versions.sort(key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id))
 
         rows = []
         for version in versions:
-            payload = as_dict[version.id]
             rows.append(
                 {
                     "entity": version,
                     "id": version.id,
-                    "status": payload["status"],
-                    "current_for_modes": [MODE_LABELS.get(m, m) for m in payload["current_for_modes"]],
-                    "ambiguous_for_modes": [MODE_LABELS.get(m, m) for m in payload["ambiguous_for_modes"]],
+                    "product_name": self.name_of("product", version.product_id),
                     "previous_id": version.previous_version_id,
-                    "next_ids": [
+                    "successor_ids": [
                         v.id for v in versions if v.previous_version_id == version.id
                     ],
-                    "product_name": self.name_of("product", version.product_id),
-                    "keyword_names": [self.name_of("keyword", k) for k in version.related_keywords],
-                    "timing_names": [self.name_of("timing", t) for t in version.related_timing_ids],
+                    # 技能文本里的技能名 / 关键词名 / 卡牌名自动变成链接
+                    "segments": self.annotate(version.text),
                 }
             )
 
@@ -1184,79 +1332,41 @@ class AdminStore:
             "kind": "skill",
             "skill": entity,
             "versions": rows,
-            "modes": mode_groups,
-            "chains": [
-                [self.name_of("skill_version", vid) + f"（{vid}）" for vid in chain]
-                for chain in _history_chains(list(as_dict.values()))
+            "modes": [
+                {
+                    "mode": mode,
+                    "label": MODE_LABELS.get(mode, mode),
+                    "count": len([v for v in versions if v.mode == mode]),
+                    "version_ids": [v.id for v in versions if v.mode == mode],
+                }
+                for mode in sorted({v.mode for v in versions}, key=mode_sort_key)
             ],
-            "as_of": as_of,
+            "chains": _history_chains(rows),
         }
-
-    def set_view(self, set_id: str) -> dict | None:
-        """系列详情：上级、子系列、以及所有在用这个系列的武将版本。"""
-        entity = self.entity("general_set", set_id)
-        if entity is None:
-            return None
-        bundle = self.bundle
-        parent = bundle.get("general_set", entity.parent_id) if entity.parent_id else None
-        children = sorted((s for s in bundle.all("general_set").values()
-                           if s.parent_id == entity.id), key=lambda s: (s.sort_order, s.name))
-        users = []
-        for variant in bundle.all("general_variant").values():
-            if (getattr(variant, "general_set", "") or "") != entity.name:
-                continue
-            general = bundle.get("general", variant.general_id)
-            users.append({
-                "id": variant.id,
-                "general_id": variant.general_id,
-                "name": (getattr(general, "name", "") or variant.general_id) + f"（{variant.variant}）",
-                "title": variant.title,
-                "number": variant.general_number,
-                "faction": variant.faction,
-                "status": self.status_of("general_variant", variant),
-            })
-        users.sort(key=lambda r: (_number_sort_key(r["number"] or ""), r["name"]))
-        return {"parent": parent, "children": children, "users": users}
 
     def general_view(self, general_id: str) -> dict | None:
         entity = self.entity("general", general_id)
         if entity is None:
             return None
         bundle = self.bundle
-        as_of = date.today().isoformat()
 
         variants = []
         for variant in sorted(
             (v for v in bundle.all("general_variant").values() if v.general_id == general_id),
             key=lambda v: (v.variant, v.id),
         ):
-            mode = variant.mode
-            payloads: dict[str, dict] = {}
             skills = []
             for position, ref in enumerate(variant.skills):
-                versions = [
-                    v
-                    for v in bundle.all("skill_version").values()
-                    if v.skill_id == ref.skill_id
-                ]
-                versions.sort(
-                    key=lambda v: (mode_sort_key(v.mode), v.effective_from or date.min, v.id)
+                all_versions = sorted(
+                    (
+                        v
+                        for v in bundle.all("skill_version").values()
+                        if v.skill_id == ref.skill_id
+                    ),
+                    key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id),
                 )
-                for version in versions:
-                    if version.id not in payloads:
-                        payload = version.model_dump(mode="json")
-                        payload["status"] = _status(payload, as_of)
-                        payloads[version.id] = payload
-
-                candidates = [
-                    payloads[v.id]
-                    for v in versions
-                    if payloads[v.id]["mode"] in (mode, "common")
-                ]
-                pinned = payloads.get(ref.version_id) if ref.version_id else None
-                derived, ambiguous = (
-                    pick_current(candidates, mode, as_of) if candidates else (None, [])
-                )
+                pinned = bundle.get("skill_version", ref.version_id) if ref.version_id else None
+                chosen = pinned or self._fallback_version(all_versions, variant.mode)
                 skills.append(
                     {
                         "position": position,
@@ -1264,13 +1374,13 @@ class AdminStore:
                         "skill": bundle.get("skill", ref.skill_id),
                         "version_id": ref.version_id,
                         "pinned": pinned,
-                        "derived": derived,
-                        "current": pinned or derived,
+                        "current": chosen,
                         "pinned_missing": bool(ref.version_id and pinned is None),
-                        "all_versions": [payloads[v.id] for v in versions],
-                        "ambiguous_ids": [p["id"] for p in ambiguous],
+                        "all_versions": all_versions,
+                        "segments": self.annotate(chosen.text) if chosen is not None else [],
                     }
                 )
+            product = bundle.get("product", variant.product_id)
             variants.append(
                 {
                     "entity": variant,
@@ -1278,8 +1388,8 @@ class AdminStore:
                     "variant": variant.variant,
                     "skills": skills,
                     "product_name": self.name_of("product", variant.product_id),
+                    "product_mode": getattr(product, "mode", None),
                     "set_display": self.set_display(variant.general_set),
-                    "source": source_dict(variant),
                     "edit_url": f"/edit/general/{general_id}?variant={variant.id}",
                 }
             )
@@ -1288,8 +1398,25 @@ class AdminStore:
             "kind": "general",
             "general": entity,
             "variants": variants,
-            "as_of": as_of,
         }
+
+    @staticmethod
+    def _fallback_version(versions: list[Any], mode: str | None) -> Any | None:
+        """技能版本回退规则（与 schema 约定一致）。
+
+        没有显式 ``version_id`` 时，按该武将版本的 mode 匹配**唯一**一条版本作为回退；
+        匹配不到（一条都没有，或有多条并列有歧义）就表示这个技能在这个版本上没有文本，
+        不静默挑一个。
+        """
+        seen: set[str] = set()
+        for wanted in (mode, "common"):
+            if not wanted or wanted in seen:
+                continue
+            seen.add(wanted)
+            hits = [v for v in versions if v.mode == wanted]
+            if len(hits) == 1:
+                return hits[0]
+        return None
 
     def card_view(self, card_id: str) -> dict | None:
         entity = self.entity("card", card_id)
@@ -1307,16 +1434,11 @@ class AdminStore:
                     "product_name": self.name_of("product", printing.product_id),
                     "suit_label": SUIT_LABELS.get(printing.suit, printing.suit),
                     "rank_label": rank_label(printing.rank),
+                    # CardPrinting 自己没有 mode：一律由产品推导
+                    "mode": self.mode_of("card_printing", printing),
                 }
             )
-        return {
-            "kind": "card",
-            "card": entity,
-            "printings": rows,
-            "keywords": [
-                bundle.get("keyword", k) for k in entity.related_keywords if bundle.get("keyword", k)
-            ],
-        }
+        return {"kind": "card", "card": entity, "printings": rows}
 
     def product_view(self, product_id: str) -> dict | None:
         entity = self.entity("product", product_id)
@@ -1336,11 +1458,8 @@ class AdminStore:
             "variants": sorted(variants, key=lambda v: (v.general_id, v.variant, v.id)),
             "printings": sorted(printings, key=lambda p: (p.card_set or "", p.suit, p.rank or 0, p.id)),
             "skill_versions": sorted(versions, key=lambda v: (v.skill_id, mode_sort_key(v.mode), v.id)),
-            "set_chips": [
-                {"name": name, "id": index.get(name, "")}
-                for name in (entity.general_sets or [])
-                for index in [{s.name: s.id for s in bundle.all("general_set").values()}]
-            ],
+            "general_set_chips": [{"name": str(name)} for name in (entity.general_sets or [])],
+            "card_set_chips": [{"name": str(name)} for name in (entity.card_sets or [])],
         }
 
     # ------------------------------------------------------------ 写入
@@ -1797,9 +1916,3 @@ def _iter_yaml(data_dir: Path):
     from ..loader import iter_yaml_files
 
     return iter_yaml_files(Path(data_dir))
-
-
-def _history_chains(versions: list[dict]) -> list[list[str]]:
-    from ..repo import _history_chains as impl
-
-    return impl(versions)

@@ -16,10 +16,4 @@ skills:
     version_id: skill_diao_gui_guozhan_qlhd_v1
   - skill_id: skill_feng_yang
     version_id: skill_feng_yang_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WU 086
 verification_status: unverified
-notes: ''

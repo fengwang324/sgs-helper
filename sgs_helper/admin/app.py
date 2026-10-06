@@ -365,14 +365,25 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         detail: dict[str, Any] = {}
         if kind == "skill":
             detail = live.skill_view(entity_id) or {}
-        elif kind == "general_set":
-            detail = live.set_view(entity_id) or {}
         elif kind == "general":
             detail = live.general_view(entity_id) or {}
         elif kind == "card":
             detail = live.card_view(entity_id) or {}
         elif kind == "product":
             detail = live.product_view(entity_id) or {}
+        elif kind == "skill_version":
+            detail = {
+                # 技能文本里的技能名 / 关键词名 / 卡牌名自动变成链接
+                "segments": live.annotate(entity.text),
+                "bound_variants": live.variants_using_version(entity_id),
+            }
+        elif kind == "faq":
+            # FAQ 的手工关联字段已删除：关联关系按实体名称从正文里自动识别
+            detail = {
+                "mentions": live.mentions(
+                    f"{entity.question}\n{entity.answer}"
+                )
+            }
         return render(
             request,
             "detail.html",
@@ -674,7 +685,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         # 哪个版本的，如果当成初值会把它覆盖到「版本标签」输入框里（保存后标签变成 ID）。
         allowed = {
             "name", "title", "general_number", "mode", "faction", "hp", "gender",
-            "product_id", "general_set", "id", "notes", "general_notes",
+            "product_id", "general_set", "id",
         }
         return {
             key: value
@@ -901,6 +912,23 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         live: AdminStore = request.app.state.store
         return live.product_search(q, limit=max(1, min(limit, 50)))
 
+    @app.get("/api/products/{product_id}")
+    def api_product(request: Request, product_id: str) -> dict:
+        """单个产品：武将编辑页用它取 ``Product.general_sets`` 作为 general_set 的候选。"""
+        live: AdminStore = request.app.state.store
+        product = live.entity("product", product_id)
+        if product is None:
+            raise HTTPException(status_code=404, detail=f"产品不存在：{product_id}")
+        return {
+            "id": product.id,
+            "name": product.name,
+            "release_year": product.release_year,
+            "mode": product.mode,
+            "mode_label": MODE_LABELS.get(product.mode or "", product.mode or ""),
+            "general_sets": live.product_general_sets(product_id),
+            "card_sets": list(product.card_sets or []),
+        }
+
     @app.get("/api/suggest")
     def api_suggest(request: Request, field: str = "faction", q: str = "", limit: int = 40) -> list[dict]:
         if field not in {"faction", "general_set"}:
@@ -937,19 +965,14 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         if kind == "skill_version" and params.get("previous_version_id"):
             previous = live.entity("skill_version", params["previous_version_id"])
             if previous is not None:
-                for field_name in ("skill_id", "mode", "product_id", "package"):
+                for field_name in ("skill_id", "mode", "product_id", "version_label"):
                     value = getattr(previous, field_name, None)
                     if value and not params.get(field_name):
                         params[field_name] = value
                 if previous.source is not None:
                     params.setdefault("source.type", previous.source.type)
-                    params.setdefault("source.title", previous.source.title)
                     params.setdefault("source.reference", previous.source.reference)
         values = forms.prefill(values, params)
-        if kind == "skill_version" and not values.get("effective_from"):
-            from datetime import date
-
-            values["effective_from"] = date.today().isoformat()
         return render(
             request,
             "edit.html",
@@ -1223,7 +1246,7 @@ def require_base_sha(form: Any) -> str:
 
 
 def issue_field(field_name: str) -> str:
-    """把校验器里的 ``skill_ids[1]`` / ``source.title`` 归并到表单字段名。"""
+    """把校验器里的 ``skill_ids[1]`` / ``source.reference`` 归并到表单字段名。"""
     base = field_name.split("[", 1)[0]
     return base or field_name
 

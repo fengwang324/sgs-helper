@@ -1,23 +1,13 @@
 id: card_zhi_ji_zhi_bi_qlhd_club_3
 card_id: card_zhi_ji_zhi_bi
 name_printed: 知己知彼
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: club
 rank: 3
 quantity: 1
 printed_text: 出牌阶段，对一名其他角色使用。观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_zhi_ji_zhi_bi_qlhd_club_3.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

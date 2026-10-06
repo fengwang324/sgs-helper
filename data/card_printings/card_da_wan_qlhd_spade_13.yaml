@@ -1,23 +1,13 @@
 id: card_da_wan_qlhd_spade_13
 card_id: card_da_wan
 name_printed: 大宛
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: spade
 rank: 13
 quantity: 1
 printed_text: “大宛汗血古共知，青海龙种骨更奇；网丝旧画昔尝见，不意人间今见之。”《天马歌》
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_da_wan_qlhd_spade_13.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

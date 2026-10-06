@@ -45,15 +45,7 @@ answer: |-
   ◆角色发动技能选择的目标是合法的，但是没有任何效果可以执行，不会妨碍技能的正常发动。
   例如：吴国太可以对装备区里都没有牌的两名角色发动【甘露】。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》规则章节：技能的要素

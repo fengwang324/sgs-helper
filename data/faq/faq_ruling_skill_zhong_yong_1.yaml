@@ -4,16 +4,7 @@ answer: |-
   你使用因执行【忠勇】“对该目标角色使用【杀】（无距离限制）”的效果而使用的【杀】选择目标时，除该目标角色外的角色不是合法目标。
   例如：周仓对大乔使用【杀】，大乔使用【闪】进行响应，当此【杀】被此【闪】抵消时，周仓发动【忠勇】将此【闪】交给小乔，然后周仓只可以对大乔使用【杀】，但大乔可以发动【流离】，因为此时【忠勇】已经不能对周仓使用此【杀】的目标的合法性产生影响了。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_zhong_yong
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【周仓】技能【忠勇】的裁定原文；问题栏取自原文首个分句

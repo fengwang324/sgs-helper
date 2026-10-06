@@ -19,16 +19,7 @@ answer: |-
   同1-1-2。
   周泰不发动【不屈】，则进入濒死状态，正常进行濒死结算，在濒死结算过程中，对周泰使用的前X张【桃】/【酒】的效果是令周泰回复体力，之后每对其使用一张【桃】/【酒】的效果是周泰将任意一张“创”置入弃牌堆，总计最多可以对周泰使用X+Y张【桃】/【酒】。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_bu_qu
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【周泰】技能【不屈】的裁定原文；问题栏取自原文首个分句

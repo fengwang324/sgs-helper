@@ -4,17 +4,8 @@ mode: guozhan
 text: 出牌阶段限一次，你可以弃置一张手牌，然后亮出牌堆顶的X张牌，你获得其中所有与你以此法弃置牌类别相同的牌，将其余的牌放入弃牌堆；若你以此法得到的牌数大于3，则你失去“敛资”，获得“制衡”（X为所有吴势力角色装备区里的牌数与“烽火”数之和）。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

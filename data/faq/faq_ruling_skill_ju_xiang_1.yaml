@@ -7,16 +7,7 @@ answer: |-
   例如：除非荀攸发动【奇策】将唯一的一张手牌【南蛮入侵】当【南蛮入侵】使用，否则其发动【奇策】使用的【南蛮入侵】因结算完毕而置入弃牌堆后，祝融不会触发【巨象②】。
   例如：于吉用非【南蛮入侵】的牌发动【蛊惑】使用【南蛮入侵】，没有角色质疑，在因结算完毕而置入弃牌堆后祝融不会触发【巨象②】；于吉用【南蛮入侵】发动【蛊惑】使用【南蛮入侵】，没有角色质疑，在因结算完毕而置入弃牌堆后祝融会触发【巨象②】。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_ju_xiang
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【祝融】技能【巨象】的裁定原文；问题栏取自原文首个分句

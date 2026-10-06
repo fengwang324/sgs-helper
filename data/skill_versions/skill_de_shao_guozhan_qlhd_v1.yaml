@@ -1,21 +1,11 @@
 id: skill_de_shao_guozhan_qlhd_v1
 skill_id: skill_de_shao
 mode: guozhan
-text: |-
-  每回合限X次，其他角色使用黑色牌指定你为唯一目标后，若其明置的武将牌数不大于你，你可以弃置其一张牌（X为你的体力值）。
+text: 每回合限X次，其他角色使用黑色牌指定你为唯一目标后，若其明置的武将牌数不大于你，你可以弃置其一张牌（X为你的体力值）。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

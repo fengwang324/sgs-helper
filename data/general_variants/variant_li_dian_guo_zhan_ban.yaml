@@ -16,12 +16,6 @@ skills:
     version_id: skill_xun_xun_guozhan_qlhd_v1
   - skill_id: skill_wang_xi
     version_id: skill_wang_xi_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WEI 017
 verification_status: unverified
-notes: ''
 zhulianbihe:
   - 乐进

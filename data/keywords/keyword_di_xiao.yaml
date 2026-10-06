@@ -2,12 +2,7 @@ id: keyword_di_xiao
 name: 抵消
 definition: 在一张牌对一个目标的结算过程中抵消此牌，即此牌对该目标不生效。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「事件、响应与结算」

@@ -8,7 +8,7 @@
 导入什么：
 
 - ``--stage skills``  武将页（card/hero/*）的「技能名——技能描述」→ SkillDefinition + SkillVersion
-                      （每个技能按模式取一个印次的文本；其它印次写进 notes）
+                      （每个技能按模式取一个印次的文本；其它印次暂不单独录入版本）
 - ``--stage faq``     规则专题/流程/用语章节 → FAQ；武将页的 ◆ 裁定 → FAQ（挂在对应技能上）
 - ``--stage keyword`` 用语页的术语 → Keyword
 - ``--stage timing``  「游戏的流程」页的时机 → Timing
@@ -59,9 +59,7 @@ BOOK_TITLE = "三国杀官方规则集 3.0"
 
 SOURCE = {
     "type": "official_rule",
-    "title": BOOK_TITLE,
     "reference": SITE_URL,
-    "notes": "gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）",
 }
 
 HERO_PAGES = [
@@ -338,8 +336,6 @@ def import_skills() -> dict:
             {
                 "id": skill_id,
                 "name": name,
-                "notes": "",
-                "source": SOURCE,
             }
         )
         write_entity("skill", skill)
@@ -348,16 +344,6 @@ def import_skills() -> dict:
         for mode, best in sorted(modes.items()):
             version_id = f"{skill_id}_{mode}_v1"
             version_alloc.reserve(version_id)
-            others = sorted(
-                {
-                    variant_label(option["variant"])
-                    for option in candidates[(name, mode)]
-                    if option["variant"] != best["variant"]
-                }
-            )
-            notes = ""
-            if others:
-                notes = "规则集中该技能在同一模式下还有这些印次（未单独录入版本）：" + "、".join(others)
             version = MODEL_BY_KIND["skill_version"].model_validate(
                 {
                     "id": version_id,
@@ -366,16 +352,9 @@ def import_skills() -> dict:
                     "text": best["text"],
                     "version_label": variant_label(best["variant"]),
                     "product_id": None,
-                    "package": best["variant"],
-                    "effective_from": None,
-                    "effective_to": None,
                     "previous_version_id": None,
-                    "change_note": "",
-                    "related_keywords": [],
-                    "related_timing_ids": [],
                     "source": SOURCE,
                     "verification_status": "community",
-                    "notes": notes,
                 }
             )
             write_entity("skill_version", version)
@@ -441,11 +420,8 @@ def import_rule_faqs() -> list[dict]:
                 "question": faq_question(title, kind),
                 "answer": answer,
                 "mode": "common",
-                "related_keywords": [],
-                "related_timing_ids": [],
                 "source": SOURCE,
                 "verification_status": "community",
-                "notes": f"取自《{BOOK_TITLE}》{kind}章节：{title}",
                 "title": title,
                 "kind": kind,
             }
@@ -454,7 +430,7 @@ def import_rule_faqs() -> list[dict]:
 
 
 def import_ruling_faqs(skill_index: dict[str, str]) -> list[dict]:
-    """武将页里的 ◆ 裁定 → FAQ（related_skill_ids 指向对应技能）。"""
+    """武将页里的 ◆ 裁定 → FAQ（问题里的技能名会在构建索引时按名称自动识别）。"""
     groups, _ = parse_hero_pages()
     entries: list[dict] = []
     seen: set[str] = set()
@@ -483,14 +459,8 @@ def import_ruling_faqs(skill_index: dict[str, str]) -> list[dict]:
                     "question": ruling_question(skill_name, text),
                     "answer": text,
                     "mode": mode,
-                    "related_skill_ids": [skill_id] if skill_id else [],
                     "source": SOURCE,
                     "verification_status": "community",
-                    "notes": (
-                        f"《{BOOK_TITLE}》中武将【{group.general}】"
-                        + (f"技能【{skill_name}】" if skill_name else "")
-                        + "的裁定原文；问题栏取自原文首个分句"
-                    ),
                     "skill_id": skill_id,
                 }
             )
@@ -544,11 +514,8 @@ def import_keywords() -> list[dict]:
                     "name": term,
                     "definition": body,
                         "mode": "common",
-                    "related_keyword_ids": [],
-                    "related_timing_ids": [],
                     "source": SOURCE,
                     "verification_status": "community",
-                    "notes": f"取自《{BOOK_TITLE}》用语「{title}」",
                 }
             )
     return entries
@@ -580,15 +547,8 @@ def import_timings() -> list[dict]:
                 "name": term,
                 "description": body,
                 "mode": "common",
-                "parent_id": None,
-                "previous_ids": [],
-                "next_ids": [],
-                "related_keywords": [],
-                "related_skill_ids": [],
-                "related_faq_ids": [],
                 "source": SOURCE,
                 "verification_status": "community",
-                "notes": f"取自《{BOOK_TITLE}》流程章节「游戏的流程」",
             }
         )
     return entries

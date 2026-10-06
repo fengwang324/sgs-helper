@@ -3,7 +3,8 @@
 #
 # 日常录入只需要：name / release_year / mode / general_sets / card_sets。
 # general_sets 与 card_sets 是两件不同的事，不要混：
-#   general_sets = 这个产品里的**武将牌系列 / 武将牌组名称**（国战标准、势备篇、九变篇…）
+#   general_sets = 这个产品里的**武将牌系列 / 武将牌组名称**（国战标准、势备篇、九变篇…）；
+#                  它同时是 GeneralVariant.general_set 的唯一候选来源
 #   card_sets    = 这个产品里的**游戏牌牌堆 / 牌堆系列名称**（标准牌堆、九变牌堆、君主游戏牌…）
 id: product_change_me
 name: 产品名称
@@ -14,15 +15,3 @@ general_sets:
   - 势备篇
 card_sets:
   - 标准牌堆
-# ---- 以下为“高级信息”，日常可以留空 ----
-series: ""
-publisher: ""
-release_date: null      # 可省略；填了就必须与 release_year 同年
-edition: ""
-source:
-  type: physical_card   # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
-  title: 本人实体产品
-  reference: ""
-  notes: ""
-verification_status: unverified
-notes: ""

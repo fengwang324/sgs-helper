@@ -1,21 +1,11 @@
 id: skill_fang_yuan_guozhan_qlhd_v1
 skill_id: skill_fang_yuan
 mode: guozhan
-text: |-
-  阵法技，若你是围攻角色，此围攻关系中的所有围攻角色的手牌上限+1且被围攻角色的手牌上限一1。结束阶段，若你是被围攻角色，则你选择一名此围攻关系中的围攻角色，视为对其使用一张【杀】。
+text: 阵法技，若你是围攻角色，此围攻关系中的所有围攻角色的手牌上限+1且被围攻角色的手牌上限一1。结束阶段，若你是被围攻角色，则你选择一名此围攻关系中的围攻角色，视为对其使用一张【杀】。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

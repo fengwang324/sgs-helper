@@ -4,17 +4,8 @@ mode: guozhan
 text: 锁定技，你于回合内使用牌无距离和次数限制：弃牌阶段开始时，若你本回合使用过牌且未造成过伤害，本回合你的手牌上限-1；若你本回合未使用过牌，本回合你的手牌上限+1。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

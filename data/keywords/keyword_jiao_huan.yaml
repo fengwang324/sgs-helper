@@ -6,12 +6,7 @@ definition: |-
   ◆交换的其中一方可以没有指定交换的牌，也可以双方都没有指定交换的牌（此情况依然视为执行了交换的效果）。
   例如：吴国太可以对两名装备区里都没有牌的角色发动【甘露】。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

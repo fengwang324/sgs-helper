@@ -14,6 +14,7 @@ def test_real_data_dir_loads(data_dir: Path) -> None:
     assert {
         "product",
         "general",
+        "general_variant",
         "skill",
         "skill_version",
         "card",
@@ -22,6 +23,8 @@ def test_real_data_dir_loads(data_dir: Path) -> None:
         "keyword",
         "timing",
     } <= kinds
+    # GeneralSet 实体与目录已删除
+    assert "general_set" not in kinds
 
 
 def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
@@ -35,6 +38,20 @@ def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
 
     found = [rel for _path, rel, _kind in iter_yaml_files(data)]
     assert found == ["products/a.yaml"]
+
+
+def test_unknown_directories_are_ignored(tmp_path: Path) -> None:
+    """只认 KIND_BY_NAME 里的目录名；删掉的 general_sets 等目录即使存在也不装载。"""
+    data = tmp_path / "data"
+    (data / "products").mkdir(parents=True)
+    (data / "products" / "a.yaml").write_text("id: product_a\n", encoding="utf-8")
+    (data / "general_sets").mkdir()
+    (data / "general_sets" / "gs.yaml").write_text("id: gs_x\nname: X\n", encoding="utf-8")
+    (data / "nonsense").mkdir()
+    (data / "nonsense" / "y.yaml").write_text("id: y\n", encoding="utf-8")
+
+    found = [(rel, kind) for _path, rel, kind in iter_yaml_files(data)]
+    assert found == [("products/a.yaml", "product")]
 
 
 def test_single_mapping_file(synth: Path) -> None:
@@ -106,5 +123,5 @@ def test_empty_file_is_ignored(tmp_path: Path) -> None:
 def test_manifest_digest_changes_with_content(synth: Path) -> None:
     first = manifest_digest(synth)
     target = synth / "skills" / "demo.yaml"
-    target.write_text(target.read_text(encoding="utf-8") + "notes: 改动\n", encoding="utf-8")
+    target.write_text(target.read_text(encoding="utf-8") + "review_note: 改动\n", encoding="utf-8")
     assert manifest_digest(synth) != first

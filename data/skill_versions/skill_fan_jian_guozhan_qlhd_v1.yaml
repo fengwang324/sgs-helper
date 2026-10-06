@@ -4,17 +4,8 @@ mode: guozhan
 text: 出牌阶段限一次，你可以展示一张手牌然后你将之交给一名其他角色，令其选择一项：1.展示其所有手牌，然后弃置其与之花色相同的所有牌；2.失去1点体力。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

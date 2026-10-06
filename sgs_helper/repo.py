@@ -5,19 +5,18 @@
 - CLI（``scripts/query.py``）直接渲染；
 - 以后接微信小程序时，FastAPI 路由可以原样复用它，不用改数据层。
 
-“当前有效版本”的推导规则（不使用易忘的 current: true）::
+技能文本的取法（新模型，**不按日期推导**）::
 
-    1. 只看 skill_id 相同、mode 为「请求模式」或「common」的版本；
-    2. 生效区间按日期闭区间判断：effective_from <= as_of <= effective_to，
-       未填写的一端视为无穷；
-    3. 具体模式优先于 common；
-    4. 再按 effective_from 取最晚；
-    5. 若仍有多个并列，则判定为“有歧义”，全部列出并提示，不静默挑一个。
+    1. ``GeneralVariant.skills[].version_id`` 显式绑定：填了就按它取文本；
+    2. 为空时，按该武将版本的 ``mode`` 去匹配该技能**唯一一条**同模式版本作为回退；
+    3. 匹配不到（0 条，或多条并列）就是“这个技能在此武将版本上没有文本”。
+
+FAQ / 关键词 / 时点的关联不再人工维护，而是在正文里按实体名称自动识别
+（见 :func:`mentions`）。
 """
 
 from __future__ import annotations
 
-import datetime as dt
 import json
 import sqlite3
 from pathlib import Path
@@ -27,13 +26,21 @@ from .constants import (
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
-    MODE_SPECIFICITY,
     mode_sort_key,
 )
-from .db import JSON_COLUMNS, fts_query
+from .db import JSON_COLUMNS, SOURCE_KINDS, fts_query
 
-MIN_DATE = "0001-01-01"
-MAX_DATE = "9999-12-31"
+#: 参与“按名称自动识别”的实体类型（与构建期 ``db.NAME_KINDS`` 保持一致）
+NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
+
+#: 自动识别的 kind -> 报告里的分组键名
+MENTION_GROUPS: dict[str, str] = {
+    "general": "generals",
+    "skill": "skills",
+    "card": "cards",
+    "keyword": "keywords",
+    "timing": "timings",
+}
 
 
 class DatabaseMissing(FileNotFoundError):
@@ -73,6 +80,39 @@ def row_to_dict(kind: str, row: sqlite3.Row) -> dict:
     return data
 
 
+def product_mode(conn: sqlite3.Connection, product_id: str | None) -> str | None:
+    """``CardPrinting.mode`` 不再存储，按 ``product_id -> Product.mode`` 推导。"""
+    if not product_id:
+        return None
+    table = KIND_BY_NAME["product"].table
+    row = conn.execute(f"SELECT mode FROM {table} WHERE id = ?", (product_id,)).fetchone()
+    return row[0] if row is not None else None
+
+
+def _derive(conn: sqlite3.Connection, kind: str, data: dict) -> dict:
+    """补上“不落库、按需推导”的字段。"""
+    if kind == "card_printing":
+        data["mode"] = product_mode(conn, data.get("product_id"))
+    return data
+
+
+def source_of(conn: sqlite3.Connection, key: str | None) -> dict | None:
+    """按 source_key 取回去重后的来源记录（只有 type + reference）。"""
+    if not key:
+        return None
+    row = conn.execute(
+        "SELECT type, reference FROM sources WHERE source_key = ?", (key,)
+    ).fetchone()
+    return dict(row) if row is not None else None
+
+
+def with_source(conn: sqlite3.Connection, data: dict, kind: str | None = None) -> dict:
+    """只给仍有来源的实体（skill_version / faq / keyword / timing）补 source 字段。"""
+    if (kind or data.get("kind")) in SOURCE_KINDS:
+        data["source"] = source_of(conn, data.get("source_key"))
+    return data
+
+
 def fetch(conn: sqlite3.Connection, kind: str, entity_id: str | None) -> dict | None:
     if not entity_id:
         return None
@@ -80,53 +120,97 @@ def fetch(conn: sqlite3.Connection, kind: str, entity_id: str | None) -> dict | 
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (entity_id,)).fetchone()
     if row is None:
         return None
-    return with_source(conn, row_to_dict(kind, row))
-
-
-def source_of(conn: sqlite3.Connection, key: str | None) -> dict | None:
-    """按 source_key 取回去重后的来源记录。"""
-    if not key:
-        return None
-    row = conn.execute(
-        "SELECT type, title, reference, notes FROM sources WHERE source_key = ?", (key,)
-    ).fetchone()
-    return dict(row) if row is not None else None
-
-
-def with_source(conn: sqlite3.Connection, data: dict) -> dict:
-    data["source"] = source_of(conn, data.get("source_key"))
-    return data
+    return _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind))
 
 
 def _fetch_all(conn: sqlite3.Connection, kind: str, sql: str, params: Iterable = ()) -> list[dict]:
     return [
-        with_source(conn, row_to_dict(kind, row)) for row in conn.execute(sql, tuple(params))
+        _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind))
+        for row in conn.execute(sql, tuple(params))
     ]
+
+
+# ---------------------------------------------------------------- 按名称自动识别
+
+
+def name_index(conn: sqlite3.Connection) -> dict[str, tuple[str, str]]:
+    """``name -> (kind, id)``，覆盖 general / skill / card / keyword / timing。
+
+    规则与构建期 ``db.build_name_index`` 一致：单字名称不参与（避免整段规则文本
+    被刷成链接）；同名时按 :data:`NAME_KINDS` 的顺序取第一个。
+    """
+    index: dict[str, tuple[str, str]] = {}
+    for kind in NAME_KINDS:
+        table = KIND_BY_NAME[kind].table
+        for entity_id, name in conn.execute(f"SELECT id, name FROM {table} ORDER BY id"):
+            text = (name or "").strip()
+            if len(text) < 2 or text in index:
+                continue
+            index[text] = (kind, entity_id)
+    return index
+
+
+def mentions(
+    conn: sqlite3.Connection,
+    text: str,
+    kinds: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing"),
+    limit: int = 12,
+) -> list[dict]:
+    """在 ``text`` 里按实体名称做最长优先匹配。
+
+    返回 ``[{"kind", "id", "name"}]``：去重、名称长的在前。名称长度 < 2 的不参与。
+    """
+    if not text:
+        return []
+    selected = set(kinds)
+    hits = [
+        (name, kind, entity_id)
+        for name, (kind, entity_id) in name_index(conn).items()
+        if kind in selected and name in text
+    ]
+    hits.sort(key=lambda hit: (-len(hit[0]), hit[0]))
+    return [
+        {"kind": kind, "id": entity_id, "name": name}
+        for name, kind, entity_id in hits[:limit]
+    ]
+
+
+def _mentioned_entities(
+    conn: sqlite3.Connection,
+    text: str,
+    *,
+    exclude: tuple[str, str] | None = None,
+    limit: int = 12,
+) -> dict[str, list[dict]]:
+    """把 ``mentions()`` 的结果按 kind 分组并取回实体。
+
+    返回的键固定为 ``generals / skills / cards / keywords / timings``，
+    与渲染层和 admin 模板约定一致（替代原来的手工关联字段）。
+    """
+    grouped: dict[str, list[dict]] = {key: [] for key in MENTION_GROUPS.values()}
+    for hit in mentions(conn, text, limit=limit):
+        if exclude is not None and (hit["kind"], hit["id"]) == exclude:
+            continue
+        entity = fetch(conn, hit["kind"], hit["id"])
+        if entity is not None:
+            grouped[MENTION_GROUPS[hit["kind"]]].append(entity)
+    return grouped
 
 
 # ---------------------------------------------------------------- 检索
 
 
-def _aliases_of(row) -> list[str]:
-    return [a.strip() for a in (row["aliases"] or "").split(" | ") if a.strip()]
-
-
 def _score(query: str, row) -> int | None:
     name = row["name"] or ""
-    aliases = _aliases_of(row)
     body = row["body"] or ""
     if name == query:
         return 0
-    if query in aliases:
-        return 1
     if name.startswith(query):
-        return 2
+        return 1
     if query in name:
-        return 3
-    if any(query in alias for alias in aliases):
-        return 4
+        return 2
     if query in body:
-        return 5
+        return 3
     return None
 
 
@@ -143,7 +227,7 @@ def search(
     kinds: Iterable[str] | None = None,
     limit: int = 25,
 ) -> list[dict]:
-    """简单可靠的检索：精确名称 > 别名 > 名称模糊 > 正文；FTS5 作为兜底。"""
+    """简单可靠的检索：精确名称 > 名称前缀 > 名称模糊 > 正文；FTS5 作为兜底。"""
     text = (query or "").strip()
     if not text:
         return []
@@ -151,10 +235,10 @@ def search(
     placeholders = ", ".join("?" for _ in kind_list)
     like = f"%{text}%"
     sql = (
-        "SELECT kind, entity_id, name, aliases, body FROM search_index "
-        f"WHERE kind IN ({placeholders}) AND (name LIKE ? OR aliases LIKE ? OR body LIKE ?)"
+        "SELECT kind, entity_id, name, body FROM search_index "
+        f"WHERE kind IN ({placeholders}) AND (name LIKE ? OR body LIKE ?)"
     )
-    rows = list(conn.execute(sql, [*kind_list, like, like, like]).fetchall())
+    rows = list(conn.execute(sql, [*kind_list, like, like]).fetchall())
 
     from_fts = False
     if not rows:
@@ -167,7 +251,7 @@ def search(
         if score is None:
             if not from_fts:
                 continue
-            score = 6
+            score = 4
         scored.append((score, _kind_rank(row["kind"]), row["name"] or "", row["kind"], row["entity_id"]))
     scored.sort(key=lambda item: item[:3])
 
@@ -192,7 +276,7 @@ def _fts_search(conn: sqlite3.Connection, text: str, kinds: list[str]) -> list[s
         if hit["kind"] not in kinds:
             continue
         row = conn.execute(
-            "SELECT kind, entity_id, name, aliases, body FROM search_index "
+            "SELECT kind, entity_id, name, body FROM search_index "
             "WHERE kind = ? AND entity_id = ?",
             (hit["kind"], hit["entity_id"]),
         ).fetchone()
@@ -215,19 +299,15 @@ def resolve(
     table = KIND_BY_NAME[kind].table
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (text,)).fetchone()
     if row is not None:
-        return row_to_dict(kind, row), []
+        return _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind)), []
 
     rows = list(
         conn.execute(
-            "SELECT kind, entity_id, name, aliases, body FROM search_index WHERE kind = ?",
+            "SELECT kind, entity_id, name, body FROM search_index WHERE kind = ?",
             (kind,),
         ).fetchall()
     )
-    exact = [
-        r
-        for r in rows
-        if (r["name"] or "") == text or text in _aliases_of(r)
-    ]
+    exact = [r for r in rows if (r["name"] or "") == text]
     if len(exact) == 1:
         return fetch(conn, kind, exact[0]["entity_id"]), []
     if len(exact) > 1:
@@ -250,46 +330,11 @@ def resolve(
     return None, candidates
 
 
-# ---------------------------------------------------------------- 版本推导
-
-
-def _active(version: dict, as_of: str) -> bool:
-    low = version.get("effective_from") or MIN_DATE
-    high = version.get("effective_to") or MAX_DATE
-    return low <= as_of <= high
-
-
-def pick_current(
-    versions: list[dict], mode: str, as_of: str
-) -> tuple[dict | None, list[dict]]:
-    """推导某模式下的当前有效版本。返回 (唯一版本 | None, 并列版本列表)。"""
-    candidates = [v for v in versions if v["mode"] in (mode, "common") and _active(v, as_of)]
-    if not candidates:
-        return None, []
-
-    def rank(version: dict) -> tuple:
-        return (
-            MODE_SPECIFICITY.get(version["mode"], 0),
-            version.get("effective_from") or MIN_DATE,
-            version["id"],
-        )
-
-    best = max(rank(v) for v in candidates)
-    winners = [v for v in candidates if rank(v) == best]
-    if len(winners) == 1:
-        return winners[0], []
-    return None, winners
-
-
-def _status(version: dict, as_of: str) -> str:
-    if (version.get("effective_from") or MIN_DATE) > as_of:
-        return "future"
-    if (version.get("effective_to") or MAX_DATE) < as_of:
-        return "expired"
-    return "active"
+# ---------------------------------------------------------------- 技能版本
 
 
 def _history_chains(versions: list[dict]) -> list[list[str]]:
+    """按 previous_version_id 串出的版本演进链。"""
     by_id = {v["id"]: v for v in versions}
     referenced = {v["previous_version_id"] for v in versions if v.get("previous_version_id")}
     chain_starts = [v for v in versions if v["id"] not in referenced]
@@ -308,86 +353,58 @@ def _versions_of_skill(conn: sqlite3.Connection, skill_id: str) -> list[dict]:
     return _fetch_all(
         conn,
         "skill_version",
-        "SELECT * FROM skill_versions WHERE skill_id = ? "
-        "ORDER BY mode, COALESCE(effective_from, '0001-01-01'), id",
+        "SELECT * FROM skill_versions WHERE skill_id = ? ORDER BY mode, id",
         (skill_id,),
     )
 
 
-def annotate_versions(
-    conn: sqlite3.Connection, skill_id: str, modes: Iterable[str], as_of: dt.date
-) -> list[dict]:
-    """给某技能的全部版本打上状态与“在哪些模式下是当前有效版本”。"""
-    as_of_iso = as_of.isoformat()
-    versions = _versions_of_skill(conn, skill_id)
-    for version in versions:
-        version["status"] = _status(version, as_of_iso)
-        version["current_for_modes"] = []
-    for mode in modes:
-        current, ambiguous = pick_current(versions, mode, as_of_iso)
-        if current is not None:
-            current["current_for_modes"].append(mode)
-        for version in ambiguous:
-            version.setdefault("ambiguous_for_modes", []).append(mode)
-    return versions
+def _match_version(
+    versions: list[dict], mode: str | None, version_id: str | None
+) -> tuple[dict | None, bool]:
+    """选定武将版本上要显示的技能文本，返回 ``(版本 | None, 是否显式绑定)``。
+
+    - ``version_id`` 非空：按它取；取不到就是 ``(None, True)``（绑定失效）。
+    - ``version_id`` 为空：先按 ``mode`` 找**唯一一条**同模式版本，再退到 ``common``
+      的**唯一一条**；两边都是 0 条或多条并列都算无文本（绝不静默挑一个）。
+
+    这套回退规则与 ``validate.py`` 的「该武将版本的技能没有可用文本」警告、
+    以及管理页 ``AdminStore._fallback_version`` 完全一致。
+    """
+    if version_id:
+        pinned_version = next((v for v in versions if v["id"] == version_id), None)
+        return pinned_version, True
+    seen: set[str] = set()
+    for wanted in (mode, "common"):
+        if not wanted or wanted in seen:
+            continue
+        seen.add(wanted)
+        candidates = [v for v in versions if v.get("mode") == wanted]
+        if len(candidates) == 1:
+            return candidates[0], False
+    return None, False
 
 
-# ---------------------------------------------------------------- 各类报告
-
-
-def skill_report(
-    conn: sqlite3.Connection, query: str, as_of: dt.date | None = None
-) -> dict | None:
+def skill_report(conn: sqlite3.Connection, query: str) -> dict | None:
     entity, _candidates = resolve(conn, "skill", query)
     if entity is None:
         return None
-    as_of = as_of or dt.date.today()
-    as_of_iso = as_of.isoformat()
 
-    versions = _fetch_all(
-        conn,
-        "skill_version",
-        "SELECT * FROM skill_versions WHERE skill_id = ? "
-        "ORDER BY mode, COALESCE(effective_from, '0001-01-01'), id",
-        (entity["id"],),
-    )
-    modes_present = sorted(
-        {v["mode"] for v in versions}, key=mode_sort_key
-    )
+    versions = _versions_of_skill(conn, entity["id"])
+    modes_present = sorted({v["mode"] for v in versions}, key=mode_sort_key)
+
+    groups = [
+        {
+            "mode": mode,
+            "label": MODE_LABELS.get(mode, mode),
+            "version_ids": [v["id"] for v in versions if v["mode"] == mode],
+        }
+        for mode in modes_present
+    ]
 
     for version in versions:
-        version["status"] = _status(version, as_of_iso)
-        version["current_for_modes"] = []
-        version["ambiguous_for_modes"] = []
-
-    groups = []
-    for mode in modes_present:
-        current, ambiguous = pick_current(versions, mode, as_of_iso)
-        if current is not None:
-            current["current_for_modes"].append(mode)
-        for version in ambiguous:
-            version["ambiguous_for_modes"].append(mode)
-        groups.append(
-            {
-                "mode": mode,
-                "label": MODE_LABELS.get(mode, mode),
-                "version_ids": [v["id"] for v in versions if v["mode"] == mode],
-                "current_id": current["id"] if current else None,
-                # 该模式的当前版本其实来自 common 时给出提示
-                "current_mode": current["mode"] if current else None,
-                "ambiguous_ids": [v["id"] for v in ambiguous],
-            }
+        version["previous_version"] = fetch(
+            conn, "skill_version", version.get("previous_version_id")
         )
-
-    for version in versions:
-        version["previous_version"] = fetch(conn, "skill_version", version.get("previous_version_id"))
-        version["related_keyword_names"] = [
-            (fetch(conn, "keyword", k) or {}).get("name", k) for k in version["related_keywords"]
-        ]
-        version["related_timing_names"] = [
-            (fetch(conn, "timing", t) or {}).get("name", t)
-            for t in version["related_timing_ids"]
-        ]
 
     product_ids = {v["product_id"] for v in versions if v.get("product_id")}
     products = {pid: fetch(conn, "product", pid) for pid in product_ids}
@@ -395,7 +412,6 @@ def skill_report(
     return {
         "kind": "skill",
         "definition": entity,
-        "as_of": as_of_iso,
         "versions": versions,
         "modes": groups,
         "history_chains": _history_chains(versions),
@@ -404,13 +420,37 @@ def skill_report(
 
 
 def variant_skill_refs(conn: sqlite3.Connection, variant_id: str) -> list[dict]:
-    """读某个武将版本的技能关系（含可选的具体版本绑定），顺序即卡面上的技能顺序。"""
+    """读某个武将版本的技能关系原始行，顺序即卡面上的技能顺序。"""
     rows = conn.execute(
         "SELECT skill_id, version_id, position FROM variant_skills "
         "WHERE variant_id = ? ORDER BY position",
         (variant_id,),
     ).fetchall()
     return [{"skill_id": row[0], "version_id": row[1], "position": row[2]} for row in rows]
+
+
+def variant_skills(conn: sqlite3.Connection, variant: dict) -> list[dict]:
+    """武将版本 → 技能条目，补上“显示哪一版文本”。
+
+    每条形如 ``{"skill_id", "version_id", "position", "version", "pinned", "skill"}``：
+    ``version`` 是匹配到的版本 dict（可能为 None），``pinned`` 表示是否显式绑定。
+    """
+    mode = variant.get("mode")
+    entries: list[dict] = []
+    for ref in variant_skill_refs(conn, variant["id"]):
+        versions = _versions_of_skill(conn, ref["skill_id"])
+        version, pinned = _match_version(versions, mode, ref["version_id"])
+        entries.append(
+            {
+                "skill_id": ref["skill_id"],
+                "version_id": ref["version_id"],
+                "position": ref["position"],
+                "version": version,
+                "pinned": pinned,
+                "skill": fetch(conn, "skill", ref["skill_id"]),
+            }
+        )
+    return entries
 
 
 def general_variants(conn: sqlite3.Connection, general_id: str) -> list[dict]:
@@ -423,64 +463,20 @@ def general_variants(conn: sqlite3.Connection, general_id: str) -> list[dict]:
     )
 
 
-def _variant_skills(conn: sqlite3.Connection, variant: dict, as_of_iso: str) -> list[dict]:
-    """给一个武将版本的技能打上“当前显示哪一版”的信息。"""
-    mode = variant.get("mode")
-    skills = []
-    for ref in variant_skill_refs(conn, variant["id"]):
-        skill_id = ref["skill_id"]
-        pinned_id = ref["version_id"]
-        skill = fetch(conn, "skill", skill_id)
-        all_versions = _fetch_all(
-            conn,
-            "skill_version",
-            "SELECT * FROM skill_versions WHERE skill_id = ? "
-            "ORDER BY mode, COALESCE(effective_from, '0001-01-01'), id",
-            (skill_id,),
-        )
-        for version in all_versions:
-            version["status"] = _status(version, as_of_iso)
-
-        candidates = [v for v in all_versions if v["mode"] in (mode, "common")]
-        pinned = next((v for v in all_versions if v["id"] == pinned_id), None)
-        derived, ambiguous = (
-            pick_current(candidates, mode, as_of_iso) if candidates else (None, [])
-        )
-        skills.append(
-            {
-                "skill_id": skill_id,
-                "skill": skill,
-                "version_id": pinned_id,
-                "pinned": pinned,
-                "versions": candidates,
-                "all_versions": all_versions,
-                "current": pinned or derived,
-                "derived": derived,
-                "ambiguous_ids": [v["id"] for v in ambiguous],
-            }
-        )
-    return skills
-
-
-def general_report(
-    conn: sqlite3.Connection, query: str, as_of: dt.date | None = None
-) -> dict | None:
+def general_report(conn: sqlite3.Connection, query: str) -> dict | None:
     entity, _candidates = resolve(conn, "general", query)
     if entity is None:
         return None
-    as_of = as_of or dt.date.today()
-    as_of_iso = as_of.isoformat()
 
     variants = []
     for variant in general_variants(conn, entity["id"]):
-        variants.append({**variant, "skills": _variant_skills(conn, variant, as_of_iso)})
+        variants.append({**variant, "skills": variant_skills(conn, variant)})
 
     return {
         "kind": "general",
         "general": entity,
         "variants": variants,
         "product": fetch(conn, "product", (variants[0].get("product_id") if variants else None)),
-        "as_of": as_of_iso,
     }
 
 
@@ -498,12 +494,10 @@ def card_report(conn: sqlite3.Connection, query: str) -> dict | None:
     for printing in printings:
         printing["product"] = fetch(conn, "product", printing.get("product_id"))
         printing["sibling_printings"] = []
-    keywords = [fetch(conn, "keyword", k) for k in entity.get("related_keywords", [])]
     return {
         "kind": "card",
         "definition": entity,
         "printings": printings,
-        "keywords": [k for k in keywords if k],
     }
 
 
@@ -511,14 +505,11 @@ def faq_report(conn: sqlite3.Connection, faq_id: str) -> dict | None:
     entity = fetch(conn, "faq", faq_id)
     if entity is None:
         return None
+    text = f"{entity.get('question') or ''}\n{entity.get('answer') or ''}"
     return {
         "kind": "faq",
         "faq": entity,
-        "generals": [fetch(conn, "general", i) for i in entity["related_general_ids"]],
-        "skills": [fetch(conn, "skill", i) for i in entity["related_skill_ids"]],
-        "cards": [fetch(conn, "card", i) for i in entity["related_card_ids"]],
-        "keywords": [fetch(conn, "keyword", i) for i in entity["related_keywords"]],
-        "timings": [fetch(conn, "timing", i) for i in entity["related_timing_ids"]],
+        **_mentioned_entities(conn, text),
     }
 
 
@@ -539,18 +530,9 @@ def keyword_report(conn: sqlite3.Connection, query: str) -> dict | None:
     return {
         "kind": "keyword",
         "keyword": entity,
-        "related_keywords": [
-            fetch(conn, "keyword", i) for i in entity["related_keyword_ids"]
-        ],
-        "timings": [fetch(conn, "timing", i) for i in entity["related_timing_ids"]],
-        "faqs": _fetch_all(
-            conn, "faq", "SELECT * FROM faqs WHERE related_keywords LIKE ? ORDER BY id",
-            (f'%"{entity["id"]}"%',),
-        ),
-        "skills": _fetch_all(
-            conn, "skill_version",
-            "SELECT * FROM skill_versions WHERE related_keywords LIKE ? ORDER BY skill_id",
-            (f'%"{entity["id"]}"%',),
+        # 目录里自己的名字可能就写在定义里，别把自身当成“相关”
+        **_mentioned_entities(
+            conn, entity.get("definition") or "", exclude=("keyword", entity["id"])
         ),
     }
 
@@ -562,15 +544,9 @@ def timing_report(conn: sqlite3.Connection, query: str) -> dict | None:
     return {
         "kind": "timing",
         "timing": entity,
-        "parent": fetch(conn, "timing", entity.get("parent_id")),
-        "previous": [fetch(conn, "timing", i) for i in entity["previous_ids"]],
-        "next": [fetch(conn, "timing", i) for i in entity["next_ids"]],
-        "children": _fetch_all(
-            conn, "timing", "SELECT * FROM timings WHERE parent_id = ? ORDER BY id", (entity["id"],)
+        **_mentioned_entities(
+            conn, entity.get("description") or "", exclude=("timing", entity["id"])
         ),
-        "keywords": [fetch(conn, "keyword", i) for i in entity["related_keywords"]],
-        "skills": [fetch(conn, "skill", i) for i in entity["related_skill_ids"]],
-        "faqs": [fetch(conn, "faq", i) for i in entity["related_faq_ids"]],
     }
 
 

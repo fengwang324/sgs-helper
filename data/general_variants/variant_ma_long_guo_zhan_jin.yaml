@@ -16,10 +16,4 @@ skills:
     version_id: skill_zhuan_zhan_guozhan_qlhd_v1
   - skill_id: skill_xun_ji
     version_id: skill_xun_ji_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.JIN 037
 verification_status: unverified
-notes: ''

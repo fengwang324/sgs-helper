@@ -18,10 +18,4 @@ skills:
     version_id: skill_wei_di_guozhan_qlhd_v1
   - skill_id: skill_yong_si
     version_id: skill_yong_si_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.QUN 021
 verification_status: unverified
-notes: ''

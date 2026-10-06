@@ -12,16 +12,7 @@ description: |-
   ◆出牌阶段有无数个空闲时间点，每一个空闲时间点都是一个独立的时机，角色在此时机可以发动相应的技能/使用相应的牌，但如果此技能/牌中说明“出牌阶段限一次”，则你在一个出牌阶段，只能在一个空闲时间点发动一次此技能/使用一次此牌。
   例如：主公刘备在出牌阶段的空闲时间点发动【激将】使用【杀】，若没有蜀势力角色打出【杀】进行响应，刘备可以在该出牌阶段之后的任意一个空闲时间点再次发动【激将】使用【杀】。
 mode: common
-parent_id: null
-previous_ids: []
-next_ids: []
-related_keywords: []
-related_skill_ids: []
-related_faq_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

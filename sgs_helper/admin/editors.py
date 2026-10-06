@@ -8,7 +8,7 @@
 
 - **只有武将名字必填**；其余都可以先空着，以后再补。
 - 内部 ``id`` 由后端生成（用户不填也能保存），已存在的记录绝不无故重生 id。
-- 页面没展示的字段（source / verification_status / notes…）在编辑时**保留原值**：
+- 页面没展示的字段（image / verification_status / review_note…）在编辑时**保留原值**：
   解析时以“已存在实体的 dump”为底，只覆盖表单里真的出现的字段。
 - 一次提交可以同时产生 General + 0..N Skill + 0..N SkillVersion，交给
   ``AdminStore.save_batch`` 一次性事务保存。
@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date
 from typing import Any, Mapping
 
 from ..constants import GENDER_LABELS, MODE_LABELS, Gender, Mode, SourceType, VerificationStatus
@@ -29,54 +28,47 @@ from .store import Change, make_entity_id, make_version_id
 #: 勾玉（体力）下拉的取值
 HP_CHOICES: tuple[str, ...] = ("1", "1.5", "2", "2.5", "3", "4", "5")
 
-#: 新技能 / 新版本的默认来源（从实体卡录入，通常就是这个）
+#: 新技能版本的默认来源（从实体卡录入，通常就是这个）；Source 只有 type + reference
 DEFAULT_SOURCE: dict[str, str] = {
     "type": "physical_card",
-    "title": "本人实体卡",
     "reference": "",
-    "notes": "",
 }
 
 PRODUCT_DEFAULTS: dict[str, Any] = {
     "id": "",
     "name": "",
-    "series": "",
-    "mode": None,
-    "publisher": "",
     "release_year": None,
-    "release_date": None,
-    "edition": "",
+    "mode": None,
     "general_sets": [],
     "card_sets": [],
-    "source": None,
-    "verification_status": "unverified",
-    "notes": "",
 }
 
-#: 武将个体（General）：只有相对稳定的信息
+#: 武将个体（General）：只保存 id + 官方武将名
 GENERAL_DEFAULTS: dict[str, Any] = {
     "id": "",
     "name": "",
-    "notes": "",
 }
 
-#: 武将版本（GeneralVariant）：模式/势力/体力/称号/技能等版本属性都在这里
+#: 武将版本（GeneralVariant）：模式/势力/体力/称号/技能等版本属性都在这里。
+#: 实体卡类没有 source；需要人工复核的异常写进 review_note。
 VARIANT_DEFAULTS: dict[str, Any] = {
     "id": "",
     "general_id": "",
     "variant": "标准版",
     "title": "",
     "general_number": None,
+    "illustrator": "",
+    "image": "",
     "mode": None,
     "faction": "",
     "hp": None,
     "gender": "unknown",
     "product_id": None,
     "general_set": None,
+    "zhulianbihe": [],
     "skills": [],
-    "source": None,
     "verification_status": "unverified",
-    "notes": "",
+    "review_note": "",
 }
 
 #: 版本标签的常用取值（下拉里可以直接选，也可以自己输）
@@ -152,17 +144,6 @@ def _int(form: Mapping[str, Any], name: str, errors: list[FieldError]) -> int | 
     return int(raw)
 
 
-def _date(form: Mapping[str, Any], name: str, errors: list[FieldError]) -> date | None:
-    raw = _text(form, name)
-    if not raw:
-        return None
-    try:
-        return date.fromisoformat(raw)
-    except ValueError:
-        errors.append(FieldError(name, f"日期格式应为 YYYY-MM-DD：{raw!r}"))
-        return None
-
-
 def _hp(form: Mapping[str, Any], name: str, errors: list[FieldError]) -> float | None:
     raw = _text(form, name)
     if not raw:
@@ -172,21 +153,6 @@ def _hp(form: Mapping[str, Any], name: str, errors: list[FieldError]) -> float |
     except ValueError:
         errors.append(FieldError(name, f"勾玉要写数字（例如 1.5）：{raw!r}"))
         return None
-
-
-def _source_from_form(form: Mapping[str, Any], *, allow_empty: bool = True):
-    """source 是可选的（Product/General/Skill 都允许没有来源）。"""
-    if not any(f"source.{key}" in form for key in ("type", "title", "reference", "notes")):
-        return "keep"
-    payload = {
-        "type": _text(form, "source.type"),
-        "title": _text(form, "source.title"),
-        "reference": _text(form, "source.reference"),
-        "notes": _text(form, "source.notes"),
-    }
-    if not any(payload.values()):
-        return None if allow_empty else payload
-    return payload
 
 
 def echo_values(form: Mapping[str, Any]) -> dict[str, str]:
@@ -237,7 +203,7 @@ def _apply_enum(
 def parse_product_form(
     form: Mapping[str, Any], *, store, existing: Any | None = None
 ) -> EditorResult:
-    """产品录入/编辑：只用 name / release_year / mode / general_sets / card_sets 也能保存。"""
+    """产品录入/编辑：只用 name / release_year / mode / general_sets / card_sets 就能保存。"""
     result = EditorResult(values=echo_values(form))
     errors = result.errors
     data = _base(existing, PRODUCT_DEFAULTS)
@@ -257,23 +223,12 @@ def parse_product_form(
 
     if "release_year" in form:
         data["release_year"] = _int(form, "release_year", errors)
-    if "release_date" in form:
-        data["release_date"] = _date(form, "release_date", errors)
     if "mode" in form:
         _apply_enum(data, form, "mode", Mode, errors)
     if "general_sets" in form:
         data["general_sets"] = _multi(form, "general_sets")
     if "card_sets" in form:
         data["card_sets"] = _multi(form, "card_sets")
-
-    for name in ("series", "publisher", "edition", "notes"):
-        if name in form:
-            data[name] = _text(form, name)
-    if "verification_status" in form:
-        _apply_enum(data, form, "verification_status", VerificationStatus, errors, nullable=False)
-    source = _source_from_form(form)
-    if source != "keep":
-        data["source"] = source
 
     result.changes = [
         Change(kind="product", candidate=data, old_id=existing.id if existing else None)
@@ -443,16 +398,10 @@ def _new_version_change(
         "text": body,
         "version_label": label,
         "product_id": product_id,
-        "package": None,
-        "effective_from": None,
-        "effective_to": None,
         "previous_version_id": previous_version_id or None,
-        "change_note": "",
-        "related_keywords": [],
-        "related_timing_ids": [],
         "source": dict(DEFAULT_SOURCE),
         "verification_status": "unverified",
-        "notes": "",
+        "review_note": "",
     }
     generated.add(version_id)
     return version_id, Change(kind="skill_version", candidate=candidate)
@@ -488,7 +437,7 @@ def parse_general_form(
 ) -> EditorResult:
     """武将录入/编辑：一次提交产生 General + GeneralVariant（+ 可选的新 Skill / SkillVersion）。
 
-    - ``existing``：已有的武将个体（General），改的是名字/别名/备注；
+    - ``existing``：已有的武将个体（General），改的是名字；
     - ``variant``：已有的武将版本（GeneralVariant），改的是模式/势力/体力/称号/技能等；
       为 None 时表示给这个武将**新建**一个版本（``variant=new`` 或首次录入）。
     """
@@ -510,8 +459,6 @@ def parse_general_form(
         general_data["id"] = make_entity_id(
             "general_", str(general_data.get("name") or "general"), store.bundle.ids("general")
         )
-    if "general_notes" in form:
-        general_data["notes"] = _text(form, "general_notes")
 
     # ---------------------------------------------------------------- Variant
     variant_data = _base(variant, VARIANT_DEFAULTS)
@@ -547,16 +494,13 @@ def parse_general_form(
     if variant_data.get("product_id") and variant_data["product_id"] not in known_products:
         errors.append(FieldError("product_id", f"产品不存在：{variant_data['product_id']}"))
 
-    if "notes" in form:
-        variant_data["notes"] = _text(form, "notes")
+    if "review_note" in form:
+        variant_data["review_note"] = _text(form, "review_note")
     if "verification_status" in form:
         # 编辑页是一个复选框：勾上=physical_verified，不勾=unverified
         _apply_enum(
             variant_data, form, "verification_status", VerificationStatus, errors, nullable=False
         )
-    source = _source_from_form(form)
-    if source != "keep":
-        variant_data["source"] = source
 
     # 版本 id：已有版本沿用；新建时生成
     variant_id = ""
@@ -674,8 +618,7 @@ def parse_general_form(
                 candidate={
                     "id": skill_id,
                     "name": row.new_name,
-                    "notes": "",
-                    "source": dict(DEFAULT_SOURCE),
+                    "review_note": "",
                 },
             )
         )
@@ -739,7 +682,6 @@ def general_values(
     values: dict[str, str] = {}
     if general is not None:
         values.update(values_from_entity("general", general))
-        values["general_notes"] = general.notes or ""
     if variant is not None:
         variant_values = values_from_entity("general_variant", variant)
         for key, value in variant_values.items():

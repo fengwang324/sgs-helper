@@ -33,7 +33,7 @@
 </form>
 
 {% if not q %}
-  <p class="muted">在上面输入关键词后回车。搜索范围：全部 9 类实体（含技能规则文本、卡面文本、别名、相关对象名称）。</p>
+  <p class="muted">在上面输入关键词后回车。搜索范围：全部 {{ KIND_ORDER | length }} 类实体（含技能规则文本、卡面文本，以及正文里自动识别出的关联实体名）。</p>
 {% elif not rows %}
   <p class="muted">没有匹配「{{ q }}」的记录。</p>
 {% else %}
@@ -54,7 +54,6 @@
         <td>
           {% if row.source %}
             <span class="src-type">{{ row.source.type_label }}</span>
-            {% if row.source.title %}<div class="sub">{{ row.source.title }}</div>{% endif %}
             {% if row.source.reference %}
               <div class="sub">
                 {% if row.source.reference | is_url %}

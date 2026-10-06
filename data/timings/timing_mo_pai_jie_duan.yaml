@@ -6,16 +6,7 @@ description: |-
   ◆角色执行修正摸牌阶段的摸牌数的操作后，在执行技能的（下一个）效果前，须先按修正后的摸牌数摸牌。
   例如：周瑜-鲁肃在摸牌阶段可以先发动【英姿】将摸牌数量修正为3，然后可以发动【好施】将摸牌数量修正为5，摸牌数量修正完毕，其摸五张牌，若此时其手牌多于五张，须执行【好施】的下一个效果；也可以先发动【好施】将摸牌数量修正为4，然后发动【英姿】将摸牌数量修正为5，摸牌数量修正完毕，其摸五张牌，若此时其手牌多于五张，须执行【好施】的下一个效果。
 mode: common
-parent_id: null
-previous_ids: []
-next_ids: []
-related_keywords: []
-related_skill_ids: []
-related_faq_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节「游戏的流程」

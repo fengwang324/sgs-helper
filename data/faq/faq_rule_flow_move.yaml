@@ -45,15 +45,7 @@ answer: |-
   例如：刘备（君）发动【仁德】将一张【飞龙夺凤】交给关羽，在【飞龙夺凤】置入关羽的手牌区前，刘备会触发【章武②】展示此牌，然后将此牌置于牌堆底，此时刘备于此阶段内以发动【仁德】的方式交给其他角色的手牌数+1。
   例如：虞翻对一名其他角色使用【火攻】，该角色展示一张红桃手牌，虞翻发动【纵玄】展示一张红桃手牌，然后将此牌置于牌堆顶，最后执行对其造成1点火焰伤害的效果。
 mode: common
-related_general_ids: []
-related_skill_ids: []
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》流程章节：牌移动的结算流程

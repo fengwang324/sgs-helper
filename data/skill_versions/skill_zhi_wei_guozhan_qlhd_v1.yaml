@@ -4,17 +4,8 @@ mode: guozhan
 text: 当你明置此武将牌时，你可以选择一名其他角色。该角色造成伤害后，你摸一张牌：该角色受到伤害后，你弃置一张手牌：弃牌阶段结束时，该角色获得你此阶段弃置的牌：其死亡时，若你所有武将牌均明置，你暗置此武将牌；若其未死亡，此武将牌不能被暗置。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

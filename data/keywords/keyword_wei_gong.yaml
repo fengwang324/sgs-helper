@@ -2,12 +2,7 @@ id: keyword_wei_gong
 name: 围攻
 definition: 一名角色的上家和下家势力相同且与该角色势力不同时，其“被围攻”，称为“被围攻角色”。其上家和下家对其“围攻”，称为“围攻角色”。“围攻角色”和“被围攻角色”处于同一“围攻关系”。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「国战」

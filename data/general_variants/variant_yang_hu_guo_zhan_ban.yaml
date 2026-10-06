@@ -17,10 +17,5 @@ skills:
     version_id: skill_de_shao_guozhan_qlhd_v1
   - skill_id: skill_ming_fa
     version_id: skill_ming_fa_guozhan_qlhd_v1
-source:
-  type: physical_card
-  title: 本人实体卡（群狼环鼎）
-  reference: ''
-  notes: 卡面编号 G.WEI 089
 verification_status: unverified
-notes: Paddle 读出的称号为「制航同赖」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 2 字），疑似 OCR 误读，请对照卡图核验
+review_note: Paddle 读出的称号为「制航同赖」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 2 字），疑似 OCR 误读，请对照卡图核验

@@ -9,16 +9,7 @@ answer: |-
   此【杀】对A进行使用结算造成的伤害，在伤害结算中防止此伤害。
   此【杀】对A进行使用结算造成的伤害，在伤害结算中计算出最终的伤害值。
 mode: guozhan
-related_general_ids: []
-related_skill_ids:
-  - skill_pao_xiao
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【刘备】技能【咆哮】的裁定原文；问题栏取自原文首个分句

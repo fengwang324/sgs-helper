@@ -4,17 +4,8 @@ mode: guozhan
 text: 锁定技，每名其他势力角色的准备阶段，若你不在其攻击范围内，则其选择一项：1.令你摸一张牌；2.弃置你装备区里的一张牌，然后其失去1点体力。
 version_label: 群狼环鼎
 product_id: qlhd
-package: null
-effective_from: null
-effective_to: null
 previous_version_id: null
-change_note: ''
-related_keywords: []
-related_timing_ids: []
 source:
   type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
   reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: 技能名与技能文本均取自卡面（PaddleOCR / PP-OCRv6），未用其它来源覆盖。

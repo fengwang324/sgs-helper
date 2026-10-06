@@ -5,12 +5,7 @@ definition: |-
   例如：一名装备【青釭剑】的角色的攻击范围为2，若其受到【吴六剑】的影响，则其攻击范围为3。
   ◆若A的攻击范围不小于A与B的距离，称为B在A的攻击范围内或A的攻击范围内含有B。A的攻击范围无限，即所有其他角色都在A的攻击范围内。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「数值」

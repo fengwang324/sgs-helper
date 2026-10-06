@@ -12,12 +12,7 @@ definition: |-
   例如：刘备发动【仁德】交给法正两张手牌，当法正因交给而获得这些牌后，法正可以对刘备发动【恩怨①】。
   ◆在某牌或技能的使用结算中，一名角色获得了一张牌，若后续效果中须对此牌进行操作，则该角色在将此牌加入手牌时不能与其他手牌混在一起。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「游戏牌的操作」

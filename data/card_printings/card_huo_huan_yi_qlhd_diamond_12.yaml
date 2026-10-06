@@ -1,23 +1,13 @@
 id: card_huo_huan_yi_qlhd_diamond_12
 card_id: card_huo_huan_yi
 name_printed: 火浣衣
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: 九变篇
 suit: diamond
 rank: 12
 quantity: 1
 printed_text: 防止你受到的属性伤害；当你成为【杀】的目标后，你可以弃置一张手牌对使用者造成1点火焰伤害。
-normalized_text: ''
 bottom_right_mark: 九
 card_number: ''
-illustrator: ''
 image: card_huo_huan_yi_qlhd_diamond_12.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

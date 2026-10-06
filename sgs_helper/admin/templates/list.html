@@ -44,7 +44,7 @@
   {% endif %}
   {% if options.packages %}
     <select name="package">
-      <option value="">全部包</option>
+      <option value="">全部{{ options.package_label }}</option>
       {% for item in options.packages %}
         <option value="{{ item.value }}" {{ 'selected' if package == item.value else '' }}>{{ item.label }}（{{ item.count }}）</option>
       {% endfor %}
@@ -97,7 +97,6 @@
         <td>
           {% if row.source %}
             <span class="src-type">{{ row.source.type_label }}</span>
-            {% if row.source.title %}<div class="sub">{{ row.source.title }}</div>{% endif %}
             {% if row.source.reference %}
               <div class="sub">
                 {% if row.source.reference | is_url %}

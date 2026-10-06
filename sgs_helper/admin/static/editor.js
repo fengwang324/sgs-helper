@@ -379,7 +379,7 @@
     function fillVersions(row, versions, preselect) {
       var select = row.querySelector(".version-select");
       var current = select.value;
-      var html = '<option value="">（不指定：按模式+生效区间自动推导当前有效版本）</option>';
+      var html = '<option value="">（不指定：按模式回退到该技能的唯一版本）</option>';
       versions.forEach(function (version) {
         // 版本标签与产品名/模式重复时不再重复显示（避免「群狼环鼎 · 国战 · 群狼环鼎」）
         var head = [];
@@ -388,8 +388,7 @@
         if (version.product_name) head.push(version.product_name);
         var label = head.join(" · ") + " · " + version.text_excerpt;
         var preview =
-          version.mode_label + " · " + (version.product_name || "未绑定产品") + " · " +
-          (version.effective_from || "不限") + " ~ " + (version.effective_to || "至今") + "\n" +
+          version.mode_label + " · " + (version.product_name || "未绑定产品") + "\n" +
           version.text_excerpt;
         html +=
           '<option value="' + escapeHtml(version.id) + '" data-preview="' + escapeHtml(preview) + '">' +
@@ -641,21 +640,16 @@
           combos.product.setValue(item.value, item.label);
           var raw = item.raw || {};
           if (raw.mode && modeSelect && !modeSelect.value) modeSelect.value = raw.mode;
-          var setInput = form.querySelector('[name="general_set"]');
-          var setCombo = combos.general_set;
-          if ((raw.general_sets || []).length) {
-            combos.general_set.setSuggestions(raw.general_sets);
-            if (setCombo && setCombo.input && !setCombo.input.value.trim()) {
-              var first = raw.general_sets[0];
-              setCombo.setValue(first, first);
-            }
+          // 武将牌系列的候选完全来自所选产品的 Product.general_sets
+          if (combos.setGeneralSetCandidates) {
+            combos.setGeneralSetCandidates(raw.general_sets || []);
           }
           if (window.__sgsDraftTouch) window.__sgsDraftTouch();
         },
       });
     }
 
-    /* ---- 势力 / 武将牌系列：可搜索已有值，也可自由输入 */
+    /* ---- 势力：可搜索已有值，也可自由输入 */
     function setupSuggestCombo(kind, field) {
       var root = form.querySelector('[data-combo="' + kind + '"]');
       if (!root) return null;
@@ -666,11 +660,7 @@
             "/api/suggest?field=" + field + "&q=" + encodeURIComponent(query)
           ).then(function (items) {
             return items.map(function (item) {
-              var bits = [];
-            if (item.parent) bits.push("属于 " + item.parent);
-            if (item.children && item.children.length) bits.push("子系列 " + item.children.join("、"));
-            bits.push("已用 " + item.count + " 次");
-            return { value: item.value, label: item.value, sub: bits.join(" · ") };
+              return { value: item.value, label: item.value, sub: "已用 " + item.count + " 次" };
             });
           });
         },
@@ -681,18 +671,61 @@
       });
     }
     combos.faction = setupSuggestCombo("faction", "faction");
-    combos.general_set = setupSuggestCombo("general_set", "general_set");
-    if (combos.general_set) {
-      combos.general_set.setSuggestions = function (values) {
-        this.options.fetch = function (query) {
-          return Promise.resolve(
-            values
-              .filter(function (value) { return !query || value.indexOf(query) !== -1; })
-              .map(function (value) { return { value: value, label: value, sub: "该产品的武将牌系列" }; })
-          );
-        };
+
+    /* ---- 武将牌系列：候选来自所选产品的 Product.general_sets */
+    (function setupGeneralSetCombo() {
+      var root = form.querySelector('[data-combo="general_set"]');
+      if (!root) return;
+      var productSets = null;      // 当前产品声明的系列（所选产品的权威候选）
+      var allSets = null;          // 没选产品时的兜底：所有已知系列
+      combos.general_set = new SearchCombo(root, {
+        freeText: true,
+        fetch: function (query) {
+          if (productSets) {
+            return Promise.resolve(
+              productSets
+                .filter(function (value) { return !query || value.indexOf(query) !== -1; })
+                .map(function (value) {
+                  return { value: value, label: value, sub: "该产品的武将牌系列" };
+                })
+            );
+          }
+          if (allSets) {
+            return Promise.resolve(
+              allSets
+                .filter(function (value) { return !query || value.indexOf(query) !== -1; })
+                .map(function (value) {
+                  return { value: value, label: value, sub: "已有武将牌系列" };
+                })
+            );
+          }
+          return jsonFetch("/api/suggest?field=general_set&q=" + encodeURIComponent(query))
+            .then(function (items) {
+              allSets = items.map(function (item) { return item.value; });
+              return items.map(function (item) {
+                return { value: item.value, label: item.value, sub: "已用 " + item.count + " 次" };
+              });
+            });
+        },
+        onPick: function (item, combo) {
+          combo.setValue(item.value, item.value);
+          if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+        },
+      });
+
+      combos.setGeneralSetCandidates = function (sets) {
+        productSets = (sets && sets.length) ? sets : null;
+        allSets = null;
       };
-    }
+
+      // 编辑已有记录：按当前产品的 general_sets 准备候选；输入框里已有当前值即为预选
+      var currentProduct = productHidden ? productHidden.value : "";
+      if (currentProduct) {
+        jsonFetch("/api/products/" + encodeURIComponent(currentProduct))
+          .then(function (raw) { combos.setGeneralSetCandidates(raw.general_sets || []); })
+          .catch(function () {});
+      }
+    })();
 
     /* ---- 同名武将提醒（只提醒，不阻止） */
     var nameInput = form.querySelector('[name="name"]');

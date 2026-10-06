@@ -1,23 +1,13 @@
 id: card_tao_qlhd_diamond_2
 card_id: card_tao
 name_printed: 桃
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: diamond
 rank: 2
 quantity: 1
 printed_text: ''
-normalized_text: ''
 bottom_right_mark: 周
 card_number: ''
-illustrator: ''
 image: card_tao_qlhd_diamond_2.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

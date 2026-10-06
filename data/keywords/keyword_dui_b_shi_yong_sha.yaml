@@ -2,12 +2,7 @@ id: keyword_dui_b_shi_yong_sha
 name: （A）对B使用【杀】
 definition: 表示B为A使用此【杀】应选择的额定目标。
 mode: common
-related_keyword_ids: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 取自《三国杀官方规则集 3.0》用语「技能描述」

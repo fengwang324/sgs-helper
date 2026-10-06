@@ -1,23 +1,13 @@
 id: card_yi_yi_dai_lao_qlhd_diamond_4
 card_id: card_yi_yi_dai_lao
 name_printed: 以逸待劳
-mode: guozhan
 product_id: qlhd
-package: null
 card_set: null
 suit: diamond
 rank: 4
 quantity: 1
 printed_text: 出牌阶段，对你和与你势力相同的角色使用。每名目标角色各摸两张牌，然后弃置两张牌。
-normalized_text: ''
 bottom_right_mark: ''
 card_number: ''
-illustrator: ''
 image: card_yi_yi_dai_lao_qlhd_diamond_4.jpg
-source:
-  type: physical_card
-  title: 本人实体卡（国战·群狼环鼎）
-  reference: ''
-  notes: 由实体卡照片识别；卡面编号见各条记录
 verification_status: unverified
-notes: ''

@@ -6,16 +6,7 @@ answer: |-
   例如：太史慈发动【天义】拼点赢后，对大乔和伏皇后（按行动顺序排列）使用【杀】，大乔在成为目标时对伏皇后发动【流离】后就不是此【杀】的目标了，伏皇后在成为此【杀】的新目标时对大乔发动【求援】，大乔成为此【杀】的新目标但不会出现“成为目标时”。
   例如：太史慈发动【天义】拼点赢后，对伏皇后和汉献帝（按行动顺序排列）使用【杀】，伏皇后在成为目标时对汉献帝发动【求援】，汉献帝第二次成为此【杀】的目标但不会出现“成为目标时”。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_qiu_yuan
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【伏皇后】技能【求援】的裁定原文；问题栏取自原文首个分句

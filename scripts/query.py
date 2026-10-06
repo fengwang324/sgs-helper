@@ -11,7 +11,7 @@
     python scripts/query.py timing 伤害结算
     python scripts/query.py product 国战
     python scripts/query.py search 集智
-    python scripts/query.py skill 集智 --as-of 2024-01-01 --json
+    python scripts/query.py skill 集智 --json
 """
 
 from __future__ import annotations

@@ -4,16 +4,7 @@ answer: |-
   你发动【蛊惑】被质疑，亮出验明后不进行结算置入弃牌堆：若你是在出牌阶段的空闲时间点发动【蛊惑】使用牌，则视为你没有使用过为你声明的牌名的牌；若你是对某事件进行响应需要使用牌，则视为你没有决定如何进行响应。
   例如：贾诩发动【乱武】，轮到于吉进行响应时，于吉用非红桃【杀】发动【蛊惑】对A使用【杀】，A质疑后无论是否死亡，于吉都视为没有决定如何进行响应，可以再次发动【蛊惑】对此时距离最小的一名角色（如果A存活可以选择A为目标）使用【杀】进行响应。
 mode: identity
-related_general_ids: []
-related_skill_ids:
-  - skill_gu_huo
-related_card_ids: []
-related_keywords: []
-related_timing_ids: []
 source:
   type: official_rule
-  title: 三国杀官方规则集 3.0
   reference: https://gltjk.com/sanguosha/rules/
-  notes: gltjk.com 的《三国杀官方规则集 3.0》网页版；内容为凌天翼规则集，社区整理（非游卡官方发布物）
 verification_status: unverified
-notes: 《三国杀官方规则集 3.0》中武将【于吉】技能【蛊惑】的裁定原文；问题栏取自原文首个分句
