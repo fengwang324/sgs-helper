@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 你使用【杀】对目标造成伤害后，你回复1点体力，若其为君主或野心家，杀死该角色。
   skills: []
-verification_status: unverified
 review_note: ''

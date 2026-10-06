@@ -8,5 +8,4 @@ card_set: 不臣篇
 effect:
   text: 出牌阶段，对任意一名角色使用。这些角色各选择一项：1. 视为使用一张【杀】；2. 摸一张牌。蜀：蜀势力角色选择1时此【杀】伤害+1，选择2时改为摸两张牌。
   skills: []
-verification_status: unverified
 review_note: ''

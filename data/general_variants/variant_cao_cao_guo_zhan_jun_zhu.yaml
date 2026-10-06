@@ -1,5 +1,5 @@
 id: variant_cao_cao_guo_zhan_jun_zhu
-general_id: general_cao_cao
+general_id: general_cao_cao_jun_zhu
 variant: 群狼环鼎·君主
 title: 电模
 general_number: G.EM 004
@@ -19,5 +19,4 @@ skills:
     version_id: skill_hui_bian_guozhan_qlhd_v1
   - skill_id: skill_zong_yu
     version_id: skill_zong_yu_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「电模」；三国杀 WIKI 该武将称号为「魏武帝」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

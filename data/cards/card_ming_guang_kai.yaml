@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 锁定技，当你成为【火烧连营】、【火攻】或火【杀】的目标时，取消之；若你是小势力角色，你不会被横置。
   skills: []
-verification_status: unverified
 review_note: ''

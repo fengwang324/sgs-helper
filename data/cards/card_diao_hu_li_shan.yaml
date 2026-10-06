@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对一至两名其他角色使用。目标角色于此回合内体力值不会改变，不计入距离和座次的计算，不能使用牌且不是牌的合法目标。
   skills: []
-verification_status: unverified
 review_note: ''

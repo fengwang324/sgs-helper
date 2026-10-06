@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对有明置武将牌且与你势力不同的一名角色使用。该角色摸一张牌，然后你摸三张牌。"形禁势格，利从近取，害以远隔。上火下泽。"《三十六计》
   skills: []
-verification_status: unverified
 review_note: ''

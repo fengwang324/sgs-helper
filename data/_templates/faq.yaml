@@ -9,4 +9,3 @@ mode: common                     # common/guozhan/identity/ol/mobile/other
 source:
   type: official_faq             # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
   reference: ""
-verification_status: official     # unverified/community/official/physical_verified/conflict

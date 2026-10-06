@@ -11,9 +11,10 @@ hp: 1.5
 gender: unknown
 product_id: qlhd
 general_set: null
+zhulianbihe: []
 skills:
   - skill_id: skill_zhao_ran
     version_id: skill_zhao_ran_guozhan_qlhd_v1
   - skill_id: skill_bei_luan
     version_id: skill_bei_luan_guozhan_qlhd_v1
-verification_status: unverified
+review_note: ''

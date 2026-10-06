@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，改为依次弃置其两张牌。
   skills: []
-verification_status: unverified
 review_note: ''

@@ -15,5 +15,4 @@ zhulianbihe: []
 skills:
   - skill_id: skill_tu_xi
     version_id: skill_tu_xi_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「纺将军」；三国杀 WIKI 该武将称号为「前将军」（逐位相同 2 字），疑似 OCR 误读，请对照卡图核验

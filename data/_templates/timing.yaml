@@ -7,4 +7,3 @@ mode: common
 source:
   type: official_rule
   reference: ""
-verification_status: unverified

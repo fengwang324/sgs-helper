@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对体力值不是最少的一名角色使用。除其外的每名角色各可以选择一项：1. 弃置一张手牌，视为对其使用一张【杀】；2. 弃置其一张牌。魏：魏势力角色选择1时无需弃牌，选择2时可获得其弃置的牌。
   skills: []
-verification_status: unverified
 review_note: ''

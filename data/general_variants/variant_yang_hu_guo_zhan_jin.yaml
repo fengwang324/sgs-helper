@@ -1,5 +1,5 @@
 id: variant_yang_hu_guo_zhan_jin
-general_id: general_yang_hu
+general_id: general_yang_hu_jin
 variant: 群狼环鼎·晋
 title: 执德清劭
 general_number: G.JIN 022
@@ -16,5 +16,4 @@ skills:
     version_id: skill_huai_yuan_guozhan_qlhd_v1
   - skill_id: skill_fu_shou
     version_id: skill_fu_shou_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「执德劭」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

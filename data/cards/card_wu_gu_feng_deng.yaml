@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对所有角色使用。你从牌堆亮出等同于现存角色数量的牌，每名目标角色选择并获得其中的一张。
   skills: []
-verification_status: unverified
 review_note: ''

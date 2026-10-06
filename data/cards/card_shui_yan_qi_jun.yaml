@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对一名装备区里有牌的其他角色使用。目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。
   skills: []
-verification_status: unverified
 review_note: ''

@@ -15,5 +15,4 @@ zhulianbihe: []
 skills:
   - skill_id: skill_jie_yue
     version_id: skill_jie_yue_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「计暴坚垒子禁」；三国杀 WIKI 该武将称号为「讨暴坚垒」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
   skills: []
-verification_status: unverified
 review_note: ''

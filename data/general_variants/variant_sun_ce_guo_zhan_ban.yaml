@@ -22,5 +22,4 @@ skills:
     version_id: skill_ying_yang_guozhan_qlhd_v1
   - skill_id: skill_hun_shang
     version_id: skill_hun_shang_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「江东岭小王」；三国杀 WIKI 该武将称号为「江东的小霸王」（逐位相同 3 字），疑似 OCR 误读，请对照卡图核验

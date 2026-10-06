@@ -1,5 +1,5 @@
 id: variant_si_ma_zhao_guo_zhan_ye_xin_jia
-general_id: general_si_ma_zhao
+general_id: general_si_ma_zhao_ye_xin_jia
 variant: 群狼环鼎·野心家
 title: 嘲风开天
 general_number: G.AM 001
@@ -17,4 +17,3 @@ skills:
     version_id: skill_su_zhi_guozhan_qlhd_v1
   - skill_id: skill_zhao_xin
     version_id: skill_zhao_xin_guozhan_qlhd_v1
-verification_status: unverified

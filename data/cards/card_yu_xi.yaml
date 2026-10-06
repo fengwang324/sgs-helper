@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 锁定技，若你有已明置的武将牌，你获得以下效果：你的势力成为场上唯一的大势力，其他势力均为小势力；摸牌阶段，你多摸一张牌；出牌阶段开始时，你视为使用一张【知己知彼】。
   skills: []
-verification_status: unverified
 review_note: ''

@@ -1,5 +1,5 @@
 id: variant_sun_quan_guo_zhan_jun_zhu
-general_id: general_sun_quan
+general_id: general_sun_quan_jun_zhu
 variant: 群狼环鼎·君主
 title: 虎据江东
 general_number: G.EM 003
@@ -20,5 +20,4 @@ skills:
     version_id: skill_lian_zi_guozhan_qlhd_v1
   - skill_id: skill_ju_bao
     version_id: skill_ju_bao_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「家关」；三国杀 WIKI 该武将称号为「年轻的贤君」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

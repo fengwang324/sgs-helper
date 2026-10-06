@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对你使用。摸两张牌。
   skills: []
-verification_status: unverified
 review_note: ''

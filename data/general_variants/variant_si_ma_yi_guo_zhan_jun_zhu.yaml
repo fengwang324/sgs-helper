@@ -1,5 +1,5 @@
 id: variant_si_ma_yi_guo_zhan_jun_zhu
-general_id: general_si_ma_yi
+general_id: general_si_ma_yi_jun_zhu
 variant: 群狼环鼎·君主
 title: 时代的归墟
 general_number: G.EM 005
@@ -20,5 +20,4 @@ skills:
     version_id: skill_gui_kuang_guozhan_qlhd_v1
   - skill_id: skill_shu_juan
     version_id: skill_shu_juan_guozhan_qlhd_v1
-verification_status: unverified
 review_note: Paddle 读出的称号为「时代的归墟」；三国杀 WIKI 该武将称号为「狼顾之鬼」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

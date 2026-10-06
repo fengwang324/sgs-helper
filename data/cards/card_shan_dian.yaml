@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 目标角色判定：若判定为黑桃2~9，则该角色受到3点雷电伤害。若判定不为黑桃2~9，则将【闪电】传递给其下家（逆时针方向的下一位角色）。
   skills: []
-verification_status: unverified
 review_note: ''

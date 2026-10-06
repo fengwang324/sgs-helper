@@ -8,5 +8,4 @@ card_set: null
 effect:
   text: 出牌阶段，对所有角色使用。每名目标角色回复1点体力。
   skills: []
-verification_status: unverified
 review_note: ''
