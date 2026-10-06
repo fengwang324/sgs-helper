@@ -5,8 +5,9 @@
 
 > 当前阶段的目标只有一个：把**资料库底座**做对。
 > 不做复杂前端、不做用户系统、不做云数据库、不接大模型问答、不做规则模拟器。
-> （唯一的例外是一个**只在本机跑**的资料维护网页 `sgs_helper/admin/`：
-> 它没有前端框架、没有登录，只是把手工编辑 YAML 变成表单编辑 YAML，见 [docs/admin.md](docs/admin.md)。）
+> （唯一的例外是**只在本机跑**的资料网页：原来的管理页 `sgs_helper/admin/`
+> 把手工编辑 YAML 变成表单编辑 YAML，见 [docs/admin.md](docs/admin.md)；
+> 现在它上面又多了一层面向日常使用的**本地 Wiki** `/wiki/*`，见 [docs/wiki.md](docs/wiki.md)。）
 
 ## 当前数据状态
 
@@ -93,16 +94,17 @@ sgs-helper/
 │   ├── repo.py               # 查询层：只读 SQLite，返回纯 dict
 │   ├── render.py             # 把查询结果渲染成人可读文本（CLI 用）
 │   ├── cli.py                # validate / build / query / admin 命令行
-│   └── admin/                # ★ 本地资料管理网页（FastAPI + Jinja2，可选依赖）
-│       ├── app.py            #   路由与页面装配
+│   └── admin/                # ★ 本地资料网页（FastAPI + Jinja2，可选依赖）
+│       ├── app.py            #   路由与页面装配（管理页 + 挂载 Wiki 路由）
+│       ├── wiki.py           #   /wiki/* 本地 Wiki 的页面逻辑
 │       ├── store.py          #   读 YAML（快照 + 内存检索）、安全写 YAML、重建 SQLite
 │       ├── forms.py          #   低频实体的 generic 表单（由 Pydantic 模型生成）
 │       ├── editors.py        #   产品 / 武将 / 卡牌专用录入页的解析与批量改动构造
 │       ├── yaml_writer.py    #   可读 YAML 读写（保留注释头/块状标量/原子落盘）
-│       ├── templates/        #   Jinja2 模板
-│       └── static/           #   一个 CSS + 一个很小的 JS
+│       ├── templates/        #   Jinja2 模板（wiki/ 子目录是 Wiki 专用）
+│       └── static/           #   style.css（管理页）+ wiki.css / wiki-upload.js（Wiki）
 ├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py / admin.py
-├── tests/                    # pytest 测试（当前 289 个）
+├── tests/                    # pytest 测试（当前 328 个）
 ├── build/                    # 生成物目录（sgs.db，**不进 Git**）
 ├── docs/                     # 设计说明、操作手册、路线图
 ├── README.md  pyproject.toml  requirements*.txt  .gitignore
@@ -229,7 +231,9 @@ effect:
 - **只有一层 `Card`**：`category_1/2/3` 表达“这张卡是什么”，`card_set` 表达“它来自哪个拓展包”，
   两者完全独立。分类树见 `constants.CARD_CATEGORY_TREE`：
   `游戏牌 → 基本牌（杀 / 闪 / 桃 / 酒，最后一级是 name）/ 锦囊牌（非延时锦囊、延时锦囊）/`
-  `装备牌（武器 / 防具 / 坐骑 / 宝物）`。
+  `装备牌（武器 / 防具 / 坐骑 / 宝物）`，以及
+  `指示物 → 军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记`（当前还没有数据）。
+  Wiki 的「游戏牌」与「指示物」两个入口直接按 `category_1` 筛选。
 - **`card_set` 是另一个维度**：它表示“来自哪个拓展包”（九变篇 / 势备篇 / 不臣篇 / 君主游戏牌 /
   阵 / 君临天下·权…），允许为空；非空时必须出现在某个产品的 `Product.card_sets` 里。
   **「指示物」是卡牌分类（`category_1`），不是拓展包**（`Product.card_sets` 里的「指示物」已删除）。
@@ -467,10 +471,34 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 [docs/admin.md](docs/admin.md)。
 
 
+## 本地 Wiki（`/wiki/*`，见 docs/wiki.md）
+
+在同一个进程、同一个端口下，管理页之上还有一层面向**日常使用**的 Wiki：
+浏览资料 + 就地编辑 + UI 原型。启动方式完全一样，打开 <http://127.0.0.1:8000/wiki>：
+
+- **一级入口**：武将 / 技能 / 游戏牌 / 指示物 / FAQ（外加只预留入口的「规则」）
+  + 全库搜索（跨四类，按类型分组）；
+- 「游戏牌」与「指示物」**直接按 `category_1` 筛选**；
+  三级分类回答「这张卡是什么」，与「来自哪个拓展包」（`card_set`）是两套独立信息；
+- 详情页之间**互相跳转**：武将 → 技能、技能 → 所属武将、卡牌 → 关联技能、
+  各实体 → 相关 FAQ、FAQ → 相关武将 / 技能 / 卡牌 / 关键词 / 时点；
+- **相关 FAQ 是反向索引**：关联沿用「实体名在正文里自动识别」，
+  但按命中位置算相关度，避免超长规则专题把关联区刷满（详见 [docs/wiki.md](docs/wiki.md)）；
+- **编辑模式**（右上角开关，cookie `sgs_edit`）：默认浏览；开启后列表页有「+新增」、
+  详情页有「编辑 / 复制 / 删除」。写入**复用**下面的录入编辑器，不另起一套；
+- **图片上传** `POST /api/upload-image` 写进 `data/card_images/`，
+  实体里只存**文件名**（相对路径）；武将卡图字段现在也能编辑了；
+- **新增分类不需要改代码**：分类树 = 内置树 ∪ 数据里已有的值，
+  在录入页直接输入一个新分类名就等于新建分类。
+
+> 当前「指示物」是 **0 条**，这是正常状态（原有指示物数据已删除）。
+> 指示物页会显示空状态，并引导从网页录入第一条。
+
+
 ## 测试
 
 ```bash
-python -m pytest -q          # 289 个测试（核心 194 条 + 管理页 95 条）
+python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本地 Wiki 39）
 ```
 
 覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间）、
@@ -484,6 +512,12 @@ python -m pytest -q          # 289 个测试（核心 194 条 + 管理页 95 条
 批量保存只 rebuild 一次、批量失败一个文件都不写、rebuild 失败全部回滚）。
 
 管理网页的测试全部在 `tmp_path` 的副本上跑，不会碰仓库里真实的 `data/`。
+
+本地 Wiki（`tests/test_wiki.py`，39 条）另外覆盖：五个入口可打开、指示物空状态、
+游戏牌与指示物按 `category_1` 互不串台、全库搜索、分页、详情页交叉跳转、
+相关 FAQ、通过网页新增第一条指示物（并落到 YAML、换实例重读后仍在）、新增游戏牌、
+分类候选含指示物子树、新分类不需改代码、编辑模式开关与 CSRF / 开放重定向防护、
+图片上传（白名单、重名去重、只存文件名）、指示物页筛选不串游戏牌拓展包。
 
 ---
 
