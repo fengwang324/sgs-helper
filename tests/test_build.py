@@ -123,7 +123,6 @@ def test_cards_table_matches_single_layer_model(synth_db: Path) -> None:
         "card_set",
         "effect_text",
         "effect_skills",
-        "verification_status",
         "review_note",
         "yaml_file",
         "yaml_line",

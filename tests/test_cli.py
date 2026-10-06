@@ -120,7 +120,7 @@ def test_spec_queries_work(cli_db: Path, command: str, query: str) -> None:
 def test_query_skill_shows_versions_and_source(cli_db: Path) -> None:
     result = run_script("scripts/query.py", "--db", str(cli_db), "skill", "集智")
     assert result.returncode == 0
-    for token in ["技能文本", "来源", "校验状态", "国战", "群狼环鼎"]:
+    for token in ["技能文本", "来源", "国战", "群狼环鼎"]:
         assert token in result.stdout
 
 

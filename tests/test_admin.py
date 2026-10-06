@@ -38,7 +38,8 @@ from sgs_helper.validate import REFERENCE_FIELDS, validate_data_dir
 #: 真实数据现在只有一个产品（群狼环鼎），武将 / 技能等都挂在它下面
 PRODUCT_ID = "qlhd"
 GENERAL_ID = "general_zhu_ge_liang"
-VARIANT_ID = "variant_zhu_ge_liang_guo_zhan_ban"
+#: 变体 id 由卡面编号决定：G.SHU 004 → variant_g_shu_004
+VARIANT_ID = "variant_g_shu_004"
 #: 卡牌：单层 Card（category_* + name + image + card_set + effect）
 CARD_ID = "card_sha"
 #: 带 1 条关联技能（skill_zhi_heng）的卡牌，用于验证 effect.skills 的渲染与删除保护
@@ -153,7 +154,6 @@ def general_payload(app, **overrides) -> dict:
         "_variant_sha": "",
         "variant_id": "",
         "review_note": "",
-        "verification_status": "unverified",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -210,7 +210,7 @@ def test_pages_start(client: TestClient, workdir: Path) -> None:
         "keyword": "keyword_shi_yong",
         "timing": "timing_hui_he_jie_shu_shi",
     }
-    urls = ["/", "/search?q=集智", "/review", "/help", "/healthz"]
+    urls = ["/", "/search?q=集智", "/help", "/healthz"]
     for kind, entity_id in seed.items():
         urls += [f"/list/{kind}", f"/view/{kind}/{entity_id}"]
         if kind != "general_variant":
@@ -275,12 +275,12 @@ def test_search_finds_entities_and_shows_metadata(client: TestClient) -> None:
     assert "技能本体" in body
     assert "技能版本" in body
     assert "skill_ji_zhi" in body
-    # 结果里要有模式、来源、核验状态
-    assert "未核验" in body
-    assert "社区资料" in body or "官方" in body
+    # 结果里要有模式与来源（核验状态已从模型删除）
+    assert "国战" in body
+    assert "本人实体卡" in body
 
 
-def test_search_supports_kind_and_status_filters(client: TestClient) -> None:
+def test_search_supports_kind_and_mode_filters(client: TestClient) -> None:
     only_skill = client.get("/search?q=集智&kind=skill")
     assert only_skill.status_code == 200
     assert "skill_ji_zhi" in only_skill.text
@@ -290,8 +290,9 @@ def test_search_supports_kind_and_status_filters(client: TestClient) -> None:
     assert JI_ZHI_V1 in only_version.text
     assert '<code class="id">skill_ji_zhi</code>' not in only_version.text
 
-    empty = client.get("/search?q=集智&status=physical_verified")
-    assert "没有匹配" in empty.text
+    # 模式筛选：国战能搜到，身份局搜不到
+    assert "集智" in client.get("/search?q=集智&mode=guozhan").text
+    assert "没有匹配" in client.get("/search?q=集智&mode=identity").text
 
 
 def test_search_by_id_works(client: TestClient) -> None:
@@ -419,7 +420,6 @@ def keyword_payload(app, **overrides) -> dict:
         "mode": "common",
         "source.type": "community_db",
         "source.reference": "",
-        "verification_status": "unverified",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -475,7 +475,7 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
     card = client.get(f"/edit/card/{CARD_ID}").text
     for needle in (
         "category_1", "category_2", "category_3", "card_set", "image",
-        "effect_text", "skill_count", "review_note", "verification_status",
+        "effect_text", "skill_count", "review_note",
     ):
         assert f'name="{needle}"' in card, needle
     assert "关联技能" in card
@@ -494,7 +494,7 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
     product = client.get("/new/product").text
     for needle in (
         "series", "publisher", "edition", "release_date",
-        "source.type", "verification_status", "notes",
+        "source.type", "notes",
     ):
         assert f'name="{needle}"' not in product, needle
 
@@ -606,7 +606,6 @@ def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path)
         "notes": "旧备注",
         "source.type": "official_rule",
         "source.reference": "https://example.com/notice",
-        "verification_status": "official",
     }
     response = post(client, "/new/skill_version", data=payload)
     assert response.status_code == 303, response.text
@@ -867,10 +866,8 @@ def test_multi_entity_file_keeps_other_records(tmp_path: Path) -> None:
         "# 顶部注释\n\n"
         "- id: keyword_a\n  name: 甲\n  definition: 甲的说明\n  mode: common\n"
         "  source:\n    type: wiki\n    reference: ''\n"
-        "  verification_status: unverified\n"
         "- id: keyword_b\n  name: 乙\n  definition: 乙的说明\n  mode: common\n"
-        "  source:\n    type: wiki\n    reference: ''\n"
-        "  verification_status: unverified\n",
+        "  source:\n    type: wiki\n    reference: ''\n",
         encoding="utf-8",
     )
     path = data_dir / "keywords" / "group.yaml"
@@ -963,25 +960,6 @@ def test_reverse_refs_and_delete_guard_agree(app) -> None:
     assert outcome.blocked is True
 
 
-# ---------------------------------------------------------------- 10. 待核验页面
-
-
-def test_review_page_groups_by_verification_status(app, client: TestClient) -> None:
-    store = app.state.store
-    groups = {group["status"]: group for group in store.review_groups()}
-    assert set(groups) == {"unverified", "community", "conflict"}
-
-    body = client.get("/review").text
-    assert "待核验清单" in body
-    for group in groups.values():
-        assert f"{group['count']} 条" in body
-
-    only_conflict = client.get("/review?status=conflict")
-    assert only_conflict.status_code == 200
-    assert "来源冲突" in only_conflict.text
-    assert "未核验</span>" not in only_conflict.text
-
-
 # ---------------------------------------------------------------- 11. 新增（表单 -> YAML -> DB）
 
 
@@ -1001,7 +979,6 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
         skill_count="1",
         skill_0_skill_id="skill_ji_zhi",
         skill_0_version_id=JI_ZHI_V1,
-        verification_status="physical_verified",
     )
     response = post(client, "/new/general", data=payload)
     assert response.status_code == 303, response.text
@@ -1024,7 +1001,6 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert variant["skills"] == [
         {"skill_id": "skill_ji_zhi", "version_id": JI_ZHI_V1}
     ]
-    assert variant["verification_status"] == "physical_verified"
 
     db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
@@ -1140,7 +1116,6 @@ def card_payload(app, **overrides) -> dict:
         "image": "",
         "effect_text": "",
         "skill_count": "0",
-        "verification_status": "unverified",
         "review_note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
@@ -1156,7 +1131,7 @@ def test_card_edit_page_is_single_layer(client: TestClient) -> None:
     body = client.get(f"/edit/card/{CARD_ID}").text
     for needle in (
         "category_1", "category_2", "category_3", "card_set", "image",
-        "effect_text", "skill_count", "review_note", "verification_status",
+        "effect_text", "skill_count", "review_note",
     ):
         assert f'name="{needle}"' in body, needle
     for combo in ("category_1", "category_2", "category_3", "card_set", "image"):
@@ -1228,7 +1203,7 @@ def test_create_card_with_effect_and_skill(client: TestClient, app, workdir: Pat
     doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_new").read_text(encoding="utf-8"))
     assert set(doc) == {
         "id", "category_1", "category_2", "category_3", "name", "image",
-        "card_set", "effect", "verification_status", "review_note",
+        "card_set", "effect", "review_note",
     }
     assert doc["category_1"] == "游戏牌"
     assert doc["category_3"] == "非延时锦囊"
@@ -1342,7 +1317,6 @@ def test_edit_card_updates_effect_and_keeps_untouched_fields(
         _base_sha=app.state.store.entity_sha("card", CARD_WITH_SKILL_ID),
     )
     payload.pop("review_note")            # 页面里没提交 -> 必须保留
-    payload.pop("verification_status")
     response = post(client, f"/edit/card/{CARD_WITH_SKILL_ID}", data=payload)
     assert response.status_code == 303, response.text
 
@@ -1353,4 +1327,3 @@ def test_edit_card_updates_effect_and_keeps_untouched_fields(
     assert after["effect"]["text"] == "【测试】改写后的效果"
     assert after["effect"]["skills"] == before["effect"]["skills"]
     assert after["review_note"] == before["review_note"]
-    assert after["verification_status"] == before["verification_status"]

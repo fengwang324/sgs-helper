@@ -81,7 +81,6 @@ zhulianbihe:
   - 演示武将乙
 skills:
   - skill_id: skill_demo
-verification_status: unverified
 review_note: 演示用待复核说明
 """,
     "general_variants/demo_alpha_identity.yaml": """id: variant_demo_alpha_identity
@@ -94,7 +93,6 @@ gender: male
 skills:
   - skill_id: skill_demo
     version_id: skill_demo_identity_v1
-verification_status: unverified
 """,
     "general_variants/demo_beta_identity.yaml": """id: variant_demo_beta_identity
 general_id: general_demo_beta
@@ -106,7 +104,6 @@ gender: female
 product_id: product_demo_b
 skills:
   - skill_id: skill_demo
-verification_status: unverified
 """,
     "skills/demo.yaml": """id: skill_demo
 name: 演示技能
@@ -121,8 +118,7 @@ mode: guozhan
 text: 另一个技能的演示文本
 version_label: 演示初版
 product_id: product_demo_a
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "skill_versions/demo_guozhan_v1.yaml": f"""id: skill_demo_guozhan_v1
 skill_id: skill_demo
 mode: guozhan
@@ -130,16 +126,14 @@ text: 国战版演示技能文本
 version_label: 国战初版
 product_id: product_demo_a
 previous_version_id: null
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "skill_versions/demo_identity_v1.yaml": f"""id: skill_demo_identity_v1
 skill_id: skill_demo
 mode: identity
 text: 身份局一代演示技能文本
 version_label: 身份局初版
 product_id: product_demo_b
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "skill_versions/demo_identity_v2.yaml": f"""id: skill_demo_identity_v2
 skill_id: skill_demo
 mode: identity
@@ -147,8 +141,7 @@ text: 身份局二代演示技能文本
 version_label: 平衡调整后
 product_id: null
 previous_version_id: skill_demo_identity_v1
-{SOURCE_YAML}verification_status: unverified
-review_note: 演示用待复核说明
+{SOURCE_YAML}review_note: 演示用待复核说明
 """,
     "cards/demo_card.yaml": """id: card_demo
 category_1: 游戏牌
@@ -160,7 +153,6 @@ card_set: null
 effect:
   text: ""
   skills: []
-verification_status: unverified
 review_note: 演示用待复核说明
 """,
     "cards/demo_trick.yaml": """id: card_demo_trick
@@ -175,39 +167,33 @@ effect:
   skills:
     - skill_id: skill_demo
       version_id: skill_demo_guozhan_v1
-verification_status: unverified
 review_note: ""
 """,
     "faq/demo_1.yaml": f"""id: faq_demo_1
 question: 演示问题：演示技能的结算？
 answer: 演示答案：演示技能与演示卡牌一起结算。
 mode: identity
-{SOURCE_YAML}verification_status: community
-""",
+{SOURCE_YAML}""",
     "keywords/demo.yaml": f"""id: keyword_demo
 name: 演示关键词
 definition: 演示用规则关键词定义
 mode: common
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "timings/demo.yaml": f"""id: timing_demo
 name: 演示时点
 description: 演示用时点说明
 mode: common
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "timings/demo_next.yaml": f"""id: timing_demo_next
 name: 演示后续时点
 description: 演示用的后续时点
 mode: common
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
     "keywords/demo2.yaml": f"""id: keyword_demo2
 name: 演示关键词二
 definition: 第二个演示关键词
 mode: common
-{SOURCE_YAML}verification_status: unverified
-""",
+{SOURCE_YAML}""",
 }
 
 

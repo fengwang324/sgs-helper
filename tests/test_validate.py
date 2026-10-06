@@ -329,7 +329,7 @@ def test_common_version_counts_as_available_text(synth: Path) -> None:
     replace_in(synth / "general_variants" / "demo_beta_identity.yaml", "mode: identity", "mode: ol")
     (synth / "skill_versions" / "demo_common_v1.yaml").write_text(
         f"id: skill_demo_common_v1\nskill_id: skill_demo\nmode: common\n"
-        f"text: 通用版演示技能文本\n{SOURCE_YAML}verification_status: unverified\n",
+        f"text: 通用版演示技能文本\n{SOURCE_YAML}",
         encoding="utf-8",
     )
     result = validate_data_dir(synth)

@@ -254,7 +254,7 @@ def test_entity_counts_are_stable(migration_db: Path) -> None:
         }
         assert counts == {
             "product": 1,
-            "general": 155,
+            "general": 163,
             "general_variant": 163,
             "skill": 311,
             "skill_version": 297,

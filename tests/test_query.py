@@ -65,7 +65,7 @@ def _dataset_with_versions(
     for version_id, mode in versions:
         files[f"skill_versions/{version_id}.yaml"] = (
             f"id: {version_id}\nskill_id: skill_s\nmode: {mode}\n"
-            f"text: {version_id} 的文本\n{SOURCE_YAML}verification_status: unverified\n"
+            f"text: {version_id} 的文本\n{SOURCE_YAML}"
         )
     return write_dataset(tmp_path / "data", files)
 

@@ -113,7 +113,6 @@ def general_payload(app, **overrides) -> dict:
         "_variant_sha": "",
         "variant_id": "",
         "review_note": "",
-        "verification_status": "unverified",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -359,8 +358,8 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
         skill_1_skill_id="skill_kong_cheng",
         skill_1_version_id=KONG_CHENG_V1,
     )
-    # 页面里没有 image，也不该因为“没提交”而被清空；review_note / 核验状态同理
-    for key in ("review_note", "verification_status", "illustrator", "zhulianbihe"):
+    # 页面里没有 image，也不该因为“没提交”而被清空；review_note 同理
+    for key in ("review_note", "illustrator", "zhulianbihe"):
         payload.pop(key, None)
     response = post(client, f"/edit/general/{GENERAL_ID}", data=payload)
     assert response.status_code == 303, response.text
@@ -369,7 +368,6 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
     assert after_variant["image"] == variant_before["image"]
     assert after_variant["illustrator"] == variant_before["illustrator"]
     assert after_variant["review_note"] == variant_before["review_note"]
-    assert after_variant["verification_status"] == variant_before["verification_status"]
     assert after_variant["hp"] == 2.5
     assert [ref["skill_id"] for ref in after_variant["skills"]] == [
         "skill_guan_xing",

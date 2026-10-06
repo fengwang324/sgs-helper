@@ -94,7 +94,6 @@ def test_enum_values_stay_strings() -> None:
         id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本", source=SOURCE
     )
     assert version.mode == "guozhan"
-    assert version.verification_status == "unverified"
 
 
 def test_strings_are_stripped() -> None:
@@ -157,14 +156,12 @@ def test_card_is_single_layer() -> None:
         "image",
         "card_set",
         "effect",
-        "verification_status",
         "review_note",
     }
     card = _card()
     assert card.image == ""
     assert card.card_set is None
     assert card.effect == CardEffect()
-    assert card.verification_status == "unverified"
     assert card.review_note == ""
 
 
@@ -371,9 +368,8 @@ def test_removed_relation_fields_are_rejected() -> None:
         Timing(id="timing_x", name="时点", source=SOURCE, previous_ids=["timing_y"])
 
 
-def test_verification_status_only_on_allowed_kinds() -> None:
-    assert "verification_status" not in Product.model_fields
-    assert "verification_status" not in General.model_fields
-    assert "verification_status" not in Skill.model_fields
-    for model in (GeneralVariant, SkillVersion, Card, Keyword, Faq, Timing):
-        assert "verification_status" in model.model_fields
+def test_verification_status_is_gone_from_every_model() -> None:
+    """核验状态已从数据模型整体删除，任何实体都不该再有这个字段。"""
+    for model in (Product, General, GeneralVariant, Skill, SkillVersion,
+                  Card, Keyword, Faq, Timing):
+        assert "verification_status" not in model.model_fields, model.__name__

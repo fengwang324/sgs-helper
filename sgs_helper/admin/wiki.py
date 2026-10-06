@@ -745,7 +745,6 @@ class WikiRoutes:
             "fields": [
                 {"k": "技能名", "v": skill.name},
                 {"k": "版本数", "v": str(len(versions))},
-                {"k": "复核备注", "v": getattr(skill, "review_note", "")},
             ],
             "prose_blocks": [],
             "skill_rows": [],
@@ -769,7 +768,6 @@ class WikiRoutes:
             {"k": "三级分类", "v": card.category_3},
             {"k": "拓展包", "v": card.card_set or ""},
             {"k": "卡名", "v": card.name},
-            {"k": "复核备注", "v": getattr(card, "review_note", "")},
         ]
 
         prose_blocks = []
@@ -938,6 +936,7 @@ def _variant_summary(row: dict) -> str:
     variant = row["entity"]
     bits = [
         getattr(variant, "title", "") or "",
+        MODE_LABELS.get(getattr(variant, "mode", "") or "", getattr(variant, "mode", "") or ""),
         getattr(variant, "faction", "") or "",
         (
             f"{_hp(getattr(variant, 'hp', None))} 体力"
