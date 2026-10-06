@@ -603,6 +603,13 @@ BASIC_CARD_FAMILIES: tuple[str, ...] = tuple(
     CARD_CATEGORY_TREE.get("游戏牌", {}).get("基本牌", ())
 )
 
+#: 指示物的二级分类候选（军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记）。
+#: 只用于**告警**：分类体系允许以后继续增加新的二/三级分类，
+#: 所以命中不在候选里只提示、不报错。
+INDICATOR_SUBCATEGORIES: tuple[str, ...] = tuple(
+    CARD_CATEGORY_TREE.get(INDICATOR_CATEGORY, {})
+)
+
 
 def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> None:
     """卡牌一致性：基本牌三级分类 / ``card_set`` 归属 / 技能版本绑定。
@@ -633,6 +640,25 @@ def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                     "category_3",
                     f'基本牌的三级分类应为牌族（{"、".join(BASIC_CARD_FAMILIES)}），'
                     f'当前是 "{card.category_3}"；具体是哪一张牌写在 name（"{card.name}"）里',
+                    line=origin.line,
+                    entity_id=entity_id,
+                )
+            )
+
+        # 指示物：二级分类不在已知子树里时只提示（分类体系允许继续扩展）
+        if (
+            card.category_1 == INDICATOR_CATEGORY
+            and INDICATOR_SUBCATEGORIES
+            and card.category_2 not in INDICATOR_SUBCATEGORIES
+        ):
+            result.warnings.append(
+                Issue(
+                    "warning",
+                    origin.path,
+                    "category_2",
+                    f'指示物的二级分类当前登记的是（{"、".join(INDICATOR_SUBCATEGORIES)}），'
+                    f'"{card.category_2}" 不在其中；'
+                    "如果是有意新增的分类可以忽略，之后把它补进 constants.CARD_CATEGORY_TREE 的「指示物」子树",
                     line=origin.line,
                     entity_id=entity_id,
                 )

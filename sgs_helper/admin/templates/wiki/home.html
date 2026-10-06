@@ -1,0 +1,52 @@
+{% extends "wiki/base.html" %}
+
+{% block content %}
+<div class="wiki-page-head">
+  <div>
+    <p class="wiki-page-head__eyebrow">资料检索</p>
+    <h1 class="wiki-page-head__title">SGS Helper</h1>
+    <p class="wiki-page-head__lead">三国杀线下资料库 · 浏览、检索并就地维护资料</p>
+  </div>
+</div>
+
+{% include "wiki/_tabs.html" %}
+
+<form class="wiki-toolbar" action="/wiki/search" method="get" role="search">
+  <div class="wiki-search">
+    <input type="search" name="q" value="{{ q }}"
+           placeholder="搜索武将 / 技能 / 游戏牌 / 指示物 / FAQ（名称、称号、编号、描述、正文）"
+           aria-label="全库搜索" autofocus>
+    <button class="wiki-btn wiki-btn--primary" type="submit">搜索</button>
+  </div>
+</form>
+
+<div class="wiki-section">
+  <div class="wiki-section__head">
+    <h2 class="wiki-h2">资料总览</h2>
+    <span class="wiki-card__path">共 {{ total }} 条</span>
+  </div>
+  <div class="wiki-grid">
+    {% for card in overview %}
+      <a class="wiki-card" href="{{ card.url }}">
+        <span class="wiki-card__top">
+          <span class="wiki-card__name">{{ card.label }}</span>
+          <span class="wiki-card__badge wiki-tag">{{ card.count }}</span>
+        </span>
+        <span class="wiki-card__path">{{ card.hint }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if rules_reserved %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">规则</h2></div>
+  <div class="wiki-inset" style="font-size:13px;color:var(--text-color-2)">
+    规则入口已预留：规则关键词 {{ rules_reserved.keywords }} 条、时点 {{ rules_reserved.timings }} 条
+    已经在库里，但本阶段不做规则页内容。
+    现在可以通过 <a href="/wiki/search?q=濒死状态">全库搜索</a> 或
+    <a href="/list/keyword">管理页</a> 查看它们。
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "wiki/base.html" %}
+
+{% block content %}
+<a class="wiki-detail-back" href="{{ detail.back_url or back_url or '/wiki' }}">← 返回{{ detail.back_label or back_label or '' }}</a>
+
+<div class="wiki-section">
+  <div class="wiki-detail-head">
+    {% if detail.image_url %}
+      <img class="wiki-detail-head__art" src="{{ detail.image_url }}" alt="{{ detail.title }}">
+    {% endif %}
+    <div class="wiki-detail-head__body">
+      <p class="wiki-page-head__eyebrow">{{ detail.eyebrow }}</p>
+      <h1 class="wiki-detail-title">{{ detail.title }}</h1>
+      {% if detail.subtitle %}<p class="wiki-detail-sub">{{ detail.subtitle }}</p>{% endif %}
+      {% if detail.tags %}
+        <div class="wiki-detail-tags">
+          {% for tag in detail.tags %}<span class="wiki-tag {{ tag.class }}">{{ tag.text }}</span>{% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="wiki-page-head__actions">
+      {% if edit_mode %}
+        {% if detail.edit_url %}<a class="wiki-btn wiki-btn--primary" href="{{ detail.edit_url }}">编辑</a>{% endif %}
+        {% if detail.copy_url %}<a class="wiki-btn" href="{{ detail.copy_url }}">复制</a>{% endif %}
+        {% if detail.delete_url %}<a class="wiki-btn wiki-btn--danger" href="{{ detail.delete_url }}">删除</a>{% endif %}
+      {% else %}
+        {% if detail.edit_url %}<a class="wiki-btn" href="/wiki/edit-mode?on=1&amp;next={{ request.url.path | urlencode }}" title="开启编辑模式后可编辑此条资料">✎ 开启编辑模式</a>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ---------------------------------------------------------------- 字段 #}
+{% if detail.fields %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">基本信息</h2></div>
+  <div class="wiki-fields">
+    {% for f in detail.fields %}
+      <div class="wiki-field">
+        <div class="wiki-field__k">{{ f.k }}</div>
+        <div class="wiki-field__v {{ 'is-empty' if not f.v }}">{{ f.v or '—' }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 正文（可点击实体） #}
+{% for block in detail.prose_blocks %}
+<div class="wiki-section">
+  <div class="wiki-section__head">
+    <h2 class="wiki-h2">{{ block.title }}</h2>
+    {% if block.meta %}<span class="wiki-card__path">{{ block.meta }}</span>{% endif %}
+  </div>
+  <div class="wiki-prose">{% for seg in block.segments %}{% if seg.text is defined %}{{ seg.text }}{% else %}<a class="wiki-mention" href="{{ url_for_entity(seg.kind, seg.id) }}">{{ seg.label }}</a>{% endif %}{% endfor %}</div>
+  {% if block.note %}<p class="wiki-note" style="margin-top:9px">{{ block.note }}</p>{% endif %}
+</div>
+{% endfor %}
+
+{# ---------------------------------------------------------------- 技能（武将详情） #}
+{% if detail.skill_rows %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">技能</h2><span class="wiki-card__path">{{ detail.skill_rows | length }} 项</span></div>
+  {% for row in detail.skill_rows %}
+    <div class="wiki-skill-row">
+      <a class="wiki-skill-row__name" href="{{ url_for_entity('skill', row.skill_id) }}">{{ row.name }}</a>
+      <div class="wiki-skill-row__text">
+        {% if row.text %}{{ row.text }}{% else %}<span class="wiki-tag">该模式下暂无技能文本</span>{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 技能版本（技能详情） #}
+{% if detail.version_rows %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">技能版本</h2><span class="wiki-card__path">{{ detail.version_rows | length }} 个</span></div>
+  {% for v in detail.version_rows %}
+    <div class="wiki-version">
+      <div class="wiki-version__head">
+        <span class="wiki-version__label">{{ v.label }}</span>
+        <span class="wiki-tag">{{ v.mode_label }}</span>
+        {% if v.product %}<span class="wiki-tag">{{ v.product }}</span>{% endif %}
+        <span class="wiki-tag wiki-tag--status-{{ v.status }}">{{ v.status_label }}</span>
+        {% if v.source %}<span class="wiki-tag">{{ v.source }}</span>{% endif %}
+        {% if v.previous_label %}<span class="wiki-tag" title="上一版">↳ {{ v.previous_label }}</span>{% endif %}
+      </div>
+      <div class="wiki-prose">{% for seg in v.segments %}{% if seg.text is defined %}{{ seg.text }}{% else %}<a class="wiki-mention" href="{{ url_for_entity(seg.kind, seg.id) }}">{{ seg.label }}</a>{% endif %}{% endfor %}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 所属武将（技能详情） #}
+{% if detail.owners %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">所属武将</h2><span class="wiki-card__path">{{ detail.owners | length }} 处</span></div>
+  {% for owner in detail.owners %}
+    <div class="wiki-skill-row">
+      <a class="wiki-skill-row__name" href="{{ owner.url }}">{{ owner.name }}</a>
+      <div class="wiki-skill-row__text">{{ owner.subtitle }}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 变体（武将详情） #}
+{% if detail.variant_rows %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">版本 / 变体</h2><span class="wiki-card__path">{{ detail.variant_rows | length }} 个</span></div>
+  <div class="wiki-fields">
+    {% for v in detail.variant_rows %}
+      <div class="wiki-field">
+        <div class="wiki-field__k">{{ v.variant }}</div>
+        <div class="wiki-field__v">{{ v.summary }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 关联技能（卡牌详情） #}
+{% if detail.effect_skill_rows %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">关联技能</h2></div>
+  {% for row in detail.effect_skill_rows %}
+    <div class="wiki-skill-row">
+      <a class="wiki-skill-row__name" href="{{ url_for_entity('skill', row.skill_id) }}">{{ row.name }}</a>
+      <div class="wiki-skill-row__text">{% if row.text %}{{ row.text }}{% else %}<span class="wiki-tag">该模式下暂无技能文本</span>{% endif %}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 指向其它实体 #}
+{% if detail.refs %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">指向的资料</h2></div>
+  {% for group in detail.refs %}
+    <p class="wiki-h3">{{ group.label }}</p>
+    <div class="wiki-detail-tags">
+      {% for item in group.links %}
+        <a class="wiki-tag wiki-tag--faction" href="{{ item.url }}">{{ item.name }}</a>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 相关 FAQ #}
+{% if detail.faqs is not none %}
+<div class="wiki-section">
+  <div class="wiki-section__head">
+    <h2 class="wiki-h2">相关 FAQ</h2>
+    <span class="wiki-card__path">{{ detail.faqs | length }} 条</span>
+  </div>
+  {% if detail.faqs %}
+    {% for faq in detail.faqs %}
+      <a class="wiki-faq-item" href="/wiki/faq/{{ faq.id }}">
+        <div class="wiki-faq-item__q">{{ faq.question }}</div>
+        <div class="wiki-faq-item__a">{{ faq.answer_excerpt }}</div>
+        <div class="wiki-faq-item__meta">
+          <span class="wiki-tag">{{ faq.mode_label }}</span>
+          {% if faq.score >= 100 %}<span>· 问题即提到本条</span>{% endif %}
+        </div>
+      </a>
+    {% endfor %}
+    <p class="wiki-note" style="margin-top:10px">
+      关联是按实体名称在 FAQ 正文里自动识别的（只取相关度较高的前 {{ detail.faqs | length }} 条），
+      可能有个别误报或漏报；数据库里只保存一份 FAQ。
+    </p>
+  {% else %}
+    <div class="wiki-empty" style="padding:26px 16px">
+      <p class="wiki-empty__title">暂无相关 FAQ</p>
+      <p class="wiki-empty__text">还没有 FAQ 正文提到「{{ detail.title }}」。</p>
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- 原始数据 #}
+{% if detail.file %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">数据来源</h2></div>
+  <div class="wiki-inset" style="font-size:12.5px;color:var(--text-color-2)">
+    权威源：<code>{{ detail.file }}{% if detail.line %}:{{ detail.line }}{% endif %}</code>
+    · <a href="{{ detail.raw_url }}">查看 YAML 原文</a>
+    · <a href="{{ detail.admin_url }}">在管理页打开</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

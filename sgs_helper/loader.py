@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -113,26 +114,46 @@ def iter_yaml_files(data_dir: Path) -> list[tuple[Path, str, str]]:
     """按目录约定枚举 ``data/`` 下的 YAML 文件。
 
     返回 ``(绝对路径, 相对 data 的路径, kind)``。以 ``_`` 开头的文件（模板）跳过。
+
+    只走进 :data:`KINDS` 里登记的目录（``data/card_images/`` 这类非数据目录直接跳过），
+    并优先用 ``os.scandir``：``Path.rglob`` 在 Windows 上会为每个条目做多次
+    ``is_file`` / ``relative_to``，几百个文件就会明显拖慢整页渲染
+    （管理页每个请求都要按文件指纹判断缓存是否失效）。
     """
     found: list[tuple[Path, str, str]] = []
     for spec in KINDS:
-        directory = data_dir / spec.dirname
-        if not directory.is_dir():
+        root = data_dir / spec.dirname
+        if not root.is_dir():
             continue
-        for path in sorted(directory.rglob("*")):
-            if not path.is_file():
+        # (当前目录, 相对 data_dir 的前缀)
+        stack: list[tuple[Path, str]] = [(root, spec.dirname)]
+        while stack:
+            directory, prefix = stack.pop()
+            try:
+                with os.scandir(directory) as entries:
+                    children = list(entries)
+            except OSError:  # pragma: no cover - 权限/竞态
                 continue
-            if path.suffix.lower() not in YAML_SUFFIXES:
-                continue
-            if path.name.startswith("_"):
-                continue
-            rel = path.relative_to(data_dir).as_posix()
-            # 从 data/ 往下第一段决定 kind（支持 data/generals/guozhan/xxx.yaml）
-            top = rel.split("/", 1)[0]
-            kind_spec = KIND_BY_DIRNAME.get(top)
-            if kind_spec is None:
-                continue
-            found.append((path, rel, kind_spec.kind))
+            for entry in children:
+                name = entry.name
+                if name.startswith("_"):
+                    continue
+                rel = f"{prefix}/{name}"
+                try:
+                    is_dir = entry.is_dir()
+                except OSError:  # pragma: no cover
+                    continue
+                if is_dir:
+                    stack.append((Path(entry.path), rel))
+                    continue
+                if not name.lower().endswith(YAML_SUFFIXES):
+                    continue
+                # 从 data/ 往下第一段决定 kind（支持 data/generals/guozhan/xxx.yaml）
+                top = rel.split("/", 1)[0]
+                kind_spec = KIND_BY_DIRNAME.get(top)
+                if kind_spec is None:
+                    continue
+                found.append((Path(entry.path), rel, kind_spec.kind))
     return found
 
 

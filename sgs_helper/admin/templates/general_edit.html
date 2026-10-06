@@ -233,6 +233,20 @@
              placeholder="卡面版权行 Illustration: 后面的名字">
     </div>
     <div class="field">
+      <label for="f-image">卡图（可空）</label>
+      <input id="f-image" name="image" value="{{ values.get('image', '') }}"
+             placeholder="例如 variant_zhu_ge_liang_guo_zhan_ban.jpg">
+      <p class="help">
+        存的是 <code>data/card_images/</code> 下的**文件名**（不是完整路径）。
+        <button type="button" class="btn js-upload-image"
+                data-upload-target="image" data-upload-preview="variant-image-preview">上传卡图</button>
+      </p>
+      <div id="variant-image-preview">
+        {% if values.get('image') %}<img src="/card-images/{{ values.get('image') }}" alt="卡图预览"
+             style="max-width:150px;max-height:210px;border:1px solid #e5e7eb;border-radius:8px;display:block;margin-top:8px">{% endif %}
+      </div>
+    </div>
+    <div class="field">
       <label for="f-general_number">编号</label>
       <input id="f-general_number" name="general_number" value="{{ values.get('general_number', '') }}"
              placeholder="WEI001 / shu-01">
@@ -377,4 +391,4 @@
 {% endif %}
 {% endblock %}
 
-{% block scripts %}<script src="/static/editor.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/editor.js"></script><script src="/static/wiki-upload.js"></script>{% endblock %}

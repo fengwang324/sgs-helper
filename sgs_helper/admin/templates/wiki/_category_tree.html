@@ -1,0 +1,22 @@
+{# 三级分类导航：游戏牌 / 指示物
+   树 = 静态分类树 ∪ 数据里实际出现过的分类值，
+   所以「在录入页直接输入一个新分类名」会立刻出现在这里。 #}
+{% if nav_tree %}
+<div class="wiki-tree">
+  <span class="wiki-tree__group">
+    <span class="wiki-tree__label">全部</span>
+    <a class="wiki-tree__item {{ 'is-active' if not category_2 else '' }}" href="{{ section_url }}">不限</a>
+  </span>
+  {% for node in nav_tree %}
+    <span class="wiki-tree__group">
+      <span class="wiki-tree__label">{{ node.value }}</span>
+      <a class="wiki-tree__item {{ 'is-active' if category_2 == node.value and not category_3 else '' }}"
+         href="{{ filter_url(category_2=node.value) }}">全部<span class="n">{{ node.count }}</span></a>
+      {% for child in node.children %}
+        <a class="wiki-tree__item {{ 'is-active' if category_2 == node.value and category_3 == child.value else '' }}"
+           href="{{ filter_url(category_2=node.value, category_3=child.value) }}">{{ child.value }}<span class="n">{{ child.count }}</span></a>
+      {% endfor %}
+    </span>
+  {% endfor %}
+</div>
+{% endif %}

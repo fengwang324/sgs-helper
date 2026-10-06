@@ -310,6 +310,9 @@ class AdminStore:
         self._index: dict[str, dict[str, tuple[str, str]]] = {}
         self._digest: str = ""
         self._digest_fingerprint: str = ""
+        #: Wiki：``(kind, id) -> [相关 FAQ]`` 反向索引，按文件指纹缓存
+        self._faq_index: dict[tuple[str, str], list[dict]] | None = None
+        self._faq_index_fingerprint: str = ""
 
     # ------------------------------------------------------------ 快照
 
@@ -330,23 +333,36 @@ class AdminStore:
         全部 YAML 文件，几百个文件的数据量下整页会慢到不可用。所以这里对
         “文件指纹”做了一个很短的缓存：一次请求只算一遍，跨请求最多每
         ``FINGERPRINT_TTL`` 秒重算一次。
+
+        .. important::
+           命中缓存的判断**只看 ``_fingerprint_at``**，不能在判断前就去算指纹。
+           算一次指纹要 stat 全部 YAML 文件，数据量上来后比 TTL 还慢；
+           先算后判会让缓存永远命中不了 —— 于是每个 ``self.bundle`` 都退化成
+           一次全目录 stat（实测 81 张卡片的列表页会慢到 100 秒以上）。
+           这里必须保持“先看时间、再决定是否 stat”的顺序。
         """
         with self._lock:
+            if force or self._snapshot is None:
+                fingerprint = self._fingerprint_now()
+                self._snapshot = validate_data_dir(self.data_dir)
+                self._fingerprint = fingerprint
+                self._fingerprint_at = time.monotonic()
+                self._index = {}
+                self._faq_index = None
+                return self._snapshot
+
             now = time.monotonic()
-            needs_check = (
-                force
-                or self._snapshot is None
-                or (now - self._fingerprint_at) > self.FINGERPRINT_TTL
-            )
-            if not needs_check:
+            if (now - self._fingerprint_at) <= self.FINGERPRINT_TTL:
                 return self._snapshot  # type: ignore[return-value]
 
+            # 超过 TTL 才真正 stat 目录，用来发现外部（手工改 YAML）改动
             fingerprint = self._fingerprint_now()
             self._fingerprint_at = now
-            if force or self._snapshot is None or fingerprint != self._fingerprint:
+            if fingerprint != self._fingerprint:
                 self._snapshot = validate_data_dir(self.data_dir)
                 self._fingerprint = fingerprint
                 self._index = {}
+                self._faq_index = None
             return self._snapshot
 
     def invalidate(self) -> None:
@@ -357,6 +373,8 @@ class AdminStore:
             self._index = {}
             self._digest = ""
             self._digest_fingerprint = ""
+            self._faq_index = None
+            self._faq_index_fingerprint = ""
 
     @property
     def bundle(self) -> DataBundle:
@@ -728,6 +746,148 @@ class AdminStore:
             return []
         return [str(value) for value in (product.general_sets or []) if str(value).strip()]
 
+    # ------------------------------------------------------------ Wiki
+
+    def wiki_nav_tree(self, category_1: str, *, counts: bool = True) -> list[dict]:
+        """某个 ``category_1`` 下的二级 / 三级分类树（Wiki 导航与筛选用）。
+
+        树 = ``CARD_CATEGORY_TREE`` 里登记的静态子树 ∪ **数据里实际出现过的值**。
+        后者让「在录入页直接输入一个新分类名」立刻出现在 Wiki 导航里
+        （不需要预先登记，也不需要新建实体）。
+
+        ``counts`` 为真时统计每个节点的卡牌数（指示物当前 0 条是正常状态）。
+        """
+        from ..constants import CARD_CATEGORY_TREE
+
+        static = CARD_CATEGORY_TREE.get(category_1, {})
+        # 二级 -> 三级，保序：先静态树的顺序，再补数据里新出现的
+        levels: dict[str, list[str]] = {name: list(children) for name, children in static.items()}
+        tally: dict[tuple[str, str], int] = {}
+
+        for card in self.bundle.all("card").values():
+            if (getattr(card, "category_1", "") or "") != category_1:
+                continue
+            c2 = (getattr(card, "category_2", "") or "").strip()
+            c3 = (getattr(card, "category_3", "") or "").strip()
+            if c2 and c2 not in levels:
+                levels[c2] = []
+            if c2 and c3 and c3 not in levels.setdefault(c2, []):
+                levels[c2].append(c3)
+            if c2:
+                tally[(c2, c3)] = tally.get((c2, c3), 0) + 1
+                tally[(c2, "")] = tally.get((c2, ""), 0) + 1
+
+        tree: list[dict] = []
+        for c2, children in levels.items():
+            third = [
+                {"value": c3, "count": tally.get((c2, c3), 0) if counts else 0}
+                for c3 in children
+            ]
+            tree.append(
+                {
+                    "value": c2,
+                    "count": tally.get((c2, ""), 0) if counts else 0,
+                    "children": third,
+                }
+            )
+        return tree
+
+    def _related_faq_index(self) -> dict[tuple[str, str], list[dict]]:
+        """``(kind, entity_id) -> [相关 FAQ]`` 的反向索引（按快照缓存）。
+
+        关联本身沿用既有的「按实体名称在正文里自动识别」机制，这里额外做两件事：
+
+        1. **反向**：``repo.py`` 只有「给文本找实体」，没有「给实体找 FAQ」；
+        2. **定相关度**：规则类 FAQ 动辄数千字、罗列上百个技能名，
+           只按「命中就算相关」会让几乎所有技能都挂上同一批规则专题。
+           所以按命中位置打分，只保留真正相关的（详见 :meth:`_faq_relevance`）。
+        """
+        cache_key = self._fingerprint
+        if self._faq_index is not None and self._faq_index_fingerprint == cache_key:
+            return self._faq_index
+
+        index: dict[tuple[str, str], list[dict]] = {}
+        for faq_id, faq in self.bundle.all("faq").items():
+            question = str(getattr(faq, "question", "") or "")
+            answer = str(getattr(faq, "answer", "") or "")
+            for kind, entity_id, score in self._faq_relevance(question, answer):
+                index.setdefault((kind, entity_id), []).append(
+                    {"faq_id": faq_id, "score": score}
+                )
+
+        for hits in index.values():
+            hits.sort(key=lambda row: (-row["score"], row["faq_id"]))
+        self._faq_index = index
+        self._faq_index_fingerprint = cache_key
+        return index
+
+    #: 命中在 question 里 = 用户问的就是它
+    FAQ_SCORE_IN_QUESTION = 100
+    #: 命中在 answer 开头 = 正文主要就是在讲它
+    FAQ_SCORE_ANSWER_HEAD = 50
+    #: 命中位置在 answer 前半段
+    FAQ_SCORE_ANSWER_EARLY = 20
+    #: 低于这个分数不算相关（避免超长规则专题把关联区刷满）
+    FAQ_SCORE_MIN = 20
+    #: 「开头」的判定字符数
+    FAQ_HEAD_CHARS = 200
+
+    def _faq_relevance(
+        self, question: str, answer: str
+    ) -> list[tuple[str, str, int]]:
+        """一条 FAQ 与哪些实体相关（按命中位置打分）。"""
+        scores: dict[tuple[str, str], int] = {}
+
+        def bump(kind: str, entity_id: str, score: int) -> None:
+            key = (kind, entity_id)
+            if score > scores.get(key, 0):
+                scores[key] = score
+
+        for hit in self.mentions(question, limit=50):
+            bump(str(hit["kind"]), str(hit["id"]), self.FAQ_SCORE_IN_QUESTION)
+
+        if answer.strip():
+            half = max(len(answer) // 2, 1)
+            head = answer[: self.FAQ_HEAD_CHARS]
+            early = answer[:half]
+            for hit in self.mentions(answer, limit=200):
+                name = str(hit.get("name") or "")
+                kind, entity_id = str(hit["kind"]), str(hit["id"])
+                if name and name in head:
+                    bump(kind, entity_id, self.FAQ_SCORE_ANSWER_HEAD)
+                elif name and name in early:
+                    bump(kind, entity_id, self.FAQ_SCORE_ANSWER_EARLY)
+
+        return [
+            (kind, entity_id, score)
+            for (kind, entity_id), score in scores.items()
+            if score >= self.FAQ_SCORE_MIN
+        ]
+
+    def related_faqs(self, kind: str, entity_id: str, *, limit: int = 8) -> list[dict]:
+        """提到某个实体的 FAQ，按相关度排序（详情页「相关 FAQ」区块用）。"""
+        hits = self._related_faq_index().get((kind, entity_id), [])
+        out: list[dict] = []
+        for hit in hits[:limit]:
+            faq = self.bundle.get("faq", hit["faq_id"])
+            if faq is None:
+                continue
+            out.append(
+                {
+                    "id": faq.id,
+                    "question": str(getattr(faq, "question", "") or ""),
+                    "answer_excerpt": truncate(str(getattr(faq, "answer", "") or ""), 160),
+                    "mode": getattr(faq, "mode", "") or "",
+                    "score": hit["score"],
+                }
+            )
+        return out
+
+    def related_faq_counts(self, kind: str, ids: Iterable[str]) -> dict[str, int]:
+        """批量取「某个实体有多少条相关 FAQ」（列表页角标用，避免逐行扫描）。"""
+        index = self._related_faq_index()
+        return {entity_id: len(index.get((kind, entity_id), [])) for entity_id in ids}
+
     # ------------------------------------------------------------ 检索
 
     def _build_index(self) -> dict[str, dict[str, tuple[str, str]]]:
@@ -866,6 +1026,48 @@ class AdminStore:
         else:
             rows.sort(key=lambda r: (r["name"], r["id"]))
         return rows
+
+    def filter_options_scoped(
+        self, kind: str, *, category_1: str = ""
+    ) -> dict[str, list[dict]]:
+        """``filter_options`` 的「只看某一级分类」版本（Wiki 的游戏牌 / 指示物入口用）。
+
+        ``filter_options`` 是按整个 kind 统计的，卡牌侧会把「游戏牌」的拓展包
+        也算到「指示物」页面的下拉里。这里先按 ``category_1`` 收窄再统计。
+        """
+        if not category_1 or kind != "card":
+            return self.filter_options(kind)
+
+        options = self.filter_options(kind)
+        cards = [
+            card
+            for card in self.bundle.all("card").values()
+            if (getattr(card, "category_1", "") or "") == category_1
+        ]
+        sets: dict[str, int] = {}
+        statuses: dict[str, int] = {}
+        for card in cards:
+            value = (getattr(card, "card_set", None) or "").strip()
+            if value:
+                sets[value] = sets.get(value, 0) + 1
+            status = getattr(card, "verification_status", "") or ""
+            if status:
+                statuses[status] = statuses.get(status, 0) + 1
+
+        scoped = dict(options)
+        scoped["sets"] = [
+            {"value": value, "count": count}
+            for value, count in sorted(sets.items(), key=lambda kv: (-kv[1], kv[0]))
+        ]
+        scoped["statuses"] = [
+            {
+                "value": value,
+                "label": VERIFICATION_LABELS.get(value, value),
+                "count": count,
+            }
+            for value, count in sorted(statuses.items(), key=lambda kv: (-kv[1], kv[0]))
+        ]
+        return scoped
 
     def filter_options(self, kind: str) -> dict[str, list[dict]]:
         """当前数据里实际出现过的筛选值，避免下拉框给一堆空选项。"""

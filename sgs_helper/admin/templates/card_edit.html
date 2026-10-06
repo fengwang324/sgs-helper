@@ -167,6 +167,15 @@
         <div class="combo-list" hidden></div>
       </div>
       <p class="help">候选是 <code>data/card_images/</code> 下真实存在的文件名；待补卡图（火杀 / 雷杀 / 掠闪…）留空即可。</p>
+      <p>
+        <button type="button" class="btn js-upload-image"
+                data-upload-target="image" data-upload-preview="image-preview">上传卡图</button>
+        <span class="muted">上传后会自动把文件名填进上面的输入框（支持 jpg / png / webp，单张 ≤ 8MB）。</span>
+      </p>
+      <div id="image-preview">
+        {% if values.get('image') %}<img src="/card-images/{{ values.get('image') }}" alt="卡图预览"
+             style="max-width:150px;max-height:210px;border:1px solid #e5e7eb;border-radius:8px;display:block;margin-top:8px">{% endif %}
+      </div>
       {% for message in error_map.get('image', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
@@ -250,4 +259,4 @@
 {% endif %}
 {% endblock %}
 
-{% block scripts %}<script src="/static/editor.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/editor.js"></script><script src="/static/wiki-upload.js"></script>{% endblock %}

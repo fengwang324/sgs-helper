@@ -38,7 +38,7 @@ from ..constants import (
     VERIFICATION_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
-from . import editors, forms, ocr_test
+from . import editors, forms, ocr_test, wiki
 from .store import (
     REVIEW_STATUSES,
     AdminStore,
@@ -215,6 +215,11 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         # ctx() 里本来就有 "request"，这里去掉，改由 Starlette 注入，避免重复传参
         extra.pop("request", None)
         return templates.TemplateResponse(req, template, extra)
+
+    # ------------------------------------------------------------ 本地 Wiki
+    # /wiki/* 的页面逻辑集中在 sgs_helper/admin/wiki.py；写入仍然走下面的
+    # /new|/edit|/delete，避免第二套写入实现。
+    app.include_router(wiki.WikiRoutes(templates).router)
 
     # ------------------------------------------------------------ 首页
 

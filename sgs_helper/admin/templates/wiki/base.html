@@ -1,0 +1,58 @@
+{# ---------------------------------------------------------------------------
+   Wiki 基础模板
+   ---------------------------------------------------------------------------
+   与 admin 的 base.html 分开：这里只服务 /wiki/* 页面，
+   顶部是「SGS Helper」品牌 + 一级入口 + 编辑模式开关。
+   --------------------------------------------------------------------------- #}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if title %}{{ title }} · {% endif %}SGS Helper 资料库</title>
+  <link rel="stylesheet" href="/static/wiki.css">
+</head>
+<body class="wiki">
+<header class="wiki-topbar">
+  <div class="wiki-topbar__inner">
+    <a class="wiki-brand" href="/wiki">
+      <span class="wiki-brand__name">SGS Helper</span>
+      <span class="wiki-brand__tag">三国杀线下资料库</span>
+    </a>
+    <span class="wiki-topbar__spacer"></span>
+    <nav class="wiki-topbar__links">
+      <a href="/wiki" class="{{ 'is-active' if wiki_section == 'home' else '' }}">资料检索</a>
+      <a href="/">管理页</a>
+      <a href="/help">说明</a>
+    </nav>
+    {# 编辑模式开关：纯表单，无 JS 也能工作；POST 后 303 回当前页 #}
+    <form action="/wiki/edit-mode" method="post">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+      <input type="hidden" name="on" value="{{ '0' if edit_mode else '1' }}">
+      <button type="submit"
+              class="wiki-edit-toggle {{ 'is-on' if edit_mode else '' }}"
+              title="{% if edit_mode %}当前：编辑模式（列表可新增、详情可编辑/复制/删除）{% else %}当前：浏览模式（点此开启编辑模式）{% endif %}">
+        {% if edit_mode %}✎ 编辑模式：开{% else %}✎ 编辑模式：关{% endif %}
+      </button>
+    </form>
+  </div>
+</header>
+
+<main class="wiki-main">
+  {% if not db_state.exists %}
+    <div class="wiki-banner">还没有生成 SQLite（<code>{{ db_state.path }}</code>）。Wiki 直接读 YAML，页面可用；要让 CLI / 小程序读到最新数据请去<a href="/">管理页</a>重建。</div>
+  {% endif %}
+  {% for item in flash %}
+    <div class="wiki-banner wiki-banner--{{ item.level }}">{{ item.text }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="wiki-footer">
+  <span>共 {{ total }} 条资料</span>
+  <span>· 数据源 <code>data/</code>（YAML 唯一权威）</span>
+  {% if edit_mode %}<span>· 编辑模式已开启，保存会真实写回 YAML</span>{% endif %}
+</footer>
+</body>
+</html>

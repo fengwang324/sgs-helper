@@ -1,0 +1,66 @@
+{% extends "wiki/base.html" %}
+
+{% block content %}
+<a class="wiki-detail-back" href="/wiki">← 返回资料检索</a>
+
+<div class="wiki-page-head">
+  <div>
+    <p class="wiki-page-head__eyebrow">全库搜索</p>
+    <h1 class="wiki-page-head__title">{% if q %}“{{ q }}”{% else %}搜索{% endif %}</h1>
+    <p class="wiki-page-head__lead">跨武将 / 技能 / 游戏牌 / 指示物 / FAQ 检索，共 {{ total_results }} 条结果</p>
+  </div>
+</div>
+
+<form class="wiki-toolbar" action="/wiki/search" method="get" role="search">
+  <div class="wiki-search">
+    <input type="search" name="q" value="{{ q }}" placeholder="输入名称、称号、编号或正文关键词" aria-label="全库搜索" autofocus>
+    <button class="wiki-btn" type="submit">搜索</button>
+  </div>
+  {% if q %}<a class="wiki-btn" href="/wiki/search">清除</a>{% endif %}
+</form>
+
+{% if groups %}
+  {% for group in groups %}
+    <div class="wiki-section">
+      <div class="wiki-section__head">
+        <h2 class="wiki-h2">{{ group.label }}</h2>
+        <span class="wiki-card__path">{{ group.rows | length }} 条{% if group.more %}（仅显示前 {{ group.rows | length }} 条）{% endif %}</span>
+      </div>
+      <div class="wiki-grid">
+        {% for row in group.rows %}
+          <a class="wiki-card {{ 'wiki-card--with-art' if row.image_url else '' }}" href="{{ row.detail_url }}">
+            {% if row.image_url %}<img class="wiki-card__art" src="{{ row.image_url }}" alt="" loading="lazy">{% endif %}
+            <span class="wiki-card__body">
+              <span class="wiki-card__top">
+                <span class="wiki-card__name">{{ row.name }}</span>
+                {% if row.badge %}<span class="wiki-card__badge wiki-tag {{ row.badge_class }}">{{ row.badge }}</span>{% endif %}
+              </span>
+              {% if row.subtitle %}<span class="wiki-card__path">{{ row.subtitle }}</span>{% endif %}
+              {% if row.excerpt %}<span class="wiki-card__text">{{ row.excerpt }}</span>{% endif %}
+              <span class="wiki-card__foot">
+                {% for tag in row.tags %}<span class="wiki-tag {{ tag.class }}">{{ tag.text }}</span>{% endfor %}
+              </span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+      {% if group.more %}<p class="wiki-note" style="margin-top:9px">还有更多结果，请用更具体的关键词，或进入「{{ group.label }}」列表页筛选。</p>{% endif %}
+    </div>
+  {% endfor %}
+{% elif q %}
+  <div class="wiki-empty">
+    <p class="wiki-empty__title">没有找到「{{ q }}」</p>
+    <p class="wiki-empty__text">试试更短的关键词，或者直接进入下面某个列表页浏览。</p>
+    <div class="wiki-detail-tags" style="justify-content:center">
+      {% for tab in wiki_tabs if tab.count is not none %}
+        <a class="wiki-tag wiki-tag--faction" href="{{ tab.url }}">{{ tab.label }}（{{ tab.count }}）</a>
+      {% endfor %}
+    </div>
+  </div>
+{% else %}
+  <div class="wiki-empty">
+    <p class="wiki-empty__title">输入关键词开始检索</p>
+    <p class="wiki-empty__text">可以搜武将名 / 称号 / 编号、技能名 / 描述、卡牌名 / 分类、FAQ 问题 / 答案。</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+{# 一级入口：武将 / 技能 / 游戏牌 / 指示物 / FAQ（+ 预留的规则） #}
+<nav class="wiki-tabs">
+  {% for tab in wiki_tabs %}
+    <a href="{{ tab.url }}" class="{{ 'is-active' if tab.key == section else '' }}">
+      {{ tab.label }}{% if tab.count is not none %}<span class="wiki-tabs__count">{{ tab.count }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</nav>
