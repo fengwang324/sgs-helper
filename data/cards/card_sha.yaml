@@ -1,4 +1,12 @@
 id: card_sha
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀
 name: 杀
-card_type: basic
-subtype: ''
+image: card_sha_qlhd_spade_4.jpg
+card_set: null
+effect:
+  text: ''
+  skills: []
+verification_status: unverified
+review_note: ''

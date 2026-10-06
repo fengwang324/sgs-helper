@@ -1,6 +1,6 @@
-"""产品 / 武将**专用录入页**的表单解析与批量改动构造。
+"""产品 / 武将 / 卡牌**专用录入页**的表单解析与批量改动构造。
 
-为什么不塞进 ``forms.py``：这两个页面的目标是「拿着实体卡从上到下一路录完」，
+为什么不塞进 ``forms.py``：这些页面的目标是「拿着一张卡从上到下一路录完」，
 字段顺序、联动（产品 → 模式/系列）和“一次提交产生多条实体”的语义，
 跟 generic 的“按 schema 平铺字段”完全不是一回事。放这里，generic 表单继续保持简单。
 
@@ -20,7 +20,15 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from ..constants import GENDER_LABELS, MODE_LABELS, Gender, Mode, SourceType, VerificationStatus
+from ..constants import (
+    CARD_CATEGORY_TREE,
+    GENDER_LABELS,
+    MODE_LABELS,
+    Gender,
+    Mode,
+    SourceType,
+    VerificationStatus,
+)
 from ..schema import MODEL_BY_KIND
 from .forms import FieldError
 from .store import Change, make_entity_id, make_version_id
@@ -50,7 +58,7 @@ GENERAL_DEFAULTS: dict[str, Any] = {
 }
 
 #: 武将版本（GeneralVariant）：模式/势力/体力/称号/技能等版本属性都在这里。
-#: 实体卡类没有 source；需要人工复核的异常写进 review_note。
+#: 实体类记录（武将版本 / 卡牌）没有 source；需要人工复核的异常写进 review_note。
 VARIANT_DEFAULTS: dict[str, Any] = {
     "id": "",
     "general_id": "",
@@ -75,6 +83,21 @@ VARIANT_DEFAULTS: dict[str, Any] = {
 VARIANT_LABELS: tuple[str, ...] = (
     "标准版", "国战版", "界限突破", "OL", "手卡（手杀）", "其他",
 )
+
+#: 卡牌（Card）：单层——分类 + 卡名 + 卡图 + 拓展包 + 效果。
+#: ``effect`` 是嵌套映射（text + skills），卡牌**没有** source 字段；分类字段必填。
+CARD_DEFAULTS: dict[str, Any] = {
+    "id": "",
+    "category_1": "",
+    "category_2": "",
+    "category_3": "",
+    "name": "",
+    "image": "",
+    "card_set": None,
+    "effect": {"text": "", "skills": []},
+    "verification_status": "unverified",
+    "review_note": "",
+}
 
 
 @dataclass
@@ -694,6 +717,206 @@ def general_values(
             if value not in (None, ""):
                 values[key] = str(value)
     return values
+
+
+# ---------------------------------------------------------------- 卡牌
+
+
+def card_category_tree() -> dict[str, dict[str, list[str]]]:
+    """卡牌分类树（``constants.CARD_CATEGORY_TREE`` 的副本）。
+
+    录入页的候选 = 这棵树 ∪ 现有卡牌数据里出现过的值；两边都是可输入可选的，
+    所以新增分类（例如以后补上「指示物」树）不需要改前端。
+    """
+    return {level_1: dict(children) for level_1, children in CARD_CATEGORY_TREE.items()}
+
+
+def card_category_triples(store) -> list[list[str]]:
+    """现有卡牌里出现过的 ``(一级, 二级, 三级)`` 组合，供录入页联动候选使用。"""
+    triples: list[list[str]] = []
+    for card in store.bundle.all("card").values():
+        triple = [
+            str(getattr(card, "category_1", "") or ""),
+            str(getattr(card, "category_2", "") or ""),
+            str(getattr(card, "category_3", "") or ""),
+        ]
+        if all(triple) and triple not in triples:
+            triples.append(triple)
+    return triples
+
+
+def parse_card_form(
+    form: Mapping[str, Any], *, store, existing: Any | None = None
+) -> EditorResult:
+    """卡牌录入/编辑：单层 ``Card``（分类 + 卡名 + 卡图 + 拓展包 + 效果）。
+
+    - 卡名与一 / 二 / 三级分类必填（分类联动下拉允许自由输入新值）；
+    - ``card_set`` / ``image`` / ``effect.text`` 都允许为空，``effect`` 里两者同时为空也合法；
+    - ``effect.skills`` 是 0～N 条 ``SkillRef``（``{skill_id, version_id}``）：
+      卡牌**只关联已有技能**，技能文本继续由 Skill / SkillVersion 维护。
+    """
+    result = EditorResult(values=echo_values(form))
+    errors = result.errors
+    data = _base(existing, CARD_DEFAULTS)
+
+    if "name" in form:
+        data["name"] = _text(form, "name")
+    if not str(data.get("name") or "").strip():
+        errors.append(FieldError("name", "卡名必填"))
+
+    for field_name, label in (
+        ("category_1", "一级分类"),
+        ("category_2", "二级分类"),
+        ("category_3", "三级分类"),
+    ):
+        if field_name in form:
+            data[field_name] = _text(form, field_name)
+        if not str(data.get(field_name) or "").strip():
+            errors.append(
+                FieldError(field_name, f"{label}必填（可以从下拉里选，也可以直接输入新值）")
+            )
+
+    raw_id = _text(form, "id")
+    if raw_id:
+        data["id"] = raw_id
+    elif existing is None:
+        data["id"] = make_entity_id(
+            "card_", str(data.get("name") or "card"), store.bundle.ids("card")
+        )
+
+    if "image" in form:
+        data["image"] = _text(form, "image")
+    if "card_set" in form:
+        data["card_set"] = _optional_text(form, "card_set")
+    if "review_note" in form:
+        data["review_note"] = _text(form, "review_note")
+    if "verification_status" in form:
+        _apply_enum(
+            data, form, "verification_status", VerificationStatus, errors, nullable=False
+        )
+
+    # ---------------------------------------------------------------- 效果（嵌套映射）
+    effect = dict(data.get("effect") or {})
+    if "effect_text" in form:
+        effect["text"] = _text(form, "effect_text")
+    else:
+        effect.setdefault("text", "")
+
+    existing_skills = store.bundle.ids("skill")
+    refs: list[dict] = []
+    result.rows = []
+    for row in parse_skill_rows(form):
+        prefix = _row_prefix(row.index)
+        rendered = row.as_dict()
+        result.rows.append(rendered)
+
+        if not row.skill_id:
+            if row.new_name:
+                errors.append(
+                    FieldError(
+                        f"{prefix}skill_id",
+                        f"技能「{row.new_name}」还没有从下拉里选中：卡牌只关联已有技能",
+                    )
+                )
+            continue
+        # 失败页要原样回显这一行：技能名 + 可选版本一起带上，
+        # 否则重新渲染时 <select> 里没有当前版本，用户一提交就把版本绑定丢了。
+        rendered["skill_name"] = store.name_of("skill", row.skill_id)
+        rendered["version_options"] = store.skill_version_options(row.skill_id)
+        if row.skill_id not in existing_skills:
+            errors.append(FieldError(f"{prefix}skill_id", f"技能不存在：{row.skill_id}"))
+            # 仍然把这条引用放进候选：这样失败页也能由校验器给出“文件 / 字段 / 原因”
+            refs.append({"skill_id": row.skill_id, "version_id": row.version_id or None})
+            continue
+
+        version_id = row.version_id or None
+        if version_id:
+            version = store.entity("skill_version", version_id)
+            if version is None:
+                errors.append(FieldError(f"{prefix}version_id", f"版本不存在：{version_id}"))
+                refs.append({"skill_id": row.skill_id, "version_id": version_id})
+                continue
+            if version.skill_id != row.skill_id:
+                errors.append(
+                    FieldError(
+                        f"{prefix}version_id",
+                        f"版本 {version_id} 属于技能 {version.skill_id}，和选中的技能不一致",
+                    )
+                )
+                refs.append({"skill_id": row.skill_id, "version_id": version_id})
+                continue
+
+        refs.append({"skill_id": row.skill_id, "version_id": version_id})
+        rendered["version_label"] = (
+            store.version_display_label(store.entity("skill_version", version_id))
+            if version_id
+            else ""
+        )
+        rendered["version_display"] = rendered["version_label"]
+
+    effect["skills"] = refs
+    data["effect"] = effect
+
+    result.changes = [
+        Change(kind="card", candidate=data, old_id=existing.id if existing else None)
+    ]
+    result.record_id = str(data.get("id") or "")
+    return result
+
+
+def card_values(
+    store, card: Any | None, *, params: Mapping[str, Any] | None = None
+) -> dict[str, str]:
+    """渲染卡牌录入页时的初始值（技能行单独给）。"""
+    from .forms import values_from_entity
+
+    values: dict[str, str] = {
+        "id": "",
+        "category_1": "",
+        "category_2": "",
+        "category_3": "",
+        "name": "",
+        "image": "",
+        "card_set": "",
+        "effect_text": "",
+        "verification_status": "unverified",
+        "review_note": "",
+    }
+    if card is not None:
+        values.update(values_from_entity("card", card))
+        effect = getattr(card, "effect", None)
+        values["effect_text"] = str(getattr(effect, "text", "") or "")
+        values["card_set"] = card.card_set or ""
+    if params:
+        for key, value in params.items():
+            if value not in (None, ""):
+                values[str(key)] = str(value)
+    return values
+
+
+def card_skill_rows(store, card: Any | None) -> list[dict]:
+    """编辑页初始技能行：把 ``effect.skills`` 渲染成一行行表单。"""
+    if card is None:
+        return []
+    rows: list[dict] = []
+    for index, ref in enumerate(card.effect.skills):
+        skill = store.entity("skill", ref.skill_id)
+        version = store.entity("skill_version", ref.version_id) if ref.version_id else None
+        rows.append(
+            SkillRow(
+                index=index,
+                skill_id=ref.skill_id,
+                version_id=ref.version_id or "",
+            ).as_dict()
+            | {
+                "skill_name": skill.name if skill else ref.skill_id,
+                "version_label": (version.version_label or version.id) if version else "",
+                "version_display": store.version_display_label(version) if version else "",
+                "version_text": version.text if version else "",
+                "version_options": store.skill_version_options(ref.skill_id),
+            }
+        )
+    return rows
 
 
 # ---------------------------------------------------------------- 共用小工具

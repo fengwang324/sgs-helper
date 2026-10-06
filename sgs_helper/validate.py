@@ -17,7 +17,7 @@ from typing import Any, Iterable
 
 from pydantic import ValidationError
 
-from .constants import KIND_BY_NAME, KIND_ORDER, MODE_LABELS
+from .constants import CARD_CATEGORY_TREE, KIND_BY_NAME, KIND_ORDER, MODE_LABELS
 from .loader import DataBundle, Issue, RawEntity, load_data_dir
 from .schema import MODEL_BY_KIND
 
@@ -30,11 +30,14 @@ from .schema import MODEL_BY_KIND
 #:
 #: 这张表同时驱动校验器的引用检查与本地管理页的删除保护，只声明一次。
 #:
-#: 实体卡类（Product / GeneralVariant / CardPrinting）不再有 ``source``，
+#: 实体卡类（Product / GeneralVariant / Card）不再有 ``source``，
 #: 规则类的 ``related_*`` / ``parent_id`` / ``previous_ids`` / ``next_ids`` 也已
 #: 全部删除，所以这里只剩真正的结构化引用。``GeneralVariant.general_set`` 是字符串，
 #: 它到 ``Product.general_sets`` 的归属关系由 :func:`_check_general_set_consistency`
 #: 单独对账（不再是实体引用，``GeneralSet`` 实体已删除）。
+#:
+#: ``Card.effect.skills`` 与 ``GeneralVariant.skills`` 形状相同（都是 ``SkillRef``），
+#: 所以引用存在性 / 空引用 / 列表内重复检查同样声明一次即可。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("general_variant", "general_id", "general", False),
     ("general_variant", "product_id", "product", False),
@@ -43,8 +46,8 @@ REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("skill_version", "skill_id", "skill", False),
     ("skill_version", "product_id", "product", False),
     ("skill_version", "previous_version_id", "skill_version", False),
-    ("card_printing", "card_id", "card", False),
-    ("card_printing", "product_id", "product", False),
+    ("card", "effect.skills[].skill_id", "skill", True),
+    ("card", "effect.skills[].version_id", "skill_version", True),
 )
 
 
@@ -185,6 +188,8 @@ def validate_entities(
     _check_general_set_consistency(bundle, result)
     _check_kind_consistency(bundle, result)
     _check_version_consistency(bundle, result)
+    _check_card_consistency(bundle, result)
+    _check_images(bundle, result)
 
     result.errors.sort(key=_issue_sort_key)
     result.warnings.sort(key=_issue_sort_key)
@@ -515,58 +520,8 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             else:
                 seen_labels[key] = variant_id
 
-    # 卡牌印刷：产品模式一致 / 花色点数组合 / 同产品重复
-    # 卡牌印刷：花色点数组合 / 同产品重复（``mode`` 由 product_id -> Product.mode 推导，不再单独校验）
-    combos: dict[tuple, list[str]] = {}
-    for entity_id, printing in bundle.all("card_printing").items():
-        origin = bundle.origin_of("card_printing", entity_id)
-        if printing.suit == "none" and printing.rank is not None:
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "rank",
-                    "suit 为 none 却填写了 rank，请确认是否漏填花色",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
-        if printing.suit != "none" and printing.rank is None:
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "rank",
-                    "填写了花色却没有点数，请确认",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
-        key = (
-            printing.product_id,
-            printing.card_set or "",
-            printing.suit,
-            printing.rank,
-        )
-        combos.setdefault(key, []).append(entity_id)
-
-    for key, ids in combos.items():
-        if len(ids) < 2:
-            continue
-        product_id, card_set, suit, rank = key
-        origin = bundle.origin_of("card_printing", ids[0])
-        result.warnings.append(
-            Issue(
-                "warning",
-                origin.path,
-                "suit/rank",
-                f"同一产品 {product_id}"
-                + (f" / 牌堆 {card_set}" if card_set else "")
-                + f" 下存在多张 {suit} {rank} 的实体卡：{', '.join(sorted(ids))}",
-                line=origin.line,
-                entity_id=ids[0],
-            )
-        )
+    # 卡牌的校验见 :func:`_check_card_consistency`（基本牌三级分类 / card_set 归属 /
+    # 技能版本绑定）与 :func:`_check_images`（卡图存在性）。
 
     # FAQ 的关联关系不再手工维护：构建索引 / 渲染详情时按实体名称从 question/answer 自动识别，
     # 因此这里不再校验 related_general_ids 与 FAQ 模式是否一致。
@@ -635,3 +590,129 @@ def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> 
             walked.add(cursor)
             node = versions.get(cursor)
             cursor = node.previous_version_id if node is not None else None
+
+
+# ---------------------------------------------------------------- 卡牌
+
+
+#: 「指示物」是卡牌分类（``category_1``），不是游戏牌拓展包
+INDICATOR_CATEGORY = "指示物"
+
+#: 基本牌的三级分类只能是牌族（具体是哪一张牌写在 ``name`` 里），取自分类树
+BASIC_CARD_FAMILIES: tuple[str, ...] = tuple(
+    CARD_CATEGORY_TREE.get("游戏牌", {}).get("基本牌", ())
+)
+
+
+def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> None:
+    """卡牌一致性：基本牌三级分类 / ``card_set`` 归属 / 技能版本绑定。
+
+    ``Card`` 是单层的：``category_1/2/3`` 表达“这张卡是什么”，``card_set`` 表达
+    “它来自哪个拓展包”，两者完全独立。以下几条 pydantic 管不了，放在这里对账：
+
+    - 基本牌的最后一级是 ``name``，``category_3`` 只放牌族（杀 / 闪 / 桃 / 酒）；
+    - ``card_set`` 非空时必须出现在**任一产品**的 ``Product.card_sets`` 里
+      （拓展包名的候选全集由产品声明，卡牌不自己发明拓展包）；
+    - ``effect.skills[].version_id`` 非空时必须属于同一个 ``skill_id``
+      （存在性由 :data:`REFERENCE_FIELDS` 的引用检查负责，这里只查父子关系）。
+    """
+    declared_card_sets: set[str] = set()
+    for product in bundle.all("product").values():
+        declared_card_sets.update(product.card_sets or [])
+    declared_line = "、".join(sorted(declared_card_sets)) or "（没有任何产品声明 card_sets）"
+
+    for entity_id, card in bundle.all("card").items():
+        origin = bundle.origin_of("card", entity_id)
+
+        # 基本牌：三级分类只放牌族，具体是哪一张杀 / 闪 / 桃 / 酒写在 name 里
+        if card.category_2 == "基本牌" and card.category_3 not in BASIC_CARD_FAMILIES:
+            result.warnings.append(
+                Issue(
+                    "warning",
+                    origin.path,
+                    "category_3",
+                    f'基本牌的三级分类应为牌族（{"、".join(BASIC_CARD_FAMILIES)}），'
+                    f'当前是 "{card.category_3}"；具体是哪一张牌写在 name（"{card.name}"）里',
+                    line=origin.line,
+                    entity_id=entity_id,
+                )
+            )
+
+        # card_set 归属：只要出现在任一产品的 card_sets 里就算对上了
+        card_set = (card.card_set or "").strip()
+        if card_set:
+            if card_set == INDICATOR_CATEGORY:
+                result.warnings.append(
+                    Issue(
+                        "warning",
+                        origin.path,
+                        "card_set",
+                        f'"{card_set}" 不是游戏牌拓展包，而是卡牌分类；'
+                        "请把它写到 category_1，card_set 留空或改填真正的拓展包名",
+                        line=origin.line,
+                        entity_id=entity_id,
+                    )
+                )
+            elif card_set not in declared_card_sets:
+                result.warnings.append(
+                    Issue(
+                        "warning",
+                        origin.path,
+                        "card_set",
+                        f'拓展包 "{card_set}" 不在任何产品声明的 card_sets'
+                        f"（{declared_line}）里，请确认拓展包名是否写错，"
+                        "或需要在对应产品的 card_sets 里补上它",
+                        line=origin.line,
+                        entity_id=entity_id,
+                    )
+                )
+
+        # 卡牌效果里的技能：显式绑定的版本必须属于同一个技能
+        for position, ref in enumerate(card.effect.skills):
+            if not ref.version_id:
+                continue
+            version = bundle.get("skill_version", ref.version_id)
+            if version is None:
+                continue  # 版本不存在已由引用检查报错
+            if version.skill_id != ref.skill_id:
+                result.errors.append(
+                    Issue(
+                        "error",
+                        origin.path,
+                        f"effect.skills[{position}].version_id",
+                        f"绑定的技能版本 {ref.version_id} 属于技能 {version.skill_id}，"
+                        f"与这里的技能 {ref.skill_id} 不一致",
+                        line=origin.line,
+                        entity_id=entity_id,
+                    )
+                )
+
+
+# ---------------------------------------------------------------- 卡图
+
+
+def _check_images(bundle: DataBundle, result: ValidationResult) -> None:
+    """卡图存在性：``Card.image`` / ``GeneralVariant.image`` 必须真的在 ``data/card_images/`` 下。
+
+    空 ``image`` 是允许的（例如待补卡图的 火杀 / 雷杀 / 掠闪），只检查非空值。
+    """
+    images_dir = bundle.data_dir / "card_images"
+    for kind in ("card", "general_variant"):
+        for entity_id, entity in bundle.all(kind).items():
+            image = (getattr(entity, "image", "") or "").strip()
+            if not image:
+                continue
+            if (images_dir / image).is_file():
+                continue
+            origin = bundle.origin_of(kind, entity_id)
+            result.warnings.append(
+                Issue(
+                    "warning",
+                    origin.path,
+                    "image",
+                    f'卡图 "{image}" 不存在：data/card_images/ 下没有这个文件'
+                    "（image 填相对 data/card_images/ 的文件名），请确认文件名是否写错",
+                    line=origin.line,
+                    entity_id=entity_id,
+                )
+            )

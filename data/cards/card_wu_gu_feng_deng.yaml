@@ -1,4 +1,12 @@
 id: card_wu_gu_feng_deng
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 五谷丰登
-card_type: trick
-subtype: ''
+image: card_wu_gu_feng_deng_qlhd_heart_3.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对所有角色使用。你从牌堆亮出等同于现存角色数量的牌，每名目标角色选择并获得其中的一张。
+  skills: []
+verification_status: unverified
+review_note: ''

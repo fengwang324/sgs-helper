@@ -1,4 +1,12 @@
 id: card_jing_fan
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 坐骑
 name: 惊帆
-card_type: equipment
-subtype: 坐骑
+image: card_jing_fan_qlhd_heart_3.jpg
+card_set: 君主游戏牌
+effect:
+  text: “曹真有駃马，名为惊帆，言其驰骤如烈风之举帆疾也。”——裴松之《古令注·杂记》
+  skills: []
+verification_status: unverified
+review_note: ''

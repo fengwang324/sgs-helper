@@ -37,12 +37,13 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | 路由 | 作用 |
 | --- | --- |
 | `GET /` | 首页：统一搜索框、各类型条数、核验状态分布、SQLite 状态、当前校验错误与警告 |
-| `GET /search?q=&kind=&status=&mode=` | 跨 10 类实体检索，显示类型 / 名称 / 模式 / 来源（规则类才有）/ 核验状态 / YAML 位置 |
-| `GET /list/{kind}?q=&mode=&status=&product=&page=` | 分类列表 + 筛选 + 分页 |
+| `GET /search?q=&kind=&status=&mode=` | 跨 9 类实体检索，显示类型 / 名称 / 模式 / 来源（规则类才有）/ 核验状态 / YAML 位置 |
+| `GET /list/{kind}?q=&mode=&status=&product=&set_name=&faction=&category_1=&category_2=&page=` | 分类列表 + 筛选 + 分页（`set_name` 是「系列 / 拓展包」筛选，武将侧对 `general_set`、卡牌侧对 `card_set`） |
 | `GET /view/{kind}/{id}` | 详情页（技能 / 卡牌 / 武将有专门的分层展示） |
 | **`GET|POST /new/product`、`/edit/product/{id}`** | **产品专用录入页**（见第 3 节） |
 | **`GET|POST /new/general`、`/edit/general/{id}[?variant=…]`** | **武将专用录入页**（General + GeneralVariant，见第 3、4、5 节） |
-| `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、卡牌、实体卡、FAQ、关键词、时点） |
+| **`GET|POST /new/card`、`/edit/card/{id}`** | **卡牌专用录入页**（分类联动 + 拓展包 + 卡图 + 效果文本 + 关联技能，见第 3.5 节） |
+| `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、FAQ、关键词、时点） |
 | `GET|POST /delete/{kind}/{id}` | 删除确认 + 引用检查 |
 | `GET /review[?status=]` | 待核验清单：`unverified` / `community` / `conflict` |
 | `POST /rebuild` | 手动按当前 YAML 全量重建 SQLite |
@@ -57,19 +58,19 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | `GET /api/skills?q=&limit=` | 技能搜索（名称 / id），返回 `version_count` |
 | `GET /api/skills/{id}/versions?mode=&product_id=` | 某技能的可选版本，按「产品匹配 > 模式匹配 > common > 其它」排序；每项带版本标签、模式、产品、文本摘要/全文 |
 | `GET /api/products?q=` | 产品搜索（名称 / ID / 年份） |
-| `GET /api/suggest?field=faction|general_set&q=` | 势力 / 武将牌系列的已有值（带使用次数） |
+| `GET /api/suggest?field=faction|general_set|card_set&q=` | 势力 / 武将牌系列 / 游戏牌拓展包的已有值（带使用次数） |
 | `GET /api/generals?name=` | 同名武将提醒（版本 / 模式 / 产品 / 系列 / 编号） |
 | `GET /api/version-exists?skill_id=&mode=&product_id=&text=` | 是否已有内容完全相同的技能版本 |
 
 ---
 
-## 3. 产品 / 武将专用录入页
+## 3. 产品 / 武将 / 卡牌专用录入页
 
 ### 为什么不再用 schema 自动表单
 
 日常录入的真实顺序是「拿着实体卡从上往下抄」，不是「按数据库字段顺序填」。
-所以产品与武将改成**专用页面**：字段顺序、联动、内联新建技能/版本都是为录卡服务的。
-其余低频实体（技能本体、技能版本、卡牌、实体卡、FAQ、关键词、时点）继续用 generic 表单，
+所以产品、武将与卡牌改成**专用页面**：字段顺序、分类联动、内联新建技能/版本都是为录卡服务的。
+其余低频实体（技能本体、技能版本、FAQ、关键词、时点）继续用 generic 表单，
 两者的解析代码也分开：generic 在 `forms.py`，专用在 `editors.py`。
 
 ### 产品录入页
@@ -82,15 +83,18 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | 发行年份 | 可空 |
 | 模式 | 固定下拉（国战 / 身份 / OL / 手杀 / 其他 / 通用），可空 |
 | 武将牌 | 该产品包含的**武将牌系列 / 武将牌组名称**，标签输入，可搜索已有值、也可直接新增，支持多个 |
-| 游戏牌 | 该产品包含的**游戏牌牌堆 / 牌堆系列名称**，同上 |
+| 游戏牌 | 该产品包含的**游戏牌拓展包名称**（九变篇 / 君主游戏牌 / 君临天下·权…），同上 |
 
 数据模型上这两者已经**彻底分开**：`Product.general_sets` 与 `Product.card_sets`
-（旧字段 `included_sets` 把“武将牌系列”和“游戏牌牌堆”混在一起，已删除）。
-填入的标签会去重并保序；`general_sets` 会作为武将录入页的候选值。
+（旧字段 `included_sets` 把“武将牌系列”和“游戏牌拓展包”混在一起，已删除）。
+填入的标签会去重并保序：`general_sets` 是武将录入页「武将牌系列」的候选，
+`card_sets` 是卡牌录入页「所属拓展包」的候选。注意「指示物」是卡牌分类而不是拓展包，
+`Product.card_sets` 里已没有它。
 
 出版方、版次、系列、发行日期、来源、核验状态、备注这些旧字段都已从模型删除，
 产品就只剩上面这 5 个字段（`release_year` / `mode` 也可以留空）。
-`general_sets` 里的值会成为武将录入页「武将牌系列」下拉的候选全集。
+`general_sets` 里的值会成为武将录入页「武将牌系列」下拉的候选全集，
+`card_sets` 里的值会成为卡牌录入页「所属拓展包」下拉的候选全集。
 
 ### 武将录入页
 
@@ -150,6 +154,43 @@ python scripts/admin.py --port 8000 --reload # 开发用
 - **产品**：搜索式下拉，支持按 名称 / ID / 年份 搜索。
   选中后只会给**当前为空**的字段带入模式与武将牌系列，不覆盖你已经填的内容。
 
+### 卡牌录入页
+
+卡牌是一层 `Card`，走专用录入页 `/new/card`、`/edit/card/{id}`，按「拿着卡从上往下录」排：
+
+```text
+新增卡牌
+── 卡名 * [ 定澜夜明珠 ] ────────────────────────
+── 分类 ───────────────────────────────────────
+一级分类 [ 游戏牌 ▼ ]  二级分类 [ 装备牌 ▼ ]  三级分类 [ 宝物 ▼ ]
+（一级决定二级候选、二级决定三级候选；候选 = 分类树 ∪ 现有卡牌出现过的值，也可直接输入新值）
+── 拓展包 / 卡图 ──────────────────────────────
+所属拓展包 [ 九变篇 ▼ ]（可空）   卡图 [ card_….jpg ▼ ]（可空）
+── 效果 ──────────────────────────────────────
+效果文本 [ 锁定技，你视为拥有“制衡”… ]
+关联技能：搜索已有技能 + 指定版本（0～N 行，顺序即卡面顺序）
+核验状态 [ 未核验 ▼ ]   复核备注 [ ]
+[保存]
+```
+
+各字段的行为：
+
+- **卡名**：唯一必填。基本牌这里写具体是哪一张（杀 / 火杀 / 雷杀 / 闪 / 掠闪…），
+  三级分类只写牌族。
+- **三级分类是联动的**：一级 → 二级 → 三级逐级给候选，候选来自
+  `constants.CARD_CATEGORY_TREE` 加现有卡牌的取值，没有想要的可以直接输入新值。
+  基本牌的三级候选里**不会**出现「火杀」这类具体牌名。
+- **拓展包（`card_set`）**：可空；候选来自所有产品的 `card_sets` 加已有卡牌的取值。
+  非空时必须被某个产品声明（卡牌自己不能发明拓展包名）；「指示物」是分类而不是拓展包。
+- **卡图（`image`）**：候选是 `data/card_images/` 下真实存在的文件名，只填文件名；
+  待补卡图（火杀 / 雷杀 / 掠闪…）留空即可。
+- **效果文本（`effect.text`）**：卡面效果原文，逐字照抄；纯技能卡可留空。
+  技能说明**不要**抄进来——那属于技能版本。
+- **关联技能（`effect.skills`）**：0～N 行，只能关联**已有技能**（卡牌页没有内联新建技能那套），
+  可指定具体版本；留空表示按该技能的 `mode` 匹配唯一一条版本。
+- **核验状态 / 复核备注**：卡牌没有 `source`；OCR 多版本、拓展包归属待定等异常写进 `review_note`。
+- 详情页不再有「实体卡印刷（N 条）」：卡牌就是一层的，同一规则卡的花色 / 点数印刷不在这里建模。
+
 ### 内部 ID 与“编号”是两件事
 
 - 页面上的「编号」是实体卡编号（`general_number`，自由字符串）。
@@ -195,6 +236,8 @@ python scripts/admin.py --port 8000 --reload # 开发用
 ```text
 1 个 General + 0..N 个新 Skill + 0..N 个新 SkillVersion + 多条 General→Skill/Version 关系
 ```
+
+卡牌录入页一次提交只写 **1 张卡**（关联技能只能选已有技能，没有内联新建技能）。
 
 `AdminStore.save_batch()` 把它当成**一个事务**：
 
@@ -309,6 +352,9 @@ skills:
   同模式（或 `common`）版本（标记「按模式回退」）；0 条或多条并列就显示“没有文本”；
 - SQLite 侧落到 `variant_skills(variant_id, general_id, skill_id, version_id, position)`，
   `position` 就是卡面上的技能顺序。
+- 卡牌的效果技能（`Card.effect.skills`）用的是**同一种** `SkillRef` 形状
+  （`GeneralSkillRef` 已改名为 `SkillRef`）：`skill_id` 必填，`version_id` 可空且不为空时
+  必须属于同一技能；卡牌的技能只落到 `cards.effect_skills` 这一列 JSON，不建关系表。
 
 ---
 
@@ -316,7 +362,7 @@ skills:
 
 `/review` 按 `verification_status` 汇总 `unverified` / `community` / `conflict`。
 逐条打开 → 对着实体卡核验 → 改核验状态 → 保存。
-实体卡类实体（GeneralVariant / CardPrinting）没有 `source`：它们的来源由 `product_id` 定位；
+实体卡类实体（GeneralVariant / Card）没有 `source`：武将版本的来源由 `product_id` 定位、卡牌由 `card_set` 定位；
 只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才填 `source`（只有 `type` + `reference`，
 展示名由 `reference` 推导）。日常录卡可以先不管核验状态（默认 `unverified`，会进待核验页面）。
 
@@ -334,8 +380,9 @@ skills:
    选中后下面还有一段预览。没有做成两行富文本下拉（保持键盘与无 JS 可用）。
 5. **并发保护是记录级哈希**：只改注释不会触发冲突（这是刻意的，避免同文件多记录互相干扰）。
 6. **旧字段不再兼容**：`included_sets` / `skill_ids` / `package` / 通用备注 / 别名 /
-   手工关联 / 生效区间 / 存库的检索正文 都已从模型里删除，
-   旧 YAML 会直接报“未知字段”，需要按第 9 节的新结构迁移（数据已经迁移过）。
+   手工关联 / 生效区间 / 存库的检索正文 都已从模型里删除；
+   卡牌也随 `CardPrinting` 层一起删掉了它的全部字段（卡牌类型 / 子类 / 花色 / 点数 / 印次文本 /
+   右下角角标 / 卡面编号…）。旧 YAML 会直接报“未知字段”，需要按第 9 节的新结构迁移（数据已经迁移过）。
 7. **列表字段是“一行一项”文本**：空行忽略、首尾空格去除。
 8. 本地工具：没有登录/权限/审计；`--host 0.0.0.0` 时请只放在可信网络。
 9. 不做并发写入合并：同一记录被两处同时改，后提交方被拒绝并要求刷新。
@@ -359,6 +406,6 @@ python -m pytest tests/test_admin_editors.py -q   # 本次录入流程重构
   `version_id` 必须属于对应技能、同时创建技能与版本、为已有技能新增版本并串
   `previous_version_id`、相同内容版本复用、批量保存只 rebuild 一次、
   批量失败一个文件都不写、rebuild 失败全部回滚、`_base_sha` 并发保护、
-  新的 GeneralSkillRef 引用保护（删技能 / 删被绑定的版本被拒绝）。
+  新的 SkillRef 引用保护（删技能 / 删被绑定的版本被拒绝）。
 
 所有测试都在 `tmp_path` 的副本上跑，绝不修改仓库里真实的 `data/`。

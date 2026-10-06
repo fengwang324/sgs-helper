@@ -29,13 +29,12 @@ from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from ..constants import (
-    CARD_TYPE_LABELS,
+    CARD_CATEGORY_TREE,
     GENDER_LABELS,
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
     SOURCE_LABELS,
-    SUIT_LABELS,
     VERIFICATION_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
@@ -44,7 +43,6 @@ from .store import (
     REVIEW_STATUSES,
     AdminStore,
     SaveOutcome,
-    rank_label,
     truncate,
 )
 
@@ -88,12 +86,9 @@ def build_templates() -> Jinja2Templates:
     templates = Jinja2Templates(env=env)
     env.filters.update(
         {
-            "rank_label": rank_label,
             "mode_label": lambda v: MODE_LABELS.get(v, v or ""),
             "status_label": lambda v: VERIFICATION_LABELS.get(v, v or ""),
             "source_label": lambda v: SOURCE_LABELS.get(v, v or ""),
-            "suit_label": lambda v: SUIT_LABELS.get(v, v or ""),
-            "card_type_label": lambda v: CARD_TYPE_LABELS.get(v, v or ""),
             "gender_label": lambda v: GENDER_LABELS.get(v, v or ""),
             "short": truncate,
             "is_url": lambda v: isinstance(v, str) and v.startswith(("http://", "https://")),
@@ -123,7 +118,7 @@ templates = build_templates()
 def _ocr_image_index(live: AdminStore) -> list[dict]:
     """data/card_images 下的卡图，配上可读标签，方便在 OCR 页里直接挑一张试。"""
     out: list[dict] = []
-    for kind, prefix in (("general_variant", "武将"), ("card_printing", "游戏牌")):
+    for kind, prefix in (("general_variant", "武将"), ("card", "游戏牌")):
         for entity in live.bundle.all(kind).values():
             image = getattr(entity, "image", "") or ""
             if not image:
@@ -133,7 +128,10 @@ def _ocr_image_index(live: AdminStore) -> list[dict]:
                 name = getattr(general, "name", "") or entity.id
                 label = f"{prefix}：{name}（{getattr(entity, 'variant', '')}）"
             else:
-                label = f"{prefix}：{getattr(entity, 'name_printed', '') or entity.id}"
+                label = (
+                    f"{prefix}：{getattr(entity, 'name', '') or entity.id}"
+                    f"（{getattr(entity, 'category_2', '')}/{getattr(entity, 'category_3', '')}）"
+                )
             out.append({"file": image, "label": label, "id": entity.id})
     out.sort(key=lambda r: (r["label"], r["file"]))
     return out
@@ -153,24 +151,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     static_dir = ADMIN_DIR / "static"
     if static_dir.is_dir():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-    # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
-    images_dir = store.data_dir / "card_images"
-    try:
-        images_dir.mkdir(parents=True, exist_ok=True)
-    except OSError:  # pragma: no cover
-        pass
-    if images_dir.is_dir():
-        app.mount("/card-images", StaticFiles(directory=str(images_dir)), name="card-images")
-
-    # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
-    images_dir = store.data_dir / "card_images"
-    try:
-        images_dir.mkdir(parents=True, exist_ok=True)
-    except OSError:  # pragma: no cover
-        pass
-    if images_dir.is_dir():
-        app.mount("/card-images", StaticFiles(directory=str(images_dir)), name="card-images")
 
     # 卡图：data/card_images/ 下的单卡图片，供详情页对照实体卡
     images_dir = store.data_dir / "card_images"
@@ -309,14 +289,17 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         mode: str = "",
         status: str = "",
         product: str = "",
-        package: str = "",
+        set_name: str = "",
         faction: str = "",
+        category_1: str = "",
+        category_2: str = "",
         page: int = 1,
     ) -> HTMLResponse:
         require_kind(kind)
         live: AdminStore = request.app.state.store
         rows = live.filter_rows(kind, q=q, mode=mode, status=status, product=product,
-                                package=package, faction=faction)
+                                set_name=set_name, faction=faction,
+                                category_1=category_1, category_2=category_2)
         total = len(rows)
         pages = max(1, math.ceil(total / PER_PAGE))
         page = min(max(1, page), pages)
@@ -337,8 +320,10 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 mode=mode,
                 status=status,
                 product=product,
-                package=package,
+                set_name=set_name,
                 faction=faction,
+                category_1=category_1,
+                category_2=category_2,
                 options=live.filter_options(kind),
                 spec=KIND_BY_NAME[kind],
             ),
@@ -887,6 +872,128 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             status_code=303,
         )
 
+    # ------------------------------------------------------------ 专用录入页：卡牌
+
+    def _card_editor_extra(request: Request) -> dict:
+        live: AdminStore = request.app.state.store
+        return {
+            # 联动下拉的候选 = constants 的分类树 ∪ 现有卡牌里出现过的值
+            "category_tree": editors.card_category_tree(),
+            "category_triples": editors.card_category_triples(live),
+        }
+
+    def _card_params(request: Request) -> dict[str, str]:
+        # 只接受卡牌自己的字段，避免 URL 上的别的参数被当成初值写进表单
+        allowed = {"name", "category_1", "category_2", "category_3", "image", "card_set"}
+        return {
+            key: value
+            for key, value in request.query_params.items()
+            if key in allowed and value
+        }
+
+    @app.get("/new/card", response_class=HTMLResponse)
+    def new_card(request: Request) -> HTMLResponse:
+        require_kind("card")
+        live: AdminStore = request.app.state.store
+        return render(
+            request,
+            "card_edit.html",
+            **_editor_ctx(
+                request,
+                "card",
+                title="新增卡牌",
+                values=editors.card_values(live, None, params=_card_params(request)),
+                rows=[],
+                mode="create",
+                target_id="",
+                action="/new/card",
+                card=None,
+                **_card_editor_extra(request),
+            ),
+        )
+
+    @app.post("/new/card", response_class=HTMLResponse)
+    async def create_card(request: Request) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_card_form(form, store=live)
+        if result.errors:
+            return _editor_failure(
+                request, "card_edit.html", "card", result, "/new/card", "create",
+                extra=_card_editor_extra(request),
+            )
+        # 新增：卡牌一定还不存在（_base_sha 为空串表示“这条记录还不该存在”）
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "card_edit.html", "card", result, "/new/card", "create",
+                outcome=outcome, extra=_card_editor_extra(request),
+            )
+        if str(form.get("_action", "save")) == "save_next":
+            return RedirectResponse("/new/card?created=1", status_code=303)
+        return RedirectResponse(
+            f"/view/card/{result.record_id}?created=1&warn={len(outcome.warnings)}",
+            status_code=303,
+        )
+
+    @app.get("/edit/card/{entity_id}", response_class=HTMLResponse)
+    def edit_card(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        card = live.entity("card", entity_id)
+        if card is None:
+            raise HTTPException(status_code=404, detail="卡牌不存在")
+        return render(
+            request,
+            "card_edit.html",
+            **_editor_ctx(
+                request,
+                "card",
+                title=f"编辑卡牌：{card.name}",
+                values=editors.card_values(live, card),
+                rows=editors.card_skill_rows(live, card),
+                mode="edit",
+                target_id=entity_id,
+                action=f"/edit/card/{entity_id}",
+                card=card,
+                base_sha=live.entity_sha("card", entity_id),
+                references=live.reverse_refs("card", entity_id),
+                **_card_editor_extra(request),
+            ),
+        )
+
+    @app.post("/edit/card/{entity_id}", response_class=HTMLResponse)
+    async def update_card(request: Request, entity_id: str) -> HTMLResponse:
+        live: AdminStore = request.app.state.store
+        card = live.entity("card", entity_id)
+        if card is None:
+            raise HTTPException(status_code=404, detail="卡牌不存在")
+        form = await verified_form(request)
+        base_sha = require_base_sha(form)
+        result = editors.parse_card_form(form, store=live, existing=card)
+        retry_extra = {**_card_editor_extra(request), "base_sha": base_sha}
+        if result.errors:
+            return _editor_failure(
+                request, "card_edit.html", "card", result,
+                f"/edit/card/{entity_id}", "edit", target_id=entity_id,
+                extra=retry_extra,
+            )
+        result.changes[0].expected_sha = base_sha
+        outcome = live.save_batch(result.changes)
+        if not outcome.ok:
+            return _editor_failure(
+                request, "card_edit.html", "card", result,
+                f"/edit/card/{entity_id}", "edit", target_id=entity_id,
+                outcome=outcome, extra=retry_extra,
+            )
+        if str(form.get("_action", "save")) == "save_next":
+            return RedirectResponse("/new/card?saved=1", status_code=303)
+        return RedirectResponse(
+            f"/view/card/{result.record_id}?saved=1&warn={len(outcome.warnings)}",
+            status_code=303,
+        )
+
     # ------------------------------------------------------------ 录入辅助 JSON API
 
     @app.get("/api/skills")
@@ -931,10 +1038,18 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
 
     @app.get("/api/suggest")
     def api_suggest(request: Request, field: str = "faction", q: str = "", limit: int = 40) -> list[dict]:
-        if field not in {"faction", "general_set"}:
-            raise HTTPException(status_code=400, detail="field 只支持 faction / general_set")
+        if field not in {"faction", "general_set", "card_set"}:
+            raise HTTPException(
+                status_code=400, detail="field 只支持 faction / general_set / card_set"
+            )
         live: AdminStore = request.app.state.store
         return live.suggest_values(field, q, limit=max(1, min(limit, 100)))
+
+    @app.get("/api/card-images")
+    def api_card_images(request: Request, q: str = "", limit: int = 30) -> list[dict]:
+        """卡牌录入页的卡图候选：data/card_images/ 下真实存在的文件名。"""
+        live: AdminStore = request.app.state.store
+        return live.card_image_options(q, limit=max(1, min(limit, 100)))
 
     @app.get("/api/generals")
     def api_generals(request: Request, name: str = "", limit: int = 8) -> list[dict]:
@@ -954,8 +1069,9 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.get("/new/{kind}", response_class=HTMLResponse)
     def new_page(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general", "general_variant"}:
-            # 产品 / 武将 / 武将版本都走专用录入页（generic 表单漏掉技能行会清空技能）
+        if kind in {"product", "general", "general_variant", "card"}:
+            # 产品 / 武将 / 武将版本 / 卡牌都走专用录入页
+            # （generic 表单漏掉技能行会清空技能，卡牌的 effect 是嵌套结构也渲染不了）
             raise HTTPException(
                 status_code=404, detail=f"{KIND_BY_NAME[kind].label}请使用专用录入页"
             )
@@ -999,7 +1115,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/new/{kind}", response_class=HTMLResponse)
     async def create_entity(request: Request, kind: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general", "general_variant"}:
+        if kind in {"product", "general", "general_variant", "card"}:
+            # 卡牌是嵌套的 effect（text + skills），generic 表单处理不了；走专用页
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)
@@ -1030,7 +1147,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.get("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     def edit_page(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general", "general_variant"}:
+        if kind in {"product", "general", "general_variant", "card"}:
+            # 卡牌是嵌套的 effect（text + skills），generic 表单处理不了；走专用页
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         entity = live.entity(kind, entity_id)
@@ -1064,7 +1182,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
     @app.post("/edit/{kind}/{entity_id}", response_class=HTMLResponse)
     async def update_entity(request: Request, kind: str, entity_id: str) -> HTMLResponse:
         require_kind(kind)
-        if kind in {"product", "general", "general_variant"}:
+        if kind in {"product", "general", "general_variant", "card"}:
+            # 卡牌是嵌套的 effect（text + skills），generic 表单处理不了；走专用页
             raise HTTPException(status_code=404, detail="请使用专用录入页")
         live: AdminStore = request.app.state.store
         form = await verified_form(request)

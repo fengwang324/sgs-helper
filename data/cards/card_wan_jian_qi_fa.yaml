@@ -1,4 +1,12 @@
 id: card_wan_jian_qi_fa
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 万箭齐发
-card_type: trick
-subtype: ''
+image: card_wan_jian_qi_fa_qlhd_heart_1.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对所有其他角色使用。每名目标角色需打出一张【闪】，否则受到1点伤害。
+  skills: []
+verification_status: unverified
+review_note: ''

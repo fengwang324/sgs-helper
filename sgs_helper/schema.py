@@ -3,9 +3,10 @@
 设计目标（个人资料库 / 小程序查询 / 后续 AI 读取，不做通用数据库设计）：
 
 - 只保留实际会**展示、查询、筛选、关联或核验**的字段；
-- 能从其它实体推导的数据不重复保存（例如 CardPrinting.mode 由 Product.mode 推导）；
-- 实体卡类（Product / GeneralVariant / CardPrinting）不再重复保存来源，
-  它们由 ``product_id`` 定位到具体产品；
+- 能从其它实体推导的数据不重复保存（例如卡牌所属拓展包由 ``card_set`` 表达，不再挂产品）；
+- 武将牌：``Product.general_sets`` + ``GeneralVariant.general_set`` 两处维护系列；
+- 游戏牌 / 指示物：**一层** :class:`Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），
+  同一规则卡不因为花色点数不同拆成多条；
 - 规则类（SkillVersion / Keyword / FAQ / Timing）只保留极简来源 ``type`` + ``reference``；
 - **没有通用 notes**：确实需要人工复核的地方用 ``review_note``。
 
@@ -25,11 +26,9 @@ from typing import Annotated
 
 from .constants import (
     ID_PATTERN,
-    CardType,
     Gender,
     Mode,
     SourceType,
-    Suit,
     VerificationStatus,
 )
 
@@ -57,8 +56,8 @@ class StrictModel(BaseModel):
 class Source(StrictModel):
     """规则资料来源：只保留 ``type`` + ``reference``。
 
-    展示用的来源名（例如「三国杀官方规则集 3.0」「本人实体卡（群狼环鼎）」）在渲染阶段
-    由 type / reference / 产品名推导，不再单独存储。
+    展示用的来源名（例如「三国杀官方规则集 3.0」）在渲染阶段由 type / reference 推导，
+    不再单独存储。
     """
 
     type: SourceType
@@ -75,7 +74,8 @@ class Product(StrictModel):
 
     - ``general_sets``：这个产品里的**武将牌系列 / 武将牌组名称**（国战标准、势备篇…），
       它同时是 GeneralVariant.general_set 的唯一维护处；
-    - ``card_sets``：这个产品里的**游戏牌牌堆 / 牌堆系列名称**（标准牌堆、九变牌堆…）。
+    - ``card_sets``：这个产品里的**游戏牌拓展包名称**（九变篇、君主游戏牌…），
+      它同时是 Card.card_set 的候选来源。注意「指示物」是卡牌分类，不是拓展包。
     """
 
     id: Id
@@ -84,22 +84,25 @@ class Product(StrictModel):
     mode: Mode | None = None
     #: 武将牌系列 / 武将牌组名称（可以有多个）
     general_sets: list[str] = Field(default_factory=list)
-    #: 游戏牌牌堆 / 牌堆系列名称（可以有多个）
+    #: 游戏牌拓展包名称（可以有多个）
     card_sets: list[str] = Field(default_factory=list)
 
 
-# ---------------------------------------------------------------- 武将
+# ---------------------------------------------------------------- 技能引用
 
 
-class GeneralSkillRef(StrictModel):
-    """武将版本 → 技能的关系（以及这个版本**具体用哪一版**技能文本）。
+class SkillRef(StrictModel):
+    """对某个技能（以及可选的具体版本）的引用。武将版本与卡牌效果共用这一种形状。
 
-    ``version_id`` 是技能文本的唯一依据：填了就按它取文本，不再按日期推导“当前版本”。
-    为空时按 ``mode`` 匹配该技能唯一的一条版本，取不到就表示这个武将版本上的技能没有文本。
+    - ``skill_id``：必填，指向 SkillDefinition；
+    - ``version_id``：可以为空。为空表示“按该技能的 mode 匹配唯一一条版本”。
     """
 
     skill_id: Id
     version_id: Id | None = None
+
+
+# ---------------------------------------------------------------- 武将
 
 
 class General(StrictModel):
@@ -141,7 +144,7 @@ class GeneralVariant(StrictModel):
     #: 珠联璧合：可写多个武将名，也可以是类别值（如 男性武将 / 群势力武将 / 君主）
     zhulianbihe: list[str] = Field(default_factory=list)
     #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
-    skills: list[GeneralSkillRef] = Field(default_factory=list)
+    skills: list[SkillRef] = Field(default_factory=list)
     verification_status: VerificationStatus = VerificationStatus.unverified
     #: 需要人工对照卡图/实物复核的异常（OCR 误读、疑似错字…）
     review_note: str = ""
@@ -190,7 +193,7 @@ class SkillVersion(StrictModel):
     """SkillVersion：某模式 / 某产品下技能的具体规则文本。
 
     更新技能的正确做法是**新增一条** SkillVersion 并用 ``previous_version_id`` 串链，
-    绝不修改旧记录。哪个武将版本用哪一版文本，由 GeneralVariant.skills[].version_id 决定。
+    绝不修改旧记录。哪个武将版本 / 哪张卡用哪一版文本，由 ``SkillRef.version_id`` 决定。
     """
 
     id: Id
@@ -209,57 +212,40 @@ class SkillVersion(StrictModel):
 # ---------------------------------------------------------------- 卡牌
 
 
+class CardEffect(StrictModel):
+    """卡牌的效果 / 技能。
+
+    - ``text``：卡面效果原文，逐字照抄，允许为空（例如纯技能指示物只有技能引用）；
+    - ``skills``：这张卡关联到的技能（0～N 个）。技能文本继续由 Skill / SkillVersion
+      维护，**不要把技能说明抄进 ``text``**。
+    """
+
+    text: str = ""
+    skills: list[SkillRef] = Field(default_factory=list)
+
+
 class Card(StrictModel):
-    """CardDefinition：规则意义上的卡牌（杀 / 闪 / 桃 / 无懈可击 …）。"""
+    """一张有独立规则意义 / 独立卡面的卡（游戏牌与指示物共用这一层）。
 
-    id: Id
-    name: Name
-    card_type: CardType
-    subtype: str = ""
-    #: 需要人工复核的异常（例如卡面类型标签与登记的类型不一致）
-    review_note: str = ""
+    三级分类表达“这张卡是什么”，``card_set`` 表达“它来自哪个拓展包”，两者完全独立。
 
-
-class CardPrinting(StrictModel):
-    """CardPrinting：某个实体产品中实际印刷出来的一张实体卡。
-
-    - ``product_id`` 必填：必须能回答“这张实体卡来自哪个线下产品”；
-    - ``mode`` 不再存储，由 ``product_id -> Product.mode`` 推导；
-    - 搜索用的规范化文本在构建 SQLite / search_index 时动态生成，不写回 YAML。
+    同一规则卡因为花色 / 点数不同产生的多份实体印刷**不在这一层建模**：
+    当前阶段只维护卡面资料，完整牌堆构成留给以后单独加的 ``deck_entries``。
     """
 
     id: Id
-    card_id: Id
-    name_printed: Name
-    product_id: Id
-    card_set: str | None = None
-    suit: Suit = Suit.none
-    rank: int | None = Field(default=None, ge=1, le=13)
-    quantity: int = Field(default=1, ge=1, le=99)
-    printed_text: str = ""
-    #: 右下角角标，单独保存，不写进 review_note
-    bottom_right_mark: str = ""
-    card_number: str = ""
+    category_1: Name
+    category_2: Name
+    category_3: Name
+    name: Name
     #: 卡图文件名（相对 data/card_images/）
     image: str = ""
+    #: 所属拓展包；允许为空（跨多个拓展包、或暂时无法确认来源时留空）
+    card_set: str | None = None
+    effect: CardEffect = Field(default_factory=CardEffect)
     verification_status: VerificationStatus = VerificationStatus.unverified
-    #: 需要人工复核的异常（例如 OCR 误读、牌堆归属待定）
+    #: 需要人工对照卡图/实物复核的异常
     review_note: str = ""
-
-    @field_validator("rank", mode="before")
-    @classmethod
-    def _normalize_rank(cls, value):
-        """允许卡面写法 A/J/Q/K，统一归一化为 1..13。"""
-        if value is None:
-            return None
-        if isinstance(value, str):
-            text = value.strip().upper()
-            mapping = {"A": 1, "J": 11, "Q": 12, "K": 13}
-            if text in mapping:
-                return mapping[text]
-            if text.isdigit():
-                return int(text)
-        return value
 
 
 # ---------------------------------------------------------------- FAQ / 关键词 / 时点
@@ -310,7 +296,6 @@ MODEL_BY_KIND: dict[str, type[StrictModel]] = {
     "skill": Skill,
     "skill_version": SkillVersion,
     "card": Card,
-    "card_printing": CardPrinting,
     "faq": Faq,
     "keyword": Keyword,
     "timing": Timing,

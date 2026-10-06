@@ -1,0 +1,12 @@
+id: card_huo_sha
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀
+name: 火杀
+image: ''
+card_set: null
+effect:
+  text: ''
+  skills: []
+verification_status: unverified
+review_note: ''

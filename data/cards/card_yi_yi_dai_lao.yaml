@@ -1,4 +1,12 @@
 id: card_yi_yi_dai_lao
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 以逸待劳
-card_type: trick
-subtype: ''
+image: card_yi_yi_dai_lao_qlhd_heart_11.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对你和与你势力相同的角色使用。每名目标角色各摸两张牌，然后弃置两张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

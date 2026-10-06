@@ -4,10 +4,11 @@
 修改表结构请改 `sgs_helper/db.py` 的 `COLUMNS` / `INDEXES` / `SCHEMA_VERSION`，
 然后重新执行 `python scripts/build_db.py`。
 
-- schema 版本：`3`（模型精简：删除通用备注、别名、手工关联、生效区间与存库的检索正文；
-  实体卡类不再存 `source`；删掉独立的 `general_sets` 表）
-- 生成时间：`2026-10-06T11:50:46+08:00`
-- YAML 清单指纹：`744b78fb3ad36ce7bac81dd2ac6073ec45c86e7742a540de0f5e588e92b07e63`
+- schema 版本：`4`（卡牌单层化：游戏牌收敛成一层 `Card`；删除整个 `CardPrinting` 层、
+  `card_printings` 表与它的三个索引；新增 `idx_cards_category` / `idx_cards_card_set`；
+  `Product.card_sets` 只表示游戏牌拓展包）
+- 生成时间：`2026-10-06T16:00:19+08:00`
+- YAML 清单指纹：`ed863c0903e0b7a52222f392d89a5055a08c406e88dbabe3f09e4cfef6202ab7`
 - 全文检索 FTS5：`启用`
 
 ## 实体数量
@@ -19,12 +20,11 @@
 | `general_variant` | 163 |
 | `skill` | 311 |
 | `skill_version` | 297 |
-| `card` | 91 |
-| `card_printing` | 192 |
+| `card` | 81 |
 | `faq` | 83 |
 | `keyword` | 126 |
 | `timing` | 30 |
-| **合计** | **1449** |
+| **合计** | **1247** |
 
 来源表 `sources` 3 行（`physical_card` / `official_rule` / `official_online` 各一条）。
 
@@ -124,43 +124,34 @@ CREATE TABLE skill_versions (
 
 ### `cards`
 
+一层的游戏牌（与指示物共用这一层）：三级分类表达“这张卡是什么”，`card_set` 表达
+“它来自哪个拓展包”（允许为空），`effect_text` / `effect_skills` 是卡面效果与关联技能。
+分类取值见 `constants.CARD_CATEGORY_TREE`；基本牌的 `category_3` 是牌族
+（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`。
+
 ```sql
 CREATE TABLE cards (
   id TEXT PRIMARY KEY,
+  category_1 TEXT,
+  category_2 TEXT,
+  category_3 TEXT,
   name TEXT,
-  card_type TEXT,
-  subtype TEXT,
-  review_note TEXT,
-  yaml_file TEXT,
-  yaml_line INTEGER
-);
-```
-
-### `card_printings`
-
-`mode` 不落库（由 `product_id -> Product.mode` 推导），检索正文在构建时动态生成，
-也**没有** `source` 列。
-
-```sql
-CREATE TABLE card_printings (
-  id TEXT PRIMARY KEY,
-  card_id TEXT,
-  name_printed TEXT,
-  product_id TEXT,
-  card_set TEXT,
-  suit TEXT,
-  rank INTEGER,
-  quantity INTEGER,
-  printed_text TEXT,
-  bottom_right_mark TEXT,
-  card_number TEXT,
   image TEXT,
+  card_set TEXT,
+  effect_text TEXT,
+  effect_skills TEXT,
   verification_status TEXT,
   review_note TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
 ```
+
+`effect_text` 就是 `Card.effect.text`；`effect_skills` 是 `Card.effect.skills`
+（`[{skill_id, version_id}]`）的 JSON 文本，查询层在 `repo._card_effect_skills` 里解析。
+卡与产品**没有外键**：两边的唯一关系是 `Card.card_set ∈ Product.card_sets`。
+**没有** `card_printings` 表（`CardPrinting` 层与 `data/card_printings/` 目录已删除）：
+同一规则卡的花色 / 点数印刷不在这一层建模，完整牌堆构成留给以后的 `deck_entries`。
 
 ### `faqs`
 
@@ -274,9 +265,8 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
 
 ## 索引
 
-- `idx_card_printings_card`：card_printings(card_id)
-- `idx_card_printings_mark`：card_printings(bottom_right_mark)
-- `idx_card_printings_product`：card_printings(product_id)
+- `idx_cards_card_set`：cards(card_set)
+- `idx_cards_category`：cards(category_1, category_2)
 - `idx_faqs_mode`：faqs(mode)
 - `idx_general_variants_general`：general_variants(general_id)
 - `idx_general_variants_mode`：general_variants(mode)
@@ -298,8 +288,8 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
 - `yaml_line`：该条记录在文件中的起始行号。
 
 只有还会保存来源的实体（`skill_versions` / `faqs` / `keywords` / `timings`）多一列
-`source_key`，指向 `sources` 表；`products` / `general_variants` / `card_printings` 没有它
-（来源由 `product_id` 定位），`generals` / `skills` / `cards` 也不需要。
+`source_key`，指向 `sources` 表；`products` / `general_variants` / `cards` 没有它
+（来源由 `product_id` / `card_set` 定位），`generals` / `skills` 也不需要。
 
 `meta` 表另有 `git_commit` / `git_branch` / `git_dirty` / `yaml_manifest_sha256`，
 可用于判断当前数据库是否与数据文件一致。

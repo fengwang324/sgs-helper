@@ -18,16 +18,17 @@
 | FAQ / 裁定 83 | gltjk.com 网页版《三国杀官方规则集 3.0》（规则专题与流程章节 + 武将页的 ◆ 裁定） | 真实文本，`source.type: official_rule`，`verification_status: unverified` |
 | 规则关键词 126 / 时点 30 | 同上（用语、游戏的流程） | 同上 |
 | 武将 155 / 武将版本 163 | 群狼环鼎实体卡照片 + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) | 真实数据；`product_id` 全部指向 `qlhd`，mode 全是国战 |
-| 产品 1 / 卡牌定义 91 / 实体卡印刷 192 | 群狼环鼎（`product_id: qlhd`） | 真实数据；实体卡类没有 `source` 字段，来源由 `product_id` 定位 |
+| 产品 1 / 卡牌 81 | 群狼环鼎（`product_id: qlhd`） | 真实数据；卡牌是一层 `Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），没有 `source` 字段 |
 
-实测口径（`python scripts/validate_data.py`）：**实体 1449 条 / 0 错误 / 60 警告**
-（46 条「同一产品同花色点数重复」+ 14 条「技能本体没有任何 SkillVersion」）。
+实测口径（`python scripts/validate_data.py`）：**实体 1247 条 / 0 错误 / 14 警告**
+（14 条全是「技能本体没有任何 SkillVersion」；随 `CardPrinting` 一起删除的
+「同一产品同花色点数重复」那 46 条警告已消失）。
 
 - `source` 只有 `type` + `reference` 两个字段；展示用的来源名在渲染时由 `reference` 推导
   （`constants.SOURCE_TITLE_BY_REFERENCE` → `SOURCE_LABELS`），不再单独存储。
 - 只有规则类（SkillVersion / FAQ / Keyword / Timing）带 `source`：
   规则侧统一写成 `source.type: official_rule`、`source.reference: https://gltjk.com/sanguosha/rules/`。
-  实体卡类（Product / GeneralVariant / CardPrinting）**没有** `source`，来源由 `product_id` 定位。
+  实体卡类（Product / GeneralVariant / Card）**没有** `source`，来源由 `product_id` / `card_set` 定位。
 - 每个技能按模式各留一条版本：国战取群狼环鼎的卡面文本，身份局取**标准版**印次的文本；
   同一技能在其它印次（界限突破、台湾版、铜雀台…）还有不同文本时，再单独补一条 SkillVersion。
 - 规则文本逐字照抄网页版，包括站点本身的排版细节；**未按实体卡核验**，
@@ -78,8 +79,7 @@ sgs-helper/
 │   ├── generals/             # 武将
 │   ├── skills/               # SkillDefinition：技能本体
 │   ├── skill_versions/       # SkillVersion：技能的具体版本文本
-│   ├── cards/                # CardDefinition：规则意义上的卡牌
-│   ├── card_printings/       # CardPrinting：某产品实际印刷的一张实体卡
+│   ├── cards/                # Card：一层卡牌（分类 + 卡名 + 卡图 + 拓展包 + 效果）
 │   ├── faq/                  # FAQ / 裁定
 │   ├── keywords/             # 规则关键词
 │   ├── timings/              # 时点
@@ -97,12 +97,12 @@ sgs-helper/
 │       ├── app.py            #   路由与页面装配
 │       ├── store.py          #   读 YAML（快照 + 内存检索）、安全写 YAML、重建 SQLite
 │       ├── forms.py          #   低频实体的 generic 表单（由 Pydantic 模型生成）
-│       ├── editors.py        #   产品 / 武将专用录入页的解析与批量改动构造
+│       ├── editors.py        #   产品 / 武将 / 卡牌专用录入页的解析与批量改动构造
 │       ├── yaml_writer.py    #   可读 YAML 读写（保留注释头/块状标量/原子落盘）
 │       ├── templates/        #   Jinja2 模板
 │       └── static/           #   一个 CSS + 一个很小的 JS
 ├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py / admin.py
-├── tests/                    # pytest 测试（241 个）
+├── tests/                    # pytest 测试（当前 289 个）
 ├── build/                    # 生成物目录（sgs.db，**不进 Git**）
 ├── docs/                     # 设计说明、操作手册、路线图
 ├── README.md  pyproject.toml  requirements*.txt  .gitignore
@@ -112,7 +112,7 @@ sgs-helper/
 
 1. **YAML 是唯一权威源**，SQLite 只是生成物，可随时由 YAML 完整重建。
 2. **不手工修改 SQLite**；`build/sgs.db` 不进 Git（在 `.gitignore` 里）。
-3. **技能两层、卡牌两层**：定义与版本/印刷分离，**旧版本永不覆盖**。
+3. **技能两层、卡牌一层**：技能定义与版本文本分离；卡牌只有一层 `Card`，**旧版本永不覆盖**。
 4. **来源可追溯**：每条数据都记 YAML 文件与行号；规则类实体另带 `source`（只有 `type` + `reference`），构建物里记录 Git commit。
 5. **不确定的规则不编造**：拿不准就标 `unverified` / 冲突就标 `conflict`，两边都留着。
 
@@ -127,8 +127,7 @@ sgs-helper/
 | general_variant | `data/general_variants/` | `general_variants` | **GeneralVariant**：某模式/版本下的武将数据（势力/体力/称号/技能…） |
 | skill | `data/skills/` | `skills` | **SkillDefinition**：技能本体 |
 | skill_version | `data/skill_versions/` | `skill_versions` | **SkillVersion**：某模式/产品下的技能文本 |
-| card | `data/cards/` | `cards` | **CardDefinition**：规则意义上的卡牌 |
-| card_printing | `data/card_printings/` | `card_printings` | **CardPrinting**：某产品实际印刷的一张卡 |
+| card | `data/cards/` | `cards` | **Card**：一层卡牌（分类 + 卡名 + 卡图 + 拓展包 + 效果） |
 | faq | `data/faq/` | `faqs` | FAQ / 裁定 |
 | keyword | `data/keywords/` | `keywords` | 规则关键词 |
 | timing | `data/timings/` | `timings` | 时点 |
@@ -142,24 +141,30 @@ sgs-helper/
 - **写错字段名会直接报错**（模型 `extra="forbid"`），不会静默丢弃。
 - `mode`：`common`（通用）/ `guozhan`（国战）/ `identity`（身份局）/ `ol` / `mobile` / `other`；
   **产品与武将的 mode 允许为空**（先录入，以后再补）。
-- `Product.general_sets`（武将牌系列）与 `Product.card_sets`（游戏牌牌堆）是两件事，不要混：
-  `general_sets` 同时是 `GeneralVariant.general_set` 的**唯一候选来源**（没有独立的「系列」实体，
-  也没有单独的系列数据目录）。
+- `Product.general_sets`（武将牌系列）与 `Product.card_sets`（游戏牌拓展包）是两件事，不要混：
+  两者分别是 `GeneralVariant.general_set` 与 `Card.card_set` 的**唯一候选来源**（没有独立的「系列」实体，
+  也没有单独的系列数据目录）。注意「指示物」是卡牌分类（`category_1`），不是拓展包。
 - **武将分两层**：`General`（武将个体）只存 `id / name`；
   模式、势力、体力、性别、称号、编号、产品、武将牌系列、技能全部属于 `GeneralVariant`。
   「诸葛亮 / 界诸葛亮 / 神诸葛亮」官方名不同 → 三个 General；
   「标准版诸葛亮 / 国战诸葛亮」官方名都是「诸葛亮」→ 同一个 General 的两个 Variant。
 - `GeneralVariant.hp`（体力）允许为空：身份局标准版记正常体力（3/4/5），
-  国战按阴阳鱼记 1.5 / 2 / 2.5；`GeneralVariant.skills` 是关系列表
-  `[{skill_id, version_id}]`，`version_id` 为空表示“按该技能的 `mode` 匹配唯一一条版本”。
+  国战按阴阳鱼记 1.5 / 2 / 2.5。
+- `GeneralVariant.skills` 与 `Card.effect.skills` 都是同一种关系列表 `SkillRef`
+  `[{skill_id, version_id}]`（`GeneralSkillRef` 已改名 `SkillRef`，武将版本与卡牌效果共用），
+  `version_id` 为空表示“按该技能的 `mode` 匹配唯一一条版本”。
+- **卡牌只有一层 `Card`**：`category_1/2/3`（是什么）+ `name` + `image`
+  + `card_set`（来自哪个拓展包）+ `effect: {text, skills}`。
+  同一规则卡因花色 / 点数不同产生的多份实体印刷**不在这里建模**（以后另加 `deck_entries`）；
+  基本牌的三级分类是**牌族**（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`（杀 / 火杀 / 雷杀…）。
 - `verification_status`：`unverified` / `community` / `official` / `physical_verified` / `conflict`；
-  只出现在 `GeneralVariant` / `SkillVersion` / `CardPrinting` / `FAQ` / `Keyword` / `Timing` 上
-  （`Product` / `General` / `Skill` / `Card` 没有这个字段）。
-- `review_note`：只出现在 `GeneralVariant` / `SkillVersion` / `CardPrinting` / `Skill` / `Card` 上，
+  只出现在 `GeneralVariant` / `SkillVersion` / `Card` / `FAQ` / `Keyword` / `Timing` 上
+  （`Product` / `General` / `Skill` 没有这个字段）。
+- `review_note`：只出现在 `GeneralVariant` / `SkillVersion` / `Card` / `Skill` 上，
   只写“需要人工对照卡图/实物复核的异常”，不再有通用的 `notes`。
 - `source.type`：`physical_card`（本人实体卡）/ `official_rule` / `official_faq` / `official_online` / `community_db` / `wiki` / `discussion`。
 - `source` 只在 `SkillVersion` / `FAQ` / `Keyword` / `Timing` 上是**必填**；
-  `Product` / `GeneralVariant` / `CardPrinting` **没有** `source` 字段（来源由 `product_id` 定位）。
+  `Product` / `GeneralVariant` / `Card` **没有** `source` 字段（来源由 `product_id` / `card_set` 定位）。
 
 完整 SQLite 表结构见 [docs/sqlite-schema.md](docs/sqlite-schema.md)。
 
@@ -185,23 +190,57 @@ skill_ji_zhi（技能本体 · data/skills/skill_ji_zhi.yaml）
   `skills[].version_id` 必须属于同一个 `skill_id`。
 - CLI 支持 `--json` 输出结构化结果。
 
-## CardDefinition / CardPrinting 如何工作
+## Card 如何工作（单层）
 
-```text
-card_sha（“杀”这个概念 · data/cards/card_sha.yaml）
-├── card_sha_qlhd_spade_7     群狼环鼎 · 黑桃7 · 角标 R
-├── card_sha_qlhd_heart_10    群狼环鼎 · 君主游戏牌 · 红桃10 · 角标 君
-└── card_sha_qlhd_club_4      群狼环鼎 · 梅花4
+```yaml
+# data/cards/card_ding_lan_ye_ming_zhu.yaml —— 定澜夜明珠
+id: card_ding_lan_ye_ming_zhu
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 宝物
+name: 定澜夜明珠
+image: card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg
+card_set: 九变篇                # 所属拓展包，允许为空
+effect:
+  text: 锁定技，你视为拥有“制衡”。若你已拥有“制衡”，则改为取消弃置牌数的限制。
+  skills:
+    - skill_id: skill_zhi_heng
+      version_id: skill_zhi_heng_guozhan_qlhd_v1
+
+# data/cards/card_sha.yaml —— 杀（基本牌：三级分类写牌族，具体牌名看 name）
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀
+name: 杀
+image: card_sha_qlhd_spade_4.jpg
+card_set: null                  # 允许为空：跨拓展包 / 暂时无法确认来源
+
+# data/cards/card_huo_sha.yaml —— 火杀（先记录，卡图与文本待补）
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀
+name: 火杀
+image: ""
+effect:
+  text: ""
+  skills: []
 ```
 
-- `CardPrinting.product_id` **必填**：必须能回答“这张实体卡来自哪个线下产品”。
-- `CardPrinting` **没有** `mode` 字段：需要模式时由 `product_id -> Product.mode` 推导。
-- `printed_text` 逐字保存卡面原文；检索用的规范化正文由 `db.py` 在构建 SQLite /
-  `search_index` 时**动态生成**，它**不是** YAML 字段，也不会覆盖 `printed_text`。
-- `bottom_right_mark` 单独成列（不写进 `review_note`），方便以后查“所有带某个角标的卡”、
-  “某个牌堆是否混入其他产品的卡”。第一版保持简单字符串，需要时再扩展成结构化对象。
-- `rank` 可以写 `7`，也可以按卡面写 `A/J/Q/K`（会归一化成 `1/11/12/13` 入库）。
-- 校验器会告警：同一产品同一牌堆下出现多张相同花色点数的实体卡（可能是重复登记或混牌）。
+- **只有一层 `Card`**：`category_1/2/3` 表达“这张卡是什么”，`card_set` 表达“它来自哪个拓展包”，
+  两者完全独立。分类树见 `constants.CARD_CATEGORY_TREE`：
+  `游戏牌 → 基本牌（杀 / 闪 / 桃 / 酒，最后一级是 name）/ 锦囊牌（非延时锦囊、延时锦囊）/`
+  `装备牌（武器 / 防具 / 坐骑 / 宝物）`。
+- **`card_set` 是另一个维度**：它表示“来自哪个拓展包”（九变篇 / 势备篇 / 不臣篇 / 君主游戏牌 /
+  阵 / 君临天下·权…），允许为空；非空时必须出现在某个产品的 `Product.card_sets` 里。
+  **「指示物」是卡牌分类（`category_1`），不是拓展包**（`Product.card_sets` 里的「指示物」已删除）。
+- `effect.text` 逐字保存卡面原文，允许为空；`effect.skills` 是 `[{skill_id, version_id}]`，0～N 个；
+  技能文本仍由 Skill / SkillVersion 维护，**不要把技能说明抄进 `effect.text`**。
+  检索用的规范化正文由 `db.py` 在构建 `search_index` 时**动态生成**，不是 YAML 字段。
+- **同一规则卡的花色 / 点数印刷不在这一层建模**：`CardPrinting` 层、`data/card_printings/` 目录、
+  相关校验、页面与测试引用已整体删除（完整牌堆构成留给以后单独加的 `deck_entries`）。
+- 校验器会告警：基本牌 `category_3` 不是牌族、`card_set` 没有被任何产品声明
+  （写「指示物」会给专门提示）、`Card.image` 文件不存在、
+  `effect.skills[].skill_id` 不存在或 `version_id` 不属于同一个技能。
 
 ---
 
@@ -215,8 +254,10 @@ card_sha（“杀”这个概念 · data/cards/card_sha.yaml）
 
 1. 打开 `/new/product`（或 `cp data/_templates/product.yaml data/products/my_product_2026.yaml`）
 2. 日常只需要 5 个字段：`name`、`release_year`、`mode`、`general_sets`、`card_sets`；
-   - `general_sets`：该产品包含的**武将牌系列**（国战标准、势备篇、九变篇…）；
-   - `card_sets`：该产品包含的**游戏牌牌堆**（标准牌堆、君主游戏牌…）。
+   - `general_sets`：该产品包含的**武将牌系列**（国战标准、势备篇、九变篇…），
+     同时是武将版本 `general_set` 的候选来源；
+   - `card_sets`：该产品包含的**游戏牌拓展包**（国战标准、君主游戏牌、九变篇…），
+     同时是卡牌 `card_set` 的候选来源。
    两者是两件事，**不要混**（旧字段 `included_sets` 已删除）。
 3. 产品只有这 5 个字段，没有 `series` / `publisher` / `release_date` / `edition` / `source` /
    `verification_status` / `notes`（这些都已从模型删除）。
@@ -285,25 +326,21 @@ review_note: ""                  # 需要人工对照卡图/实物复核时才�
 不指就按 `mode` 匹配该技能唯一一条版本（同模式多条并存时匹配不到，就显示不出文本）。
 校验器会检查版本链是否成环、显式绑定的版本是否属于同一个技能。
 
-### 新增一张实体卡
+### 新增一张卡牌
 
-先有 CardDefinition，再登记印刷：
+卡牌只有一层，走专用录入页（`/new/card`）或复制模板：
 
-1. `cp data/_templates/card.yaml data/cards/my_card.yaml` → `id` / `name` / `card_type` / `subtype`
-   （另可写 `review_note`）；
-2. `cp data/_templates/card_printing.yaml data/card_printings/my_card_guozhan_spade_7.yaml`
-3. 填写 `card_id`、`name_printed`、`product_id`（必填）、`card_set`、`suit`、`rank`、`quantity`、
-   `printed_text`（照抄卡面）、`bottom_right_mark`、`card_number`、`image`。
-   `CardPrinting` 没有 `mode` / `source`：模式由 `product_id -> Product.mode` 推导。
+1. 打开 `/new/card`（或 `cp data/_templates/card.yaml data/cards/my_card.yaml`），按录入顺序填：
+   卡名 → 一级 / 二级 / 三级分类（联动）→ 拓展包（`card_set`，可空）→ 卡图（`image`，待补可留空）
+   → 效果文本（`effect.text`，照抄卡面，可空）→ 关联技能 0～N（`effect.skills`，搜索已有技能、可指定版本）
+   → 核验状态 → 复核备注。
+2. `card_set` 非空时，必须是某个产品 `Product.card_sets` 里声明过的拓展包名（产品侧补上即可）；
+   「指示物」要写到 `category_1`，不能当拓展包。
+3. 基本牌的三级分类只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里。
+4. 卡图放在 `data/card_images/` 下，`image` 只填文件名；待补卡图的（火杀 / 雷杀 / 掠闪）留空。
 
-### 记录右下角角标
-
-```yaml
-bottom_right_mark: 君       # 单独字段，别写进 review_note
-```
-
-查询能力：`query.py card 杀` 会显示每张印刷的角标；`query.py product 国战` 会汇总该产品的角标分布。
-以后如果要按角标反查产品，直接查 `card_printings.bottom_right_mark`（已建索引）。
+查询能力：`query.py card 定澜夜明珠` 会显示分类、卡图、拓展包、效果文本、关联技能与核验状态；
+`query.py product qlhd` 会列出「该产品游戏牌（N 条）」（按 `Card.card_set ∈ Product.card_sets` 关联）。
 
 ### 增加 FAQ
 
@@ -345,10 +382,11 @@ python scripts/validate_data.py --strict   # 有警告也算失败
 
 检查项包括：YAML 语法与顶层结构、必填字段、未知字段、id 格式与**重复 id**、
 `GeneralVariant.general_id` / `skills[].skill_id` / `skills[].version_id` / `SkillVersion.skill_id` /
-`previous_version_id` / `CardPrinting.card_id` / `product_id` 引用是否存在、
+`previous_version_id` / `Card.effect.skills[].skill_id` / `product_id` 引用是否存在、
 空引用与自引用、`previous_version_id` 是否同技能/是否成环、
 `skills[].version_id` 是否属于同一个技能、`GeneralVariant.general_set` 是否在所属产品的
-`general_sets` 里、体力步进、武将/实体卡模式与所属产品是否一致、同一产品重复花色点数、
+`general_sets` 里、体力步进、武将模式与所属产品是否一致、
+基本牌三级分类是否为牌族、`Card.card_set` 是否被某个产品声明、卡图文件是否存在、
 武将引用的技能在该模式下是否有版本、技能本体是否缺 SkillVersion、规则类实体是否缺 `source`。
 
 ## 重新构建数据库
@@ -370,7 +408,7 @@ python scripts/build_db.py --db build/sgs.db --no-fts
 python scripts/query.py skill 集智              # 各模式 / 各版本文本 / 来源 / 校验状态
 python scripts/query.py skill skill_ji_zhi --json
 python scripts/query.py general 孔融            # 含“获得技能后的完整技能说明”
-python scripts/query.py card 杀                 # 定义 + 各产品印刷（花色/点数/角标/卡面原文）
+python scripts/query.py card 定澜夜明珠         # 分类 / 卡图 / 拓展包 / 效果文本 / 关联技能 / 核验状态
 python scripts/query.py faq 伤害
 python scripts/query.py keyword 濒死状态
 python scripts/query.py timing 伤害结算
@@ -393,14 +431,16 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 
 打开 <http://127.0.0.1:8000>：
 
-- `/` 统一搜索框（10 类实体）+ 数据量与核验状态分布 + 当前校验错误；
-- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `general_set` 筛选；
+- `/` 统一搜索框（9 类实体）+ 数据量与核验状态分布 + 当前校验错误；
+- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `set_name`
+  （标签「系列 / 拓展包」：武将侧筛 `general_set`、卡牌侧筛 `card_set`）/ `category_1` / `category_2` 筛选；
 - `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 各 SkillVersion（模式/文本/来源/校验状态）`，
-  卡牌显示 `CardDefinition → 所有 CardPrinting（产品/花色/点数/卡面文本/右下角角标）`，
+  卡牌显示单层 `Card`（一/二/三级分类 · 卡名 · 拓展包 · 效果文本 · 关联技能），
   武将显示 `General → GeneralVariant（每个版本的势力/体力/称号/技能）→ SkillVersion`；
-- **`/new/product`、`/new/general`：产品 / 武将专用录入页** ——
+- **`/new/product`、`/new/general`、`/new/card`：产品 / 武将 / 卡牌专用录入页** ——
   产品只要 名称/年份/模式/武将牌/游戏牌；武将**只有名字必填**，
   技能行支持搜索已有技能、内联新建技能、内联新增版本、指定版本、排序；
+  卡牌按 卡名 → 三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 → 核验状态 → 复核备注 的顺序录；
 - `/new/{kind}`、`/edit/{kind}/{id}`：其余低频实体的 generic 表单（字段由 Pydantic 模型生成）；
 - 武将页支持「保存并新增下一位」（可继承上一位的产品信息）、「以此武将为模板新增」、
   Ctrl/⌘+S 保存、搜索框 ↑↓/Enter/Esc、sessionStorage 草稿恢复、同名武将与重复版本提醒；
@@ -430,18 +470,18 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 ## 测试
 
 ```bash
-python -m pytest -q          # 241 个测试
+python -m pytest -q          # 289 个测试（核心 194 条 + 管理页 95 条）
 ```
 
-覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间、rank 归一化）、
+覆盖：YAML 装载（单条/列表/items/语法错误/行号）、模型校验（未知字段、枚举、区间）、
 引用与一致性校验（错误与警告）、SQLite 构建（表结构、幂等重建、来源去重、元信息、可追溯列）、
-两层关联（技能本体↔版本、卡牌定义↔印刷、同名不覆盖）、
+两层关联（技能本体↔版本、同名不覆盖）与单层卡牌（分类 / 拓展包 / 效果技能引用）、
 查询（显式绑定版本与按 mode 回退、模式分组、版本链、检索、FAQ 按名称自动关联）、CLI 端到端、
 本地管理网页（页面可启动、搜索可用、编辑 YAML 后重建数据库、非法修改被 validate 拦截且不落盘、
 新增 SkillVersion 不覆盖旧版本、被引用实体不能删除、YAML 往返无损、CSRF 与并发保护），
-以及产品/武将专用录入页（只填名字也能建、自动生成内部 ID、编号格式、`general_sets` / `card_sets`、
-隐藏字段不丢、技能搜索与绑定、显式绑定版本、批量保存只 rebuild 一次、批量失败一个文件都不写、
-rebuild 失败全部回滚）。
+以及产品/武将/卡牌专用录入页（只填名字也能建、自动生成内部 ID、编号格式、`general_sets` / `card_sets`、
+隐藏字段不丢、技能搜索与绑定、显式绑定版本、卡牌三级分类联动与拓展包校验、
+批量保存只 rebuild 一次、批量失败一个文件都不写、rebuild 失败全部回滚）。
 
 管理网页的测试全部在 `tmp_path` 的副本上跑，不会碰仓库里真实的 `data/`。
 
@@ -477,7 +517,6 @@ rebuild 失败全部回滚）。
 | `GET /api/skills/{id}/versions` | `skill_report(conn, id)["versions"]` |
 | `GET /api/generals/{id}` | `general_report(conn, id)` |
 | `GET /api/cards/{id}` | `card_report(conn, id)` |
-| `GET /api/cards/{id}/printings` | `card_report(conn, id)["printings"]` |
 | `GET /api/faq?q=伤害` | `faq_search(conn, q)` |
 | `GET /api/keywords/{id}` | `keyword_report(conn, id)` |
 | `GET /api/timings/{id}` | `timing_report(conn, id)` |
@@ -494,7 +533,8 @@ rebuild 失败全部回滚）。
 - 武将只有 `General` + `GeneralVariant` 两层：同一个武将的不同玩法/版本各写一条 `GeneralVariant`
   （各自带 `mode` / `hp` / `product_id` / `skills`），不需要「武将印刷」层。
 - 技能文本没有结构化（没有 effects/targets/conditions 字段）：这是完整的规则引擎，超出当前阶段。
-- 来源只记一条：规则类实体带 `source`（type + reference），实体卡类实体干脆不记 source（由 `product_id` 定位）；
+- 来源只记一条：规则类实体带 `source`（type + reference），实体卡类实体干脆不记 source
+  （武将版本由 `product_id`、卡牌由 `card_set` 定位）；
   需要多来源并列时，目前用 `verification_status: conflict` + `review_note` 说明；
   以后可以扩展成来源关联表。
 - 时点关系只记录先后，不做完整结算顺序模拟。

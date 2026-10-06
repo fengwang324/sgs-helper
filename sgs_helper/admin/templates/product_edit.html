@@ -29,7 +29,7 @@
 
 <section class="hint">
   <p>
-    产品只有 <strong>名称 / 发行年份 / 模式 / 武将牌系列 / 游戏牌牌堆</strong> 这几个字段
+    产品只有 <strong>名称 / 发行年份 / 模式 / 武将牌系列 / 游戏牌拓展包</strong> 这几个字段
     （系列、出版方、版次、发行日期、来源、核验状态、备注都已从模型里删除）。
     保存流程仍然是：<strong>写回 YAML → 校验 → 重建 SQLite</strong>；校验不过一个字都不会落盘。
   </p>
@@ -62,7 +62,7 @@
           <option value="{{ value }}" {{ 'selected' if values.get('mode') == value else '' }}>{{ label }}</option>
         {% endfor %}
       </select>
-      <p class="help">这个产品的模式；实体卡（CardPrinting）的 mode 由这里推导。</p>
+      <p class="help">这个产品的模式（产品自己的标签；卡牌是单层的，不保存 mode）。</p>
       {% for message in error_map.get('mode', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
@@ -81,12 +81,12 @@
 
   <fieldset class="tag-fieldset">
     <legend>游戏牌</legend>
-    <p class="help">这个产品包含的<strong>游戏牌牌堆 / 牌堆系列名称</strong>（例如 标准牌堆、九变牌堆、君主游戏牌）。</p>
+    <p class="help">这个产品包含的<strong>游戏牌拓展包名称</strong>（例如 九变篇、君主游戏牌、君临天下·权）。它同时是卡牌 <code>card_set</code> 的候选全集。</p>
     <input type="hidden" name="card_sets" id="f-card_sets" value="{{ values.get('card_sets', '') }}">
     <div class="tag-input"
          data-target="f-card_sets"
          data-values='{{ all_card_sets | tojson }}'
-         data-placeholder="输入牌堆名，回车添加"></div>
+         data-placeholder="输入拓展包名，回车添加"></div>
     {% for message in error_map.get('card_sets', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
   </fieldset>
 

@@ -29,7 +29,7 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 群狼环鼎卡面照片；按“内容是什么”标 `source.type`（`official_rule` / `physical_card` …），
 按“来源可靠到什么程度”标 `verification_status`（目前基本都是 `unverified`）——
 两者分开记录，核验一条就升一条，不因为文档名称里带“官方”就默认可信。
-实体卡类实体（Product / GeneralVariant / CardPrinting）不存 `source`，来源由 `product_id` 定位。
+实体卡类实体（Product / GeneralVariant / Card）不存 `source`，来源由 `product_id` / `card_set` 定位。
 
 解析性能：数据长到近千个 YAML 之后，`loader` 做了两件事 ——
 有 libyaml 就用 C 解析器（快 5～7 倍），以及单条映射不再为了拿行号多解析一遍；
@@ -65,10 +65,10 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 ### 1.2 录入模型的三处调整（为了“拿着卡从上往下录”）
 
-1. **产品里“武将牌系列”和“游戏牌牌堆”分开**：
+1. **产品里“武将牌系列”和“游戏牌拓展包”分开**：
    旧字段 `included_sets` 把两者混在一个列表里，录卡时没人分得清哪个是哪个。
    现在拆成 `Product.general_sets` 与 `Product.card_sets`；
-   前者的值还会成为武将录入页「武将牌系列」的候选。
+   前者是武将录入页「武将牌系列」的候选，后者是卡牌录入页「所属拓展包」的候选。
 2. **武将 → 技能改成关系结构**：
    旧的 `skill_ids: [...]` 只能回答“有哪些技能”，回答不了“这张卡印的是哪一版”。
    现在是 `skills: [{skill_id, version_id}]`：`version_id` 填了就按它取文本，
@@ -133,17 +133,22 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 | 只有 `common` 版本 | 具体模式没有版本时回退到它 |
 | 产品特例与通用版本并存 | 目前以显式 `version_id` 优先；产品级规则留待有真实需求时再加 `scope` |
 
-## 3. 为什么卡牌要拆两层
+## 3. 为什么卡牌只留一层
 
-- `CardDefinition` 回答“杀是什么”（规则意义）；
-- `CardPrinting` 回答“我手里这张杀是哪一盒里的、什么花色点数、角标是什么、卡面怎么印的”。
+游戏牌最终收敛成**一层** `Card`：
 
-同一张 `杀` 在不同产品里的 `printed_text` 可能不同，**必须分开存**；
-`product_id` 是必填的，否则无法回答“这张卡来自哪个产品”，也就无法排查“牌堆里是否混入了其他产品的卡”。
-`CardPrinting` 不存 `mode`：要按模式筛选时由 `product_id -> Product.mode` 推导。
+- 三级分类（`category_1/2/3`）回答“这张卡是什么”（基本牌 / 锦囊牌 / 装备牌…）；
+- `name` 回答“具体是哪一张”（基本牌的三级分类是牌族，杀 / 闪 / 桃 / 酒，具体牌名写在这里）；
+- `card_set` 回答“它来自哪个拓展包”（与分类完全独立的一个维度，允许为空）；
+- `effect: {text, skills}` 回答“卡面写了什么、关联了哪些技能”。
 
-`bottom_right_mark` 单列（不进 `review_note`），因为它是**结构性信息**：
-以后要查“所有带君角标的卡”“某角标对应哪些产品”，都必须能直接筛选。
+原来的 `CardPrinting` 层（某产品实际印刷的一张实体卡：花色 / 点数 / 角标 / 卡面文本）**已整体删除**：
+个人资料库当前只需要卡面资料，同一规则卡的花色 / 点数印刷属于“完整牌堆构成”，
+留给以后单独加的 `deck_entries`，不再为了花色点数把同一张卡拆成多条。
+
+`card_set` 不再是产品外键：卡与产品**没有外键**，唯一关系是
+`Card.card_set ∈ Product.card_sets`（同名拓展包可被多个产品共用，产品页会重复计数）。
+「指示物」是卡牌分类（`category_1`），不是拓展包。
 
 ## 4. 可追溯性做到什么程度
 
@@ -161,8 +166,8 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 - 一种实体一张表；多值字段（`general_sets`、`card_sets`、`zhulianbihe`）以 JSON 文本存储，
   另外把「武将版本 ↔ 技能」额外落一张 `variant_skills` 关联表，方便以后做反向查询。
 - 建了必要的索引：`skill_versions(skill_id, mode)`、`skill_versions(previous_version_id)`、
-  `card_printings(card_id)`、`card_printings(product_id)`、`card_printings(bottom_right_mark)`、
-  `general_variants(product_id)` 等。
+  `cards(category_1, category_2)`、`cards(card_set)`、
+  `general_variants(general_id)` / `general_variants(mode)` / `general_variants(product_id)` 等。
 - 统一的 `search_index(kind, entity_id, name, body)` 承担检索：
   `body` 在构建时拼好（技能版本正文、FAQ 问答、`review_note`、关联对象名称等），
   查询层不需要复杂 SQL。关联对象**不再手工维护**：构建时按实体名称在正文里自动识别，
@@ -186,15 +191,16 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 **警告（不影响建库，但应当关注）**
 
-1. 同一产品同一牌堆出现相同花色点数的多张实体卡；
-2. 武将 / 实体卡的 `mode` 与所属产品的 `mode` 不一致；
-3. 武将引用的技能在该模式下没有任何 SkillVersion，且 `version_id` 为空（查询时拿不到文本）；
-4. 技能本体没有任何 SkillVersion；
-5. 有花色却没点数（或反之）；
+1. 归属对不上：武将 `mode` 与所属产品的 `mode` 不一致、
+   `GeneralVariant.general_set` 不在所属产品的 `general_sets` 里、
+   `Card.card_set` 没有被任何产品的 `card_sets` 声明（写成「指示物」会给专门提示）；
+2. 基本牌的 `category_3` 不是牌族（杀 / 闪 / 桃 / 酒）；
+3. `Card.image` / `GeneralVariant.image` 指向的卡图文件不存在；
+4. 武将引用的技能在该模式下没有任何 SkillVersion，且 `version_id` 为空（查询时拿不到文本）；
+5. 技能本体没有任何 SkillVersion；
 6. 体力不是 0.5 的整数倍；
-7. `GeneralVariant.general_set` 不在所属产品的 `general_sets` 里；
-8. 武将没有任何版本；同一武将出现重复的（`variant` + `mode`）；
-9. 列表内重复引用（同一个武将版本重复引用同一个技能）。
+7. 武将没有任何版本；同一武将出现重复的（`variant` + `mode`）；
+8. 列表内重复引用（同一个武将版本重复引用同一个技能、同一张卡重复引用同一个技能）。
 
 ## 7. 明确不做（当前阶段）
 
@@ -209,7 +215,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 | 边界 | 现状 | 将来的做法 |
 | --- | --- | --- |
 | 同名武将跨产品/玩法 | 同一个 `general.id`，每个玩法各写一条 `GeneralVariant`（各自带 `mode` / `product_id` / `skills`） | 不需要「武将印刷」层 |
-| 一个实体多来源 | 规则类实体带单条 `source`（type + reference），实体卡类实体由 `product_id` 定位、不记 source | 抽 `entity_sources` 关联表 |
+| 一个实体多来源 | 规则类实体带单条 `source`（type + reference），实体卡类实体由 `product_id` / `card_set` 定位、不记 source | 抽 `entity_sources` 关联表 |
 | 产品级规则特例 | 以显式 `version_id` 优先，未做产品级优先级 | 给 SkillVersion 加 `scope` / `rule_priority` |
 | 时点结算顺序 | 时点只存名称与说明（“时点速查”），不记录先后关系 | 需要时再引入顺序号与嵌套时点 |
 | 技能效果检索 | 全文检索规则文本 | 需要时再加结构化字段（不与文本混用） |

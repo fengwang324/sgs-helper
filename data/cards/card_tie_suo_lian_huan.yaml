@@ -1,4 +1,12 @@
 id: card_tie_suo_lian_huan
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 铁索连环
-card_type: trick
-subtype: ''
+image: card_tie_suo_lian_huan_qlhd_club_12.jpg
+card_set: null
+effect:
+  text: 出牌阶段，指定一至两名角色。分别横置或重置其副的武将牌。（被横置副将武将牌的角色处于“连环状态”）重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+  skills: []
+verification_status: unverified
+review_note: 卡面存在 2 种不同文本：2 张「出牌阶段，指定一至两名角色。分别横置或重置其副的…」；1 张「出牌阶段，指定一至两名角色。分别横置或重置其副将…」。本条取 2 张一致的那一版，请对照卡图确认

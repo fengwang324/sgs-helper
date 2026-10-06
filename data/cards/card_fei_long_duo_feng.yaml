@@ -1,4 +1,12 @@
 id: card_fei_long_duo_feng
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 飞龙夺凤
-card_type: equipment
-subtype: 武器
+image: card_fei_long_duo_feng_qlhd_spade_2.jpg
+card_set: 阵
+effect:
+  text: ◆当你使用【杀】指定角色为目标后，你可以令该角色弃置一张牌。你的【杀】令目标角色进入濒死状态时，你可以获得其一张手牌。
+  skills: []
+verification_status: unverified
+review_note: ''

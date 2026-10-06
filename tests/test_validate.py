@@ -1,7 +1,11 @@
-"""校验器测试：交叉引用、重复 id、版本链、武将牌系列归属、一致性警告。
+"""校验器测试：交叉引用、重复 id、版本链、武将牌系列归属、卡牌一致性、卡图存在性。
 
 精简后 ``related_*`` / ``parent_id`` / ``previous_ids`` / ``next_ids`` / ``effective_*``
 等字段全部删除：写了就是未知字段（error），而不是走原来的关系校验。
+
+卡牌单层化之后，``CardPrinting`` 时代的「同花色点数重复 / 漏填花色」警告随该层一起消失，
+新增：基本牌三级分类必须是牌族、``card_set`` 必须被某个产品声明、卡图必须存在、
+``effect.skills[].version_id`` 必须属于同一个技能。
 """
 
 from __future__ import annotations
@@ -14,6 +18,12 @@ from sgs_helper.validate import validate_data_dir
 
 
 def test_synth_dataset_is_clean(synth: Path) -> None:
+    # conftest 的合成武将版本引用了 variant_demo_alpha_guozhan.jpg；卡图存在性由
+    # validate._check_images 单独校验（见 test_missing_card_image_is_warned），
+    # 这里先补上文件，才能断言“其余校验零警告”。
+    images = synth / "card_images"
+    images.mkdir(exist_ok=True)
+    (images / "variant_demo_alpha_guozhan.jpg").write_bytes(b"")
     result = validate_data_dir(synth)
     assert result.ok, error_text(result)
     assert result.warnings == [], warning_text(result)
@@ -27,18 +37,27 @@ def test_real_dataset_is_clean(data_dir: Path) -> None:
     assert result.counts_line()
 
 
-def test_real_dataset_warnings_are_the_known_kinds(data_dir: Path) -> None:
-    """真实数据的警告只应来自两个已知来源：
+def test_real_dataset_warnings_are_only_skills_without_versions(data_dir: Path) -> None:
+    """真实数据 0 错误 / 14 警告。
 
-    - ``suit/rank``：同一产品 / 牌堆下存在多张同花色点数的实体卡（指示物等）；
-    - ``id``：技能本体没有任何 SkillVersion。
-
-    新增 / 改动校验规则时，这条会立刻暴露未预期的警告。
+    14 条警告全部来自「技能本体没有任何 SkillVersion」；旧模型里的「同花色点数重复」
+    随 CardPrinting 一起消失，新增的卡牌 / 卡图 / 拓展包校验在真实数据上都是干净的。
     """
     result = validate_data_dir(data_dir)
     assert result.ok, error_text(result)
-    assert result.warnings, "真实数据应当仍有警告，用来验证警告通道没坏"
-    assert {issue.field for issue in result.warnings} <= {"suit/rank", "id"}
+    assert len(result.warnings) == 14, warning_text(result)
+    assert {issue.field for issue in result.warnings} == {"id"}
+    assert all("没有任何 SkillVersion" in issue.message for issue in result.warnings)
+
+    skills_without_version = {
+        skill_id
+        for skill_id in result.bundle.all("skill")
+        if not any(
+            sv.skill_id == skill_id for sv in result.bundle.all("skill_version").values()
+        )
+    }
+    assert {issue.entity_id for issue in result.warnings} == skills_without_version
+    assert len(skills_without_version) == 14
 
 
 # ---------------------------------------------------------------- 错误
@@ -160,6 +179,80 @@ def test_removed_fields_are_rejected_not_ignored(synth: Path) -> None:
     assert "未知字段" in text
 
 
+# ---------------------------------------------------------------- 卡牌错误 / 警告
+
+
+def test_missing_card_skill_reference_is_detected(synth: Path) -> None:
+    replace_in(
+        synth / "cards" / "demo_trick.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
+    result = validate_data_dir(synth)
+    assert not result.ok
+    text = error_text(result)
+    assert "skill_missing" in text
+    assert "effect.skills[0].skill_id" in text
+    assert "data/skills/" in text
+
+
+def test_empty_card_skill_reference_is_detected(synth: Path) -> None:
+    replace_in(synth / "cards" / "demo_trick.yaml", "skill_id: skill_demo", 'skill_id: ""')
+    result = validate_data_dir(synth)
+    assert not result.ok
+    assert "effect.skills[0].skill_id" in error_text(result)
+
+
+def test_card_effect_version_must_belong_to_same_skill(synth: Path) -> None:
+    """卡牌效果绑定的版本必须属于同一个技能（与武将版本同规则）。"""
+    replace_in(
+        synth / "cards" / "demo_trick.yaml",
+        "version_id: skill_demo_guozhan_v1",
+        "version_id: skill_demo_other_v1",
+    )
+    result = validate_data_dir(synth)
+    assert not result.ok
+    text = error_text(result)
+    assert "effect.skills[0].version_id" in text
+    assert "skill_demo_other" in text
+
+
+def test_basic_card_category_3_must_be_a_family(synth: Path) -> None:
+    """基本牌最后一级是牌族（杀 / 闪 / 桃 / 酒），具体哪张写在 name 里。"""
+    replace_in(synth / "cards" / "demo_card.yaml", "category_3: 杀", "category_3: 火杀")
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    text = warning_text(result)
+    assert "基本牌的三级分类应为牌族" in text
+    assert "火杀" in text
+
+
+def test_card_set_must_be_declared_by_a_product(synth: Path) -> None:
+    replace_in(synth / "cards" / "demo_trick.yaml", "card_set: 演示牌堆", "card_set: 幻想的拓展包")
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    text = warning_text(result)
+    assert "不在任何产品声明" in text
+    assert "幻想的拓展包" in text
+
+
+def test_indicator_is_a_category_not_a_card_set(synth: Path) -> None:
+    """「指示物」是 category_1，不是游戏牌拓展包，校验器要给专门提示。"""
+    replace_in(synth / "cards" / "demo_trick.yaml", "card_set: 演示牌堆", "card_set: 指示物")
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    assert "不是游戏牌拓展包" in warning_text(result)
+
+
+def test_missing_card_image_is_warned(synth: Path) -> None:
+    replace_in(synth / "cards" / "demo_card.yaml", 'image: ""', "image: 不存在的卡图.jpg")
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    text = warning_text(result)
+    assert "卡图" in text and "不存在" in text
+    assert "不存在的卡图.jpg" in text
+
+
 # ---------------------------------------------------------------- 警告
 
 
@@ -192,23 +285,6 @@ def test_hp_step_is_warned(synth: Path) -> None:
     result = validate_data_dir(synth)
     assert result.ok
     assert "不是 0.5 的整数倍" in warning_text(result)
-
-
-def test_duplicate_card_combo_is_warned(synth: Path) -> None:
-    original = (synth / "card_printings" / "demo_a_spade_1.yaml").read_text(encoding="utf-8")
-    (synth / "card_printings" / "demo_a_spade_1_again.yaml").write_text(
-        original.replace("card_demo_a_spade_1", "card_demo_a_spade_1_again"), encoding="utf-8"
-    )
-    result = validate_data_dir(synth)
-    assert result.ok
-    assert "存在多张" in warning_text(result)
-
-
-def test_rank_without_suit_is_warned(synth: Path) -> None:
-    replace_in(synth / "card_printings" / "demo_b_heart_5.yaml", "suit: heart", "suit: none")
-    result = validate_data_dir(synth)
-    assert result.ok
-    assert "漏填花色" in warning_text(result)
 
 
 def test_skill_without_version_is_warned(synth: Path) -> None:

@@ -1,4 +1,12 @@
 id: card_san_jian_liang_ren_dao
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 三尖两刃刀
-card_type: equipment
-subtype: 武器
+image: card_san_jian_liang_ren_dao_qlhd_diamond_12.jpg
+card_set: null
+effect:
+  text: 你使用【杀】对目标角色造成伤害后，可弃置一张手牌并对该角色距离1的另一名角色造成1点伤害。
+  skills: []
+verification_status: unverified
+review_note: ''

@@ -8,7 +8,7 @@
 
 模型精简后这里承担两件“构建期自动推导”的事：
 
-- ``CardPrinting.mode`` 由 ``product_id -> Product.mode`` 推导（不落库、按需算）；
+- 卡牌是一层的 :class:`Card`：同一规则卡不因为花色 / 点数不同拆成多条，分类（category_1/2/3）与拓展包（card_set）落库，效果文本与关联技能拆成 ``effect_text`` / ``effect_skills``；
 - FAQ / 技能文本等正文里的**关联实体**按名称自动识别，拼进 ``search_index.body``，
   不再要求人工维护 ``related_*``；
 - 检索用的规范化正文（原 ``normalized_text``）只在这里生成，不写回 YAML。
@@ -27,17 +27,15 @@ from pathlib import Path
 from typing import Any
 
 from .constants import (
-    CARD_TYPE_LABELS,
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
-    SUIT_LABELS,
 )
 from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
@@ -53,11 +51,9 @@ COLUMNS: dict[str, tuple[str, ...]] = {
         "skill_id", "mode", "text", "version_label", "product_id", "previous_version_id",
         "verification_status", "review_note",
     ),
-    "card": ("name", "card_type", "subtype", "review_note"),
-    "card_printing": (
-        "card_id", "name_printed", "product_id", "card_set", "suit", "rank", "quantity",
-        "printed_text", "bottom_right_mark", "card_number", "image",
-        "verification_status", "review_note",
+    "card": (
+        "category_1", "category_2", "category_3", "name", "image", "card_set",
+        "effect_text", "effect_skills", "verification_status", "review_note",
     ),
     "faq": ("question", "answer", "mode", "verification_status"),
     "keyword": ("name", "definition", "mode", "verification_status"),
@@ -67,7 +63,7 @@ COLUMNS: dict[str, tuple[str, ...]] = {
 #: 以 JSON 文本落库的多值列
 JSON_COLUMNS: frozenset[str] = frozenset({"general_sets", "card_sets", "zhulianbihe"})
 
-_INT_COLUMNS = frozenset({"rank", "release_year", "quantity", "yaml_line"})
+_INT_COLUMNS = frozenset({"release_year", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
 
 #: 还会保存来源的实体（其余实体的来源由 product_id 定位）
@@ -91,9 +87,8 @@ INDEXES: tuple[tuple[str, str], ...] = (
     ("idx_variant_skills_skill", "variant_skills(skill_id)"),
     ("idx_skill_versions_skill", "skill_versions(skill_id, mode)"),
     ("idx_skill_versions_prev", "skill_versions(previous_version_id)"),
-    ("idx_card_printings_card", "card_printings(card_id)"),
-    ("idx_card_printings_product", "card_printings(product_id)"),
-    ("idx_card_printings_mark", "card_printings(bottom_right_mark)"),
+    ("idx_cards_category", "cards(category_1, category_2)"),
+    ("idx_cards_card_set", "cards(card_set)"),
     ("idx_faqs_mode", "faqs(mode)"),
     ("idx_keywords_mode", "keywords(mode)"),
     ("idx_timings_mode", "timings(mode)"),
@@ -197,6 +192,14 @@ def _column_type(column: str) -> str:
 
 
 def _column_value(entity: Any, column: str) -> Any:
+    if column == "effect_text":
+        return str(getattr(getattr(entity, "effect", None), "text", "") or "")
+    if column == "effect_skills":
+        skills = getattr(getattr(entity, "effect", None), "skills", None) or []
+        return json.dumps(
+            [{"skill_id": ref.skill_id, "version_id": ref.version_id} for ref in skills],
+            ensure_ascii=False,
+        )
     value = getattr(entity, column, None)
     if column in JSON_COLUMNS:
         return json.dumps(list(value or []), ensure_ascii=False)
@@ -213,14 +216,6 @@ def _trace_columns(kind: str) -> tuple[str, ...]:
     if kind in SOURCE_KINDS:
         return (SOURCE_TRACE_COLUMN, *TRACE_COLUMNS)
     return TRACE_COLUMNS
-
-
-def mode_of_product(bundle: DataBundle, product_id: str | None) -> str | None:
-    """``CardPrinting.mode`` 由 ``product_id -> Product.mode`` 推导。"""
-    if not product_id:
-        return None
-    product = bundle.get("product", product_id)
-    return getattr(product, "mode", None) if product is not None else None
 
 
 # ---------------------------------------------------------------- 按名称自动识别
@@ -316,7 +311,6 @@ def _names_of(bundle: DataBundle, kind: str, ids: list[str]) -> str:
         entity = bundle.get(kind, ref)
         if entity is not None:
             names.append(str(getattr(entity, "name", ref)))
-            names.append(str(getattr(entity, "name_printed", "")))
         else:
             names.append(ref)
     return " ".join(x for x in names if x)
@@ -333,7 +327,7 @@ def _search_row(
     ``body`` 里包含“按名称自动识别出来的关联实体名”，这正是原来 ``related_*``
     手工字段想解决的问题。
     """
-    name = str(getattr(entity, "name", "") or getattr(entity, "name_printed", "") or entity.id)
+    name = str(getattr(entity, "name", "") or entity.id)
     parts: list[str] = []
 
     def mention_names(text: str) -> list[str]:
@@ -377,23 +371,16 @@ def _search_row(
         ]
         parts += mention_names(entity.text)
     elif kind == "card":
+        effect = getattr(entity, "effect", None)
+        text = str(getattr(effect, "text", "") or "")
         parts += [
-            entity.subtype, entity.review_note,
-            CARD_TYPE_LABELS.get(entity.card_type, ""),
+            entity.category_1, entity.category_2, entity.category_3,
+            entity.name, entity.card_set or "", entity.review_note, text,
         ]
-    elif kind == "card_printing":
-        product = bundle.get("product", entity.product_id)
-        product_name = str(getattr(product, "name", entity.product_id))
-        mode = mode_of_product(bundle, entity.product_id)
-        parts += [
-            entity.name_printed, entity.printed_text, entity.bottom_right_mark,
-            entity.card_number, entity.card_set or "", entity.review_note,
-            SUIT_LABELS.get(entity.suit, entity.suit),
-            str(entity.rank) if entity.rank is not None else "",
-            MODE_LABELS.get(mode, mode or ""),
-            product_name,
-        ]
-        parts += mention_names(entity.printed_text)
+        parts.append(
+            _names_of(bundle, "skill", [ref.skill_id for ref in (effect.skills if effect else [])])
+        )
+        parts += mention_names(text)
     elif kind == "faq":
         name = entity.question if len(entity.question) <= 60 else entity.question[:60] + "…"
         parts += [entity.question, entity.answer, MODE_LABELS.get(entity.mode, entity.mode)]

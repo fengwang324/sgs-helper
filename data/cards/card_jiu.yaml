@@ -1,4 +1,12 @@
 id: card_jiu
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 酒
 name: 酒
-card_type: basic
-subtype: ''
+image: card_jiu_qlhd_spade_6.jpg
+card_set: null
+effect:
+  text: ''
+  skills: []
+verification_status: unverified
+review_note: ''

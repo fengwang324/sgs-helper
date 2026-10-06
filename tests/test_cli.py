@@ -82,15 +82,16 @@ def test_build_script_creates_database(tmp_path: Path) -> None:
 
 
 def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> None:
+    """卡牌效果里的技能引用也是硬引用：改了就让 build 拒绝。"""
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
-    target = _find_yaml(broken / "card_printings", "card_id: card_sha")
-    replace_in(target, "card_id: card_sha", "card_id: card_not_exist")
+    target = _find_yaml(broken / "cards", "skill_id: skill_zhi_heng")
+    replace_in(target, "skill_id: skill_zhi_heng", "skill_id: skill_not_exist")
     result = run_script(
         "scripts/build_db.py", "--data-dir", str(broken), "--db", str(tmp_path / "x.db")
     )
     assert result.returncode == 2
-    assert "card_not_exist" in result.stderr
+    assert "skill_not_exist" in result.stderr
 
 
 # ---------------------------------------------------------------- query
@@ -189,8 +190,49 @@ def test_query_unknown_entity(cli_db: Path) -> None:
     assert "没有找到" in result.stdout
 
 
-def test_query_card_shows_printings_and_mark(cli_db: Path) -> None:
+def test_query_card_shows_categories_and_effect_skill(cli_db: Path) -> None:
+    result = run_script(
+        "scripts/query.py", "--db", str(cli_db), "card", "card_ding_lan_ye_ming_zhu"
+    )
+    assert result.returncode == 0
+    for token in [
+        "分类：游戏牌 / 装备牌 / 宝物",
+        "拓展包：九变篇",
+        "卡图：card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg",
+        "关联技能（1 个）",
+        "制衡",
+        "技能文本",
+    ]:
+        assert token in result.stdout
+
+
+def test_query_card_is_single_layer(cli_db: Path) -> None:
+    """卡牌单层：CLI 不再渲染「实体卡印刷 / 右下角角标」这些 CardPrinting 概念。"""
     result = run_script("scripts/query.py", "--db", str(cli_db), "card", "杀")
     assert result.returncode == 0
-    assert "右下角角标" in result.stdout
-    assert "实体卡印刷" in result.stdout
+    assert "分类：游戏牌 / 基本牌 / 杀" in result.stdout
+    assert "关联技能（0 个）" in result.stdout
+    assert "实体卡印刷" not in result.stdout
+    assert "右下角角标" not in result.stdout
+
+
+def test_query_card_json_is_single_layer(cli_db: Path) -> None:
+    result = run_script("scripts/query.py", "--db", str(cli_db), "--json", "card", "card_sha")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "card"
+    assert set(payload) == {
+        "kind",
+        "card",
+        "effect",
+        "generals",
+        "skills",
+        "cards",
+        "keywords",
+        "timings",
+    }
+    assert "printings" not in payload
+    assert payload["card"]["name"] == "杀"
+    assert payload["card"]["category_3"] == "杀"
+    assert "card_id" not in payload["card"] and "suit" not in payload["card"]
+    assert payload["effect"] == {"text": "", "skills": []}

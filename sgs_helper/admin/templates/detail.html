@@ -207,54 +207,87 @@
 {# ---------------------------------------------------------------- 卡牌 #}
 {% if kind == 'card' %}
   <section>
-    <h2>CardDefinition → CardPrinting</h2>
+    <h2>单层 Card（分类 · 卡名 · 拓展包 · 效果）</h2>
+    <p class="muted">
+      一张卡只有一层：一 / 二 / 三级分类表达“这张卡是什么”，<code>card_set</code> 表达“它来自哪个拓展包”，
+      两者完全独立。同一规则卡的不同实体印刷不在这一层建模。
+    </p>
     {% if entity.review_note %}
       <p class="sub badge warn" style="display:block;padding:6px 8px;">复核备注：{{ entity.review_note }}</p>
     {% endif %}
-    {% if detail.printings %}
-      <table class="rows">
-        <tr>
-          <th>产品</th><th>模式</th><th>花色</th><th>点数</th><th>角标</th><th>编号</th><th>牌堆</th><th>数量</th><th>核验</th><th></th>
-        </tr>
-        {% for p in detail.printings %}
-          <tr>
-            <td>
-              <a href="/view/product/{{ p.entity.product_id }}">{{ p.product_name }}</a>
-              <code class="id">{{ p.entity.product_id }}</code>
-            </td>
-            <td>{{ mode_badge(p.mode) }}</td>
-            <td>{{ p.suit_label }}</td>
-            <td>{{ p.rank_label }}</td>
-            <td>{{ p.entity.bottom_right_mark or '—' }}</td>
-            <td>{{ p.entity.card_number or '—' }}</td>
-            <td>{{ p.entity.card_set or '—' }}</td>
-            <td>{{ p.entity.quantity }}</td>
-            <td>{{ status_badge(p.entity.verification_status) }}</td>
-            <td class="nowrap">
-              <a href="/view/card_printing/{{ p.entity.id }}">详情</a> ·
-              <a href="/edit/card_printing/{{ p.entity.id }}">编辑</a> ·
-              <a href="/delete/card_printing/{{ p.entity.id }}">删除</a>
-            </td>
-          </tr>
-          <tr class="detail-row">
-            <td colspan="10">
-              <div class="rule-text">{{ p.entity.printed_text or '（未填卡面文本）' }}</div>
-              {% if p.entity.image %}
-                <img class="card-thumb" src="/card-images/{{ p.entity.image }}" alt="{{ p.entity.name_printed }} 卡图">
-              {% endif %}
-              <div class="sub">
-                印刷名：{{ p.entity.name_printed }}
-                {% if p.entity.review_note %} · 复核备注：{{ p.entity.review_note }}{% endif %}
-              </div>
-              <div class="sub muted">mode 由产品推导（CardPrinting 不再保存 mode）。</div>
-            </td>
-          </tr>
-        {% endfor %}
-      </table>
-    {% else %}
-      <p class="badge warn">这张卡还没有任何实体卡印刷记录。</p>
-      <p><a class="btn" href="/new/card_printing?card_id={{ row.id }}">新增实体卡印刷</a></p>
-    {% endif %}
+    <table class="kv">
+      <tr><th>一级分类</th><td>{{ entity.category_1 }}</td></tr>
+      <tr><th>二级分类</th><td>{{ entity.category_2 }}</td></tr>
+      <tr><th>三级分类</th><td>{{ entity.category_3 }}</td></tr>
+      <tr><th>卡名</th><td>
+        {{ entity.name }}
+        {% if entity.category_2 == '基本牌' %}
+          <span class="muted">（基本牌的具体牌名写在 name：杀 / 火杀 / 雷杀 / 闪 / 掠闪 …）</span>
+        {% endif %}
+      </td></tr>
+      <tr><th>所属拓展包</th><td>
+        {% if entity.card_set %}<span class="tag-chip">{{ entity.card_set }}</span>
+        {% else %}<span class="muted">未填（跨拓展包 / 暂时无法确认来源）</span>{% endif %}
+      </td></tr>
+      <tr><th>卡图</th><td>
+        {% if entity.image %}<code>{{ entity.image }}</code>
+        {% else %}<span class="badge warn">卡图待补</span>{% endif %}
+      </td></tr>
+    </table>
+    <p>
+      <a class="btn" href="/edit/card/{{ row.id }}">编辑卡牌</a>
+    </p>
+
+    <div class="subblock">
+      <h3>效果文本</h3>
+      {% if detail.effect_text %}
+        {{ rich_text(detail.effect_text) }}
+      {% else %}
+        <p class="muted">（没有独立的效果文本；技能文本由 Skill / SkillVersion 维护）</p>
+      {% endif %}
+    </div>
+
+    <div class="subblock">
+      <h3>关联技能（{{ detail.skills | length }}）</h3>
+      {% for entry in detail.skills %}
+        <div class="skill-block">
+          <h4>
+            {{ entity_link('skill', entry.skill_id) }}
+            {% if entry.version_id %}
+              {% if entry.pinned %}<span class="badge ok">按卡面指定</span>
+              {% else %}<span class="badge error">绑定版本不存在</span>{% endif %}
+            {% endif %}
+          </h4>
+          {% if entry.current %}
+            <p class="sub">
+              {{ mode_badge(entry.current.mode) }}
+              <a href="/view/skill_version/{{ entry.current.id }}"><code class="id">{{ entry.current.id }}</code></a>
+              {% if entry.current.version_label %}［{{ entry.current.version_label }}］{% endif %}
+              <span class="badge {{ 'ok' if entry.pinned else 'muted' }}">{{ '显式绑定' if entry.pinned else '按模式回退' }}</span>
+            </p>
+            {{ rich_text(entry.segments, '（这一版没有文本）') }}
+          {% else %}
+            <p class="badge warn">这个技能没有可用的唯一版本（卡牌没有 mode，只能回退到唯一一条 common 版本）。</p>
+          {% endif %}
+          <details>
+            <summary>该技能的全部版本（{{ entry.all_versions | length }}）</summary>
+            <ul>
+              {% for v in entry.all_versions %}
+                <li>
+                  <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
+                  {% if v.id == entry.version_id %}<span class="badge ok">卡牌绑定</span>{% endif %}
+                  {{ mode_badge(v.mode) }}
+                  {% if v.version_label %}<span class="muted">{{ v.version_label }}</span>{% endif %}
+                  {{ status_badge(v.verification_status) }}
+                </li>
+              {% endfor %}
+            </ul>
+          </details>
+        </div>
+      {% else %}
+        <p class="muted">这张卡没有关联技能。</p>
+      {% endfor %}
+    </div>
   </section>
 {% endif %}
 
@@ -270,7 +303,7 @@
           {% for value in detail.general_set_chips %}<span class="tag-chip">{{ value.name }}</span>{% endfor %}
         {% else %}<span class="muted">—</span>{% endif %}
       </td></tr>
-      <tr><th>游戏牌牌堆</th><td>
+      <tr><th>游戏牌拓展包</th><td>
         {% if detail.card_set_chips %}
           {% for value in detail.card_set_chips %}<span class="tag-chip">{{ value.name }}</span>{% endfor %}
         {% else %}<span class="muted">—</span>{% endif %}
@@ -292,20 +325,6 @@
               <a href="/view/general/{{ v.general_id }}">{{ v._display_name or v.general_id }}</a>
               <code class="id">{{ v.id }}</code>
               {{ status_badge(v.verification_status) }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}<p class="muted">没有。</p>{% endif %}
-    </div>
-
-    <div class="subblock">
-      <h3>实体卡印刷（{{ detail.printings | length }}）<a class="btn small" href="/new/card_printing?product_id={{ row.id }}">新增实体卡</a></h3>
-      {% if detail.printings %}
-        <ul class="inline-list">
-          {% for p in detail.printings %}
-            <li>
-              <a href="/view/card_printing/{{ p.id }}">{{ p.name_printed }}</a>
-              <span class="muted">{{ p.suit | suit_label }}{{ p.rank | rank_label }}{% if p.bottom_right_mark %} · 角标 {{ p.bottom_right_mark }}{% endif %}</span>
             </li>
           {% endfor %}
         </ul>
@@ -394,7 +413,7 @@
             </ul>
           {% elif field.empty %}
             <span class="muted">—</span>
-          {% elif field.name in ('text', 'printed_text', 'question', 'answer', 'definition', 'description', 'review_note') %}
+          {% elif field.name in ('text', 'question', 'answer', 'definition', 'description', 'review_note') %}
             <div class="rule-text">{{ field.text }}</div>
           {% else %}
             {{ field.text }}

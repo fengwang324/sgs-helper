@@ -9,17 +9,13 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 from .constants import (
-    CARD_TYPE_LABELS,
     GENDER_LABELS,
     KIND_BY_NAME,
     MODE_LABELS,
     SOURCE_LABELS,
     SOURCE_TITLE_BY_REFERENCE,
-    SUIT_LABELS,
     VERIFICATION_LABELS,
 )
-
-RANK_LABELS = {1: "A", 11: "J", 12: "Q", 13: "K"}
 
 #: 自动识别出来的相关实体：报告键 -> kind（顺序即展示顺序）
 _LINK_GROUPS: tuple[tuple[str, str], ...] = (
@@ -43,22 +39,8 @@ def verification_label(value: str | None) -> str:
     return VERIFICATION_LABELS.get(value or "", value or "未核验")
 
 
-def suit_label(value: str | None) -> str:
-    return SUIT_LABELS.get(value or "", value or "")
-
-
-def card_type_label(value: str | None) -> str:
-    return CARD_TYPE_LABELS.get(value or "", value or "")
-
-
 def gender_label(value: str | None) -> str:
     return GENDER_LABELS.get(value or "", value or "")
-
-
-def rank_label(rank: Any) -> str:
-    if rank is None:
-        return "无点数"
-    return RANK_LABELS.get(int(rank), str(rank))
 
 
 def fmt_source(source: dict | None) -> str:
@@ -285,47 +267,59 @@ def render_general(report: dict) -> str:
 
 
 def render_card(report: dict) -> str:
-    definition = report["definition"]
-    lines = ["=" * 72, f"卡牌：{definition['name']}    （id：{definition['id']}）"]
-    lines.append(
-        f"  类型：{card_type_label(definition.get('card_type'))}"
-        + (f" / {definition['subtype']}" if definition.get("subtype") else "")
-    )
-    if definition.get("review_note"):
-        lines.append(f"  待复核：{definition['review_note']}")
-    lines.append(f"  源文件：{fmt_location(definition)}")
+    card = report["card"]
+    effect = report.get("effect") or {}
 
-    printings = report["printings"]
-    lines.append("")
-    lines.append(_section(f"实体卡印刷（{len(printings)} 条，同名不同产品分别保留）"))
-    if not printings:
-        lines.append("  （尚未登记任何实体卡）")
-    for printing in printings:
-        product = printing.get("product") or {}
+    lines = ["=" * 72, f"卡牌：{card['name']}    （id：{card['id']}）"]
+    lines.append(
+        f"  分类：{card.get('category_1') or '未填'}"
+        f" / {card.get('category_2') or '未填'}"
+        f" / {card.get('category_3') or '未填'}"
+    )
+    lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
+    lines.append(f"  卡图：{card.get('image') or '未填'}")
+    lines.append(f"  核验状态：{verification_label(card.get('verification_status'))}")
+    lines.append(f"  待复核：{card.get('review_note') or '无'}")
+    lines.append(f"  源文件：{fmt_location(card)}")
+
+    effect_text = effect.get("text") or ""
+    effect_text = effect_text if effect_text.strip() else "（卡面无独立效果文本）"
+    lines += _block("效果文本", effect_text, indent="  ")
+
+    skills = effect.get("skills") or []
+    lines.append(f"  关联技能（{len(skills)} 个）：")
+    if not skills:
+        lines.append("    （无）")
+    for entry in skills:
+        skill = entry.get("skill") or {}
+        skill_name = str(skill.get("name") or "").strip()
         lines.append(
-            f"  ▪ {printing['id']}    {printing['name_printed']}"
-            + (f"    ×{printing['quantity']}" if printing.get("quantity", 1) > 1 else "")
+            f"    ● {skill_name}（{entry['skill_id']}）" if skill_name
+            else f"    ● {entry['skill_id']}    ⚠ 这个技能不存在"
         )
+        version = entry.get("version")
+        if version is None:
+            if entry.get("pinned"):
+                lines.append(
+                    f"        绑定版本：{entry['version_id']}"
+                    "    ⚠ 绑定的版本不存在（可能被删掉了），这个技能没有文本"
+                )
+            else:
+                lines.append(
+                    "        绑定版本：（无）"
+                    "    ⚠ 没有显式绑定，且按模式匹配不到唯一版本：无技能文本"
+                )
+            continue
+        how = "显式绑定" if entry.get("pinned") else "按模式匹配"
         lines.append(
-            f"      来源产品：{printing['product_id']}"
-            + (f" / {product.get('name')}" if product else "")
-            + f"    （{mode_label(product.get('mode') or printing.get('mode'))}）"
+            f"        绑定版本（{how}）：{version['id']}"
+            + (f"  [{version['version_label']}]" if version.get("version_label") else "")
         )
-        lines.append(
-            f"      模式：{mode_label(printing.get('mode'))}    "
-            f"牌堆/卡组：{printing.get('card_set') or '未填'}"
-        )
-        lines.append(
-            f"      花色点数：{suit_label(printing.get('suit'))} {rank_label(printing.get('rank'))}    "
-            f"右下角角标：{printing.get('bottom_right_mark') or '（无）'}    "
-            f"卡牌编号：{printing.get('card_number') or '（无）'}"
-        )
-        lines += _block("卡面原文", printing.get("printed_text"), indent="      ")
-        lines.append(f"      校验状态：{verification_label(printing.get('verification_status'))}")
-        lines.append(f"      源文件：{fmt_location(printing)}")
-        if printing.get("review_note"):
-            lines.append(f"      待复核：{printing['review_note']}")
-        lines.append("")
+        lines += _block("技能文本", version.get("text"), indent="        ")
+
+    related = _link_text(report)
+    if related:
+        lines.append("  相关：" + related)
     return "\n".join(lines)
 
 
@@ -391,16 +385,21 @@ def render_product(report: dict) -> str:
     variant_names = [f"{v.get('general_name')}（{v['variant']}）" for v in report["variants"]]
     lines.append(f"  该产品收录武将版本 {len(variant_names)} 条："
                  + ("、".join(variant_names) or "（无）"))
-    lines.append(f"  该产品实体卡 {len(report['printings'])} 张："
-                 + ("、".join(p["id"] for p in report["printings"]) or "（无）"))
+    cards = report.get("cards") or []
+    # 卡与产品没有外键，只能按“产品声明的拓展包名”关联；同名拓展包被多个产品共用会重复计数
+    lines.append(
+        f"  该产品游戏牌（{len(cards)} 条；按 card_set 关联，同名拓展包共用时会重复计数）"
+    )
+    if not cards:
+        lines.append("    （无）")
+    for card in cards:
+        category = "/".join(
+            str(card.get(key) or "未填")
+            for key in ("category_1", "category_2", "category_3")
+        )
+        lines.append(
+            f"    ▪ {card.get('card_set') or '未填'} / {category}    {card['name']}"
+        )
     lines.append(f"  该产品技能版本 {len(report['skill_versions'])} 条："
                  + ("、".join(v["id"] for v in report["skill_versions"]) or "（无）"))
-    marks: dict[str, int] = {}
-    for printing in report["printings"]:
-        mark = printing.get("bottom_right_mark") or "（无角标）"
-        marks[mark] = marks.get(mark, 0) + 1
-    if marks:
-        lines.append(
-            "  右下角角标分布：" + "、".join(f"{k} × {v}" for k, v in sorted(marks.items()))
-        )
     return "\n".join(lines)

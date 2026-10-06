@@ -9,8 +9,8 @@
 6. 被引用实体不能直接删除。
 
 另外补了一批“真的会毁数据”的回归测试：YAML 往返稳定性、并发冲突、CSRF、
-ID 路径穿越、反向引用声明完整性，以及本次「数据模型精简」的字段级回归
-（被删字段必须从表单 / 模板 / 路由里彻底消失，GeneralSet 实体不存在）。
+ID 路径穿越、反向引用声明完整性，以及本次「卡牌单层化」的字段级回归
+（被删字段必须从表单 / 模板 / 路由里彻底消失，GeneralSet / CardPrinting 实体不存在）。
 
 所有测试都在 ``tmp_path`` 里的**副本**上操作，绝不碰仓库里真实的 ``data/``。
 """
@@ -39,6 +39,11 @@ from sgs_helper.validate import REFERENCE_FIELDS, validate_data_dir
 PRODUCT_ID = "qlhd"
 GENERAL_ID = "general_zhu_ge_liang"
 VARIANT_ID = "variant_zhu_ge_liang_guo_zhan_ban"
+#: 卡牌：单层 Card（category_* + name + image + card_set + effect）
+CARD_ID = "card_sha"
+#: 带 1 条关联技能（skill_zhi_heng）的卡牌，用于验证 effect.skills 的渲染与删除保护
+CARD_WITH_SKILL_ID = "card_ding_lan_ye_ming_zhu"
+#: 旧 CardPrinting 层的 id：整个层已删除，这个值只用于断言各入口 404
 CARD_PRINTING_ID = "card_ba_gua_zhen_qlhd_spade_2"
 JI_ZHI_V1 = "skill_ji_zhi_guozhan_qlhd_v1"
 GUAN_XING_V1 = "skill_guan_xing_guozhan_qlhd_v1"
@@ -200,8 +205,7 @@ def test_pages_start(client: TestClient, workdir: Path) -> None:
         "general_variant": VARIANT_ID,
         "skill": "skill_ji_zhi",
         "skill_version": JI_ZHI_V1,
-        "card": "card_sha",
-        "card_printing": CARD_PRINTING_ID,
+        "card": CARD_ID,
         "faq": "faq_rule_flow_damage",
         "keyword": "keyword_shi_yong",
         "timing": "timing_hui_he_jie_shu_shi",
@@ -219,12 +223,34 @@ def test_pages_start(client: TestClient, workdir: Path) -> None:
     assert client.get("/edit/faq/faq_rule_flow_damage").status_code == 200
     assert client.get("/delete/faq/faq_rule_flow_damage").status_code == 200
     assert client.get("/raw/faq/faq_rule_flow_damage").status_code == 200
+    # 卡牌走专用录入页（分类 / 卡图 / 效果 / 关联技能）
+    assert client.get(f"/edit/card/{CARD_ID}").status_code == 200
+    assert client.get(f"/delete/card/{CARD_ID}").status_code == 200
+    assert client.get(f"/raw/card/{CARD_ID}").status_code == 200
+    assert client.get(
+        "/new/card",
+        params={"category_1": "游戏牌", "category_2": "基本牌", "category_3": "杀"},
+    ).status_code == 200
     # 未知类型 / 未知记录
     assert client.get("/list/nope").status_code == 404
     assert client.get("/view/skill/nope").status_code == 404
-    # GeneralSet 实体已删除：没有列表页
-    assert client.get("/list/general_set").status_code == 404
+    # GeneralSet / CardPrinting 实体已删除：KINDS 里没有它们，所有入口都 404
+    from sgs_helper.constants import KIND_BY_NAME
+
+    assert "general_set" not in KIND_BY_NAME
+    assert "card_printing" not in KIND_BY_NAME
     assert not (workdir / "data" / "general_sets").exists()
+    assert not (workdir / "data" / "card_printings").exists()
+    assert client.get("/list/general_set").status_code == 404
+    for url in (
+        "/list/card_printing",
+        "/new/card_printing",
+        f"/view/card_printing/{CARD_PRINTING_ID}",
+        f"/edit/card_printing/{CARD_PRINTING_ID}",
+        f"/delete/card_printing/{CARD_PRINTING_ID}",
+        f"/raw/card_printing/{CARD_PRINTING_ID}",
+    ):
+        assert client.get(url).status_code == 404, url
 
     health = client.get("/healthz").json()
     assert health["ok"] is True
@@ -444,9 +470,22 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
         assert f'name="{needle}"' not in version, needle
     assert 'name="review_note"' in version  # review_note 取代了 notes
 
-    card_printing = client.get(f"/edit/card_printing/{CARD_PRINTING_ID}").text
-    for needle in ("mode", "package", "normalized_text", "illustrator", "notes", "source.type"):
-        assert f'name="{needle}"' not in card_printing, needle
+    # 卡牌现在是专用录入页（templates/card_edit.html）：单层卡片的字段必须都在，
+    # 两层时代 / 卡牌印刷时代的字段必须彻底消失（不是隐藏 input）。
+    card = client.get(f"/edit/card/{CARD_ID}").text
+    for needle in (
+        "category_1", "category_2", "category_3", "card_set", "image",
+        "effect_text", "skill_count", "review_note", "verification_status",
+    ):
+        assert f'name="{needle}"' in card, needle
+    assert "关联技能" in card
+    for needle in (
+        "card_type", "subtype", "name_printed", "card_id", "product_id", "suit",
+        "rank", "quantity", "printed_text", "normalized_text", "illustrator",
+        "bottom_right_mark", "card_number", "related_keywords", "mode",
+        "source.type", "notes",
+    ):
+        assert f'name="{needle}"' not in card, needle
 
     timing = client.get("/edit/timing/timing_hui_he_jie_shu_shi").text
     for needle in ("parent_id", "previous_ids", "next_ids", "related_timing_ids", "notes"):
@@ -485,13 +524,25 @@ def test_skill_version_text_auto_links_entities(client: TestClient) -> None:
     assert 'href="/view/timing/timing_mo_pai_jie_duan_kai_shi_shi"' in body
 
 
-def test_card_printing_mode_is_derived_from_product(app, store, client: TestClient) -> None:
-    """CardPrinting 没有 mode 字段：mode 一律由 product_id -> Product.mode 推导。"""
-    printing = store.entity("card_printing", CARD_PRINTING_ID)
-    assert not hasattr(printing, "mode")
-    assert store.mode_of("card_printing", printing) == "guozhan"
-    # 列表页也是推导后显示
-    assert "国战" in client.get("/list/card_printing", params={"product": PRODUCT_ID}).text
+def test_card_is_single_layer_without_mode_or_product(store, client: TestClient) -> None:
+    """单层 Card 没有 mode / product_id：拓展包归属只由 ``card_set`` 表达。"""
+    card = store.entity("card", CARD_ID)
+    assert card is not None
+    assert not hasattr(card, "mode")
+    assert not hasattr(card, "product_id")
+    assert store.mode_of("card", card) is None
+    assert store.describe("card", card)["mode_label"] == ""
+
+    # card_set 的候选全集由产品声明：九变篇 是产品声明的拓展包，指示物 是分类不是拓展包
+    declared = {
+        str(value)
+        for product in store.bundle.all("product").values()
+        for value in (product.card_sets or [])
+    }
+    assert store.entity("card", CARD_WITH_SKILL_ID).card_set == "九变篇"
+    assert "九变篇" in declared
+    assert "指示物" not in declared
+    assert client.get("/list/card").status_code == 200
 
 
 def test_skill_binding_display(client: TestClient, store) -> None:
@@ -618,8 +669,9 @@ def test_delete_blocked_when_referenced(client: TestClient, app, workdir: Path) 
     )
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    # 列出引用它的对象（实体卡 reference product_id）
-    assert CARD_PRINTING_ID in response.text
+    # 列出引用它的对象（武将版本 / 技能版本 reference product_id）
+    assert VARIANT_ID in response.text
+    assert "product_id" in response.text
     assert path.exists()
     assert path.read_text(encoding="utf-8") == before
 
@@ -681,7 +733,7 @@ def test_delete_confirm_page_lists_references(client: TestClient) -> None:
     response = client.get(f"/delete/product/{PRODUCT_ID}")
     assert response.status_code == 200
     assert "不能直接删除" in response.text
-    assert CARD_PRINTING_ID in response.text
+    assert VARIANT_ID in response.text
 
 
 # ---------------------------------------------------------------- 7. 安全与并发回归
@@ -864,32 +916,40 @@ def test_remove_only_entity_deletes_file(tmp_path: Path) -> None:
 def test_reference_fields_cover_every_id_field() -> None:
     """任何 ``*_id`` / ``*_ids`` 模型字段都必须在 REFERENCE_FIELDS 里声明。
 
-    包括嵌在关系结构里的字段（例如 ``GeneralVariant.skills[].skill_id``）。
+    包括嵌在关系结构里的字段：``GeneralVariant.skills[].skill_id`` 与卡牌的
+    ``Card.effect.skills[].skill_id``（``Card.effect`` → ``CardEffect.skills``
+    是两层嵌套，路径写成 ``effect.skills[]....``）。
     新增引用字段却忘了更新声明表时，删除保护与引用校验会静默失效 —— 这条测试就是为了
     让那种情况在 CI 里立刻炸出来。
     """
-    from sgs_helper.schema import GeneralSkillRef
+    import typing
+
+    from pydantic import BaseModel
 
     declared = {(kind, field) for kind, field, _target, _is_list in REFERENCE_FIELDS}
+
+    def id_fields_of(model: type[BaseModel], prefix: str):
+        """递归收集 ``*_id`` / ``*_ids`` 字段的声明路径。"""
+        for name, info in model.model_fields.items():
+            path = f"{prefix}{name}"
+            if name.endswith("_id") or name.endswith("_ids"):
+                yield path
+            annotation = info.annotation
+            if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                yield from id_fields_of(annotation, f"{path}.")
+            for arg in typing.get_args(annotation):
+                if isinstance(arg, type) and issubclass(arg, BaseModel):
+                    yield from id_fields_of(arg, f"{path}[].")
+
     missing: list[tuple[str, str]] = []
     for kind, model in MODEL_BY_KIND.items():
-        for name, info in model.model_fields.items():
-            if name == "id":
-                continue
-            if name.endswith("_id") or name.endswith("_ids"):
-                if (kind, name) not in declared:
-                    missing.append((kind, name))
-            # 嵌套关系模型（例如 GeneralSkillRef）
-            annotation = str(info.annotation)
-            for nested in (GeneralSkillRef,):
-                if nested.__name__ in annotation:
-                    for sub_name in nested.model_fields:
-                        if sub_name == "id":
-                            continue
-                        if sub_name.endswith("_id") or sub_name.endswith("_ids"):
-                            if (kind, f"{name}[].{sub_name}") not in declared:
-                                missing.append((kind, f"{name}[].{sub_name}"))
+        for field_path in id_fields_of(model, ""):
+            if (kind, field_path) not in declared:
+                missing.append((kind, field_path))
     assert missing == [], f"这些引用字段没有在 REFERENCE_FIELDS 里声明：{missing}"
+    # 两条嵌套声明必须真的在表里（卡牌效果里的技能引用也在删除保护范围内）
+    assert ("card", "effect.skills[].skill_id") in declared
+    assert ("card", "effect.skills[].version_id") in declared
 
 
 def test_reverse_refs_and_delete_guard_agree(app) -> None:
@@ -1032,13 +1092,265 @@ def test_edit_source_reference_url_is_clickable(client: TestClient, app) -> None
 # ---------------------------------------------------------------- 12. 列表筛选
 
 
-def test_list_filters(client: TestClient) -> None:
+def test_list_filters(client: TestClient, store) -> None:
     assert client.get("/list/product?status=unverified").status_code == 200
     assert client.get("/list/skill_version?mode=guozhan").status_code == 200
-    filtered = client.get(
-        "/list/card_printing", params={"product": PRODUCT_ID, "q": CARD_PRINTING_ID}
+
+    # 系列 / 拓展包的筛选参数现在叫 set_name（旧的 package= 已不再是有效参数）
+    jiubian = sum(1 for card in store.bundle.all("card").values() if card.card_set == "九变篇")
+    cards = client.get("/list/card", params={"set_name": "九变篇"})
+    assert cards.status_code == 200
+    assert CARD_WITH_SKILL_ID in cards.text
+    assert f"{jiubian} 条" in cards.text    # card_set == 九变篇 的卡牌总数
+    assert "全部拓展包" in cards.text        # 卡牌列表把这个筛选叫「拓展包」
+
+    # 卡牌的一 / 二级分类筛选
+    basic_total = sum(
+        1 for card in store.bundle.all("card").values() if card.category_2 == "基本牌"
     )
-    assert filtered.status_code == 200
-    assert CARD_PRINTING_ID in filtered.text
-    empty = client.get("/list/card_printing", params={"product": "product_nonexistent"})
+    assert basic_total == 7                 # 杀3（杀/火杀/雷杀）/ 闪2（闪/掠闪）/ 桃1 / 酒1
+    basic = client.get("/list/card", params={"category_2": "基本牌"})
+    assert basic.status_code == 200
+    assert f"{basic_total} 条" in basic.text
+
+    # 在武将版本上，同一个 set_name 表示「武将牌系列」
+    variants = client.get("/list/general_variant", params={"set_name": "国战标准"})
+    assert variants.status_code == 200
+    assert "诸葛亮（群狼环鼎）" in variants.text
+
+    empty = client.get("/list/card", params={"set_name": "不存在的拓展包"})
     assert "没有符合条件" in empty.text
+
+
+# ---------------------------------------------------------------- 13. 卡牌专用录入页（单层 Card）
+
+
+def card_payload(app, **overrides) -> dict:
+    """卡牌专用录入页会提交的表单：分类 + 卡名 + 卡图 + 拓展包 + 效果 + 关联技能。"""
+    payload = {
+        "_csrf": app.state.csrf,
+        "_base_sha": "",
+        "_action": "save",
+        "id": "",
+        "name": "",
+        "category_1": "游戏牌",
+        "category_2": "锦囊牌",
+        "category_3": "非延时锦囊",
+        "card_set": "",
+        "image": "",
+        "effect_text": "",
+        "skill_count": "0",
+        "verification_status": "unverified",
+        "review_note": "",
+    }
+    payload.update({key: str(value) for key, value in overrides.items()})
+    return payload
+
+
+def card_count(workdir: Path) -> int:
+    return len(list((workdir / "data" / "cards").glob("*.yaml")))
+
+
+def test_card_edit_page_is_single_layer(client: TestClient) -> None:
+    """卡牌录入页是专用页：分类联动 + 卡图 + 效果 + 关联技能；旧字段全部消失。"""
+    body = client.get(f"/edit/card/{CARD_ID}").text
+    for needle in (
+        "category_1", "category_2", "category_3", "card_set", "image",
+        "effect_text", "skill_count", "review_note", "verification_status",
+    ):
+        assert f'name="{needle}"' in body, needle
+    for combo in ("category_1", "category_2", "category_3", "card_set", "image"):
+        assert f'data-combo="{combo}"' in body, combo
+    assert 'id="card-category-data"' in body          # 联动候选（分类树 ∪ 现有值）
+    assert 'data-editor="card"' in body
+    for needle in (
+        "card_type", "subtype", "name_printed", "card_id", "product_id", "suit",
+        "rank", "quantity", "printed_text", "normalized_text", "illustrator",
+        "bottom_right_mark", "card_number", "related_keywords", "mode",
+    ):
+        assert f'name="{needle}"' not in body, needle
+
+
+def test_card_editor_renders_effect_and_skill_rows(client: TestClient) -> None:
+    """定澜夜明珠有 1 条关联技能：编辑页要渲染成一行，并带上版本候选。"""
+    body = client.get(f"/edit/card/{CARD_WITH_SKILL_ID}").text
+    assert 'name="skill_count" id="skill-count" value="1"' in body
+    assert 'name="skill_0_skill_id" value="skill_zhi_heng"' in body
+    assert 'name="skill_0_version_id"' in body
+    assert "skill_zhi_heng_guozhan_qlhd_v1" in body
+    assert "锁定技" in body          # 效果文本原样回显
+    assert "九变篇" in body          # 所属拓展包
+
+
+def test_card_detail_shows_single_layer_and_skill(client: TestClient) -> None:
+    body = client.get(f"/view/card/{CARD_WITH_SKILL_ID}").text
+    assert "单层 Card" in body
+    assert 'href="/view/skill/skill_zhi_heng"' in body
+    assert "skill_zhi_heng_guozhan_qlhd_v1" in body
+    assert "按卡面指定" in body       # 显式绑定版本
+
+    pending = client.get("/view/card/card_huo_sha").text
+    assert "卡图待补" in pending      # 火杀：卡图待补
+    assert "基本牌的具体牌名写在 name" in pending
+
+
+def test_card_set_candidates_come_from_products(client: TestClient) -> None:
+    """拓展包候选来自 Product.card_sets ∪ 现有卡牌；「指示物」是分类，不是拓展包。"""
+    values = {
+        item["value"]
+        for item in client.get("/api/suggest", params={"field": "card_set"}).json()
+    }
+    assert {"九变篇", "君主游戏牌", "君临天下·权"} <= values
+    assert "指示物" not in values
+
+    images = client.get("/api/card-images").json()
+    assert images and all(item["value"] for item in images)
+
+
+def test_create_card_with_effect_and_skill(client: TestClient, app, workdir: Path) -> None:
+    response = post(
+        client,
+        "/new/card",
+        data=card_payload(
+            app,
+            id="card_test_new",
+            name="【测试】新卡",
+            card_set="九变篇",
+            effect_text="【测试】效果文本",
+            skill_count="1",
+            skill_0_skill_id="skill_zhi_heng",
+            skill_0_version_id="skill_zhi_heng_guozhan_qlhd_v1",
+        ),
+    )
+    assert response.status_code == 303, response.text
+    assert response.headers["location"].startswith("/view/card/card_test_new")
+
+    doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_new").read_text(encoding="utf-8"))
+    assert set(doc) == {
+        "id", "category_1", "category_2", "category_3", "name", "image",
+        "card_set", "effect", "verification_status", "review_note",
+    }
+    assert doc["category_1"] == "游戏牌"
+    assert doc["category_3"] == "非延时锦囊"
+    assert doc["card_set"] == "九变篇"
+    assert doc["effect"] == {
+        "text": "【测试】效果文本",
+        "skills": [
+            {"skill_id": "skill_zhi_heng", "version_id": "skill_zhi_heng_guozhan_qlhd_v1"}
+        ],
+    }
+    # 两层时代的字段没有回来
+    for removed in ("card_type", "subtype", "suit", "rank", "product_id", "card_id"):
+        assert removed not in doc, removed
+
+    conn = sqlite3.connect(workdir / "build" / "sgs.db")
+    raw = conn.execute(
+        "SELECT effect_skills FROM cards WHERE id = ?", ("card_test_new",)
+    ).fetchone()[0]
+    conn.close()
+    import json as _json
+
+    assert _json.loads(raw) == [
+        {"skill_id": "skill_zhi_heng", "version_id": "skill_zhi_heng_guozhan_qlhd_v1"}
+    ]
+    page = client.get("/view/card/card_test_new").text
+    assert "单层 Card" in page
+    assert "skill_zhi_heng" in page
+
+
+def test_create_card_with_empty_effect_is_legal(client: TestClient, app, workdir: Path) -> None:
+    """效果文本与关联技能同时为空、卡图与拓展包留空都合法。"""
+    response = post(
+        client,
+        "/new/card",
+        data=card_payload(
+            app,
+            id="card_test_empty",
+            name="【测试】空白卡",
+            category_2="基本牌",
+            category_3="杀",
+            card_set="",
+            image="",
+            effect_text="",
+            skill_count="0",
+        ),
+    )
+    assert response.status_code == 303, response.text
+    doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_empty").read_text(encoding="utf-8"))
+    assert doc["card_set"] is None
+    assert doc["image"] == ""
+    assert doc["effect"] == {"text": "", "skills": []}
+
+
+def test_card_form_requires_name_and_categories(client: TestClient, app, workdir: Path) -> None:
+    before = card_count(workdir)
+    response = post(client, "/new/card", data=card_payload(app, name="", category_3=""))
+    assert response.status_code == 400
+    assert "卡名必填" in response.text
+    assert "三级分类必填" in response.text
+    assert card_count(workdir) == before      # 一个文件都没写
+
+
+def test_card_form_rejects_unknown_skill_and_foreign_version(
+    client: TestClient, app, workdir: Path
+) -> None:
+    before = card_count(workdir)
+    missing = post(
+        client,
+        "/new/card",
+        data=card_payload(
+            app, id="card_test_bad1", name="【测试】坏技能",
+            skill_count="1", skill_0_skill_id="skill_does_not_exist",
+        ),
+    )
+    assert missing.status_code == 400
+    assert "skill_does_not_exist" in missing.text
+
+    foreign = post(
+        client,
+        "/new/card",
+        data=card_payload(
+            app, id="card_test_bad2", name="【测试】版本错配",
+            skill_count="1", skill_0_skill_id="skill_zhi_heng",
+            skill_0_version_id=JI_ZHI_V1,
+        ),
+    )
+    assert foreign.status_code == 400
+    assert "和选中的技能不一致" in foreign.text
+    assert card_count(workdir) == before      # 两次失败都没落盘
+
+
+def test_edit_card_updates_effect_and_keeps_untouched_fields(
+    client: TestClient, app, workdir: Path
+) -> None:
+    """编辑卡牌：分类 / 拓展包 / 效果都能改；表单没提交的字段保留原值。"""
+    path = yaml_of(workdir, "card", CARD_WITH_SKILL_ID)
+    before = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload = card_payload(
+        app,
+        id=CARD_WITH_SKILL_ID,
+        name=before["name"],
+        category_1=before["category_1"],
+        category_2=before["category_2"],
+        category_3=before["category_3"],
+        card_set=before["card_set"],
+        image=before["image"],
+        effect_text="【测试】改写后的效果",
+        skill_count="1",
+        skill_0_skill_id="skill_zhi_heng",
+        skill_0_version_id="skill_zhi_heng_guozhan_qlhd_v1",
+        _base_sha=app.state.store.entity_sha("card", CARD_WITH_SKILL_ID),
+    )
+    payload.pop("review_note")            # 页面里没提交 -> 必须保留
+    payload.pop("verification_status")
+    response = post(client, f"/edit/card/{CARD_WITH_SKILL_ID}", data=payload)
+    assert response.status_code == 303, response.text
+
+    after = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert after["name"] == before["name"]
+    assert after["card_set"] == before["card_set"]
+    assert after["image"] == before["image"]
+    assert after["effect"]["text"] == "【测试】改写后的效果"
+    assert after["effect"]["skills"] == before["effect"]["skills"]
+    assert after["review_note"] == before["review_note"]
+    assert after["verification_status"] == before["verification_status"]

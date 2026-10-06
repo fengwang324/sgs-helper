@@ -1,4 +1,12 @@
 id: card_jue_dou
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 决斗
-card_type: trick
-subtype: ''
+image: card_jue_dou_qlhd_spade_1.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对一名其他角色使用。由该角色开始，你与其轮流打出一张【杀】，首先不出【杀】的一方受到另一方造成的1点伤害。
+  skills: []
+verification_status: unverified
+review_note: ''

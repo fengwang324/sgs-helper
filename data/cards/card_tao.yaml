@@ -1,4 +1,12 @@
 id: card_tao
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 桃
 name: 桃
-card_type: basic
-subtype: ''
+image: card_tao_qlhd_heart_4.jpg
+card_set: null
+effect:
+  text: ''
+  skills: []
+verification_status: unverified
+review_note: ''

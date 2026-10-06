@@ -1,4 +1,12 @@
 id: card_wu_zhong_sheng_you
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 无中生有
-card_type: trick
-subtype: ''
+image: card_wu_zhong_sheng_you_qlhd_heart_7.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对你使用。摸两张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

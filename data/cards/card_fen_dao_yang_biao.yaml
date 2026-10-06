@@ -1,4 +1,12 @@
 id: card_fen_dao_yang_biao
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 分道扬镳
-card_type: trick
-subtype: ''
+image: card_fen_dao_yang_biao_qlhd_heart_2.jpg
+card_set: 九变篇
+effect:
+  text: 出牌阶段，对一名与你势力相同的其他角色使用；你摸六张牌并交给目标三张牌，然后你成为野心家。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

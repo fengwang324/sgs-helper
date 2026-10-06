@@ -1,4 +1,12 @@
 id: card_qing_gang_jian
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 青釭剑
-card_type: equipment
-subtype: 武器
+image: card_qing_gang_jian_qlhd_spade_6.jpg
+card_set: null
+effect:
+  text: 攻击范围 2
+  skills: []
+verification_status: unverified
+review_note: ''

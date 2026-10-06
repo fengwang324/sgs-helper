@@ -1,4 +1,12 @@
 id: card_ying_wu_bei
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 宝物
 name: 鹦鹉杯
-card_type: equipment
-subtype: 宝物
+image: card_ying_wu_bei_qlhd_heart_9.jpg
+card_set: 九变篇
+effect:
+  text: 每回合限九次，你可以将牌堆顶的牌当【酒】使用。
+  skills: []
+verification_status: unverified
+review_note: ''

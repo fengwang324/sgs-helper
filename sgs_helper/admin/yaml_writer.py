@@ -30,7 +30,6 @@ from ..schema import MODEL_BY_KIND
 BLOCK_TEXT_FIELDS: frozenset[str] = frozenset(
     {
         "text",
-        "printed_text",
         "question",
         "answer",
         "definition",
@@ -207,6 +206,22 @@ def entity_to_yaml_dict(kind: str, entity: Any) -> dict:
         value = ordered.get(name)
         if isinstance(value, str) and value.strip():
             ordered[name] = BlockStr(value)
+
+    # Card.effect 是嵌套映射：text 按规则文本用块状标量，skills 固定 skill_id/version_id 键序
+    effect = ordered.get("effect")
+    if isinstance(effect, dict):
+        effect = dict(effect)
+        text = effect.get("text")
+        if isinstance(text, str) and text.strip():
+            effect["text"] = BlockStr(text)
+        skills = effect.get("skills")
+        if isinstance(skills, list):
+            effect["skills"] = [
+                {"skill_id": ref.get("skill_id"), "version_id": ref.get("version_id")}
+                for ref in skills
+                if isinstance(ref, dict)
+            ]
+        ordered["effect"] = effect
 
     source = ordered.get("source")
     if isinstance(source, dict):

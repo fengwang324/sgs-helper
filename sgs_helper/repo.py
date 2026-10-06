@@ -7,9 +7,9 @@
 
 技能文本的取法（新模型，**不按日期推导**）::
 
-    1. ``GeneralVariant.skills[].version_id`` 显式绑定：填了就按它取文本；
-    2. 为空时，按该武将版本的 ``mode`` 去匹配该技能**唯一一条**同模式版本作为回退；
-    3. 匹配不到（0 条，或多条并列）就是“这个技能在此武将版本上没有文本”。
+    1. ``SkillRef.version_id`` 显式绑定：填了就按它取文本；
+    2. 为空时，按该实体的 ``mode`` 去匹配该技能**唯一一条**同模式版本作为回退；
+    3. 匹配不到（0 条，或多条并列）就是“这个技能在此实体上没有文本”。
 
 FAQ / 关键词 / 时点的关联不再人工维护，而是在正文里按实体名称自动识别
 （见 :func:`mentions`）。
@@ -80,22 +80,6 @@ def row_to_dict(kind: str, row: sqlite3.Row) -> dict:
     return data
 
 
-def product_mode(conn: sqlite3.Connection, product_id: str | None) -> str | None:
-    """``CardPrinting.mode`` 不再存储，按 ``product_id -> Product.mode`` 推导。"""
-    if not product_id:
-        return None
-    table = KIND_BY_NAME["product"].table
-    row = conn.execute(f"SELECT mode FROM {table} WHERE id = ?", (product_id,)).fetchone()
-    return row[0] if row is not None else None
-
-
-def _derive(conn: sqlite3.Connection, kind: str, data: dict) -> dict:
-    """补上“不落库、按需推导”的字段。"""
-    if kind == "card_printing":
-        data["mode"] = product_mode(conn, data.get("product_id"))
-    return data
-
-
 def source_of(conn: sqlite3.Connection, key: str | None) -> dict | None:
     """按 source_key 取回去重后的来源记录（只有 type + reference）。"""
     if not key:
@@ -120,12 +104,12 @@ def fetch(conn: sqlite3.Connection, kind: str, entity_id: str | None) -> dict | 
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (entity_id,)).fetchone()
     if row is None:
         return None
-    return _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind))
+    return with_source(conn, row_to_dict(kind, row), kind)
 
 
 def _fetch_all(conn: sqlite3.Connection, kind: str, sql: str, params: Iterable = ()) -> list[dict]:
     return [
-        _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind))
+        with_source(conn, row_to_dict(kind, row), kind)
         for row in conn.execute(sql, tuple(params))
     ]
 
@@ -214,7 +198,7 @@ def _score(query: str, row) -> int | None:
     return None
 
 
-def _kind_rank(kind: str) -> int:
+def _kind_order(kind: str) -> int:
     try:
         return KIND_ORDER.index(kind)
     except ValueError:  # pragma: no cover
@@ -252,12 +236,20 @@ def search(
             if not from_fts:
                 continue
             score = 4
-        scored.append((score, _kind_rank(row["kind"]), row["name"] or "", row["kind"], row["entity_id"]))
+        scored.append(
+            (
+                score,
+                _kind_order(row["kind"]),
+                row["name"] or "",
+                row["kind"],
+                row["entity_id"],
+            )
+        )
     scored.sort(key=lambda item: item[:3])
 
     return [
         {"kind": kind, "id": entity_id, "name": name, "score": score}
-        for score, _rank, name, kind, entity_id in scored[:limit]
+        for score, _order, name, kind, entity_id in scored[:limit]
     ]
 
 
@@ -299,7 +291,7 @@ def resolve(
     table = KIND_BY_NAME[kind].table
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (text,)).fetchone()
     if row is not None:
-        return _derive(conn, kind, with_source(conn, row_to_dict(kind, row), kind)), []
+        return with_source(conn, row_to_dict(kind, row), kind), []
 
     rows = list(
         conn.execute(
@@ -361,7 +353,7 @@ def _versions_of_skill(conn: sqlite3.Connection, skill_id: str) -> list[dict]:
 def _match_version(
     versions: list[dict], mode: str | None, version_id: str | None
 ) -> tuple[dict | None, bool]:
-    """选定武将版本上要显示的技能文本，返回 ``(版本 | None, 是否显式绑定)``。
+    """选定某条技能引用上要显示的技能文本，返回 ``(版本 | None, 是否显式绑定)``。
 
     - ``version_id`` 非空：按它取；取不到就是 ``(None, True)``（绑定失效）。
     - ``version_id`` 为空：先按 ``mode`` 找**唯一一条**同模式版本，再退到 ``common``
@@ -480,24 +472,63 @@ def general_report(conn: sqlite3.Connection, query: str) -> dict | None:
     }
 
 
+def _card_effect_skills(conn: sqlite3.Connection, card: dict) -> list[dict]:
+    """把 ``cards.effect_skills``（JSON 字符串）解析成卡牌效果里的技能条目。
+
+    每条形如 ``{"skill_id", "version_id", "version", "pinned", "skill"}``：
+
+    - ``skills`` / ``skill_versions`` 里解析不出的引用保留原样、实体为 ``None``；
+    - 没有显式 ``version_id`` 时按 ``common`` 选**唯一一条**版本，退不到就再看该技能
+      是否只有唯一一条版本；仍然不唯一就算“没有文本”（绝不静默挑一个）。
+    """
+    raw = card.get("effect_skills")
+    refs: list[dict] = []
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw or "[]")
+        except json.JSONDecodeError:
+            parsed = []
+        if isinstance(parsed, list):
+            refs = [ref for ref in parsed if isinstance(ref, dict)]
+    elif isinstance(raw, list):  # 已经是 JSON 列（row_to_dict 解析过的场景）
+        refs = [ref for ref in raw if isinstance(ref, dict)]
+
+    entries = []
+    for ref in refs:
+        skill_id = str(ref.get("skill_id") or "").strip()
+        version_id = str(ref.get("version_id") or "").strip() or None
+        if not skill_id:
+            continue
+        versions = _versions_of_skill(conn, skill_id)
+        version, pinned = _match_version(versions, "common", version_id)
+        if version is None and not pinned and len(versions) == 1:
+            version = versions[0]
+        entries.append(
+            {
+                "skill_id": skill_id,
+                "version_id": version_id,
+                "version": version,
+                "pinned": pinned,
+                "skill": fetch(conn, "skill", skill_id),
+            }
+        )
+    return entries
+
+
 def card_report(conn: sqlite3.Connection, query: str) -> dict | None:
     entity, _candidates = resolve(conn, "card", query)
     if entity is None:
         return None
-    printings = _fetch_all(
-        conn,
-        "card_printing",
-        "SELECT * FROM card_printings WHERE card_id = ? "
-        "ORDER BY product_id, suit, COALESCE(rank, 0), id",
-        (entity["id"],),
-    )
-    for printing in printings:
-        printing["product"] = fetch(conn, "product", printing.get("product_id"))
-        printing["sibling_printings"] = []
+    text = entity.get("effect_text") or ""
     return {
         "kind": "card",
-        "definition": entity,
-        "printings": printings,
+        "card": entity,
+        "effect": {
+            "text": text,
+            "skills": _card_effect_skills(conn, entity),
+        },
+        # 卡牌效果文本里出现的技能名 / 关键词按名称自动识别（不含卡自己）
+        **_mentioned_entities(conn, text, exclude=("card", entity["id"])),
     }
 
 
@@ -550,7 +581,35 @@ def timing_report(conn: sqlite3.Connection, query: str) -> dict | None:
     }
 
 
+def _product_cards(conn: sqlite3.Connection, card_sets: Iterable[str]) -> list[dict]:
+    """产品声明过的 ``card_sets`` 展开出的游戏牌，按分类 + 卡名排序。
+
+    新模型下卡与产品**没有外键**，两者的唯一关系是 ``Card.card_set ∈ Product.card_sets``；
+    同名拓展包可能被多个产品共用，所以同一条卡会在多个产品页出现（这里不去重）。
+    返回的每一行额外带一个 ``card_set``（就是它命中产品声明的那个拓展包名）。
+    """
+    wanted = sorted({str(name).strip() for name in card_sets if str(name).strip()})
+    if not wanted:
+        return []
+    placeholders = ", ".join("?" for _ in wanted)
+    table = KIND_BY_NAME["card"].table
+    return _fetch_all(
+        conn,
+        "card",
+        f"SELECT * FROM {table} WHERE card_set IN ({placeholders}) "
+        "ORDER BY category_1, category_2, category_3, name, id",
+        wanted,
+    )
+
+
 def product_report(conn: sqlite3.Connection, query: str) -> dict | None:
+    """产品详情：``kind`` / ``product`` / ``variants`` / ``cards`` / ``skill_versions``。
+
+    - ``variants``：该产品的武将版本（``GeneralVariant.product_id`` 外键）；
+    - ``cards``：该产品 ``card_sets`` 里声明过的拓展包下的游戏牌，按分类 + 卡名排序
+      （新模型没有卡-产品外键，只能按 ``Card.card_set`` 关联；同名拓展包共用会重复计数）；
+    - ``skill_versions``：挂在该产品上的技能版本（``SkillVersion.product_id`` 外键）。
+    """
     entity, _candidates = resolve(conn, "product", query)
     if entity is None:
         return None
@@ -568,11 +627,7 @@ def product_report(conn: sqlite3.Connection, query: str) -> dict | None:
         "kind": "product",
         "product": entity,
         "variants": variants,
-        "printings": _fetch_all(
-            conn, "card_printing",
-            "SELECT * FROM card_printings WHERE product_id = ? ORDER BY card_set, suit, COALESCE(rank, 0), id",
-            (entity["id"],),
-        ),
+        "cards": _product_cards(conn, entity.get("card_sets") or []),
         "skill_versions": _fetch_all(
             conn, "skill_version",
             "SELECT * FROM skill_versions WHERE product_id = ? ORDER BY skill_id, mode, id",

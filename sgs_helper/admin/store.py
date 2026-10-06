@@ -33,7 +33,6 @@ from ..constants import (
     KIND_ORDER,
     MODE_LABELS,
     SOURCE_LABELS,
-    SUIT_LABELS,
     VERIFICATION_LABELS,
     mode_sort_key,
 )
@@ -68,11 +67,11 @@ from .yaml_writer import BlockStr  # noqa: F401  （供模板/其它模块引用
 REVIEW_STATUSES: tuple[str, ...] = ("unverified", "community", "conflict")
 
 #: 新模型里**自带** ``verification_status`` 的实体
-#: （Product / General / Skill / Card 没有核验状态）
+#: （Product / General / Skill 自己没有核验状态：General / Skill 跟着引用它的武将版本走）
 STATUS_KINDS: tuple[str, ...] = (
     "general_variant",
     "skill_version",
-    "card_printing",
+    "card",
     "faq",
     "keyword",
     "timing",
@@ -83,14 +82,6 @@ MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing
 
 
 # ---------------------------------------------------------------- 展示辅助
-
-
-def rank_label(rank: int | None) -> str:
-    """1..13 -> A/2..10/J/Q/K。"""
-    if rank is None:
-        return ""
-    mapping = {1: "A", 11: "J", 12: "Q", 13: "K"}
-    return mapping.get(rank, str(rank))
 
 
 def source_dict(entity: Any) -> dict | None:
@@ -395,8 +386,6 @@ class AdminStore:
             base = getattr(skill, "name", "") or getattr(entity, "skill_id", "")
             label = getattr(entity, "version_label", "") or ""
             return f"{base} {label}".strip()
-        if kind == "card_printing":
-            return getattr(entity, "name_printed", "") or entity.id
         if kind == "faq":
             return truncate(getattr(entity, "question", ""), 50)
         if kind == "general_variant":
@@ -463,23 +452,30 @@ class AdminStore:
                 label = product          # 标签与产品名重复时，用产品名占这个位置
             return f"{mode} · {label}".strip(" ·")
         if kind == "card":
-            from ..constants import CARD_TYPE_LABELS
-
-            count = sum(
-                1 for p in bundle.all("card_printing").values() if p.card_id == entity.id
+            effect = getattr(entity, "effect", None)
+            text = str(getattr(effect, "text", "") or "")
+            category = "/".join(
+                b
+                for b in (
+                    getattr(entity, "category_1", "") or "",
+                    getattr(entity, "category_2", "") or "",
+                    getattr(entity, "category_3", "") or "",
+                )
+                if b
             )
-            bits = [CARD_TYPE_LABELS.get(getattr(entity, "card_type", ""), ""), getattr(entity, "subtype", "")]
-            return " · ".join(b for b in bits if b) + f"　{count} 种印刷"
-        if kind == "card_printing":
-            product = self.display_name("product", bundle.get("product", entity.product_id))
-            suit = SUIT_LABELS.get(getattr(entity, "suit", ""), getattr(entity, "suit", ""))
-            rank = rank_label(getattr(entity, "rank", None))
-            mark = getattr(entity, "bottom_right_mark", "") or ""
-            cs = getattr(entity, "card_set", "") or ""
-            mode = MODE_LABELS.get(self.mode_of(kind, entity) or "", self.mode_of(kind, entity) or "")
-            bits = [product, mode, f"{suit}{rank}", f"牌堆 {cs}" if cs else "",
-                    f"角标 {mark}" if mark else ""]
-            return " · ".join(b for b in bits if b)
+            bits = [category]
+            if getattr(entity, "card_set", None):
+                bits.append(f"拓展包 {entity.card_set}")
+            skills = [
+                self.display_name("skill", bundle.get("skill", ref.skill_id))
+                for ref in (getattr(effect, "skills", None) or [])
+            ]
+            summary = " · ".join(b for b in bits if b)
+            if text:
+                summary += f"　{truncate(text, 40)}"
+            elif skills:
+                summary += "　技能：" + "、".join(skills)
+            return summary
         if kind == "faq":
             return truncate(getattr(entity, "answer", ""), 60)
         if kind == "keyword":
@@ -560,11 +556,8 @@ class AdminStore:
     def mode_of(self, kind: str, entity: Any) -> str | None:
         """实体的模式。
 
-        ``CardPrinting`` 已经没有 ``mode`` 字段：需要时一律由 ``product_id -> Product.mode`` 推导。
+        ``Card`` 是单层的，没有 ``mode``：卡牌不绑定具体产品，归属由 ``card_set`` 表达。
         """
-        if kind == "card_printing":
-            product = self.bundle.get("product", getattr(entity, "product_id", None))
-            return getattr(product, "mode", None) if product is not None else None
         return getattr(entity, "mode", None)
 
     def describe(self, kind: str, entity: Any) -> dict:
@@ -584,6 +577,12 @@ class AdminStore:
             "general_set": getattr(entity, "general_set", None),
             "general_sets": list(getattr(entity, "general_sets", []) or []),
             "card_sets": list(getattr(entity, "card_sets", []) or []),
+            "category_1": getattr(entity, "category_1", "") or "",
+            "category_2": getattr(entity, "category_2", "") or "",
+            "category_3": getattr(entity, "category_3", "") or "",
+            "card_set": getattr(entity, "card_set", None),
+            "image": getattr(entity, "image", "") or "",
+            "effect_text": str(getattr(getattr(entity, "effect", None), "text", "") or ""),
             "mode": mode,
             "mode_label": MODE_LABELS.get(mode, mode) if mode else "",
             "verification_status": status,
@@ -784,14 +783,15 @@ class AdminStore:
         mode: str = "",
         status: str = "",
         product: str = "",
-        package: str = "",
+        set_name: str = "",
         faction: str = "",
+        category_1: str = "",
+        category_2: str = "",
     ) -> list[dict]:
-        """列表页筛选：q / mode / verification_status / product_id / 系列。
+        """列表页筛选：q / mode / verification_status / product_id / 系列（拓展包）/ 分类。
 
-        ``package`` 在武将（版本）上表示「武将牌系列」（``general_set``），
-        在实体卡上表示「牌堆 / 套牌」（``card_set``）。
-        ``CardPrinting`` 已经没有 ``mode`` 字段：mode 一律由产品推导后再比较。
+        ``set_name`` 在武将（版本）上表示「武将牌系列」（``general_set``），
+        在卡牌上表示「拓展包」（``card_set``）——两者共用一个参数名。
         """
         bundle = self.bundle
         hits: dict[str, int] = {}
@@ -809,15 +809,19 @@ class AdminStore:
                 continue
             if product and getattr(entity, "product_id", None) != product:
                 continue
-            if package:
+            if set_name:
                 if kind in {"general", "general_variant"}:
-                    if getattr(entity, "general_set", None) != package:
+                    if getattr(entity, "general_set", None) != set_name:
                         continue
-                elif kind == "card_printing":
-                    if getattr(entity, "card_set", None) != package:
+                elif kind == "card":
+                    if getattr(entity, "card_set", None) != set_name:
                         continue
                 else:
                     continue
+            if category_1 and (kind != "card" or getattr(entity, "category_1", "") != category_1):
+                continue
+            if category_2 and (kind != "card" or getattr(entity, "category_2", "") != category_2):
+                continue
             if faction:
                 if kind == "general_variant":
                     tags = _faction_tokens(getattr(entity, "faction", ""))
@@ -853,6 +857,12 @@ class AdminStore:
                 if v.general_id not in first or key < first[v.general_id]:
                     first[v.general_id] = key
             rows.sort(key=lambda r: (first.get(r["id"], "zzzz"), r["name"], r["id"]))
+        elif kind == "card":
+            rows.sort(
+                key=lambda r: (
+                    r["category_1"], r["category_2"], r["category_3"], r["name"], r["id"]
+                )
+            )
         else:
             rows.sort(key=lambda r: (r["name"], r["id"]))
         return rows
@@ -863,7 +873,9 @@ class AdminStore:
         modes: dict[str, int] = {}
         statuses: dict[str, int] = {}
         products: dict[str, int] = {}
-        packages: dict[str, int] = {}
+        sets: dict[str, int] = {}
+        categories_1: dict[str, int] = {}
+        categories_2: dict[str, int] = {}
         for _eid, entity in bundle.all(kind).items():
             mode = self.mode_of(kind, entity)
             if mode:
@@ -876,13 +888,20 @@ class AdminStore:
                 products[product] = products.get(product, 0) + 1
             if kind in {"general", "general_variant"}:
                 values = [getattr(entity, "general_set", None)]
-            elif kind == "card_printing":
+            elif kind == "card":
                 values = [getattr(entity, "card_set", None)]
             else:
                 values = []
             for value in values:
                 if value:
-                    packages[value] = packages.get(value, 0) + 1
+                    sets[value] = sets.get(value, 0) + 1
+            if kind == "card":
+                value_1 = getattr(entity, "category_1", "") or ""
+                value_2 = getattr(entity, "category_2", "") or ""
+                if value_1:
+                    categories_1[value_1] = categories_1.get(value_1, 0) + 1
+                if value_2:
+                    categories_2[value_2] = categories_2.get(value_2, 0) + 1
 
         factions: dict[str, int] = {}
         if kind == "general_variant":
@@ -915,12 +934,14 @@ class AdminStore:
             "modes": options(modes, lambda k: MODE_LABELS.get(k, k)),
             "statuses": options(statuses, lambda k: VERIFICATION_LABELS.get(k, k)),
             "products": options(products, lambda k: self.name_of("product", k)),
-            "packages": options(packages, lambda k: k),
+            "sets": options(sets, lambda k: k),
+            "categories_1": options(categories_1, lambda k: k),
+            "categories_2": options(categories_2, lambda k: k),
             "factions": options(factions, lambda k: k),
-            "package_label": (
+            "set_label": (
                 "武将牌系列" if kind in {"general", "general_variant"}
-                else "牌堆" if kind == "card_printing"
-                else "包/堆"
+                else "拓展包" if kind == "card"
+                else "系列 / 拓展包"
             ),
         }
 
@@ -1103,13 +1124,31 @@ class AdminStore:
         return rows[:limit]
 
     def suggest_values(self, field_name: str, query: str = "", limit: int = 40) -> list[dict]:
-        """势力 / 武将牌系列这类“自由文本但希望复用已有值”的字段的候选值。
+        """势力 / 武将牌系列 / 游戏牌拓展包这类“自由文本但希望复用已有值”的字段的候选值。
 
-        武将牌系列的**权威来源是 Product.general_sets**：产品里声明过的系列都能选到，
-        另外把已经在武将版本上使用的值也一并列出。
+        - 武将牌系列的**权威来源是 Product.general_sets**：产品里声明过的系列都能选到，
+          另外把已经在武将版本上使用的值也一并列出；
+        - 游戏牌拓展包的**权威来源是 Product.card_sets**，另外把已经在卡牌上使用的
+          ``Card.card_set`` 值也一并列出。
         """
         text = (query or "").strip()
         counter: dict[str, int] = {}
+        if field_name == "card_set":
+            for product in self.bundle.all("product").values():
+                for value in (product.card_sets or []):
+                    value = str(value).strip()
+                    if not value or (text and text not in value):
+                        continue
+                    counter.setdefault(value, 0)
+            for card in self.bundle.all("card").values():
+                value = str(getattr(card, "card_set", "") or "").strip()
+                if not value or (text and text not in value):
+                    continue
+                counter[value] = counter.get(value, 0) + 1
+            return [
+                {"value": value, "count": counter[value]}
+                for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]
+            ]
         if field_name == "general_set":
             for product in self.bundle.all("product").values():
                 for value in (product.general_sets or []):
@@ -1133,6 +1172,33 @@ class AdminStore:
             {"value": value, "count": counter[value]}
             for value in sorted(counter, key=lambda v: (-counter[v], v))[:limit]
         ]
+
+    def card_image_options(self, query: str = "", limit: int = 30) -> list[dict]:
+        """``data/card_images/`` 下真实存在的卡图文件名（卡牌录入页的候选）。
+
+        已经在卡牌 / 武将版本上使用的图排前面，并标出是谁在用；查询为空时也一样，
+        这样录入时优先看到“已经被用过的图”，不容易把文件名打错。
+        """
+        directory = self.data_dir / "card_images"
+        text = (query or "").strip().lower()
+        try:
+            names = sorted(path.name for path in directory.iterdir() if path.is_file())
+        except OSError:  # pragma: no cover - 目录不存在时不给候选
+            names = []
+        if text:
+            names = [name for name in names if text in name.lower()]
+        used: dict[str, str] = {}
+        for kind in ("card", "general_variant"):
+            for entity in self.bundle.all(kind).values():
+                image = getattr(entity, "image", "") or ""
+                if image:
+                    used.setdefault(image, self.display_name(kind, entity))
+        rows = [
+            {"value": name, "label": name, "sub": f"已被「{used[name]}」使用" if name in used else ""}
+            for name in names
+        ]
+        rows.sort(key=lambda row: (not bool(row["sub"]), row["value"]))
+        return rows[:limit]
 
     def generals_named(self, name: str, limit: int = 8) -> list[dict]:
         """同名武将提醒（同名在不同产品/版本下是合法的，所以只提醒、不阻止）。"""
@@ -1246,11 +1312,15 @@ class AdminStore:
             )
         elif kind == "product":
             bundle = self.bundle
+            product = self.entity("product", entity_id)
+            card_sets = {str(value) for value in (getattr(product, "card_sets", None) or [])}
             counts = {
                 "武将版本": sum(
                     1 for v in bundle.all("general_variant").values() if v.product_id == entity_id
                 ),
-                "实体卡": sum(1 for p in bundle.all("card_printing").values() if p.product_id == entity_id),
+                "卡牌（按拓展包归属）": sum(
+                    1 for c in bundle.all("card").values() if (c.card_set or "") in card_sets
+                ) if card_sets else 0,
                 "技能版本": sum(1 for v in bundle.all("skill_version").values() if v.product_id == entity_id),
             }
             detail = "、".join(f"{name} {count} 条" for name, count in counts.items() if count)
@@ -1418,27 +1488,41 @@ class AdminStore:
                 return hits[0]
         return None
 
-    def card_view(self, card_id: str) -> dict | None:
-        entity = self.entity("card", card_id)
+    def card_view(self, entity_id: str) -> dict | None:
+        """卡牌详情：**一张卡**（单层）——分类 / 卡名 / 拓展包 / 效果文本 / 关联技能。"""
+        entity = self.entity("card", entity_id)
         if entity is None:
             return None
         bundle = self.bundle
-        printings = [p for p in bundle.all("card_printing").values() if p.card_id == card_id]
-        printings.sort(key=lambda p: (p.product_id, p.card_set or "", p.suit, p.rank or 0, p.id))
-        rows = []
-        for printing in printings:
-            rows.append(
+        effect = entity.effect
+        skills: list[dict] = []
+        for position, ref in enumerate(effect.skills):
+            all_versions = sorted(
+                (v for v in bundle.all("skill_version").values() if v.skill_id == ref.skill_id),
+                key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id),
+            )
+            pinned = bundle.get("skill_version", ref.version_id) if ref.version_id else None
+            # 卡牌没有 mode：回退时只认 common（跨模式通用）那一条唯一版本
+            chosen = pinned or self._fallback_version(all_versions, None)
+            skills.append(
                 {
-                    "entity": printing,
-                    "product": bundle.get("product", printing.product_id),
-                    "product_name": self.name_of("product", printing.product_id),
-                    "suit_label": SUIT_LABELS.get(printing.suit, printing.suit),
-                    "rank_label": rank_label(printing.rank),
-                    # CardPrinting 自己没有 mode：一律由产品推导
-                    "mode": self.mode_of("card_printing", printing),
+                    "position": position,
+                    "skill_id": ref.skill_id,
+                    "skill": bundle.get("skill", ref.skill_id),
+                    "version_id": ref.version_id,
+                    "pinned": pinned,
+                    "current": chosen,
+                    "pinned_missing": bool(ref.version_id and pinned is None),
+                    "all_versions": all_versions,
+                    "segments": self.annotate(chosen.text) if chosen is not None else [],
                 }
             )
-        return {"kind": "card", "card": entity, "printings": rows}
+        return {
+            "kind": "card",
+            "card": entity,
+            "effect_text": self.annotate(effect.text) if (effect.text or "").strip() else [],
+            "skills": skills,
+        }
 
     def product_view(self, product_id: str) -> dict | None:
         entity = self.entity("product", product_id)
@@ -1450,13 +1534,11 @@ class AdminStore:
             general = bundle.get("general", variant.general_id)
             variant_name = getattr(general, "name", variant.general_id)
             variant._display_name = f"{variant_name}（{variant.variant}）"  # type: ignore[attr-defined]
-        printings = [p for p in bundle.all("card_printing").values() if p.product_id == product_id]
         versions = [v for v in bundle.all("skill_version").values() if v.product_id == product_id]
         return {
             "kind": "product",
             "product": entity,
             "variants": sorted(variants, key=lambda v: (v.general_id, v.variant, v.id)),
-            "printings": sorted(printings, key=lambda p: (p.card_set or "", p.suit, p.rank or 0, p.id)),
             "skill_versions": sorted(versions, key=lambda v: (v.skill_id, mode_sort_key(v.mode), v.id)),
             "general_set_chips": [{"name": str(name)} for name in (entity.general_sets or [])],
             "card_set_chips": [{"name": str(name)} for name in (entity.card_sets or [])],

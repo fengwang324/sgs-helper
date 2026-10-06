@@ -1,4 +1,12 @@
 id: card_gou_wei_xu_diao
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 狗尾续貂
-card_type: trick
-subtype: ''
+image: card_gou_wei_xu_diao_qlhd_diamond_1.jpg
+card_set: 九变篇
+effect:
+  text: 出牌阶段，对所有角色使用；每名目标依次选择并使用弃牌堆中的一张奇珍牌，没有则改为摸一张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

@@ -1,13 +1,17 @@
 """SQLite 构建测试。
 
-精简后建库多做两件事：
+单层化之后建库与旧模型的差别：
 
-- ``CardPrinting.mode`` 由 ``product_id -> Product.mode`` 推导（不落库）；
-- 检索正文（原 ``normalized_text``）在构建期生成，并把识别到的实体名拼进 ``search_index.body``。
+- 没有 ``card_printings`` 表（也没有它的索引），卡牌只有 ``cards`` 一张表；
+- ``cards`` 的效果文本 / 技能引用落成 ``effect_text`` / ``effect_skills``(JSON)；
+- ``Card`` 不再有 ``product_id`` / ``mode`` / 花色点数，这些字段不会出现在任何列里；
+- 检索正文（原 ``normalized_text``）在构建期生成，并把识别到的实体名拼进
+  ``search_index.body``。
 """
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -16,7 +20,7 @@ from conftest import replace_in
 
 from sgs_helper.db import DataValidationError, build_database
 from sgs_helper.loader import manifest_digest
-from sgs_helper.repo import fetch, get_meta, product_mode
+from sgs_helper.repo import get_meta
 from sgs_helper.validate import validate_data_dir
 
 EXPECTED_TABLES = {
@@ -27,7 +31,6 @@ EXPECTED_TABLES = {
     "skills",
     "skill_versions",
     "cards",
-    "card_printings",
     "faqs",
     "keywords",
     "timings",
@@ -37,13 +40,40 @@ EXPECTED_TABLES = {
 }
 
 #: 模型精简后已删除的表
-REMOVED_TABLES = {"general_sets"}
+REMOVED_TABLES = {"general_sets", "card_printings"}
+
+#: 卡牌单层化后删掉的列
+REMOVED_CARD_COLUMNS = (
+    "card_type",
+    "subtype",
+    "name_printed",
+    "card_id",
+    "product_id",
+    "suit",
+    "rank",
+    "quantity",
+    "printed_text",
+    "normalized_text",
+    "illustrator",
+    "bottom_right_mark",
+    "card_number",
+    "related_keywords",
+)
 
 
 def _tables(db_path: Path) -> set[str]:
     conn = sqlite3.connect(db_path)
     try:
         rows = conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')")
+        return {row[0] for row in rows}
+    finally:
+        conn.close()
+
+
+def _indexes(db_path: Path) -> set[str]:
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute("SELECT name FROM sqlite_master WHERE type = 'index'")
         return {row[0] for row in rows}
     finally:
         conn.close()
@@ -63,29 +93,64 @@ def test_all_expected_tables_created(synth_db: Path) -> None:
 
 def test_removed_tables_and_indexes_are_gone(synth_db: Path) -> None:
     assert not REMOVED_TABLES & _tables(synth_db)
-    conn = sqlite3.connect(synth_db)
-    try:
-        indexes = {row[0] for row in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'index'")}
-    finally:
-        conn.close()
+    indexes = _indexes(synth_db)
     assert "idx_skill_versions_window" not in indexes
+    assert not any(name.startswith("idx_card_printings") for name in indexes)
+    # 单层卡牌的新索引在，旧印刷索引不在
+    assert {"idx_cards_category", "idx_cards_card_set"} <= indexes
 
 
 def test_removed_columns_are_gone(synth_db: Path) -> None:
-    assert "mode" not in _columns(synth_db, "card_printings")  # 由产品推导
-    assert "normalized_text" not in _columns(synth_db, "card_printings")
-    assert "illustrator" not in _columns(synth_db, "card_printings")
+    card_columns = _columns(synth_db, "cards")
+    for removed in REMOVED_CARD_COLUMNS:
+        assert removed not in card_columns, f"cards 残留旧列 {removed}"
+    # Card 没有 mode / source：mode 只存在于 skill_versions / general_variants
+    assert "mode" not in card_columns
+    assert "source_key" not in card_columns
     assert "notes" not in _columns(synth_db, "skill_versions")
     assert "change_note" not in _columns(synth_db, "skill_versions")
     assert "aliases" not in _columns(synth_db, "search_index")
+
+
+def test_cards_table_matches_single_layer_model(synth_db: Path) -> None:
+    assert _columns(synth_db, "cards") == [
+        "id",
+        "category_1",
+        "category_2",
+        "category_3",
+        "name",
+        "image",
+        "card_set",
+        "effect_text",
+        "effect_skills",
+        "verification_status",
+        "review_note",
+        "yaml_file",
+        "yaml_line",
+    ]
+
+
+def test_card_effect_skills_are_stored_as_json(synth_db: Path) -> None:
+    conn = sqlite3.connect(synth_db)
+    try:
+        raw = conn.execute(
+            "SELECT effect_text, effect_skills FROM cards WHERE id = 'card_demo_trick'"
+        ).fetchone()
+    finally:
+        conn.close()
+    text, skills = raw
+    assert text == "演示效果：与演示技能相关。"
+    assert isinstance(skills, str)  # 落库的是 JSON 文本
+    assert json.loads(skills) == [
+        {"skill_id": "skill_demo", "version_id": "skill_demo_guozhan_v1"}
+    ]
 
 
 def test_build_creates_db_file(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "nested" / "sgs.db"
     result = build_database(synth, db_path)
     assert db_path.exists()
-    assert result.total == 21
+    assert result.total == 20
     assert result.db_path == db_path
 
 
@@ -96,12 +161,11 @@ def test_counts_match_bundle(synth: Path, tmp_path: Path) -> None:
     assert result.counts["general_variant"] == 3
     assert result.counts["skill"] == 2
     assert result.counts["skill_version"] == 4
-    assert result.counts["card"] == 1
-    assert result.counts["card_printing"] == 2
+    assert result.counts["card"] == 2
     assert result.counts["faq"] == 1
     assert result.counts["keyword"] == 2
     assert result.counts["timing"] == 2
-    assert result.total == 21
+    assert result.total == 20
 
 
 def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
@@ -124,6 +188,18 @@ def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
 def test_build_refuses_invalid_data(synth: Path, tmp_path: Path) -> None:
     replace_in(
         synth / "general_variants" / "demo_alpha_guozhan.yaml",
+        "skill_id: skill_demo",
+        "skill_id: skill_missing",
+    )
+    with pytest.raises(DataValidationError) as excinfo:
+        build_database(synth, tmp_path / "sgs.db")
+    assert "skill_missing" in excinfo.value.result.format_report()
+
+
+def test_build_refuses_broken_card_effect(synth: Path, tmp_path: Path) -> None:
+    """卡牌效果里的技能引用也是硬引用：不存在就拒绝建库。"""
+    replace_in(
+        synth / "cards" / "demo_trick.yaml",
         "skill_id: skill_demo",
         "skill_id: skill_missing",
     )
@@ -160,7 +236,7 @@ def test_sources_are_deduplicated(synth: Path, tmp_path: Path) -> None:
         ).fetchone()[0]
         assert linked == 4
         # 实体卡类没有 source_key 列
-        assert "source_key" not in _columns(db_path, "card_printings")
+        assert "source_key" not in _columns(db_path, "cards")
         assert "source_key" not in _columns(db_path, "products")
     finally:
         conn.close()
@@ -170,10 +246,12 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "3"
+    assert meta["schema_version"] == "4"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
-    assert meta["entity_total"] == "21"
+    assert meta["count.card"] == "2"
+    assert "count.card_printing" not in meta
+    assert meta["entity_total"] == "20"
     assert meta["fts5"] in {"0", "1"}
     assert "built_at" in meta
 
@@ -199,24 +277,6 @@ def test_variant_skills_join_table(synth_db: Path) -> None:
         ),
         ("variant_demo_beta_identity", "general_demo_beta", "skill_demo", None, 0),
     ]
-
-
-def test_card_printing_mode_is_derived_from_product(synth_db: Path) -> None:
-    conn = sqlite3.connect(synth_db)
-    conn.row_factory = sqlite3.Row
-    try:
-        assert product_mode(conn, "product_demo_a") == "guozhan"
-        assert product_mode(conn, "product_demo_b") == "identity"
-        assert product_mode(conn, None) is None
-
-        printing_a = fetch(conn, "card_printing", "card_demo_a_spade_1")
-        printing_b = fetch(conn, "card_printing", "card_demo_b_heart_5")
-        assert printing_a["mode"] == "guozhan"
-        assert printing_b["mode"] == "identity"
-        # 实体卡类没有 source
-        assert printing_a.get("source") is None
-    finally:
-        conn.close()
 
 
 def test_search_index_covers_every_entity(synth: Path, tmp_path: Path) -> None:
@@ -304,9 +364,11 @@ def test_real_data_builds_and_has_rows(data_dir: Path, tmp_path: Path) -> None:
     assert result.total == sum(result.counts.values())
     assert result.total > 1000
     assert result.counts["skill_version"] >= 1
+    assert result.counts["card"] == 81
     conn = sqlite3.connect(db_path)
     try:
         assert conn.execute("SELECT COUNT(*) FROM search_index").fetchone()[0] == result.total
     finally:
         conn.close()
     assert _tables(db_path) >= EXPECTED_TABLES
+    assert "card_printings" not in _tables(db_path)

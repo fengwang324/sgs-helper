@@ -1,13 +1,16 @@
-"""两层结构（技能本体/版本、卡牌定义/印刷）与“按名称自动识别”的关联测试。
+"""两层结构（技能本体 / 版本）与单层卡牌的关联测试，以及“按名称自动识别”。
 
-仍然成立的核心不变量：**旧版本永远不被新版本覆盖**。
+仍然成立的核心不变量：**旧版本永远不被新版本覆盖**；卡与产品之间没有外键，
+只能按 ``Card.card_set ∈ Product.card_sets`` 关联。
 
 新模型下 FAQ / 关键词 / 时点的关联不再手工维护（``related_*`` 全部删除），
-而是在正文里按实体名称自动识别（``repo.mentions`` / ``db.detect_mentions``）。
+而是在正文里按实体名称自动识别（``repo.mentions`` / ``db.detect_mentions``）；
+``CardPrinting`` 层整体删除，卡牌只有 ``cards`` 一张表。
 """
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -20,6 +23,7 @@ from sgs_helper.repo import (
     faq_report,
     general_report,
     keyword_report,
+    product_report,
     skill_report,
     timing_report,
 )
@@ -35,6 +39,10 @@ def _rows(db_path: Path, sql: str, params: tuple = ()) -> list[tuple]:
 
 def _columns(db_path: Path, table: str) -> list[str]:
     return [row[1] for row in _rows(db_path, f"PRAGMA table_info({table})")]
+
+
+def _tables(db_path: Path) -> set[str]:
+    return {row[0] for row in _rows(db_path, "SELECT name FROM sqlite_master WHERE type = 'table'")}
 
 
 # ---------------------------------------------------------------- 技能：本体 / 版本
@@ -100,38 +108,59 @@ def test_skill_version_columns_drop_dates_and_lists(synth_db: Path) -> None:
     assert "source_key" in columns
 
 
-# ---------------------------------------------------------------- 卡牌：定义 / 印刷
+# ---------------------------------------------------------------- 卡牌（单层）
 
 
-def test_card_definition_and_printings_are_linked(synth_db: Path) -> None:
-    orphan = _rows(
-        synth_db,
-        "SELECT id FROM card_printings WHERE card_id NOT IN (SELECT id FROM cards)",
-    )
-    assert orphan == []
-    assert _rows(synth_db, "SELECT COUNT(*) FROM card_printings WHERE card_id = 'card_demo'")[0][0] == 2
+def test_card_printing_layer_is_gone(synth_db: Path) -> None:
+    """CardPrinting 层整体删除：没有表，也没有旧卡面列。"""
+    assert "card_printings" not in _tables(synth_db)
+    columns = _columns(synth_db, "cards")
+    for removed in (
+        "card_id",
+        "name_printed",
+        "product_id",
+        "card_type",
+        "subtype",
+        "suit",
+        "rank",
+        "quantity",
+        "printed_text",
+        "normalized_text",
+        "illustrator",
+        "bottom_right_mark",
+        "card_number",
+        "related_keywords",
+    ):
+        assert removed not in columns
+    assert {"category_1", "category_2", "category_3", "card_set", "effect_text"} <= set(columns)
 
 
-def test_same_card_in_different_products_does_not_overwrite(synth_conn) -> None:
+def test_card_effect_skills_are_linked(synth_db: Path) -> None:
+    raw = _rows(synth_db, "SELECT effect_skills FROM cards WHERE id = 'card_demo_trick'")[0][0]
+    assert json.loads(raw) == [
+        {"skill_id": "skill_demo", "version_id": "skill_demo_guozhan_v1"}
+    ]
+    # 引用不到技能的卡牌行仍然保留原始 id（不在构建期过滤）
+    assert _rows(
+        synth_db, "SELECT effect_skills FROM cards WHERE id = 'card_demo'"
+    )[0][0] == "[]"
+
+
+def test_card_report_has_no_printings(synth_conn) -> None:
     report = card_report(synth_conn, "card_demo")
     assert report is not None
-    printings = {p["id"]: p for p in report["printings"]}
-    assert set(printings) == {"card_demo_a_spade_1", "card_demo_b_heart_5"}
-    products = {p["product_id"] for p in report["printings"]}
-    assert products == {"product_demo_a", "product_demo_b"}
-    # 卡面文字、角标按印刷记录分别保存
-    assert printings["card_demo_a_spade_1"]["printed_text"] == "A 产品演示卡面原文"
-    assert printings["card_demo_a_spade_1"]["bottom_right_mark"] == "君"
-    assert printings["card_demo_b_heart_5"]["bottom_right_mark"] == ""
-    assert printings["card_demo_a_spade_1"]["card_number"] == "001"
+    assert "printings" not in report
+    assert report["card"]["id"] == "card_demo"
+    assert report["effect"] == {"text": "", "skills": []}
 
 
-def test_card_printing_mode_comes_from_product(synth_conn) -> None:
-    """CardPrinting 不存 mode，报告里的 mode 由 product_id -> Product.mode 推导。"""
-    report = card_report(synth_conn, "card_demo")
-    assert report is not None
-    modes = {p["id"]: p["mode"] for p in report["printings"]}
-    assert modes == {"card_demo_a_spade_1": "guozhan", "card_demo_b_heart_5": "identity"}
+def test_same_card_set_shows_up_in_every_declaring_product(synth_conn) -> None:
+    """卡与产品没有外键：两个产品都声明了「演示牌堆」，因此都会列出这张卡。"""
+    a = product_report(synth_conn, "product_demo_a")
+    b = product_report(synth_conn, "product_demo_b")
+    assert [c["id"] for c in a["cards"]] == ["card_demo_trick"]
+    assert [c["id"] for c in b["cards"]] == ["card_demo_trick"]
+    assert a["cards"][0]["card_set"] == b["cards"][0]["card_set"] == "演示牌堆"
 
 
 # ---------------------------------------------------------------- 武将 → 技能版本绑定

@@ -2,6 +2,11 @@
 
 新模型下**没有** ``as_of`` / 生效日期：``skill_report`` / ``general_report`` 不再接受它，
 版本由 ``GeneralVariant.skills[].version_id`` 决定，为空时按 ``mode`` 回退到唯一一条版本。
+
+``Card`` 单层化之后：``card_report`` 返回
+``{kind, card, effect, generals, skills, cards, keywords, timings}``（没有 ``printings``）；
+``product_report`` 返回 ``{kind, product, variants, cards, skill_versions}``，
+卡与产品之间没有外键，只能按 ``Card.card_set ∈ Product.card_sets`` 关联。
 """
 
 from __future__ import annotations
@@ -296,28 +301,93 @@ def test_mentions_skips_single_char_names(conn) -> None:
     assert mentions(conn, "杀") == []
 
 
-# ---------------------------------------------------------------- 其它报告
+# ---------------------------------------------------------------- 卡牌 / 产品报告
 
 
-def test_card_report_returns_product_and_derived_mode(synth_conn) -> None:
+def test_card_report_is_single_layer(synth_conn) -> None:
+    """card_report 不再有 printings：卡是单层的，效果文本与技能引用直接挂在卡上。"""
+    report = card_report(synth_conn, "演示锦囊")
+    assert report is not None
+    assert set(report) == {
+        "kind",
+        "card",
+        "effect",
+        "generals",
+        "skills",
+        "cards",
+        "keywords",
+        "timings",
+    }
+    assert "printings" not in report
+
+    card = report["card"]
+    assert card["id"] == "card_demo_trick"
+    assert (card["category_1"], card["category_2"], card["category_3"]) == (
+        "游戏牌",
+        "锦囊牌",
+        "非延时锦囊",
+    )
+    assert card["card_set"] == "演示牌堆"
+    for removed in ("card_id", "suit", "rank", "card_type", "product_id"):
+        assert removed not in card
+
+    assert report["effect"]["text"] == "演示效果：与演示技能相关。"
+
+
+def test_card_report_resolves_effect_skill_version(synth_conn) -> None:
+    report = card_report(synth_conn, "演示锦囊")
+    assert report is not None
+    entries = report["effect"]["skills"]
+    assert len(entries) == 1
+    entry = entries[0]
+    assert set(entry) == {"skill_id", "version_id", "version", "pinned", "skill"}
+    assert entry["skill_id"] == "skill_demo"
+    assert entry["version_id"] == "skill_demo_guozhan_v1"
+    assert entry["pinned"] is True
+    assert entry["version"]["id"] == "skill_demo_guozhan_v1"
+    assert entry["skill"]["name"] == "演示技能"
+
+
+def test_card_report_detects_mentions_but_not_itself(synth_conn) -> None:
+    """效果文本里出现的技能名会被识别成“相关”，卡牌自身被排除。"""
+    report = card_report(synth_conn, "演示锦囊")
+    assert report is not None
+    assert [e["id"] for e in report["skills"]] == ["skill_demo"]
+    assert report["cards"] == []
+    assert report["generals"] == [] and report["keywords"] == [] and report["timings"] == []
+
+
+def test_card_report_without_effect(synth_conn) -> None:
+    """effect.text / effect.skills 可以为空：报告仍返回完整的分组键。"""
     report = card_report(synth_conn, "演示卡牌")
     assert report is not None
-    assert report["printings"][0]["product"]["name"] == "演示产品A"
-    assert report["printings"][0]["mode"] == "guozhan"  # 由 product_id 推导
-    marks = {p["bottom_right_mark"] for p in report["printings"]}
-    assert marks == {"君", ""}
+    assert report["effect"] == {"text": "", "skills": []}
+    assert report["skills"] == [] and report["cards"] == []
 
 
 def test_product_report_lists_related_rows(synth_conn) -> None:
     report = product_report(synth_conn, "product_demo_a")
     assert report is not None
+    assert set(report) == {"kind", "product", "variants", "cards", "skill_versions"}
+    assert "printings" not in report
     assert [v["id"] for v in report["variants"]] == ["variant_demo_alpha_guozhan"]
     assert report["variants"][0]["general_name"] == "演示武将甲"
-    assert [p["id"] for p in report["printings"]] == ["card_demo_a_spade_1"]
+    assert [c["id"] for c in report["cards"]] == ["card_demo_trick"]
     assert [v["id"] for v in report["skill_versions"]] == [
         "skill_demo_guozhan_v1",
         "skill_demo_other_v1",
     ]
+
+
+def test_product_report_associates_cards_by_card_set(synth_conn) -> None:
+    """卡与产品没有外键：同名 card_set 被多个产品共用时，两边都要列出这张卡。"""
+    a = product_report(synth_conn, "product_demo_a")
+    b = product_report(synth_conn, "product_demo_b")
+    assert [c["id"] for c in a["cards"]] == ["card_demo_trick"]
+    assert [c["id"] for c in b["cards"]] == ["card_demo_trick"]
+    assert a["cards"][0]["card_set"] == "演示牌堆"
+    # card_demo 的 card_set 为空：不属于任何产品
+    assert all(c["id"] != "card_demo" for c in a["cards"] + b["cards"])
 
 
 def test_faq_report_groups_detected_entities(synth_conn) -> None:
@@ -346,7 +416,8 @@ def test_keyword_and_timing_reports(synth_conn) -> None:
 def test_stats_reports_meta(synth_conn) -> None:
     payload = stats(synth_conn)
     assert payload["counts"]["skill_version"] == 4
-    assert payload["meta"]["schema_version"] == "3"
+    assert payload["counts"]["card"] == 2
+    assert payload["meta"]["schema_version"] == "4"
 
 
 def test_json_serializable(synth_conn) -> None:
@@ -366,3 +437,25 @@ def test_real_data_skill_query(data_dir: Path, conn) -> None:
     assert report is not None
     assert report["modes"]
     assert all(v["text"] for v in report["versions"])
+
+
+def test_real_data_card_report_is_single_layer(conn) -> None:
+    report = card_report(conn, "card_ding_lan_ye_ming_zhu")
+    assert report is not None
+    assert "printings" not in report
+    assert report["card"]["card_set"] == "九变篇"
+    skills = report["effect"]["skills"]
+    assert [e["skill_id"] for e in skills] == ["skill_zhi_heng"]
+    assert skills[0]["pinned"] is True
+    assert skills[0]["skill"]["name"] == "制衡"
+
+
+def test_real_data_product_report_has_no_printings(conn) -> None:
+    report = product_report(conn, "qlhd")
+    assert report is not None
+    assert "printings" not in report
+    # 产品声明的拓展包下的卡：card_set 非空且被声明过的那些
+    assert report["cards"]
+    assert all(c["card_set"] for c in report["cards"])
+    card_sets = set(report["product"]["card_sets"])
+    assert all(c["card_set"] in card_sets for c in report["cards"])

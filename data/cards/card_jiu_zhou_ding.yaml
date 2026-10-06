@@ -1,4 +1,12 @@
 id: card_jiu_zhou_ding
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 宝物
 name: 九州鼎
-card_type: equipment
-subtype: 宝物
+image: card_jiu_zhou_ding_qlhd_heart_13.jpg
+card_set: 九变篇
+effect:
+  text: ◆分发手牌前或洗牌后，将此牌从牌堆内置于弃牌堆。锁定技，若你装备区内有四张或以上奇珍牌，你当前阵营获得游戏胜利。
+  skills: []
+verification_status: unverified
+review_note: ''

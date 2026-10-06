@@ -1,4 +1,12 @@
 id: card_shou_lin_qian_yi
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 兽鳞潜翼
-card_type: equipment
-subtype: 武器
+image: card_shou_lin_qian_yi_qlhd_spade_6.jpg
+card_set: null
+effect:
+  text: 你使用【杀】的结算过程中，你攻击范围内的非目标角色不能使用牌（X为你的已损失体力值）。
+  skills: []
+verification_status: unverified
+review_note: ''

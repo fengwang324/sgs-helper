@@ -96,37 +96,16 @@ SOURCE_TITLE_BY_REFERENCE: dict[str, str] = {
 }
 
 
-class CardType(str, Enum):
-    basic = "basic"                  # 基本牌
-    trick = "trick"                  # 普通锦囊
-    delayed_trick = "delayed_trick"  # 延时锦囊
-    equipment = "equipment"          # 装备牌
-    other = "other"
-
-
-CARD_TYPE_LABELS: dict[str, str] = {
-    "basic": "基本牌",
-    "trick": "普通锦囊",
-    "delayed_trick": "延时锦囊",
-    "equipment": "装备牌",
-    "other": "其他",
-}
-
-
-class Suit(str, Enum):
-    spade = "spade"      # 黑桃
-    heart = "heart"      # 红桃
-    club = "club"        # 梅花
-    diamond = "diamond"  # 方块
-    none = "none"        # 无花色
-
-
-SUIT_LABELS: dict[str, str] = {
-    "spade": "黑桃",
-    "heart": "红桃",
-    "club": "梅花",
-    "diamond": "方块",
-    "none": "无花色",
+#: 卡牌的三级分类树（前端分类树 / 录入时候选联动用）。
+#: 注意：基本牌的最后一级是卡名（``name``）——「杀」下面还有 杀 / 火杀 / 雷杀，
+#: 「闪」下面还有 闪 / 掠闪；所以基本牌的 category_3 是**牌族**（杀 / 闪 / 桃 / 酒），
+#: 具体是哪一张写在 ``name`` 里。指示物树等以后真正录入时再补。
+CARD_CATEGORY_TREE: dict[str, dict[str, list[str]]] = {
+    "游戏牌": {
+        "基本牌": ["杀", "闪", "桃", "酒"],
+        "锦囊牌": ["非延时锦囊", "延时锦囊"],
+        "装备牌": ["武器", "防具", "坐骑", "宝物"],
+    },
 }
 
 
@@ -163,8 +142,7 @@ KINDS: tuple[KindSpec, ...] = (
     KindSpec("general_variant", "general_variants", "general_variants", "武将版本", "variant_"),
     KindSpec("skill", "skills", "skills", "技能本体", "skill_"),
     KindSpec("skill_version", "skill_versions", "skill_versions", "技能版本", "skill_"),
-    KindSpec("card", "cards", "cards", "卡牌定义", "card_"),
-    KindSpec("card_printing", "card_printings", "card_printings", "实体卡印刷", "card_"),
+    KindSpec("card", "cards", "cards", "卡牌", "card_"),
     KindSpec("faq", "faqs", "faq", "FAQ/裁定", "faq_"),
     KindSpec("keyword", "keywords", "keywords", "规则关键词", "keyword_"),
     KindSpec("timing", "timings", "timings", "时点", "timing_"),

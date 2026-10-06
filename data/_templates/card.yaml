@@ -1,6 +1,18 @@
-# 模板：CardDefinition（规则意义上的卡牌，不含具体印刷信息）
+# 模板：Card（一张有独立规则意义 / 独立卡面的卡；游戏牌与指示物共用这一层）
+#
+# 分类表达“这张卡是什么”，card_set 表达“它来自哪个拓展包”，两者完全独立。
+# 基本牌的最后一级是 name：游戏牌/基本牌/杀 下面是 杀 / 火杀 / 雷杀，闪 下面是 闪 / 掠闪，
+# 所以基本牌的 category_3 写牌族（杀 / 闪 / 桃 / 酒），具体哪一张写在 name。
+# 同一张规则卡的花色 / 点数印刷不在这里建模（以后另加 deck_entries）。
 id: card_change_me
+category_1: 游戏牌          # 游戏牌 / 指示物
+category_2: 装备牌          # 基本牌 / 锦囊牌 / 装备牌 …
+category_3: 宝物            # 杀 / 闪 / 桃 / 酒 / 非延时锦囊 / 延时锦囊 / 武器 / 防具 / 坐骑 / 宝物 …
 name: 卡牌名
-card_type: trick        # basic/trick/delayed_trick/equipment/other
-subtype: instant
-review_note: ""         # 需要人工复核的异常（卡面类型标签与登记的类型不一致…）
+image: ""                    # 卡图文件名，相对 data/card_images/；待补就留空
+card_set: null               # 所属拓展包（九变篇 / 君临天下·权 …），允许为空
+effect:
+  text: ""                   # 卡面效果原文，逐字照抄；没有独立效果文本就留空
+  skills: []                 # 关联技能：{skill_id, version_id}，0～N 个；技能文本写在 skill_versions/
+verification_status: unverified
+review_note: ""              # 需要人工对照卡图/实物复核的异常

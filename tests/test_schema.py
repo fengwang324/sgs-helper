@@ -2,10 +2,13 @@
 
 精简后的模型只保留实际会展示 / 查询 / 核验的字段：
 
-- 实体卡类（Product / GeneralVariant / CardPrinting）**没有** ``source``；
+- 实体卡类（Product / GeneralVariant / Card）**没有** ``source``；
 - ``Source`` 只剩 ``type`` + ``reference``；
 - 通用 ``notes`` 一律由 ``review_note`` 取代；
-- 技能版本不再按日期推导，武将版本用 ``skills[].version_id`` 显式绑定。
+- 技能版本不再按日期推导，武将版本用 ``skills[].version_id`` 显式绑定；
+- ``Card`` 是**单层**的：``category_1/2/3`` 决定它是什么，``card_set`` 决定它来自哪个
+  拓展包；同一张卡不再因为花色 / 点数不同拆成多条 ``CardPrinting``；
+- 技能引用统一为 ``SkillRef``（武将版本与卡牌效果共用）。
 """
 
 from __future__ import annotations
@@ -13,22 +16,53 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from sgs_helper.constants import CARD_CATEGORY_TREE
 from sgs_helper.schema import (
     Card,
-    CardPrinting,
+    CardEffect,
     Faq,
     General,
-    GeneralSkillRef,
     GeneralVariant,
     Keyword,
     Product,
     Skill,
+    SkillRef,
     SkillVersion,
     Source,
     Timing,
 )
 
 SOURCE = {"type": "community_db", "reference": ""}
+
+#: 一张合法基本牌的最小字段集（基本牌的 category_3 是牌族，具体哪张写在 name）
+CARD_BASE = {
+    "category_1": "游戏牌",
+    "category_2": "基本牌",
+    "category_3": "杀",
+    "name": "杀",
+}
+
+#: 卡牌从两层（Card + CardPrinting）收敛成一层后删掉的字段：写了就要报未知字段
+REMOVED_CARD_FIELDS = {
+    "card_type": "basic",
+    "subtype": "normal",
+    "name_printed": "杀",
+    "card_id": "card_x",
+    "product_id": "product_x",
+    "suit": "spade",
+    "rank": 1,
+    "quantity": 2,
+    "printed_text": "卡面原文",
+    "normalized_text": "规范化正文",
+    "illustrator": "画师",
+    "bottom_right_mark": "君",
+    "card_number": "001",
+    "related_keywords": ["keyword_x"],
+}
+
+
+def _card(**overrides) -> Card:
+    return Card(**{"id": "card_x", **CARD_BASE, **overrides})
 
 
 # ---------------------------------------------------------------- 基础约束
@@ -89,20 +123,13 @@ def test_source_requires_known_type() -> None:
 
 
 def test_entity_card_kinds_have_no_source() -> None:
-    """Product / GeneralVariant / CardPrinting 的来源由 product_id 定位，不再重复保存。"""
+    """Product / GeneralVariant / Card 的来源由 product_id 或数据目录定位，不再重复保存。"""
     with pytest.raises(ValidationError):
         Product(id="product_x", name="X", source=SOURCE)
     with pytest.raises(ValidationError):
         GeneralVariant(id="variant_x", general_id="general_x", source=SOURCE)
     with pytest.raises(ValidationError):
-        CardPrinting(
-            id="card_x_a",
-            card_id="card_x",
-            name_printed="X",
-            product_id="product_x",
-            suit="spade",
-            source=SOURCE,
-        )
+        _card(source=SOURCE)
 
 
 def test_source_is_required_where_rules_demand_it() -> None:
@@ -116,47 +143,89 @@ def test_source_is_required_where_rules_demand_it() -> None:
         Timing(id="timing_x", name="时点")
 
 
-# ---------------------------------------------------------------- 卡牌
+# ---------------------------------------------------------------- 卡牌（单层）
 
 
-def test_rank_letters_are_normalized() -> None:
-    base = dict(
-        id="card_x_a",
-        card_id="card_x",
-        name_printed="X",
-        product_id="product_x",
-        suit="spade",
+def test_card_is_single_layer() -> None:
+    """Card 只有一层：分类 / 卡名 / 卡图 / 拓展包 / 效果，没有 CardPrinting。"""
+    assert set(Card.model_fields) == {
+        "id",
+        "category_1",
+        "category_2",
+        "category_3",
+        "name",
+        "image",
+        "card_set",
+        "effect",
+        "verification_status",
+        "review_note",
+    }
+    card = _card()
+    assert card.image == ""
+    assert card.card_set is None
+    assert card.effect == CardEffect()
+    assert card.verification_status == "unverified"
+    assert card.review_note == ""
+
+
+def test_basic_card_category_three_is_the_family() -> None:
+    """基本牌最后一级是牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 name 里。"""
+    families = CARD_CATEGORY_TREE["游戏牌"]["基本牌"]
+    assert families == ["杀", "闪", "桃", "酒"]
+
+    huo_sha = _card(category_2="基本牌", category_3="杀", name="火杀")
+    assert huo_sha.category_3 == "杀" and huo_sha.name == "火杀"
+
+    lve_shan = _card(category_2="基本牌", category_3="闪", name="掠闪")
+    assert lve_shan.category_3 == "闪" and lve_shan.name == "掠闪"
+
+
+def test_card_effect_allows_empty_text_and_skills() -> None:
+    """effect.text 与 effect.skills 都允许为空，也可以同时为空。"""
+    card = _card(effect={"text": "", "skills": []})
+    assert isinstance(card.effect, CardEffect)
+    assert card.effect.text == "" and card.effect.skills == []
+
+
+def test_card_effect_skills_use_skill_ref() -> None:
+    """卡牌效果里的技能引用与武将版本共用 SkillRef（{skill_id, version_id}）。"""
+    card = _card(
+        category_2="装备牌",
+        category_3="宝物",
+        name="定澜夜明珠",
+        card_set="九变篇",
+        image="card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg",
+        effect={
+            "text": "锁定技，你视为拥有“制衡”。",
+            "skills": [
+                {
+                    "skill_id": "skill_zhi_heng",
+                    "version_id": "skill_zhi_heng_guozhan_qlhd_v1",
+                }
+            ],
+        },
     )
-    assert CardPrinting(**base, rank="A").rank == 1
-    assert CardPrinting(**base, rank="J").rank == 11
-    assert CardPrinting(**base, rank="Q").rank == 12
-    assert CardPrinting(**base, rank="K").rank == 13
-    assert CardPrinting(**base, rank="7").rank == 7
-    assert CardPrinting(**base, rank=7).rank == 7
+    ref = card.effect.skills[0]
+    assert isinstance(ref, SkillRef)
+    assert ref.skill_id == "skill_zhi_heng"
+    assert ref.version_id == "skill_zhi_heng_guozhan_qlhd_v1"
+
+    # 只写 skill_id 也合法：version_id 为空表示查询时按 mode 回退
+    loose = _card(effect={"skills": [{"skill_id": "skill_zhi_heng"}]})
+    assert loose.effect.skills[0].version_id is None
 
 
-def test_rank_out_of_range_is_rejected() -> None:
-    with pytest.raises(ValidationError):
-        CardPrinting(
-            id="card_x_a",
-            card_id="card_x",
-            name_printed="X",
-            product_id="product_x",
-            rank=14,
-        )
+@pytest.mark.parametrize(("field", "value"), sorted(REMOVED_CARD_FIELDS.items()))
+def test_removed_card_fields_are_rejected(field: str, value: object) -> None:
+    """CardPrinting 及旧卡面字段被删除后，写进 Card 必须报未知字段。"""
+    with pytest.raises(ValidationError) as excinfo:
+        _card(**{field: value})
+    assert field in str(excinfo.value)
 
 
-def test_card_printing_mode_is_not_stored() -> None:
-    """CardPrinting.mode 由 product_id -> Product.mode 推导，不再是模型字段。"""
-    assert "mode" not in CardPrinting.model_fields
-    with pytest.raises(ValidationError):
-        CardPrinting(
-            id="card_x_a",
-            card_id="card_x",
-            name_printed="X",
-            product_id="product_x",
-            mode="guozhan",
-        )
+def test_card_set_is_optional_but_must_be_a_string() -> None:
+    assert _card(card_set=None).card_set is None
+    assert _card(card_set="九变篇").card_set == "九变篇"
 
 
 # ---------------------------------------------------------------- 技能 / 武将
@@ -258,7 +327,7 @@ def test_general_skill_ref_binds_version_explicitly() -> None:
             {"skill_id": "skill_y", "version_id": "skill_y_v1"},
         ],
     )
-    assert isinstance(variant.skills[0], GeneralSkillRef)
+    assert isinstance(variant.skills[0], SkillRef)
     assert variant.skills[0].version_id is None
     assert variant.skills[1].version_id == "skill_y_v1"
 
@@ -273,19 +342,10 @@ def test_notes_is_replaced_by_review_note() -> None:
     with pytest.raises(ValidationError):
         Skill(id="skill_x", name="X", notes="旧字段")
 
-    card = Card(id="card_x", name="X", card_type="basic", review_note="待复核")
+    card = _card(review_note="待复核")
     assert card.review_note == "待复核"
     with pytest.raises(ValidationError):
-        Card(id="card_x", name="X", card_type="basic", notes="旧字段")
-
-    with pytest.raises(ValidationError):
-        CardPrinting(
-            id="card_x_a",
-            card_id="card_x",
-            name_printed="X",
-            product_id="product_x",
-            notes="旧字段",
-        )
+        _card(notes="旧字段")
 
 
 def test_removed_relation_fields_are_rejected() -> None:
@@ -315,6 +375,5 @@ def test_verification_status_only_on_allowed_kinds() -> None:
     assert "verification_status" not in Product.model_fields
     assert "verification_status" not in General.model_fields
     assert "verification_status" not in Skill.model_fields
-    assert "verification_status" not in Card.model_fields
-    for model in (GeneralVariant, SkillVersion, CardPrinting, Keyword, Faq, Timing):
+    for model in (GeneralVariant, SkillVersion, Card, Keyword, Faq, Timing):
         assert "verification_status" in model.model_fields

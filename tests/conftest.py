@@ -151,34 +151,32 @@ previous_version_id: skill_demo_identity_v1
 review_note: 演示用待复核说明
 """,
     "cards/demo_card.yaml": """id: card_demo
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀
 name: 演示卡牌
-card_type: basic
-subtype: normal
-review_note: 演示用待复核说明
-""",
-    "card_printings/demo_a_spade_1.yaml": """id: card_demo_a_spade_1
-card_id: card_demo
-name_printed: 演示卡牌
-product_id: product_demo_a
-card_set: base
-suit: spade
-rank: 1
-printed_text: A 产品演示卡面原文
-bottom_right_mark: 君
-card_number: "001"
-image: card_demo_a_spade_1.jpg
+image: ""
+card_set: null
+effect:
+  text: ""
+  skills: []
 verification_status: unverified
 review_note: 演示用待复核说明
 """,
-    "card_printings/demo_b_heart_5.yaml": """id: card_demo_b_heart_5
-card_id: card_demo
-name_printed: 演示卡牌
-product_id: product_demo_b
-card_set: base
-suit: heart
-rank: 5
-printed_text: B 产品演示卡面原文
+    "cards/demo_trick.yaml": """id: card_demo_trick
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
+name: 演示锦囊
+image: ""
+card_set: 演示牌堆
+effect:
+  text: 演示效果：与演示技能相关。
+  skills:
+    - skill_id: skill_demo
+      version_id: skill_demo_guozhan_v1
 verification_status: unverified
+review_note: ""
 """,
     "faq/demo_1.yaml": f"""id: faq_demo_1
 question: 演示问题：演示技能的结算？

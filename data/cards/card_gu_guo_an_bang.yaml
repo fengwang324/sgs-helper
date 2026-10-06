@@ -1,4 +1,12 @@
 id: card_gu_guo_an_bang
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 固国安邦
-card_type: trick
-subtype: ''
+image: card_gu_guo_an_bang_qlhd_heart_1.jpg
+card_set: 不臣篇
+effect:
+  text: 出牌阶段，对你使用。你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
+  skills: []
+verification_status: unverified
+review_note: ''

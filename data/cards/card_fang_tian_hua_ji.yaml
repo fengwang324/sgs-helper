@@ -1,4 +1,12 @@
 id: card_fang_tian_hua_ji
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 方天画戟
-card_type: equipment
-subtype: 武器
+image: card_fang_tian_hua_ji_qlhd_diamond_12.jpg
+card_set: null
+effect:
+  text: 你使用【杀】可以选择任意势力各不相同或未确定势力的角色为目标，若任意一名目标角色使用【闪】抵消了【杀】，则此【杀】对剩余的目标角色无效。
+  skills: []
+verification_status: unverified
+review_note: ''

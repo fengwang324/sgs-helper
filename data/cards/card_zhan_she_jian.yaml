@@ -1,4 +1,12 @@
 id: card_zhan_she_jian
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 斩蛇剑
-card_type: equipment
-subtype: 武器
+image: card_zhan_she_jian_qlhd_spade_1.jpg
+card_set: null
+effect:
+  text: 你使用【杀】对目标造成伤害后，你回复1点体力，若其为君主或野心家，杀死该角色。
+  skills: []
+verification_status: unverified
+review_note: ''

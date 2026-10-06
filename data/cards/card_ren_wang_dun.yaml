@@ -1,4 +1,12 @@
 id: card_ren_wang_dun
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 防具
 name: 仁王盾
-card_type: equipment
-subtype: 防具
+image: card_ren_wang_dun_qlhd_club_2.jpg
+card_set: null
+effect:
+  text: ◆锁定技，黑色的【杀】对你无效。
+  skills: []
+verification_status: unverified
+review_note: ''

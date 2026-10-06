@@ -1,4 +1,12 @@
 id: card_wen_he_luan_wu
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 文和乱武
-card_type: trick
-subtype: ''
+image: card_wen_he_luan_wu_qlhd_club_12.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对所有角色使用。每名角色各展示所有手牌，然后你选择一项：1.令其弃置两张类别不同的手牌；2.弃置其一张手牌。群：群势力角色选择完成后若没有手牌，则将手牌摸至当前体力值。
+  skills: []
+verification_status: unverified
+review_note: ''

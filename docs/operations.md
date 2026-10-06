@@ -25,7 +25,7 @@ git add -A && git commit -m "data: ..." && git push
 ## 0.1 录一张实体武将牌（推荐路径）
 
 1. 先有产品：`/new/product` —— 名称 / 发行年份 / 模式 / **武将牌系列**（`general_sets`）/
-   **游戏牌牌堆**（`card_sets`）。
+   **游戏牌拓展包**（`card_sets`）。
 2. 再录武将：`/new/general` —— **只有名字必填**。
    - 「编号」是卡面编号（`general_number`，如 `WEI001`），内部 ID 留空会自动生成；
    - 技能行里搜索已有技能 → 选择这个武将用的**版本**（不选则按 `mode` 匹配该技能唯一一条版本）；
@@ -47,9 +47,10 @@ git add -A && git commit -m "data: ..." && git push
 | `data/faq/`（83） | 真实裁定 | 规则集专题/流程章节 + 武将页 ◆ 裁定 |
 | `data/keywords/`（126）、`data/timings/`（30） | 真实定义 | 规则集「用语」「游戏的流程」 |
 | `data/generals/`（155）、`data/general_variants/`（163） | 真实数据，全是国战版本 | 群狼环鼎卡面 OCR + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) |
-| `data/products/`（1）、`data/cards/`（91）、`data/card_printings/`（192） | 真实数据（产品 `qlhd`） | 群狼环鼎实体卡 |
+| `data/products/`（1）、`data/cards/`（81） | 真实数据（产品 `qlhd`） | 群狼环鼎实体卡，卡牌为一层 `Card` |
 
-实测（`validate_data.py`）：**实体 1449 条 / 0 错误 / 60 警告**。
+实测（`validate_data.py`）：**实体 1247 条 / 0 错误 / 14 警告**
+（14 条全是「技能本体没有任何 SkillVersion」）。
 
 重新导入 / 增量导入（站点更新时）：
 
@@ -84,16 +85,21 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
   萌娘百科的「标准版」名单与 WIKI 的 `武将包` 不一致的（例如袁术，WIKI 归在神话再临·雷包），
   先不录，留待按实体卡确认。
 
-## 1.2 再录一批实体卡（产品 / 卡牌）
+## 1.2 再录一批游戏牌（产品 / 卡牌）
 
-1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品是实体卡的锚点
-   （武将版本可以关联产品，也可以先留空）。
-2. **再建卡牌定义 + 实体卡印刷**：按牌堆清点，逐张登记花色点数与角标。
-3. **重复登记检查**：跑 `validate_data.py`，同一产品同花色点数的告警会列出来。
+1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品的 `card_sets`
+   是游戏牌拓展包的候选全集（九变篇 / 势备篇 / 不臣篇 / 君主游戏牌 / 阵 / 君临天下·权…）。
+   注意「指示物」是卡牌分类，不是拓展包。
+2. **再建卡牌**（一层 `Card`，管理页专用录入页 `/new/card`）：按
+   卡名 → 一级/二级/三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 0～N → 核验状态 →
+   复核备注 的顺序录。基本牌的三级分类写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里。
+3. **归属检查**：跑 `validate_data.py`，卡牌 `card_set` 没有被任何产品声明、基本牌三级分类
+   不是牌族、卡图文件不存在都会告警；把「指示物」写进 `card_set` 会得到专门提示。
 
 登记时的三条纪律：
 
-- 卡面文字逐字抄进 `printed_text`，**不要改写原文**（检索正文由构建时生成，不用手填）；
+- 卡面效果文字逐字抄进 `effect.text`，**不要改写原文**（检索正文由构建时生成，不用手填）；
+  `effect.text` 与 `effect.skills` 都允许为空，纯技能卡可以留空；
 - 只有亲眼核过实体卡，才把 `verification_status` 改成 `physical_verified`；
 - 拿不准就留 `unverified`，需要人工对着卡图复核的异常写进 `review_note`。
 
@@ -123,14 +129,18 @@ review_note: >
 
 | 报错 | 原因 | 处理 |
 | --- | --- | --- |
-| `未知字段（YAML 里多了这个字段？）` | 字段名写错或拼错（例如写了 `version:`），或用了已删除的旧字段 | 改成模型里存在的字段；来源信息放 `source`（只有 `type` / `reference`） |
+| `未知字段（YAML 里多了这个字段？）` | 字段名写错或拼错（例如写了 `version:`），或用了已删除的旧字段（卡牌的 `card_type` / `subtype` 等） | 改成模型里存在的字段；来源信息放 `source`（只有 `type` / `reference`）；卡牌改用 `category_1/2/3` + `card_set` |
 | `id 重复：xxx 已在 data/... 中定义` | 两个文件用了同一个 id | 改 id（同名不同版本要用不同 id） |
 | `引用的 技能(xxx) 不存在` | id 写错或目标文件还没建 | 建好目标文件，或修正引用 |
-| `引用的 实体产品(card_demo) 不存在：…但同名的 卡牌定义(card_demo) 存在` | 引用到了另一种类型的 id | 字段写错了，改成对应类型的 id |
+| `引用的 实体产品(card_demo) 不存在：…但同名的 卡牌(card_demo) 存在` | 引用到了另一种类型的 id | 字段写错了，改成对应类型的 id |
 | `空引用：该字段不能是空字符串` | 写了 `product_id: ""` | 填有效 id，或改为 `null` |
 | `自引用` | 列表里包含了自己的 id | 删掉 |
 | `版本链成环` | `previous_version_id` 互相指向 | 改成单向链条 |
 | `绑定的技能版本 … 与这里的技能 … 不一致` | `skills[].version_id` 指到了别的技能的版本 | 改成同一个 `skill_id` 下的版本，或清空让它按 `mode` 回退 |
+| `基本牌的三级分类应为牌族（杀、闪、桃、酒）…` | 基本牌把具体牌名写进了 `category_3` | `category_3` 改成牌族，具体牌名（火杀…）写进 `name` |
+| `拓展包 "…" 不在任何产品声明的 card_sets（…）里` | 卡牌 `card_set` 没有被任何产品声明 | 改成产品 `card_sets` 里的值，或给对应产品补上这个拓展包 |
+| `"指示物" 不是游戏牌拓展包，而是卡牌分类` | 把「指示物」写进了卡牌 `card_set` | 写到 `category_1`，`card_set` 留空或填真正的拓展包名 |
+| `卡图 "…" 不存在：data/card_images/ 下没有这个文件` | `image` 文件名写错，或文件没放进来 | 放进 `data/card_images/`，或改成正确文件名（待补卡图就留空） |
 | `该武将版本的技能没有可用文本` | `version_id` 为空，且该技能在该模式下没有任何 SkillVersion | 补一条 SkillVersion，或显式绑定 `version_id` |
 | `武将牌系列 "…" 不在所属产品 … 的 general_sets 里` | `general_set` 与本产品的候选系列对不上 | 改成 `Product.general_sets` 里的值，或给产品补上这个系列 |
 | `没有任何 SkillVersion` | 技能本体孤立 / 武将技能在该模式下没有版本 | 补 SkillVersion，或修正武将 `mode` |
@@ -141,7 +151,8 @@ review_note: >
 
 - [ ] 新记录有唯一的 `id`，并且符合前缀约定；
 - [ ] 规则类实体（SkillVersion / FAQ / Keyword / Timing）填了 `source`，且 `verification_status` 与实际情况相符；
-- [ ] 实体卡类实体的 `product_id` 指向正确的产品；
+- [ ] 武将版本的 `product_id` 指向正确的产品；卡牌的 `card_set` 是某个产品声明过的拓展包（或留空）；
+- [ ] 卡牌的基本牌三级分类只写牌族，`image` 指向的文件真的在 `data/card_images/` 下；
 - [ ] 技能文本一字不改地来自实体卡/官方资料；
 - [ ] 引用的 id 全部存在（校验器会替你查）；
 - [ ] 修改技能时是**新增版本**而不是改旧文件；

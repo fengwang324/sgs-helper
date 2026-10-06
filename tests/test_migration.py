@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -44,10 +45,21 @@ REMOVED_FIELDS = {
     "previous_ids",
     "next_ids",
     "aliases",
+    # 卡牌从两层收敛成一层后删掉的字段
+    "card_type",
+    "subtype",
+    "card_id",
+    "name_printed",
+    "printed_text",
+    "suit",
+    "rank",
+    "quantity",
+    "bottom_right_mark",
+    "card_number",
 }
 
 #: 已删除的实体类型
-REMOVED_KINDS = {"general_set"}
+REMOVED_KINDS = {"general_set", "card_printing"}
 
 
 def _yaml_files(data_dir: Path):
@@ -96,14 +108,14 @@ def test_source_is_type_plus_reference_only(data_dir: Path) -> None:
 
 
 def test_entity_card_kinds_have_no_source(data_dir: Path) -> None:
-    for dirname in ("products", "general_variants", "card_printings"):
+    for dirname in ("products", "general_variants"):
         for path in sorted((data_dir / dirname).glob("*.yaml")):
             doc = yaml.safe_load(path.read_text(encoding="utf-8"))
             assert "source" not in doc, f"{path} 不该再保存 source"
 
 
 def test_review_notes_only_on_allowed_kinds(data_dir: Path) -> None:
-    allowed = {"general_variants", "skill_versions", "card_printings", "skills", "cards"}
+    allowed = {"general_variants", "skill_versions", "skills", "cards"}
     total = 0
     for path in _yaml_files(data_dir):
         doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -246,8 +258,7 @@ def test_entity_counts_are_stable(migration_db: Path) -> None:
             "general_variant": 163,
             "skill": 311,
             "skill_version": 297,
-            "card": 91,
-            "card_printing": 192,
+            "card": 81,
             "faq": 83,
             "keyword": 126,
             "timing": 30,
@@ -261,3 +272,90 @@ def test_models_reject_removed_fields() -> None:
     for kind, model in MODEL_BY_KIND.items():
         assert "notes" not in model.model_fields, f"{kind} 仍保留 notes"
         assert "source" not in model.model_fields or kind in SOURCE_KINDS
+
+
+# ---------------------------------------------------------------- 卡牌（单层）
+
+
+def test_cards_are_single_layer_and_categorized(migration_db: Path) -> None:
+    conn = sqlite3.connect(migration_db)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0] == 81
+        assert not conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE name = 'card_printings'").fetchone()
+        rows = dict(
+            conn.execute("SELECT id, category_1 || '/' || category_2 || '/' || category_3 FROM cards")
+        )
+        assert rows["card_sha"] == "游戏牌/基本牌/杀"
+        assert rows["card_huo_sha"] == "游戏牌/基本牌/杀"       # 基本牌最后一级是 name
+        assert rows["card_lve_shan"] == "游戏牌/基本牌/闪"
+        assert rows["card_wu_xie_ke_ji"] == "游戏牌/锦囊牌/非延时锦囊"
+        assert rows["card_le_bu_si_shu"] == "游戏牌/锦囊牌/延时锦囊"
+        assert rows["card_ding_lan_ye_ming_zhu"] == "游戏牌/装备牌/宝物"
+    finally:
+        conn.close()
+
+
+def test_no_indicator_cards_kept(data_dir: Path) -> None:
+    """本次明确舍弃全部指示物卡牌（用户以后自己加）。"""
+    for path in sorted((data_dir / "cards").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert doc["category_1"] != "指示物", f"{path} 还是指示物卡"
+
+
+def test_card_effect_skills_are_linked(migration_db: Path) -> None:
+    conn = sqlite3.connect(migration_db)
+    try:
+        raw = conn.execute(
+            "SELECT effect_skills FROM cards WHERE id = 'card_ding_lan_ye_ming_zhu'"
+        ).fetchone()[0]
+        assert json.loads(raw) == [
+            {"skill_id": "skill_zhi_heng", "version_id": "skill_zhi_heng_guozhan_qlhd_v1"}
+        ]
+    finally:
+        conn.close()
+
+
+def test_card_set_must_be_declared_by_a_product(data_dir: Path) -> None:
+    declared: set[str] = set()
+    for path in (data_dir / "products").glob("*.yaml"):
+        declared |= set(yaml.safe_load(path.read_text(encoding="utf-8"))["card_sets"])
+    assert "指示物" not in declared, "「指示物」是卡牌分类，不是拓展包"
+    for path in sorted((data_dir / "cards").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if doc.get("card_set"):
+            assert doc["card_set"] in declared, f"{path} 的拓展包没在任何产品里声明"
+
+
+def test_pending_basic_cards_have_no_image(data_dir: Path) -> None:
+    """火杀 / 雷杀 / 掠闪 是用户要求先记录、卡图后续补的；其余卡必须有真实卡图。"""
+    images = {p.name for p in (data_dir / "card_images").iterdir() if p.is_file()}
+    pending = {"火杀", "雷杀", "掠闪"}
+    seen: set[str] = set()
+    for path in sorted((data_dir / "cards").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if doc["name"] in pending:
+            seen.add(doc["name"])
+            assert doc["image"] == "", f"{doc['id']} 的卡图应当先留空"
+            continue
+        assert doc["image"], f"{doc['id']} 没有卡图"
+        assert doc["image"] in images, f"{doc['id']} 的卡图 {doc['image']} 不存在"
+    assert seen == pending
+
+
+def test_multi_text_cards_are_flagged_for_review(data_dir: Path) -> None:
+    flagged = set()
+    for path in sorted((data_dir / "cards").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if "种不同文本" in (doc.get("review_note") or ""):
+            flagged.add(doc["id"])
+    assert flagged == {
+        "card_bing_liang_cun_duan",
+        "card_huo_gong",
+        "card_huo_shao_lian_ying",
+        "card_le_bu_si_shu",
+        "card_lu_li_tong_xin",
+        "card_tie_suo_lian_huan",
+        "card_tu_qiong_bi_xian",
+        "card_wu_xie_ke_ji",
+    }

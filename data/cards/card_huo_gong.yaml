@@ -1,4 +1,12 @@
 id: card_huo_gong
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 火攻
-card_type: trick
-subtype: ''
+image: card_huo_gong_qlhd_heart_2.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对一名有手牌的角色使用。该角色展示一张手牌。然后若你弃置一张与所展示牌相同花色的手牌，则【火攻】对其造成1点火焰伤害。
+  skills: []
+verification_status: unverified
+review_note: 卡面存在 2 种不同文本：1 张「出牌阶段，对一名有手牌的角色使用。该角色展示一张…」；1 张「出牌阶段，对一名有手牌的角色使用。该角色展示一张…」。本条取 1 张一致的那一版，请对照卡图确认

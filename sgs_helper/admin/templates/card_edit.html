@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% from "_macros.html" import issue_table, reference_list with context %}
+
+{# ------------------------------------------------------------------
+   一行「关联技能」。卡牌只关联**已有技能**，所以没有「新建技能」那一套；
+   服务端为已存在的关联渲染，`__i__` 版本给 JS 克隆用。
+   ------------------------------------------------------------------ #}
+{% macro skill_row(row, idx) %}
+  {% set index = idx if idx is defined else row.index %}
+  <div class="skill-row" data-index="{{ index }}">
+    <div class="skill-row-head">
+      <span class="skill-no">技能</span>
+      <div class="skill-row-tools">
+        <button type="button" class="icon-btn row-up" title="上移">↑</button>
+        <button type="button" class="icon-btn row-down" title="下移">↓</button>
+        <button type="button" class="link-btn row-remove">删除此技能</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="f-skill-{{ index }}-combo">技能</label>
+      <div class="combo" data-combo="skill">
+        <input id="f-skill-{{ index }}-combo" class="combo-input" autocomplete="off"
+               placeholder="搜索技能名称 / id"
+               value="{{ row.skill_name if row.skill_id else '' }}">
+        <input type="hidden" class="combo-value" name="skill_{{ index }}_skill_id" value="{{ row.skill_id }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help combo-help">
+        {% if row.skill_id %}
+          已选中 {{ row.skill_id }}{% if row.version_display %}，绑定版本 {{ row.version_display }}{% endif %}
+        {% else %}
+          输入技能名后从下拉里选择已有技能（卡牌只关联已有技能；技能文本在技能版本里维护）。
+        {% endif %}
+      </p>
+      {% for message in error_map.get('skill_' ~ index ~ '_skill_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field version-field" {{ 'hidden' if not row.skill_id else '' }}>
+      <label for="f-skill-{{ index }}-version">技能版本</label>
+      <select id="f-skill-{{ index }}-version" name="skill_{{ index }}_version_id" class="version-select">
+        <option value="">（不指定：按该技能的 mode 匹配唯一一条版本）</option>
+        {% for option in row.version_options or [] %}
+          <option value="{{ option.id }}"
+                  {{ 'selected' if row.version_id == option.id else '' }}
+                  data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }}
+{{ option.text_excerpt }}">{% if option.display_label %}{{ option.display_label }} · {% endif %}{{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
+        {% endfor %}
+      </select>
+      <div class="version-preview"></div>
+      {% for message in error_map.get('skill_' ~ index ~ '_version_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{% if mode == 'create' %}新增卡牌{% else %}编辑卡牌：{{ values.get('name') or target_id }}{% endif %}</h1>
+  <div class="actions">
+    {% if target_id %}
+      <a class="btn ghost" href="/view/card/{{ target_id }}">返回详情</a>
+      <a class="btn" href="/new/card?category_1={{ values.get('category_1', '') }}&category_2={{ values.get('category_2', '') }}&category_3={{ values.get('category_3', '') }}&card_set={{ values.get('card_set', '') }}">按这张卡的分类新增</a>
+    {% endif %}
+    <a class="btn ghost" href="/list/card">卡牌列表</a>
+  </div>
+</div>
+
+{% if outcome_error %}<div class="banner error">{{ outcome_error }}</div>{% endif %}
+{% if info %}
+  <div class="banner warn">
+    <ul class="tight">{% for line in info %}<li>{{ line }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+{% if issue_list %}
+  <section>
+    <h2>校验详情（文件 / 字段 / 原因）</h2>
+    {{ issue_table(issue_list) }}
+  </section>
+{% endif %}
+
+<section class="hint">
+  <p>
+    <strong>一张卡只有一层</strong>：一 / 二 / 三级分类表达“这张卡是什么”，<strong>所属拓展包</strong>表达“它来自哪个拓展包”，
+    两者完全独立。同一规则卡的不同实体印刷<strong>不在这一层建模</strong>，卡牌也没有 source 字段。
+  </p>
+  <p>
+    分类下拉是<strong>联动</strong>的：一级决定二级候选、二级决定三级候选；候选 = 分类树 ∪ 现有卡牌里出现过的值，
+    没有想要的可以<strong>直接输入新值</strong>。
+    <strong>基本牌</strong>的三级分类只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在<strong>卡名</strong>里
+    （所以三级候选里不会有「火杀」）。
+  </p>
+  <p>
+    保存 = 写回 YAML → 完整校验 → 重建 SQLite；一次提交只写 1 张卡，任何一条不合法则全都不落盘。
+  </p>
+</section>
+
+<form method="post" action="{{ action }}" class="entity-form editor-form" data-editor="card" autocomplete="off">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+
+  <div class="field {{ 'has-error' if error_map.get('name') else '' }}">
+    <label for="f-name">卡名 <span class="req">*</span></label>
+    <input id="f-name" name="name" value="{{ values.get('name', '') }}" autofocus
+           placeholder="例如 定澜夜明珠 / 杀 / 火杀">
+    <p class="help">基本牌这里写具体是哪一张（杀 / 火杀 / 雷杀 / 闪 / 掠闪 …），三级分类只写牌族。</p>
+    {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+  </div>
+
+  <h2 class="section-title">分类</h2>
+  <div class="field-grid">
+    <div class="field {{ 'has-error' if error_map.get('category_1') else '' }}">
+      <label for="f-category_1-combo">一级分类 <span class="req">*</span></label>
+      <div class="combo" data-combo="category_1">
+        <input id="f-category_1-combo" class="combo-input" autocomplete="off"
+               placeholder="例如 游戏牌 / 指示物" value="{{ values.get('category_1', '') }}">
+        <input type="hidden" class="combo-value" name="category_1" value="{{ values.get('category_1', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">候选来自分类树 + 现有卡牌；没有的可以直接输入。</p>
+      {% for message in error_map.get('category_1', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field {{ 'has-error' if error_map.get('category_2') else '' }}">
+      <label for="f-category_2-combo">二级分类 <span class="req">*</span></label>
+      <div class="combo" data-combo="category_2">
+        <input id="f-category_2-combo" class="combo-input" autocomplete="off"
+               placeholder="例如 基本牌 / 锦囊牌 / 装备牌" value="{{ values.get('category_2', '') }}">
+        <input type="hidden" class="combo-value" name="category_2" value="{{ values.get('category_2', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">候选随一级分类变化。</p>
+      {% for message in error_map.get('category_2', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field {{ 'has-error' if error_map.get('category_3') else '' }}">
+      <label for="f-category_3-combo">三级分类 <span class="req">*</span></label>
+      <div class="combo" data-combo="category_3">
+        <input id="f-category_3-combo" class="combo-input" autocomplete="off"
+               placeholder="例如 非延时锦囊 / 武器 / 杀" value="{{ values.get('category_3', '') }}">
+        <input type="hidden" class="combo-value" name="category_3" value="{{ values.get('category_3', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">候选随一 / 二级分类变化；基本牌这里只写牌族（杀 / 闪 / 桃 / 酒）。</p>
+      {% for message in error_map.get('category_3', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-card_set-combo">所属拓展包（可空）</label>
+      <div class="combo" data-combo="card_set">
+        <input id="f-card_set-combo" class="combo-input" autocomplete="off"
+               placeholder="例如 九变篇 / 君主游戏牌" value="{{ values.get('card_set', '') }}">
+        <input type="hidden" class="combo-value" name="card_set" value="{{ values.get('card_set', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">候选来自所有产品的 <code>card_sets</code> + 已有卡牌的取值；跨拓展包或暂时无法确认来源就留空。</p>
+    </div>
+
+    <div class="field {{ 'has-error' if error_map.get('image') else '' }}">
+      <label for="f-image-combo">卡图（可空）</label>
+      <div class="combo" data-combo="image">
+        <input id="f-image-combo" class="combo-input" autocomplete="off"
+               placeholder="例如 card_sha_qlhd_spade_4.jpg（留空 = 卡图待补）"
+               value="{{ values.get('image', '') }}">
+        <input type="hidden" class="combo-value" name="image" value="{{ values.get('image', '') }}">
+        <div class="combo-list" hidden></div>
+      </div>
+      <p class="help">候选是 <code>data/card_images/</code> 下真实存在的文件名；待补卡图（火杀 / 雷杀 / 掠闪…）留空即可。</p>
+      {% for message in error_map.get('image', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="field {{ 'has-error' if error_map.get('effect_text') else '' }}">
+    <label for="f-effect_text">效果文本（可空）</label>
+    <textarea id="f-effect_text" name="effect_text" rows="5"
+              placeholder="卡面效果原文，逐字照抄；纯技能卡可以留空">{{ values.get('effect_text', '') }}</textarea>
+    <p class="help">
+      照抄卡面文字，不要改写、不要补全。技能说明<strong>不要</strong>抄进来——那属于技能版本；
+      效果文本与关联技能同时为空也是合法的。
+    </p>
+    {% for message in error_map.get('effect_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+  </div>
+
+  <h2 class="section-title">关联技能</h2>
+  <div id="skill-rows" class="skill-rows">
+    {% for row in rows %}{{ skill_row(row) }}{% endfor %}
+  </div>
+  <input type="hidden" name="skill_count" id="skill-count" value="{{ rows | length }}">
+  <p>
+    <button type="button" class="btn" id="add-skill-row">+ 添加关联技能</button>
+    <span class="muted">0 行也合法；技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行。</span>
+  </p>
+
+  <div class="field-grid">
+    <div class="field {{ 'has-error' if error_map.get('verification_status') else '' }}">
+      <label for="f-verification_status">核验状态</label>
+      <select id="f-verification_status" name="verification_status">
+        {% for value, label in verification_choices %}
+          <option value="{{ value }}" {{ 'selected' if values.get('verification_status', 'unverified') == value else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% for message in error_map.get('verification_status', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+
+    <div class="field">
+      <label for="f-review_note">复核备注</label>
+      <textarea id="f-review_note" name="review_note" rows="2"
+                placeholder="需要人工对照卡图 / 实体卡复核的异常；正常记录留空">{{ values.get('review_note', '') }}</textarea>
+      <p class="help">卡牌没有 source；需要留痕的异常（OCR 多版本、拓展包归属待定…）写在这里。</p>
+    </div>
+  </div>
+
+  <details class="advanced" {{ 'open' if error_map.get('id') else '' }}>
+    <summary>高级信息（内部 ID）</summary>
+    <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
+      <label for="f-id">内部 ID</label>
+      <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按卡名自动生成">
+      <p class="help">YAML 文件名 / URL 都用它；已存在的卡牌不会被重新生成 ID。</p>
+      {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+  </details>
+
+  <div class="form-actions">
+    <button class="btn primary" type="submit" name="_action" value="save">保存</button>
+    <button class="btn" type="submit" name="_action" value="save_next">保存并新增下一张卡</button>
+    {% if target_id %}
+      <a class="btn ghost" href="/view/card/{{ target_id }}">取消</a>
+      <a class="btn danger" href="/delete/card/{{ target_id }}">删除这张卡</a>
+    {% else %}
+      <a class="btn ghost" href="/list/card">取消</a>
+    {% endif %}
+    <span class="muted">Ctrl/⌘ + S 保存</span>
+  </div>
+</form>
+
+{# 新技能行模板：JS 克隆后把 __i__ 换成真实序号 #}
+<template id="skill-row-template">
+  {{ skill_row({"index": "__i__", "skill_id": "", "skill_name": "", "version_id": "",
+                "version_options": [], "version_display": "", "version_label": ""}, "__i__") }}
+</template>
+
+<script type="application/json" id="card-category-data">{{ {"tree": category_tree, "triples": category_triples} | tojson }}</script>
+
+{% if references %}
+  <section>
+    <h2>被引用（{{ references | length }}）</h2>
+    {{ reference_list(references) }}
+  </section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}<script src="/static/editor.js"></script>{% endblock %}

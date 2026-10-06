@@ -1,4 +1,12 @@
 id: card_bai_qi_lin
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 坐骑
 name: 白麒麟
-card_type: equipment
-subtype: 坐骑
+image: card_bai_qi_lin_qlhd_spade_2.jpg
+card_set: null
+effect:
+  text: 你使用此牌时，对所有体力值大于你的角色依次造成1点雷电伤害。
+  skills: []
+verification_status: unverified
+review_note: ''

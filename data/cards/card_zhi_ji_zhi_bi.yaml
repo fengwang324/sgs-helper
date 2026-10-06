@@ -1,4 +1,12 @@
 id: card_zhi_ji_zhi_bi
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 知己知彼
-card_type: trick
-subtype: ''
+image: card_zhi_ji_zhi_bi_qlhd_club_3.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对一名其他角色使用。观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

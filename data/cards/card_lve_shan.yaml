@@ -1,0 +1,12 @@
+id: card_lve_shan
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 闪
+name: 掠闪
+image: ''
+card_set: null
+effect:
+  text: ''
+  skills: []
+verification_status: unverified
+review_note: ''

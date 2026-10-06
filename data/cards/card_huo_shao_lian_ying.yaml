@@ -1,4 +1,12 @@
 id: card_huo_shao_lian_ying
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
 name: 火烧连营
-card_type: trick
-subtype: ''
+image: card_huo_shao_lian_ying_qlhd_spade_3.jpg
+card_set: null
+effect:
+  text: 出牌阶段，对你的下家和所有与其处于同一列队的角色使用。每人受到1点火焰伤害。
+  skills: []
+verification_status: unverified
+review_note: 卡面存在 3 种不同文本：1 张「出牌阶段，对你的下家和所有与其处于同一队列的角色…」；1 张「出牌阶段，对你的下家和所有与其处于同一列的角色使…」；1 张「出牌阶段，对你的下家和所有与其处于同一列队的角色…」。本条取 1 张一致的那一版，请对照卡图确认

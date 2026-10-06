@@ -1,4 +1,12 @@
 id: card_qi_lin_gong
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 麒麟弓
-card_type: equipment
-subtype: 武器
+image: card_qi_lin_gong_qlhd_heart_5.jpg
+card_set: null
+effect:
+  text: 当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
+  skills: []
+verification_status: unverified
+review_note: ''

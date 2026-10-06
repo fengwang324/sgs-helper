@@ -1,4 +1,12 @@
 id: card_qing_long_yan_yue_dao
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 青龙偃月刀
-card_type: equipment
-subtype: 武器
+image: card_qing_long_yan_yue_dao_qlhd_spade_5.jpg
+card_set: null
+effect:
+  text: 攻击范围 3 ◆锁定技，当你使用【杀】时，所有目标角色不能明置武将牌直到此【杀】结算完毕。
+  skills: []
+verification_status: unverified
+review_note: ''

@@ -2,7 +2,7 @@
  *
  * 只做这几件事，全部原生 JS：
  *   1. 搜索式组合框（产品 / 势力 / 武将牌系列 / 技能），支持 ↑↓ / Enter / Esc；
- *   2. 标签输入（产品的武将牌系列、游戏牌牌堆）；
+ *   2. 标签输入（产品的武将牌系列、游戏牌拓展包）；
  *   3. 武将技能行：增删 / 排序 / 版本选择 / 内联新建技能 / 内联新增版本；
  *   4. 同名武将提醒、相同技能版本提醒；
  *   5. Ctrl/⌘+S 保存、sessionStorage 草稿恢复；
@@ -343,16 +343,15 @@
     });
   }
 
-  /* ------------------------------------------------------------------ 武将录入页 */
+  /* ------------------------------------------------------------------ 技能行（武将版本与卡牌效果共用） */
 
-  function setupGeneralEditor(form) {
+  function setupSkillRows(form) {
     var rowsBox = document.getElementById("skill-rows");
+    if (!rowsBox) return null;
     var countInput = document.getElementById("skill-count");
     var template = document.getElementById("skill-row-template");
     var modeSelect = form.querySelector('[name="mode"]');
     var productHidden = form.querySelector('[name="product_id"]');
-
-    var combos = {};
 
     function reindex() {
       var rows = Array.prototype.slice.call(rowsBox.querySelectorAll(".skill-row"));
@@ -372,7 +371,7 @@
           row._combo.input.id = "f-skill-" + position + "-combo";
         }
       });
-      countInput.value = rows.length;
+      if (countInput) countInput.value = rows.length;
       if (window.__sgsDraftTouch) window.__sgsDraftTouch();
     }
 
@@ -422,12 +421,12 @@
       var select = row.querySelector(".version-select");
       if (!skillId) {
         select.innerHTML = '<option value="">（先选择技能）</option>';
-        row.querySelector(".version-field").hidden = true;
-        row.querySelector(".add-version-field").hidden = true;
+        setHidden(row.querySelector(".version-field"), true);
+        setHidden(row.querySelector(".add-version-field"), true);
         return;
       }
-      row.querySelector(".version-field").hidden = false;
-      row.querySelector(".add-version-field").hidden = false;
+      setHidden(row.querySelector(".version-field"), false);
+      setHidden(row.querySelector(".add-version-field"), false);
       var mode = modeSelect ? modeSelect.value : "";
       var productId = productHidden ? productHidden.value : "";
       jsonFetch(
@@ -438,19 +437,28 @@
         .catch(function () {});
     }
 
+    function setHidden(node, hidden) {
+      // 卡牌页的技能行只有「技能 + 版本」两个字段，装饰性的区块不存在，必须容忍缺元素
+      if (node) node.hidden = hidden;
+    }
+
     function switchRowMode(row, isNew) {
-      row.querySelector(".version-field").hidden = isNew;
-      row.querySelector(".add-version-field").hidden = isNew;
-      row.querySelector(".new-skill-field").hidden = !isNew;
+      setHidden(row.querySelector(".version-field"), isNew);
+      setHidden(row.querySelector(".add-version-field"), isNew);
+      setHidden(row.querySelector(".new-skill-field"), !isNew);
     }
 
     function setupRow(row) {
       var skillValue = row.querySelector('[name$="_skill_id"]');
       var newNameInput = row.querySelector(".combo-new-name");
       var comboRoot = row.querySelector(".combo");
+      // 只有武将录入页的整行技能支持「就地新建技能」；卡牌页只有「选已有技能 + 选版本」
+      var canCreate = !!row.querySelector(".new-skill-field");
 
       var combo = new SearchCombo(comboRoot, {
-        createLabel: function (query) { return "+ 新建技能「" + query + "」"; },
+        createLabel: canCreate
+          ? function (query) { return "+ 新建技能「" + query + "」"; }
+          : null,
         fetch: function (query) {
           return jsonFetch("/api/skills?q=" + encodeURIComponent(query)).then(function (items) {
             return items.map(function (item) {
@@ -465,7 +473,7 @@
         },
         onPick: function (item) {
           skillValue.value = item.value;
-          newNameInput.value = "";
+          if (newNameInput) newNameInput.value = "";
           combo.setValue(item.value, item.label);
           switchRowMode(row, false);
           loadVersions(row, item.value, "");
@@ -473,14 +481,15 @@
         },
         onCreate: function (name) {
           skillValue.value = "";
-          newNameInput.value = name;
+          if (newNameInput) newNameInput.value = name;
           combo.setValue("", name);
           switchRowMode(row, true);
-          row.querySelector('[name$="_new_text"]').focus();
+          var newText = row.querySelector('[name$="_new_text"]');
+          if (newText) newText.focus();
           if (window.__sgsDraftTouch) window.__sgsDraftTouch();
         },
         onInput: function (text) {
-          if (!skillValue.value) {
+          if (!skillValue.value && newNameInput) {
             newNameInput.value = text;
             switchRowMode(row, true);
           }
@@ -546,7 +555,7 @@
       if (removeButton) {
         removeButton.addEventListener("click", function () {
           if (row.querySelector('[name$="_skill_id"]').value || row.querySelector(".combo-input").value) {
-            if (!window.confirm("删除这一行技能？只会删掉这个武将与技能的引用关系，不会删除全局技能。")) return;
+            if (!window.confirm("删除这一行技能？只会删掉这条记录与技能的引用关系，不会删除全局技能。")) return;
           }
           row.remove();
           reindex();
@@ -605,9 +614,12 @@
     }
 
     rowsBox.querySelectorAll(".skill-row").forEach(setupRow);
-    document.getElementById("add-skill-row").addEventListener("click", function () {
-      addRow();
-    });
+    var addRowButton = document.getElementById("add-skill-row");
+    if (addRowButton) {
+      addRowButton.addEventListener("click", function () {
+        addRow();
+      });
+    }
     reindex();
 
     // Ctrl/⌘ + Enter：快速加下一个技能；技能描述里按 Ctrl+Enter 也一样
@@ -617,6 +629,21 @@
         addRow();
       }
     });
+
+    return { rowsBox: rowsBox, reindex: reindex, rebuildRows: rebuildRows, addRow: addRow };
+  }
+
+  /* ------------------------------------------------------------------ 武将录入页 */
+
+  function setupGeneralEditor(form) {
+    var skillRows = setupSkillRows(form);
+    var rowsBox = skillRows.rowsBox;
+    var reindex = skillRows.reindex;
+    var rebuildRows = skillRows.rebuildRows;
+    var modeSelect = form.querySelector('[name="mode"]');
+    var productHidden = form.querySelector('[name="product_id"]');
+
+    var combos = {};
 
     /* ---- 产品组合框：自动带入模式 / 系列（只填空着的字段） */
     var productComboRoot = form.querySelector('[data-combo="product"]');
@@ -846,6 +873,163 @@
     });
   }
 
+  /* ------------------------------------------------------------------ 卡牌录入页（联动分类 / 卡图 / 拓展包） */
+
+  function setupCardEditor(form) {
+    var skillRows = setupSkillRows(form);
+
+    var categoryData = { tree: {}, triples: [] };
+    var holder = document.getElementById("card-category-data");
+    if (holder) {
+      try {
+        categoryData = JSON.parse(holder.textContent || "{}") || categoryData;
+      } catch (error) {
+        categoryData = { tree: {}, triples: [] };
+      }
+    }
+    var tree = categoryData.tree || {};
+    var triples = categoryData.triples || [];
+
+    function uniquePush(list, value) {
+      if (value && list.indexOf(value) === -1) list.push(value);
+    }
+
+    // 一级：分类树的一级键 ∪ 现有卡牌数据里出现过的一级值
+    function level1Options() {
+      var out = Object.keys(tree);
+      triples.forEach(function (triple) { uniquePush(out, triple[0]); });
+      return out;
+    }
+
+    // 二级：由一级决定（分类树 + 现有数据里同一级下出现过的二级值）
+    function level2Options(category1) {
+      var out = [];
+      if (category1 && tree[category1]) {
+        Object.keys(tree[category1]).forEach(function (value) { uniquePush(out, value); });
+      }
+      triples.forEach(function (triple) {
+        if (!category1 || triple[0] === category1) uniquePush(out, triple[1]);
+      });
+      return out;
+    }
+
+    // 三级：由一 / 二级共同决定。
+    // 基本牌在树里只有 杀 / 闪 / 桃 / 酒 四个牌族，所以候选里不会出现「火杀」（那是 name）。
+    function level3Options(category1, category2) {
+      var out = [];
+      if (category1 && tree[category1]) {
+        if (category2 && tree[category1][category2]) {
+          tree[category1][category2].forEach(function (value) { uniquePush(out, value); });
+        } else if (!category2) {
+          Object.keys(tree[category1]).forEach(function (key) {
+            (tree[category1][key] || []).forEach(function (value) { uniquePush(out, value); });
+          });
+        }
+      }
+      triples.forEach(function (triple) {
+        if ((!category1 || triple[0] === category1) && (!category2 || triple[1] === category2)) {
+          uniquePush(out, triple[2]);
+        }
+      });
+      return out;
+    }
+
+    // 可输入可选的联动下拉（候选是静态算出来的，每次打开/输入时按当前上级值重算）
+    function staticCombo(name, optionsFn) {
+      var root = form.querySelector('[data-combo="' + name + '"]');
+      if (!root) return null;
+      return new SearchCombo(root, {
+        freeText: true,
+        fetch: function (query) {
+          return Promise.resolve(
+            optionsFn()
+              .filter(function (value) { return !query || value.indexOf(query) !== -1; })
+              .map(function (value) { return { value: value, label: value }; })
+          );
+        },
+        onPick: function (item, combo) {
+          combo.setValue(item.value, item.value);
+          if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+        },
+      });
+    }
+
+    var combo1 = staticCombo("category_1", level1Options);
+    var combo2 = staticCombo("category_2", function () {
+      return level2Options(combo1 ? combo1.hidden.value : "");
+    });
+    staticCombo("category_3", function () {
+      var category1 = combo1 ? combo1.hidden.value : "";
+      var category2 = combo2 ? combo2.hidden.value : "";
+      return level3Options(category1, category2);
+    });
+
+    /* ---- 所属拓展包：候选 = 所有产品的 card_sets ∪ 已有卡牌的 card_set */
+    var setRoot = form.querySelector('[data-combo="card_set"]');
+    if (setRoot) {
+      new SearchCombo(setRoot, {
+        freeText: true,
+        fetch: function (query) {
+          return jsonFetch("/api/suggest?field=card_set&q=" + encodeURIComponent(query))
+            .then(function (items) {
+              return items.map(function (item) {
+                return { value: item.value, label: item.value, sub: "已用 " + item.count + " 次" };
+              });
+            });
+        },
+        onPick: function (item, combo) {
+          combo.setValue(item.value, item.value);
+          if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+        },
+      });
+    }
+
+    /* ---- 卡图：候选 = data/card_images/ 下真实存在的文件名（可以留空 = 卡图待补） */
+    var imageRoot = form.querySelector('[data-combo="image"]');
+    if (imageRoot) {
+      new SearchCombo(imageRoot, {
+        freeText: true,
+        fetch: function (query) {
+          return jsonFetch("/api/card-images?q=" + encodeURIComponent(query))
+            .then(function (items) {
+              return items.map(function (item) {
+                return { value: item.value, label: item.value, sub: item.sub || "data/card_images/" };
+              });
+            });
+        },
+        onPick: function (item, combo) {
+          combo.setValue(item.value, item.value);
+          if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+        },
+      });
+    }
+
+    // 自由输入的组合框：提交前把输入框里的文本同步进 hidden，
+    // 避免「在自由文本框里打了字但没在下拉里点选」导致字段丢失。
+    var freeTextFields = ["category_1", "category_2", "category_3", "card_set", "image"];
+    form.addEventListener("submit", function () {
+      freeTextFields.forEach(function (name) {
+        var root = form.querySelector('[data-combo="' + name + '"]');
+        if (!root) return;
+        var input = root.querySelector(".combo-input");
+        var hidden = root.querySelector(".combo-value");
+        if (input && hidden) hidden.value = input.value.trim();
+      });
+    });
+
+    /* ---- 草稿（sessionStorage）+ Ctrl/⌘+S */
+    setupDraft(form, function (state) {
+      if (!skillRows) return;
+      if (state.skill_count != null) {
+        var total = Math.max(0, Math.min(50, Number(state.skill_count) || 0));
+        if (total !== skillRows.rowsBox.querySelectorAll(".skill-row").length) {
+          skillRows.rebuildRows(total);
+        }
+      }
+      skillRows.reindex();
+    });
+  }
+
   /* ------------------------------------------------------------------ 草稿 + 快捷键 */
 
   function setupDraft(form, beforeApply) {
@@ -962,6 +1146,10 @@
     var generalForm = document.querySelector('form[data-editor="general"]');
     if (generalForm) {
       setupGeneralEditor(generalForm);
+    }
+    var cardForm = document.querySelector('form[data-editor="card"]');
+    if (cardForm) {
+      setupCardEditor(cardForm);
     }
   });
 })();

@@ -18,13 +18,13 @@ def test_real_data_dir_loads(data_dir: Path) -> None:
         "skill",
         "skill_version",
         "card",
-        "card_printing",
         "faq",
         "keyword",
         "timing",
     } <= kinds
-    # GeneralSet 实体与目录已删除
+    # GeneralSet 实体与目录已删除；CardPrinting 层也整体删除了
     assert "general_set" not in kinds
+    assert "card_printing" not in kinds
 
 
 def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
@@ -41,12 +41,16 @@ def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
 
 
 def test_unknown_directories_are_ignored(tmp_path: Path) -> None:
-    """只认 KIND_BY_NAME 里的目录名；删掉的 general_sets 等目录即使存在也不装载。"""
+    """只认 KINDS 里的目录名；删掉的 general_sets / card_printings 目录即使存在也不装载。"""
     data = tmp_path / "data"
     (data / "products").mkdir(parents=True)
     (data / "products" / "a.yaml").write_text("id: product_a\n", encoding="utf-8")
     (data / "general_sets").mkdir()
     (data / "general_sets" / "gs.yaml").write_text("id: gs_x\nname: X\n", encoding="utf-8")
+    (data / "card_printings").mkdir()
+    (data / "card_printings" / "p.yaml").write_text(
+        "id: card_x_a\ncard_id: card_x\n", encoding="utf-8"
+    )
     (data / "nonsense").mkdir()
     (data / "nonsense" / "y.yaml").write_text("id: y\n", encoding="utf-8")
 

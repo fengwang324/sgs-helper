@@ -1,4 +1,12 @@
 id: card_hu_xin_jing
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 防具
 name: 护心镜
-card_type: equipment
-subtype: 防具
+image: card_hu_xin_jing_qlhd_club_2.jpg
+card_set: null
+effect:
+  text: 当你受到大于等于你体力值的伤害时，你可以将装备区里的【护心镜】放入弃牌堆防止此伤害。
+  skills: []
+verification_status: unverified
+review_note: ''

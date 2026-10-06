@@ -17,12 +17,10 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..constants import (
-    CARD_TYPE_LABELS,
     GENDER_LABELS,
     ID_PATTERN,
     MODE_LABELS,
     SOURCE_LABELS,
-    SUIT_LABELS,
     VERIFICATION_LABELS,
 )
 from ..schema import MODEL_BY_KIND
@@ -33,13 +31,12 @@ from .yaml_writer import SOURCE_KEY_ORDER
 FIELD_LABELS: dict[str, str] = {
     "id": "记录 ID",
     "name": "名称",
-    "name_printed": "卡面印刷名",
     "review_note": "复核备注",
     "mode": "模式",
     "verification_status": "核验状态",
     "release_year": "发行年份",
     "general_sets": "武将牌系列",
-    "card_sets": "游戏牌牌堆",
+    "card_sets": "游戏牌拓展包",
     "faction": "势力",
     "hp": "勾玉（体力）",
     "gender": "性别",
@@ -54,16 +51,12 @@ FIELD_LABELS: dict[str, str] = {
     "text": "规则文本",
     "version_label": "版本标签",
     "previous_version_id": "前一版本",
-    "card_type": "卡牌类型",
-    "subtype": "子类型",
-    "card_id": "所属卡牌定义",
-    "card_set": "牌堆/套牌",
-    "suit": "花色",
-    "rank": "点数",
-    "quantity": "数量",
-    "printed_text": "卡面文本（逐字）",
-    "bottom_right_mark": "右下角角标",
-    "card_number": "卡牌编号",
+    "category_1": "一级分类",
+    "category_2": "二级分类",
+    "category_3": "三级分类",
+    "image": "卡图",
+    "card_set": "所属拓展包",
+    "effect": "效果",
     "question": "问题",
     "answer": "回答/裁定",
     "definition": "定义",
@@ -79,16 +72,18 @@ FIELD_HELP: dict[str, str] = {
     "mode": "common 表示跨模式通用。",
     "verification_status": "unverified 未核验 / community 社区资料 / official 官方依据 / physical_verified 实体卡已核验 / conflict 来源冲突。",
     "review_note": "需要人工对照卡图 / 实物复核的异常（OCR 误读、疑似错字…）。正常记录留空。",
+    "category_1": "一级分类（游戏牌 / 指示物…）；用卡牌录入页的联动下拉选择，也可以自己输入新值。",
+    "category_2": "二级分类（基本牌 / 锦囊牌 / 装备牌…）。",
+    "category_3": "三级分类；基本牌这里只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 name。",
+    "image": "data/card_images/ 下的文件名；暂时没有卡图就留空。",
+    "card_set": "所属拓展包（九变篇、君临天下·权…）；候选来自所有产品的 card_sets，允许留空。",
     "text": "技能规则原文。更新技能请新增一条 SkillVersion，不要改旧版本。",
-    "printed_text": "照抄卡面文字，不要改写、不要补全。",
-    "bottom_right_mark": "单独保存右下角角标，不要写进复核备注。",
-    "rank": "支持 1-13，也接受 A/J/Q/K 写法。",
     "source.reference": "如果是 URL，页面上可以直接点击打开。",
     "previous_version_id": "指向被本版本取代的旧版本；旧版本保持原样。",
     "product_id": "填 null 或不填表示不绑定具体产品。",
     "general_set": "武将牌系列 / 武将牌组名称；候选来自所选产品的 general_sets，也可以直接输入新值。",
     "general_sets": "一行一项：这个产品里的武将牌系列（国战标准、势备篇…）。",
-    "card_sets": "一行一项：这个产品里的游戏牌牌堆（标准牌堆、九变牌堆…）。",
+    "card_sets": "一行一项：这个产品里的游戏牌拓展包（九变篇、君主游戏牌…）；它同时是卡牌 card_set 的候选来源。",
     "title": "武将卡上的称号，例如“独眼的罗刹”。",
     "general_number": "实体卡上的编号，例如 WEI001 / shu-01；和内部 ID 是两回事。",
     "variant": "这个版本叫什么：标准版 / 国战版 / 界限突破 / OL / 手杀 / 其他。",
@@ -101,7 +96,6 @@ FIELD_HELP: dict[str, str] = {
 TEXTAREA_FIELDS: frozenset[str] = frozenset(
     {
         "text",
-        "printed_text",
         "question",
         "answer",
         "definition",
@@ -114,8 +108,6 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
 ENUM_LABELS: dict[str, dict[str, str]] = {
     "mode": MODE_LABELS,
     "verification_status": VERIFICATION_LABELS,
-    "suit": SUIT_LABELS,
-    "card_type": CARD_TYPE_LABELS,
     "gender": GENDER_LABELS,
     "source.type": SOURCE_LABELS,
 }
@@ -129,8 +121,6 @@ REFERENCE_TARGETS: dict[tuple[str, str], str] = {
 REFERENCE_TARGET_BY_FIELD: dict[str, str] = {
     "product_id": "product",
     "skill_id": "skill",
-    "skill_ids": "skill",
-    "card_id": "card",
     "previous_version_id": "skill_version",
 }
 

@@ -1,4 +1,12 @@
 id: card_dun_jia_tian_shu
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 宝物
 name: 遁甲天书
-card_type: equipment
-subtype: 宝物
+image: card_dun_jia_tian_shu_qlhd_spade_3.jpg
+card_set: 九变篇
+effect:
+  text: ◆出牌阶段限两次，你可以变更副将。
+  skills: []
+verification_status: unverified
+review_note: ''

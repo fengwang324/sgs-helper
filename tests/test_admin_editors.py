@@ -19,7 +19,7 @@
 15. 批量里任何一条校验失败，一个 YAML 都不落盘
 16. rebuild 失败时全部回滚
 17. `_base_sha` 并发保护继续有效
-18. 删除 Skill / SkillVersion 时新的 GeneralSkillRef 引用保护正确工作
+18. 删除 Skill / SkillVersion 时新的 SkillRef（武将版本 + 卡牌 effect.skills）引用保护正确工作
 
 全部在 tmp_path 的副本上跑，绝不修改仓库里的 data/。
 """
@@ -120,7 +120,7 @@ def general_payload(app, **overrides) -> dict:
 
 
 def product_payload(app, **overrides) -> dict:
-    """产品精简表单：只有 名称 / 年份 / 模式 / 武将牌系列 / 游戏牌牌堆。"""
+    """产品精简表单：只有 名称 / 年份 / 模式 / 武将牌系列 / 游戏牌拓展包。"""
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
@@ -302,7 +302,7 @@ def test_product_minimal_form_saves_sets(client: TestClient, workdir: Path) -> N
 
 
 def test_product_edit_writes_only_model_fields(client: TestClient, workdir: Path, store) -> None:
-    """5) 编辑旧产品：只写 名称/年份/模式/武将牌系列/游戏牌牌堆，被删字段不会回来。"""
+    """5) 编辑旧产品：只写 名称/年份/模式/武将牌系列/游戏牌拓展包，被删字段不会回来。"""
     path = workdir / "data" / "products" / "qlhd.yaml"
     before = load_yaml(path)
     general_sets = list(before["general_sets"])
@@ -797,6 +797,46 @@ def test_delete_unpinned_skill_version_allowed(client: TestClient, store) -> Non
     assert store.entity("skill_version", "skill_ji_zhi_guozhan_v9") is None
 
 
+def test_delete_skill_and_version_blocked_by_card_effect_ref(store) -> None:
+    """18) 卡牌的 ``effect.skills`` 也是引用：定澜夜明珠引用 skill_zhi_heng 的那一版。
+
+    卡牌与武将共用同一个 ``SkillRef`` 形状，所以 REFERENCE_FIELDS 里的
+    ``card.effect.skills[].skill_id`` / ``...version_id`` 必须同时驱动删除保护。
+    """
+    card_id = "card_ding_lan_ye_ming_zhu"
+    skill_id = "skill_zhi_heng"
+    version_id = "skill_zhi_heng_guozhan_qlhd_v1"
+    card = store.entity("card", card_id)
+    assert card is not None
+    assert [(ref.skill_id, ref.version_id) for ref in card.effect.skills] == [
+        (skill_id, version_id)
+    ]
+
+    references = store.reverse_refs("skill", skill_id)
+    assert any(
+        ref["kind"] == "card"
+        and ref["id"] == card_id
+        and ref["field"] == "effect.skills[0].skill_id"
+        for ref in references
+    )
+    outcome = store.delete("skill", skill_id)
+    assert outcome.ok is False
+    assert outcome.blocked is True
+    assert any(ref["kind"] == "card" for ref in outcome.references)
+
+    version_refs = store.reverse_refs("skill_version", version_id)
+    assert any(
+        ref["kind"] == "card"
+        and ref["id"] == card_id
+        and ref["field"] == "effect.skills[0].version_id"
+        for ref in version_refs
+    )
+    outcome = store.delete("skill_version", version_id)
+    assert outcome.ok is False
+    assert outcome.blocked is True
+    assert any(ref["kind"] == "card" for ref in outcome.references)
+
+
 # ---------------------------------------------------------------- 录入辅助 API
 
 
@@ -886,7 +926,7 @@ def test_product_detail_shows_sets(client: TestClient) -> None:
     body = client.get(f"/view/product/{PRODUCT_ID}").text
     assert "武将牌系列" in body
     assert "九变篇" in body
-    assert "游戏牌牌堆" in body
+    assert "游戏牌拓展包" in body
     assert "君主游戏牌" in body
 
 

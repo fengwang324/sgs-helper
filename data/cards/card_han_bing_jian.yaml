@@ -1,4 +1,12 @@
 id: card_han_bing_jian
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 武器
 name: 寒冰剑
-card_type: equipment
-subtype: 武器
+image: card_han_bing_jian_qlhd_spade_2.jpg
+card_set: null
+effect:
+  text: 当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，改为依次弃置其两张牌。
+  skills: []
+verification_status: unverified
+review_note: ''

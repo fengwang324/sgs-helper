@@ -1,4 +1,12 @@
 id: card_de_lu
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 坐骑
 name: 的卢
-card_type: equipment
-subtype: 坐骑
+image: card_de_lu_qlhd_club_5.jpg
+card_set: null
+effect:
+  text: '+1'
+  skills: []
+verification_status: unverified
+review_note: ''
