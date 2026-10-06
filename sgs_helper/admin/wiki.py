@@ -49,7 +49,7 @@ WIKI_SECTIONS: tuple[tuple[str, str, str], ...] = (
 #: 每个入口的一段说明（列表页副标题）
 SECTION_LEAD: dict[str, str] = {
     "home": "浏览、检索并就地维护资料；数据以 data/ 下的 YAML 为唯一权威源",
-    "generals": "同一个武将的不同玩法是不同「版本」，技能可点进详情",
+    "generals": "一个武将 = 名字 + 称号；点进去就是那一张卡，技能可点进详情",
     "skills": "技能本体与各版本文本；可回跳所属武将",
     "cards": "按「这张卡是什么」的三级分类归集，与来自哪个拓展包相互独立",
     "markers": "军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记",
@@ -683,9 +683,6 @@ class WikiRoutes:
             "skill_rows": skill_rows,
             "version_rows": [],
             "owners": [],
-            "variant_rows": [
-                {"variant": v["variant"], "summary": _variant_summary(v)} for v in variants
-            ],
             "refs": refs,
             "effect_skill_rows": [],
             "faqs": live.related_faqs("general", general.id, limit=FAQ_LIMIT),
@@ -750,7 +747,6 @@ class WikiRoutes:
             "skill_rows": [],
             "version_rows": rows,
             "owners": owners,
-            "variant_rows": [],
             "refs": [],
             "effect_skill_rows": [],
             "faqs": live.related_faqs("skill", skill.id, limit=FAQ_LIMIT),
@@ -812,7 +808,6 @@ class WikiRoutes:
             "skill_rows": [],
             "version_rows": [],
             "owners": [],
-            "variant_rows": [],
             "refs": [],
             "effect_skill_rows": effect_skill_rows,
             "faqs": live.related_faqs("card", card.id, limit=FAQ_LIMIT),
@@ -888,7 +883,6 @@ class WikiRoutes:
             "skill_rows": [],
             "version_rows": [],
             "owners": [],
-            "variant_rows": [],
             "refs": groups,
             "effect_skill_rows": [],
             "faqs": None,  # FAQ 详情页不需要「相关 FAQ」（自己就是 FAQ）

@@ -104,21 +104,6 @@
 </div>
 {% endif %}
 
-{# ---------------------------------------------------------------- 变体（武将详情） #}
-{% if detail.variant_rows %}
-<div class="wiki-section">
-  <div class="wiki-section__head"><h2 class="wiki-h2">版本 / 变体</h2><span class="wiki-card__path">{{ detail.variant_rows | length }} 个</span></div>
-  <div class="wiki-fields">
-    {% for v in detail.variant_rows %}
-      <div class="wiki-field">
-        <div class="wiki-field__k">{{ v.variant }}</div>
-        <div class="wiki-field__v">{{ v.summary }}</div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
 {# ---------------------------------------------------------------- 关联技能（卡牌详情） #}
 {% if detail.effect_skill_rows %}
 <div class="wiki-section">
