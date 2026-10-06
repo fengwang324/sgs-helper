@@ -1,0 +1,19 @@
+id: variant_g_wei_001
+general_id: general_cao_cao
+variant: 群狼环鼎
+title: 魏武帝
+general_number: G.WEI 001
+illustrator: 青骑士
+image: g_wei_001.jpg
+mode: guozhan
+faction: 魏
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe:
+  - 典韦
+  - 许褚
+skills:
+  - skill_id: skill_jian_xiong
+    version_id: skill_jian_xiong_guozhan_qlhd_v1

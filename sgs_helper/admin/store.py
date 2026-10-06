@@ -2075,6 +2075,38 @@ def make_entity_id(prefix: str, name: str, existing: set[str]) -> str:
     return candidate
 
 
+def slug_card_number(number: str | None) -> str:
+    """卡面编号 → id / 卡图名的片段。
+
+    规则：小写，**非字母数字一律换成下划线**，首尾下划线去掉。
+    例：``G.WEI 001`` → ``g_wei_001``；``G.WEI/SHU 079`` → ``g_wei_shu_079``；
+    ``G-JIN 047`` → ``g_jin_047``（连字符与点号结果一致）。
+
+    卡面编号在现有数据里**唯一**，所以它同时决定：
+    武将版本的内部 id（``variant_<slug>``）与卡图文件名（``<slug>.jpg``）。
+    """
+    return re.sub(r"[^a-z0-9]+", "_", (number or "").lower()).strip("_")
+
+
+def make_variant_id(number: str | None, existing: set[str]) -> str:
+    """由卡面编号生成武将版本的内部 id：``variant_<slug>``。
+
+    编号为空时退回 ``variant_n<hash>``，保证仍然能建记录。
+    """
+    slug = slug_card_number(number)
+    if not slug:
+        token = hashlib.sha1((number or "").encode("utf-8")).hexdigest()[:8]
+        slug = f"n{token}"
+    candidate = f"variant_{slug}"
+    if len(candidate) < 2:  # pragma: no cover
+        candidate = "variant_n"
+    index = 2
+    while candidate in existing:
+        candidate = f"variant_{slug}_{index}"
+        index += 1
+    return candidate
+
+
 def make_version_id(skill_id: str, mode: str | None, existing: set[str]) -> str:
     """生成 SkillVersion 的 id：``<skill_id>_<mode>_vN``，N 取第一个没被占用的序号。"""
     base = f"{skill_id}_{mode or 'common'}"

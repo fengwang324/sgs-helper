@@ -1,0 +1,19 @@
+id: variant_g_jin_001
+general_id: general_si_ma_yi_jin
+variant: 群狼环鼎
+title: 应期佐命
+general_number: G.JIN 001
+illustrator: 小罗没想好
+image: g_jin_001.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+skills:
+  - skill_id: skill_ying_shi
+    version_id: skill_ying_shi_guozhan_qlhd_v1
+  - skill_id: skill_shun_fu
+    version_id: skill_shun_fu_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「应期佐命」；三国杀 WIKI 该武将称号为「狼顾之鬼」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

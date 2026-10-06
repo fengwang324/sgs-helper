@@ -1,0 +1,16 @@
+id: variant_g_jin_045
+general_id: general_si_ma_yi_2
+variant: 群狼环鼎
+title: 孤擎页
+general_number: G.JIN 045
+illustrator: 张油菜
+image: g_jin_045.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_feng_guo
+    version_id: skill_feng_guo_guozhan_qlhd_v1

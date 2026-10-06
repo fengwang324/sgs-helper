@@ -1,0 +1,20 @@
+id: variant_g_jin_040
+general_id: general_bai_fu_ren
+variant: 群狼环鼎
+title: 玲珑心窍
+general_number: G.JIN 040
+illustrator: 小罗没想好
+image: g_jin_040.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_xia_ce
+    version_id: skill_xia_ce_guozhan_qlhd_v1
+  - skill_id: skill_li_meng
+    version_id: skill_li_meng_guozhan_qlhd_v1
+zhulianbihe:
+  - 司马懿

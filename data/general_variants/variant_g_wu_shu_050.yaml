@@ -1,0 +1,20 @@
+id: variant_g_wu_shu_050
+general_id: general_pan_jun
+variant: 群狼环鼎
+title: 逆鳞之砥
+general_number: G.WU&SHU 050
+illustrator: Domi
+image: g_wu_shu_050.jpg
+mode: guozhan
+faction: 吴/蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe: []
+skills:
+  - skill_id: skill_cong_cha
+    version_id: skill_cong_cha_guozhan_qlhd_v1
+  - skill_id: skill_gong_qing
+    version_id: skill_gong_qing_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「逆鳞之砥」；三国杀 WIKI 该武将称号为「方严疾恶」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

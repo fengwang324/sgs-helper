@@ -30,7 +30,13 @@ from ..constants import (
 )
 from ..schema import MODEL_BY_KIND
 from .forms import FieldError
-from .store import Change, make_entity_id, make_version_id
+from .store import (
+    Change,
+    make_entity_id,
+    make_variant_id,
+    make_version_id,
+    slug_card_number,
+)
 
 #: 勾玉（体力）下拉的取值
 HP_CHOICES: tuple[str, ...] = ("1", "1.5", "2", "2.5", "3", "4", "5")
@@ -516,17 +522,35 @@ def parse_general_form(
     if "review_note" in form:
         variant_data["review_note"] = _text(form, "review_note")
 
-    # 版本 id：已有版本沿用；新建时生成
-    variant_id = ""
+    # 版本 id 与卡图名都由**卡面编号**决定：
+    #   编号 G.WEI 001 → id = variant_g_wei_001，卡图 = g_wei_001.jpg
+    # 这样「一个武将 = 名字 + 称号」唯一之后，内部 id 与卡图名不再需要手工维护，
+    # 改编号时两者会一起跟着改。
+    card_number = variant_data.get("general_number")
+    number_slug = slug_card_number(card_number)
+    existing_variant_ids = set(store.bundle.ids("general_variant"))
     if variant is not None:
-        variant_id = variant.id
+        existing_variant_ids.discard(variant.id)  # 自己的 id 不算占用
+
+    if number_slug:
+        variant_id = make_variant_id(card_number, existing_variant_ids)
+        image_name = f"{number_slug}.jpg"
+        current_image = (getattr(variant, "image", "") or "").strip() if variant else ""
+        # 只在编号变了、且旧图确实存在时才跟着改，避免把手工挑的图改掉
+        if "image" not in form and current_image and current_image != image_name:
+            if (store.data_dir / "card_images" / current_image).exists():
+                variant_data["image"] = image_name
     else:
-        raw_variant_id = _text(form, "variant_id")
-        variant_id = raw_variant_id or make_entity_id(
-            "variant_",
-            f"{general_data.get('name') or 'general'} {variant_data.get('variant') or ''}",
-            store.bundle.ids("general_variant"),
-        )
+        variant_id = ""
+        if variant is not None:
+            variant_id = variant.id
+        else:
+            raw_variant_id = _text(form, "variant_id")
+            variant_id = raw_variant_id or make_entity_id(
+                "variant_",
+                f"{general_data.get('name') or 'general'} {variant_data.get('variant') or ''}",
+                existing_variant_ids,
+            )
     variant_data["id"] = variant_id
 
     # ---------------------------------------------------------------- 技能行

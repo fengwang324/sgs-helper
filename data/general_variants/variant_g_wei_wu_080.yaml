@@ -1,0 +1,18 @@
+id: variant_g_wei_wu_080
+general_id: general_wen_qin
+variant: 群狼环鼎
+title: 勇而无算
+general_number: G.WEI&WU 080
+illustrator: 匠人绘-零二
+image: g_wei_wu_080.jpg
+mode: guozhan
+faction: 魏/吴
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe: []
+skills:
+  - skill_id: skill_jin_fa
+    version_id: skill_jin_fa_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「勇而无算」；三国杀 WIKI 该武将称号为「企踵西望」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

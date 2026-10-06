@@ -175,11 +175,13 @@ class WikiRoutes:
                     tags.append({"text": first.faction, "class": "wiki-tag--faction"})
                 if getattr(first, "hp", None) is not None:
                     tags.append({"text": f"{_hp(first.hp)} 体力", "class": ""})
-            if len(variants) > 1:
-                tags.append({"text": f"{len(variants)} 个版本", "class": ""})
-            subtitle = "、".join(sorted({v.variant for v in variants})) if variants else "暂无版本"
-            if variants and getattr(variants[0], "title", ""):
-                excerpt = f"称号：{variants[0].title}"
+                # 一个武将 = 名字 + 称号（唯一），版本靠卡面编号区分
+                if getattr(first, "general_number", ""):
+                    tags.append({"text": f"编号 {first.general_number}", "class": ""})
+            # 副标题：称号（武将的唯一性由 名字+称号 决定，所以称号比版本标签有用）
+            subtitle = (getattr(variants[0], "title", "") if variants else "") or "—"
+            if variants and getattr(variants[0], "general_number", ""):
+                subtitle = f"{subtitle} · {variants[0].general_number}"
 
         elif kind == "skill":
             versions = sorted(
@@ -928,16 +930,25 @@ def _hp(value: Any) -> str:
 
 
 def _variant_summary(row: dict) -> str:
+    """武将详情头部的副标题。
+
+    「版本标签」已统一成产品名（群狼环鼎），不再有区分度；
+    真正区分一张卡的是**卡面编号**，所以这里显示 称号 + 势力 + 体力 + 编号 + 系列。
+    """
     variant = row["entity"]
     bits = [
-        MODE_LABELS.get(getattr(variant, "mode", "") or "", getattr(variant, "mode", "") or ""),
+        getattr(variant, "title", "") or "",
         getattr(variant, "faction", "") or "",
         (
             f"{_hp(getattr(variant, 'hp', None))} 体力"
             if getattr(variant, "hp", None) is not None
             else ""
         ),
-        getattr(variant, "title", "") or "",
+        (
+            f"编号 {variant.general_number}"
+            if getattr(variant, "general_number", "")
+            else ""
+        ),
         row.get("set_display") or "",
         row.get("product_name") or "",
     ]

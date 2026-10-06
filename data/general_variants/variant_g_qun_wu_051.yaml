@@ -1,0 +1,20 @@
+id: variant_g_qun_wu_051
+general_id: general_shi_xie
+variant: 群狼环鼎
+title: 百粤灵欹
+general_number: G.QUN&WU 051
+illustrator: 磐蒲
+image: g_qun_wu_051.jpg
+mode: guozhan
+faction: 群/吴
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_bi_luan
+    version_id: skill_bi_luan_guozhan_qlhd_v1
+  - skill_id: skill_li_xia
+    version_id: skill_li_xia_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「百粤灵欹」；三国杀 WIKI 该武将称号为「雄长百越」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

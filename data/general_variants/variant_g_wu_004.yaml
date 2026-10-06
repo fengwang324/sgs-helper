@@ -1,0 +1,17 @@
+id: variant_g_wu_004
+general_id: general_huang_gai
+variant: 群狼环鼎
+title: 轻身为国
+general_number: G.WU 004
+illustrator: G.G.G
+image: g_wu_004.jpg
+mode: guozhan
+faction: 吴
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_ku_rou
+    version_id: skill_ku_rou_guozhan_qlhd_v1

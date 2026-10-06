@@ -1,0 +1,19 @@
+id: variant_g_jin_022
+general_id: general_yang_hu_jin
+variant: 群狼环鼎
+title: 执德清劭
+general_number: G.JIN 022
+illustrator: 匠人绘
+image: g_jin_022.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+skills:
+  - skill_id: skill_huai_yuan
+    version_id: skill_huai_yuan_guozhan_qlhd_v1
+  - skill_id: skill_fu_shou
+    version_id: skill_fu_shou_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「执德劭」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

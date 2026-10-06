@@ -1,0 +1,20 @@
+id: variant_g_jin_017
+general_id: general_yang_hui_yu
+variant: 群狼环鼎
+title: 克明礼都羊征瑜
+general_number: G.JIN 017
+illustrator: Jzeo
+image: g_jin_017.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_ci_wei
+    version_id: skill_ci_wei_guozhan_qlhd_v1
+  - skill_id: skill_cai_yuan
+    version_id: skill_cai_yuan_guozhan_qlhd_v1
+zhulianbihe:
+  - 司马师

@@ -1,0 +1,20 @@
+id: variant_g_wei_086
+general_id: general_dong_zhao
+variant: 群狼环鼎
+title: 移尊易鼎
+general_number: G.WEI 086
+illustrator: 小牛
+image: g_wei_086.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_quan_jin
+    version_id: skill_quan_jin_guozhan_qlhd_v1
+  - skill_id: skill_nad983b39
+    version_id: skill_nad983b39_guozhan_v1
+review_note: Paddle 读出的称号为「郁尊易鼎」；三国杀 WIKI 该武将称号为「筹定魏勋」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

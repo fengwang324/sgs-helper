@@ -1,0 +1,20 @@
+id: variant_g_qun_050
+general_id: general_yan_bai_hu
+variant: 群狼环鼎
+title: 豺牙落涧
+general_number: G.QUN 050
+illustrator: YanBai
+image: g_qun_050.jpg
+mode: guozhan
+faction: 群
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 不臣篇·上
+zhulianbihe: []
+skills:
+  - skill_id: skill_zhi_dao
+    version_id: skill_zhi_dao_guozhan_qlhd_v1
+  - skill_id: skill_ji_li
+    version_id: skill_ji_li_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「赫牙福涧」；三国杀 WIKI 该武将称号为「豺牙落涧」（逐位相同 2 字），疑似 OCR 误读，请对照卡图核验

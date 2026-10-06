@@ -1,0 +1,18 @@
+id: variant_g_jin_048
+general_id: general_si_ma_yue
+variant: 群狼环鼎
+title: 渊噬簧
+general_number: G.JIN 048
+illustrator: 城与橙与程
+image: g_jin_048.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_hu_luan
+    version_id: skill_hu_luan_guozhan_qlhd_v1
+  - skill_id: skill_yin_fu
+    version_id: skill_yin_fu_guozhan_qlhd_v1

@@ -1,0 +1,20 @@
+id: variant_g_shu_086
+general_id: general_liu_ba
+variant: 群狼环鼎
+title: 清河一鲲
+general_number: G.SHU 086
+illustrator: Mr_Sleeping
+image: g_shu_086.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe: []
+skills:
+  - skill_id: skill_tong_du
+    version_id: skill_tong_du_guozhan_qlhd_v1
+  - skill_id: skill_qing_yin
+    version_id: skill_qing_yin_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「御河一」；三国杀 WIKI 该武将称号为「清尚之节」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

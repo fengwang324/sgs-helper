@@ -1,0 +1,19 @@
+id: variant_g_jin_003
+general_id: general_si_ma_shi
+variant: 群狼环鼎
+title: 睚督顺目
+general_number: G.JIN 003
+illustrator: 拉布拉卡
+image: g_jin_003.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_yi_mie
+    version_id: skill_yi_mie_guozhan_qlhd_v1
+  - skill_id: skill_rong_lve
+    version_id: skill_rong_lve_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「睚督顺目」；三国杀 WIKI 该武将称号为「唯几成务」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

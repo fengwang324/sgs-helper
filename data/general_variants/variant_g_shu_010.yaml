@@ -1,0 +1,20 @@
+id: variant_g_shu_010
+general_id: general_pang_tong
+variant: 群狼环鼎
+title: 凤雏
+general_number: G.SHU 010
+illustrator: KayaK
+image: g_shu_010.jpg
+mode: guozhan
+faction: 蜀
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_lian_huan
+    version_id: skill_lian_huan_guozhan_qlhd_v1
+  - skill_id: skill_nie_pan
+    version_id: skill_nie_pan_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「圆维」；三国杀 WIKI 该武将称号为「凤雏」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

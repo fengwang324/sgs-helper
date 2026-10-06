@@ -1,0 +1,19 @@
+id: variant_g_wu_015
+general_id: general_zhang_zhao_zhang_hong
+variant: 群狼环鼎
+title: 经天纬地
+general_number: G.WU 015
+illustrator: 废柴男
+image: g_wu_015.jpg
+mode: guozhan
+faction: 吴
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe: []
+skills:
+  - skill_id: skill_zhi_jian
+    version_id: skill_zhi_jian_guozhan_qlhd_v1
+  - skill_id: skill_gu_zheng
+    version_id: skill_gu_zheng_guozhan_qlhd_v1

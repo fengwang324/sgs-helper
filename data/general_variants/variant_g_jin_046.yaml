@@ -1,0 +1,16 @@
+id: variant_g_jin_046
+general_id: general_si_ma_ying
+variant: 群狼环鼎
+title: 精关司马领
+general_number: G.JIN 046
+illustrator: 张油菜
+image: g_jin_046.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_cheng_guan
+    version_id: skill_cheng_guan_guozhan_qlhd_v1

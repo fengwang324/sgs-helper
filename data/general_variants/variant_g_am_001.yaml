@@ -1,0 +1,19 @@
+id: variant_g_am_001
+general_id: general_si_ma_zhao_ye_xin_jia
+variant: 群狼环鼎
+title: 嘲风开天
+general_number: G.AM 001
+illustrator: 凝聚永恒
+image: g_am_001.jpg
+mode: guozhan
+faction: 野心家
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: 不臣篇·下
+zhulianbihe: []
+skills:
+  - skill_id: skill_su_zhi
+    version_id: skill_su_zhi_guozhan_qlhd_v1
+  - skill_id: skill_zhao_xin
+    version_id: skill_zhao_xin_guozhan_qlhd_v1

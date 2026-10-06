@@ -1,0 +1,23 @@
+id: variant_g_em_005
+general_id: general_si_ma_yi_jun_zhu
+variant: 群狼环鼎
+title: 时代的归墟
+general_number: G.EM 005
+illustrator: 小罗没想好
+image: g_em_005.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 国战标准
+zhulianbihe:
+  - 晋势力武将
+skills:
+  - skill_id: skill_jia_ping
+    version_id: skill_jia_ping_guozhan_qlhd_v1
+  - skill_id: skill_gui_kuang
+    version_id: skill_gui_kuang_guozhan_qlhd_v1
+  - skill_id: skill_shu_juan
+    version_id: skill_shu_juan_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「时代的归墟」；三国杀 WIKI 该武将称号为「狼顾之鬼」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

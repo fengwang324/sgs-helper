@@ -1,0 +1,19 @@
+id: variant_g_wu_023
+general_id: general_chen_wu_dong_xi
+variant: 群狼环鼎
+title: 壮怀激烈
+general_number: G.WU 023
+illustrator: 地狱许
+image: g_wu_023.jpg
+mode: guozhan
+faction: 吴
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·势
+zhulianbihe: []
+skills:
+  - skill_id: skill_n5bdf2085
+    version_id: skill_n5bdf2085_guozhan_v1
+  - skill_id: skill_fen_ming
+    version_id: skill_fen_ming_guozhan_qlhd_v1

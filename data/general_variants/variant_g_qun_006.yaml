@@ -1,0 +1,19 @@
+id: variant_g_qun_006
+general_id: general_dong_zhuo
+variant: 群狼环鼎
+title: 魔王
+general_number: G.QUN 006
+illustrator: 巴萨小马
+image: g_qun_006.jpg
+mode: guozhan
+faction: 群
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·势
+zhulianbihe: []
+skills:
+  - skill_id: skill_heng_zheng
+    version_id: skill_heng_zheng_guozhan_qlhd_v1
+  - skill_id: skill_bao_ling
+    version_id: skill_bao_ling_guozhan_qlhd_v1

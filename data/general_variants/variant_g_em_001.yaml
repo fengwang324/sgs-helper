@@ -1,0 +1,23 @@
+id: variant_g_em_001
+general_id: general_liu_bei_jun_zhu
+variant: 群狼环鼎
+title: 美蜀糕
+general_number: G.EM 001
+illustrator: LiuHeng
+image: g_em_001.jpg
+mode: guozhan
+faction: 蜀
+hp: 2
+gender: male
+product_id: qlhd
+general_set: 君临天下·阵
+zhulianbihe:
+  - 蜀势力武将
+skills:
+  - skill_id: skill_shou_yue
+    version_id: skill_shou_yue_guozhan_qlhd_v1
+  - skill_id: skill_zhang_wu
+    version_id: skill_zhang_wu_guozhan_qlhd_v1
+  - skill_id: skill_ji_zhao
+    version_id: skill_ji_zhao_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「美蜀糕」；三国杀 WIKI 该武将称号为「乱世的枭雄」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

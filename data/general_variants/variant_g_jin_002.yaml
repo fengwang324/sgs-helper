@@ -1,0 +1,19 @@
+id: variant_g_jin_002
+general_id: general_zhang_chun_hua
+variant: 群狼环鼎
+title: 绢力染霜
+general_number: G.JIN 002
+illustrator: 小罗没想好
+image: g_jin_002.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_e_jue
+    version_id: skill_e_jue_guozhan_qlhd_v1
+  - skill_id: skill_shang_shi
+    version_id: skill_shang_shi_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「绢力染霜」；三国杀 WIKI 该武将称号为「冷血皇后」（逐位相同 0 字），国战称号与身份局称号不同属正常，请对照卡图核验

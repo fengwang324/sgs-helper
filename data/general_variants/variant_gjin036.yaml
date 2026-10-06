@@ -1,0 +1,16 @@
+id: variant_gjin036
+general_id: general_wang_jun
+variant: 群狼环鼎
+title: 顺流长驱
+general_number: GJIN036
+illustrator: 荆芥
+image: gjin036.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_cheng_liu
+    version_id: skill_cheng_liu_guozhan_qlhd_v1

@@ -1,0 +1,18 @@
+id: variant_g_jin_020
+general_id: general_wei_guan
+variant: 群狼环鼎
+title: 忠允薛训
+general_number: G.JIN 020
+illustrator: Kameval
+image: g_jin_020.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_cheng_xi
+    version_id: skill_cheng_xi_guozhan_qlhd_v1
+  - skill_id: skill_jian_tong
+    version_id: skill_jian_tong_guozhan_qlhd_v1

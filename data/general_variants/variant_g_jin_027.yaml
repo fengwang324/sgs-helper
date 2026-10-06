@@ -1,0 +1,20 @@
+id: variant_g_jin_027
+general_id: general_guo_huai
+variant: 群狼环鼎
+title: 嫉贤妒能
+general_number: G.JIN 027
+illustrator: 凝聚永恒
+image: g_jin_027.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_zhe_fu
+    version_id: skill_zhe_fu_guozhan_qlhd_v1
+  - skill_id: skill_yi_du
+    version_id: skill_yi_du_guozhan_qlhd_v1
+zhulianbihe:
+  - 贾充

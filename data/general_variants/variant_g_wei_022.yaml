@@ -1,0 +1,20 @@
+id: variant_g_wei_022
+general_id: general_bian_fu_ren
+variant: 群狼环鼎
+title: 奕世之雍容
+general_number: G.WEI 022
+illustrator: 雪君S
+image: g_wei_022.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: female
+product_id: qlhd
+general_set: 君临天下·变
+zhulianbihe:
+  - 曹操
+skills:
+  - skill_id: skill_wan_wei
+    version_id: skill_wan_wei_guozhan_qlhd_v1
+  - skill_id: skill_yue_jian
+    version_id: skill_yue_jian_guozhan_qlhd_v1

@@ -1,0 +1,20 @@
+id: variant_g_wei_089
+general_id: general_yang_hu
+variant: 群狼环鼎
+title: 制纮同轨
+general_number: G.WEI 089
+illustrator: 匠人绘
+image: g_wei_089.jpg
+mode: guozhan
+faction: 魏
+hp: 1.5
+gender: male
+product_id: qlhd
+general_set: 纵横捭阖
+zhulianbihe: []
+skills:
+  - skill_id: skill_de_shao
+    version_id: skill_de_shao_guozhan_qlhd_v1
+  - skill_id: skill_ming_fa
+    version_id: skill_ming_fa_guozhan_qlhd_v1
+review_note: Paddle 读出的称号为「制航同赖」；三国杀 WIKI 该武将称号为「制纮同轨」（逐位相同 2 字），疑似 OCR 误读，请对照卡图核验

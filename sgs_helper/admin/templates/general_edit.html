@@ -330,25 +330,9 @@
     <span class="muted">技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行技能。</span>
   </p>
 
-  <details class="advanced" {{ 'open' if error_map.get('id') or error_map.get('review_note') else '' }}>
-    <summary>高级信息（内部 ID / 复核备注）</summary>
-
-    <h3>武将个体（General）</h3>
-    <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
-      <label for="f-id">内部 ID</label>
-      <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按名字自动生成">
-      <p class="help">YAML 文件名 / URL / 外键都用它；已存在的武将不会被重新生成 ID。</p>
-      {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-
-    <h3>当前版本（{{ variant_label }}）</h3>
-    <div class="field">
-      <label for="f-review_note">复核备注（review_note）</label>
-      <textarea id="f-review_note" name="review_note" rows="2"
-                placeholder="需要人工对照卡图 / 实物复核的异常；正常记录留空">{{ values.get('review_note', '') }}</textarea>
-      <p class="help">实体卡类没有 source；需要留痕的异常（OCR 误读、疑似错字…）写在这里。</p>
-    </div>
-  </details>
+  {# 高级信息（内部 ID / 复核备注）已移除：
+     内部 ID 由卡面编号决定，不再需要手改；复核备注不再从页面维护
+     （字段仍留在模型与 YAML 里，编辑时按「未出现的字段保留原值」处理）。 #}
 
   <div class="form-actions">
     <button class="btn primary" type="submit" name="_action" value="save">保存</button>
