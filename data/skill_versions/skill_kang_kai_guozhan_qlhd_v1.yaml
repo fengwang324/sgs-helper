@@ -1,0 +1,20 @@
+id: skill_kang_kai_guozhan_qlhd_v1
+skill_id: skill_kang_kai
+mode: guozhan
+text: 当一名角色成为【杀】的目标后，若你与其距离1以内，你可以摸一张牌，然后交给其一张牌并展示之。若此牌为装备牌，该角色可以使用此牌。
+version_label: 群狼环鼎
+product_id: qlhd
+package: null
+effective_from: null
+effective_to: null
+previous_version_id: null
+change_note: ''
+related_keywords: []
+related_timing_ids: []
+source:
+  type: official_online
+  title: 三国杀移动版官网·武将介绍·曹昂
+  reference: https://www.sanguosha.cn/index.php/pc/hero-detail-83.html
+  notes: 文本由用户提供并逐字录入；与官网移动版武将页一致（官网原文作「若你与其距离1以内，则你可以摸一张牌……」，本条少一个「则」），未按实体卡核验
+verification_status: official
+notes: 本条技能文本来自官方移动版武将页，与 qlhd 批次其余条目（实体卡 OCR）来源不同；尚未找到群狼环鼎实体卡依据，待按实体卡核验
