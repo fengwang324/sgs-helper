@@ -1186,7 +1186,14 @@ def test_card_set_candidates_come_from_products(client: TestClient) -> None:
         item["value"]
         for item in client.get("/api/suggest", params={"field": "card_set"}).json()
     }
-    assert {"九变篇", "君主游戏牌", "君临天下·权"} <= values
+    # 具体有哪些拓展包随数据变（产品里删掉一个，这里就该消失），所以按数据算期望值
+    declared = {
+        str(name)
+        for product in client.app.state.store.bundle.all("product").values()
+        for name in (product.card_sets or [])
+    }
+    assert declared <= values
+    assert "九变篇" in values
     assert "指示物" not in values
 
     images = client.get("/api/card-images").json()
@@ -1268,13 +1275,29 @@ def test_create_card_with_empty_effect_is_legal(client: TestClient, app, workdir
     assert doc["effect"] == {"text": "", "skills": []}
 
 
-def test_card_form_requires_name_and_categories(client: TestClient, app, workdir: Path) -> None:
+def test_card_form_requires_name_and_category_1(client: TestClient, app, workdir: Path) -> None:
+    """只有卡名与一级分类必填；二 / 三级留空是合法数据（分类不受白名单约束）。"""
     before = card_count(workdir)
-    response = post(client, "/new/card", data=card_payload(app, name="", category_3=""))
+    response = post(client, "/new/card", data=card_payload(app, name="", category_2="", category_3=""))
     assert response.status_code == 400
     assert "卡名必填" in response.text
-    assert "三级分类必填" in response.text
+    assert "三级分类必填" not in response.text
+    assert "二级分类必填" not in response.text
     assert card_count(workdir) == before      # 一个文件都没写
+
+    blank = post(
+        client,
+        "/new/card",
+        data=card_payload(
+            app, id="card_test_only_level_1", name="【测试】只填一级",
+            category_2="", category_3="",
+        ),
+        follow_redirects=False,
+    )
+    assert blank.status_code == 303, blank.text
+    doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_only_level_1").read_text(encoding="utf-8"))
+    assert doc["category_1"] == "游戏牌"
+    assert doc["category_2"] == "" and doc["category_3"] == ""
 
 
 def test_card_form_rejects_unknown_skill_and_foreign_version(

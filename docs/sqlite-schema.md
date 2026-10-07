@@ -121,8 +121,9 @@ CREATE TABLE skill_versions (
 
 一层的游戏牌（与指示物共用这一层）：三级分类表达“这张卡是什么”，`card_set` 表达
 “它来自哪个拓展包”（允许为空），`effect_text` / `effect_skills` 是卡面效果与关联技能。
-分类取值见 `constants.CARD_CATEGORY_TREE`；基本牌的 `category_3` 是牌族
-（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`。
+分类取值**自由填写**：只有 `category_1` 必填，`category_2` / `category_3` 允许为空字符串；
+`constants.CARD_CATEGORY_TREE` 只是录入候选项（没有校验白名单）。习惯上基本牌的
+`category_3` 写牌族（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`。
 
 ```sql
 CREATE TABLE cards (

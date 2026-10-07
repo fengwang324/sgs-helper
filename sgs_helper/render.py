@@ -250,11 +250,13 @@ def render_card(report: dict) -> str:
     effect = report.get("effect") or {}
 
     lines = ["=" * 72, f"卡牌：{card['name']}    （id：{card['id']}）"]
-    lines.append(
-        f"  分类：{card.get('category_1') or '未填'}"
-        f" / {card.get('category_2') or '未填'}"
-        f" / {card.get('category_3') or '未填'}"
-    )
+    # 二 / 三级分类可以留空：只拼非空的级别，不输出空分隔符
+    categories = [
+        str(card.get(key)).strip()
+        for key in ("category_1", "category_2", "category_3")
+        if str(card.get(key) or "").strip()
+    ]
+    lines.append(f"  分类：{' / '.join(categories) or '未填'}")
     lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
     lines.append(f"  卡图：{card.get('image') or '未填'}")
     lines.append(f"  源文件：{fmt_location(card)}")

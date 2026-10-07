@@ -22,8 +22,12 @@
   <ul>
     <li><strong>卡牌是单层的</strong>：一 / 二 / 三级分类表达“这张卡是什么”，<code>card_set</code> 表达“它来自哪个拓展包”，两者完全独立；
         同一规则卡的不同实体印刷不在这一层建模，卡牌也<strong>没有</strong> mode / source 字段。</li>
-    <li><strong>基本牌的最后一级是卡名</strong>：<code>游戏牌/基本牌/杀</code> 下面是 杀 / 火杀 / 雷杀，
-        所以基本牌的 <code>category_3</code> 只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 <code>name</code>。</li>
+    <li><strong>分类是自由填写的</strong>：只有 <code>category_1</code> 必填，二 / 三级可以留空；
+        取值不受任何预设白名单约束（校验器不会要求你把新分类“补进 constants”），
+        候选表只是录入提示，新分类保存后自动进入候选与 Wiki 导航。</li>
+    <li><strong>基本牌的习惯写法</strong>：<code>游戏牌/基本牌/杀</code> 下面是 杀 / 火杀 / 雷杀，
+        所以习惯上基本牌的 <code>category_3</code> 写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在
+        <code>name</code>（这只是录入习惯，不是校验规则）。</li>
     <li><strong>自动关联</strong>：FAQ 详情页对 <code>question + answer</code>、技能详情页对技能文本调用
         <code>repo.mentions(conn, text)</code>，按实体名称自动识别武将 / 技能 / 卡牌 / 关键词并渲染成可点击链接；
         手工维护的关联 id 字段已全部删除。</li>

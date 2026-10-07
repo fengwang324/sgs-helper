@@ -4,8 +4,9 @@
 等字段全部删除：写了就是未知字段（error），而不是走原来的关系校验。
 
 卡牌单层化之后，``CardPrinting`` 时代的「同花色点数重复 / 漏填花色」警告随该层一起消失，
-新增：基本牌三级分类必须是牌族、``card_set`` 必须被某个产品声明、卡图必须存在、
-``effect.skills[].version_id`` 必须属于同一个技能。
+现在只管 `card_set` 必须被某个产品声明、卡图必须存在、``effect.skills[].version_id``
+必须属于同一个技能。**分类取值不再受任何预设白名单约束**：二 / 三级分类可以自由填写、
+也可以留空，校验器不提示「不在登记的分类里」，也不要求“补进 constants”。
 """
 
 from __future__ import annotations
@@ -38,14 +39,14 @@ def test_real_dataset_is_clean(data_dir: Path) -> None:
 
 
 def test_real_dataset_warnings_are_only_skills_without_versions(data_dir: Path) -> None:
-    """真实数据 0 错误 / 14 警告。
+    """真实数据 0 错误 / 13 警告。
 
-    14 条警告全部来自「技能本体没有任何 SkillVersion」；旧模型里的「同花色点数重复」
-    随 CardPrinting 一起消失，新增的卡牌 / 卡图 / 拓展包校验在真实数据上都是干净的。
+    13 条警告全部来自「技能本体没有任何 SkillVersion」；旧模型里的「同花色点数重复」
+    随 CardPrinting 一起消失，卡牌 / 卡图 / 拓展包校验在真实数据上都是干净的，
+    **分类取值也不产生任何警告**（分类不受预设白名单约束）。
     """
     result = validate_data_dir(data_dir)
     assert result.ok, error_text(result)
-    assert len(result.warnings) == 14, warning_text(result)
     assert {issue.field for issue in result.warnings} == {"id"}
     assert all("没有任何 SkillVersion" in issue.message for issue in result.warnings)
 
@@ -57,7 +58,8 @@ def test_real_dataset_warnings_are_only_skills_without_versions(data_dir: Path) 
         )
     }
     assert {issue.entity_id for issue in result.warnings} == skills_without_version
-    assert len(skills_without_version) == 14
+    # 数量不写死（删掉一个没有版本的技能本体就会少一条），但必须与数据集一致
+    assert len(result.warnings) == len(skills_without_version) >= 1
 
 
 # ---------------------------------------------------------------- 错误
@@ -217,14 +219,45 @@ def test_card_effect_version_must_belong_to_same_skill(synth: Path) -> None:
     assert "skill_demo_other" in text
 
 
-def test_basic_card_category_3_must_be_a_family(synth: Path) -> None:
-    """基本牌最后一级是牌族（杀 / 闪 / 桃 / 酒），具体哪张写在 name 里。"""
-    replace_in(synth / "cards" / "demo_card.yaml", "category_3: 杀", "category_3: 火杀")
+def test_card_categories_are_free_and_may_be_blank(synth: Path) -> None:
+    """分类不受预设白名单约束：二 / 三级可以自由填写，也可以留空，校验器都不提示。
+
+    （历史上这里有一条「基本牌三级分类应为牌族」和一条「指示物二级分类未登记」的警告，
+    两条都已删除：录入页本来就支持自由输入，把预设值当成规范会自相矛盾。）
+    """
+    replace_in(
+        synth / "cards" / "demo_card.yaml",
+        "category_2: 基本牌\ncategory_3: 杀\n",
+        "category_2: 自定义二级\ncategory_3: 自定义三级\n",
+    )
     result = validate_data_dir(synth)
     assert result.ok, error_text(result)
     text = warning_text(result)
-    assert "基本牌的三级分类应为牌族" in text
-    assert "火杀" in text
+    assert "基本牌的三级分类应为牌族" not in text
+    assert "指示物的二级分类" not in text
+
+    # 指示物 + 全新的二级分类：一样不提示
+    replace_in(
+        synth / "cards" / "demo_trick.yaml",
+        "category_1: 游戏牌",
+        "category_1: 指示物",
+    )
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    assert "指示物的二级分类" not in warning_text(result)
+
+
+def test_card_subcategories_may_be_blank(synth: Path) -> None:
+    """二 / 三级分类允许留空：只填一级（或只填一 / 二级）也是合法数据。"""
+    replace_in(
+        synth / "cards" / "demo_card.yaml",
+        "category_2: 基本牌\ncategory_3: 杀\n",
+        "category_2: ''\ncategory_3: ''\n",
+    )
+    result = validate_data_dir(synth)
+    assert result.ok, error_text(result)
+    card = result.bundle.get("card", "card_demo")
+    assert (card.category_2, card.category_3) == ("", "")
 
 
 def test_card_set_must_be_declared_by_a_product(synth: Path) -> None:

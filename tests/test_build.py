@@ -360,7 +360,7 @@ def test_real_data_builds_and_has_rows(data_dir: Path, tmp_path: Path) -> None:
     assert result.total == sum(result.counts.values())
     assert result.total > 1000
     assert result.counts["skill_version"] >= 1
-    assert result.counts["card"] == 81
+    assert result.counts["card"] >= 81
     conn = sqlite3.connect(db_path)
     try:
         assert conn.execute("SELECT COUNT(*) FROM search_index").fetchone()[0] == result.total

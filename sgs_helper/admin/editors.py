@@ -786,16 +786,22 @@ def general_values(
 
 
 def card_category_tree() -> dict[str, dict[str, list[str]]]:
-    """卡牌分类树（``constants.CARD_CATEGORY_TREE`` 的副本）。
+    """卡牌分类的**候选**树（``constants.CARD_CATEGORY_TREE`` 的副本）。
 
-    录入页的候选 = 这棵树 ∪ 现有卡牌数据里出现过的值；两边都是可输入可选的，
-    所以新增分类（例如以后补上「指示物」树）不需要改前端。
+    只是候选，不是白名单：录入页的候选 = 这棵树 ∪ 现有卡牌数据里出现过的值，
+    两边都可输入可选，所以新增分类（例如指示物下面任意新二级 / 三级）不需要改前端、
+    也不需要改代码。「指示物」在树里刻意只留一级（子分类全部来自数据）。
     """
     return {level_1: dict(children) for level_1, children in CARD_CATEGORY_TREE.items()}
 
 
 def card_category_triples(store) -> list[list[str]]:
-    """现有卡牌里出现过的 ``(一级, 二级, 三级)`` 组合，供录入页联动候选使用。"""
+    """现有卡牌里出现过的 ``(一级, 二级, 三级)`` 组合，供录入页联动候选使用。
+
+    二 / 三级允许留空，所以这里**不要求三级都齐**：只要一级非空就收集
+    （``["指示物", "鏖战", ""]`` 也要贡献二级候选「鏖战」）。
+    前端 ``uniquePush`` 会跳过空值，因此空串不会变成候选。
+    """
     triples: list[list[str]] = []
     for card in store.bundle.all("card").values():
         triple = [
@@ -803,7 +809,7 @@ def card_category_triples(store) -> list[list[str]]:
             str(getattr(card, "category_2", "") or ""),
             str(getattr(card, "category_3", "") or ""),
         ]
-        if all(triple) and triple not in triples:
+        if triple[0] and triple not in triples:
             triples.append(triple)
     return triples
 
@@ -813,7 +819,8 @@ def parse_card_form(
 ) -> EditorResult:
     """卡牌录入/编辑：单层 ``Card``（分类 + 卡名 + 卡图 + 拓展包 + 效果）。
 
-    - 卡名与一 / 二 / 三级分类必填（分类联动下拉允许自由输入新值）；
+    - 卡名与**一级分类**必填；二 / 三级分类允许留空（只填一级、只填一 / 二级都合法），
+      三个级别都可以自由输入新值（候选只是提示，不是白名单）；
     - ``card_set`` / ``image`` / ``effect.text`` 都允许为空，``effect`` 里两者同时为空也合法；
     - ``effect.skills`` 是 0～N 条 ``SkillRef``（``{skill_id, version_id}``）：
       卡牌**只关联已有技能**，技能文本继续由 Skill / SkillVersion 维护。
@@ -827,17 +834,18 @@ def parse_card_form(
     if not str(data.get("name") or "").strip():
         errors.append(FieldError("name", "卡名必填"))
 
-    for field_name, label in (
-        ("category_1", "一级分类"),
-        ("category_2", "二级分类"),
-        ("category_3", "三级分类"),
-    ):
+    # 「这张卡是什么」：一级分类必填（决定它进游戏牌还是指示物入口），
+    # 二 / 三级可空、可自由输入——分类不受任何预设白名单约束。
+    for field_name, label in (("category_1", "一级分类"),):
         if field_name in form:
             data[field_name] = _text(form, field_name)
         if not str(data.get(field_name) or "").strip():
             errors.append(
                 FieldError(field_name, f"{label}必填（可以从下拉里选，也可以直接输入新值）")
             )
+    for field_name in ("category_2", "category_3"):
+        if field_name in form:
+            data[field_name] = _text(form, field_name)
 
     raw_id = _text(form, "id")
     if raw_id:

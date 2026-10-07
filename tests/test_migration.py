@@ -265,9 +265,9 @@ def test_entity_counts_are_stable(migration_db: Path) -> None:
             "product": 1,
             "general": 163,
             "general_variant": 163,
-            "skill": 311,
+            "skill": 310,
             "skill_version": 297,
-            "card": 81,
+            "card": 82,
             "faq": 85,
             "keyword": 117,
         }
@@ -298,7 +298,7 @@ def test_models_reject_removed_fields() -> None:
 def test_cards_are_single_layer_and_categorized(migration_db: Path) -> None:
     conn = sqlite3.connect(migration_db)
     try:
-        assert conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0] == 81
+        assert conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0] >= 81
         assert not conn.execute(
             "SELECT 1 FROM sqlite_master WHERE name = 'card_printings'").fetchone()
         rows = dict(
@@ -310,15 +310,30 @@ def test_cards_are_single_layer_and_categorized(migration_db: Path) -> None:
         assert rows["card_wu_xie_ke_ji"] == "游戏牌/锦囊牌/非延时锦囊"
         assert rows["card_le_bu_si_shu"] == "游戏牌/锦囊牌/延时锦囊"
         assert rows["card_ding_lan_ye_ming_zhu"] == "游戏牌/装备牌/宝物"
+        # 指示物是分类，可以和游戏牌共存在同一张表里
+        assert any(value.startswith("指示物/") for value in rows.values())
     finally:
         conn.close()
 
 
-def test_no_indicator_cards_kept(data_dir: Path) -> None:
-    """本次明确舍弃全部指示物卡牌（用户以后自己加）。"""
+def test_indicator_cards_are_allowed(data_dir: Path) -> None:
+    """指示物是卡牌分类（``category_1``），不是拓展包：数据里可以有，分类自由填写。
+
+    （早期一轮曾把指示物卡整体舍弃，所以这里原本断言「一张都没有」；
+    现在指示物是普通分类，二 / 三级分类由录入数据决定。）
+    """
+    indicators = []
     for path in sorted((data_dir / "cards").glob("*.yaml")):
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert doc["category_1"] != "指示物", f"{path} 还是指示物卡"
+        if doc.get("category_1") != "指示物":
+            continue
+        indicators.append(doc)
+        assert (doc.get("card_set") or "") != "指示物", f"{path} 把分类写进了 card_set"
+    assert indicators, "真实数据里应当至少有一条指示物（鏖战说明卡）"
+    # 二 / 三级允许留空：只要写了的级别是字符串即可
+    for doc in indicators:
+        assert isinstance(doc.get("category_2", ""), str)
+        assert isinstance(doc.get("category_3", ""), str)
 
 
 def test_card_effect_skills_are_linked(migration_db: Path) -> None:

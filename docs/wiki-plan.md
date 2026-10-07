@@ -172,6 +172,10 @@ sgs-helper/
 | 1 | `sgs_helper/constants.py` | `CARD_CATEGORY_TREE` 增加 `指示物` 子树：`军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记` |
 | 2 | `sgs_helper/validate.py` | 新增告警：`category_1 == 指示物` 但 `category_2` 不在该子树内 |
 
+> **后续修订（2026-10-07）**：上面这两条后来被判定为与「分类自由输入 + 导航自动收录」自相矛盾，
+> 已回退 —— 预置的指示物子分类与那条告警都删掉了，二 / 三级分类允许留空。见 [updates.md](updates.md)
+> 的同日记录《分类改成完全自由填写》。本节其余内容（候选可自由输入、新分类无需改代码）仍然成立。
+
 第 1 条的后果检查：`validate.py` 的 `BASIC_CARD_FAMILIES` 从「游戏牌 → 基本牌」派生，
 **不受影响**；`Card.card_set` 校验与 `Product.card_sets` **不受影响**（指示物是分类，不是拓展包）。
 
@@ -372,7 +376,7 @@ Wiki 侧的分类树渲染为「静态树 ∪ 数据实际取值」，新分类�
 | # | 验收项 | 结论 |
 | --- | --- | --- |
 | 1 | 武将、技能、游戏牌可正常浏览 | ✅ `test_wiki_lists_show_data` / `test_wiki_list_pagination` |
-| 2 | 无指示物数据时，指示物页正常显示空状态 | ✅ `test_markers_empty_state` |
+| 2 | 指示物页只按 `category_1` 筛选，分类由数据生成 | ✅ `test_markers_page_categories_come_from_data` |
 | 3 | 网页新增 `指示物/军令/军令一`「军令」→ 出现，刷新后仍在 | ✅ `test_index_writes_back_and_visible_in_wiki` / `test_new_indicator_survives_fresh_app` |
 | 4 | 网页新增 `游戏牌/锦囊牌/非延时锦囊`「测试锦囊」→ 出现 | ✅ `test_new_play_card_appears` |
 | 5 | 新增 FAQ 并关联一个武将、一个技能 → 三处都出现 | ✅ 关联为按名称自动识别；`test_general_detail_cross_links_and_faqs` / `test_skill_detail_links_back_to_general` / `test_faq_detail_links_related_entities` |

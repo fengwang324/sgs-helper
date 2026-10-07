@@ -53,7 +53,7 @@ SECTION_LEAD: dict[str, str] = {
     "generals": "一个武将 = 名字 + 称号；点进去就是那一张卡，技能可点进详情",
     "skills": "技能本体与各版本文本；可回跳所属武将",
     "cards": "按「这张卡是什么」的三级分类归集，与来自哪个拓展包相互独立",
-    "markers": "军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记",
+    "markers": "指示物按录入时写的分类自动归集；分类可以自由填写，改了或删了自动跟着变",
     "faq": "规则专题与裁定；正文里的武将 / 技能 / 卡牌名可点击跳转",
     "rules": "规则入口已预留，本阶段不做内容",
 }
@@ -200,9 +200,11 @@ class WikiRoutes:
                 excerpt = truncate(versions[0].text, 110)
 
         elif kind == "card":
-            subtitle = f'{row["category_2"]} / {row["category_3"]}'
+            # 分类可以只填到一级 / 二级，所以只把非空的级别拼起来（不留空分隔符）
+            bits = [_category_text(row.get("category_2"), row.get("category_3"))]
             if row.get("card_set"):
-                subtitle += f' · 拓展包 {row["card_set"]}'
+                bits.append(f'拓展包 {row["card_set"]}')
+            subtitle = " · ".join(bit for bit in bits if bit)
             excerpt = truncate(
                 str(getattr(getattr(entity, "effect", None), "text", "") or ""), 110
             )
@@ -264,7 +266,7 @@ class WikiRoutes:
                 {
                     "label": "指示物",
                     "count": card_counts.get("指示物", 0),
-                    "hint": "军令 / 鏖战事件 / 技能指示物…",
+                    "hint": "分类由录入的数据自动生成",
                     "url": "/wiki/markers",
                 },
                 {
@@ -763,10 +765,16 @@ class WikiRoutes:
         effect = card.effect
         is_marker = card.category_1 == "指示物"
 
+        # 二 / 三级分类允许留空：空的那一级直接不显示，避免出现空分隔符或空标签
+        category_bits = [
+            value for value in (card.category_2, card.category_3) if (value or "").strip()
+        ]
+        subtitle = " / ".join(category_bits) or card.category_1
+
         fields = [
             {"k": "一级分类", "v": card.category_1},
-            {"k": "二级分类", "v": card.category_2},
-            {"k": "三级分类", "v": card.category_3},
+            {"k": "二级分类", "v": card.category_2 or "（未填）"},
+            {"k": "三级分类", "v": card.category_3 or "（未填）"},
             {"k": "拓展包", "v": card.card_set or ""},
             {"k": "卡名", "v": card.name},
         ]
@@ -796,11 +804,11 @@ class WikiRoutes:
         return {
             "eyebrow": "指示物" if is_marker else "游戏牌",
             "title": card.name,
-            "subtitle": f"{card.category_2} / {card.category_3}",
+            "subtitle": subtitle,
             "image_url": image_url(card.image),
             "tags": [
-                {"text": card.category_2, "class": "wiki-tag--faction"},
-                {"text": card.category_3, "class": ""},
+                {"text": value, "class": "wiki-tag--faction" if index == 0 else ""}
+                for index, value in enumerate(category_bits)
             ]
             + ([{"text": f"拓展包 {card.card_set}", "class": ""}] if card.card_set else []),
             "edit_url": f"/edit/card/{card.id}",
@@ -925,6 +933,11 @@ def _hp(value: Any) -> str:
     return str(int(number)) if number.is_integer() else str(number)
 
 
+def _category_text(*levels: Any) -> str:
+    """把分类各级拼成 ``甲 / 乙``；留空的级别不参与拼接（不产生空分隔符）。"""
+    return " / ".join(str(level).strip() for level in levels if str(level or "").strip())
+
+
 def _variant_summary(row: dict) -> str:
     """武将详情头部的副标题。
 
@@ -998,8 +1011,8 @@ def _empty_title(section: str) -> str:
 def _empty_text(section: str) -> str:
     if section == "markers":
         return (
-            "当前数据库里还没有任何 category_1 为「指示物」的记录 —— 这是正常状态"
-            "（原有指示物数据已删除）。开启编辑模式后可以在这里逐条录入。"
+            "当前还没有 category_1 为「指示物」的记录。开启编辑模式后可以在这里逐条录入；"
+            "分类（二级 / 三级）可以自由填写，也可以留空——录进去之后导航与候选会自动长出来。"
         )
     return "当前分类下还没有资料。"
 

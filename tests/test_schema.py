@@ -165,7 +165,11 @@ def test_card_is_single_layer() -> None:
 
 
 def test_basic_card_category_three_is_the_family() -> None:
-    """基本牌最后一级是牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 name 里。"""
+    """基本牌最后一级习惯写牌族（杀 / 闪 / 桃 / 酒），具体哪一张写在 name 里。
+
+    这只是本项目的录入**习惯**（也是录入页的候选来源），不是校验规则：
+    分类可以自由填写，校验器不因为填了「火杀」而报警告。
+    """
     families = CARD_CATEGORY_TREE["游戏牌"]["基本牌"]
     assert families == ["杀", "闪", "桃", "酒"]
 
@@ -174,6 +178,20 @@ def test_basic_card_category_three_is_the_family() -> None:
 
     lve_shan = _card(category_2="基本牌", category_3="闪", name="掠闪")
     assert lve_shan.category_3 == "闪" and lve_shan.name == "掠闪"
+
+
+def test_card_categories_are_free_text_and_may_be_blank() -> None:
+    """分类自由填写：没有预设的取值也不报错；二 / 三级可以留空。
+
+    「指示物」在 ``CARD_CATEGORY_TREE`` 里刻意不预置任何子分类（只有一级入口）。
+    """
+    assert CARD_CATEGORY_TREE["指示物"] == {}
+
+    free = _card(category_1="指示物", category_2="鏖战", category_3="鏖战说明卡", name="鏖战效果面")
+    assert (free.category_2, free.category_3) == ("鏖战", "鏖战说明卡")
+
+    only_level_1 = _card(category_1="指示物", category_2="", category_3="", name="只有一级")
+    assert only_level_1.category_2 == "" and only_level_1.category_3 == ""
 
 
 def test_card_effect_allows_empty_text_and_skills() -> None:

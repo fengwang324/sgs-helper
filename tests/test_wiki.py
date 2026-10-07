@@ -160,15 +160,15 @@ def test_wiki_list_pagination(client: TestClient) -> None:
     assert first != second
 
 
-def test_markers_empty_state(client: TestClient) -> None:
-    """当前没有指示物数据是正常状态：页面显示空状态与新增入口，而不是报错。"""
+def test_markers_page_categories_come_from_data(client: TestClient) -> None:
+    """指示物页按 ``category_1`` 筛选；二 / 三级分类导航完全由数据生成。"""
     body = client.get("/wiki/markers").text
-    assert "暂无指示物资料" in body
-    # 空状态要能直接引导去创建第一条
-    assert "新增" in body
-    # 五个二级分类即使没有数据也要能看到
-    for sub in ("军令", "鏖战事件", "技能指示物", "衍生技能牌", "通用标记"):
-        assert sub in body
+    # 数据里那条指示物与它写的分类
+    assert "鏖战效果面" in body
+    assert "鏖战" in body and "鏖战说明卡" in body
+    # 不再有任何「预置的」指示物子分类
+    for absent in ("技能指示物", "衍生技能牌", "通用标记"):
+        assert absent not in body
 
 
 def test_markers_does_not_leak_play_cards(client: TestClient) -> None:
@@ -308,25 +308,28 @@ def test_new_play_card_appears(client: TestClient, app) -> None:
     assert "非延时锦囊" in body
 
 
-def test_category_tree_contains_indicators(client: TestClient) -> None:
-    """验收第 5 项（前半）：录入页的分类候选里必须有指示物子树。"""
+def test_category_candidates_are_not_a_whitelist(client: TestClient) -> None:
+    """录入页的分类候选 = 预置树 ∪ 数据里已有的值；「指示物」不再预置任何子分类。"""
     body = client.get("/new/card", params={"category_1": "指示物"}).text
     match = re.search(
         r'<script type="application/json" id="card-category-data">(.*?)</script>',
         body,
         re.S,
     )
-    assert match, "卡牌录入页应该带分类树 JSON"
+    assert match, "卡牌录入页应该带分类候选 JSON"
     payload = json.loads(match.group(1))
     tree = payload["tree"]
+    # 指示物只保留一级入口，子分类由数据决定
     assert "指示物" in tree
-    assert set(tree["指示物"]) == {"军令", "鏖战事件", "技能指示物", "衍生技能牌", "通用标记"}
-    # 指示物是分类，不是拓展包
+    assert tree["指示物"] == {}
+    # 游戏牌的常用树仍然作为候选保留
     assert tree.get("游戏牌")
+    # 数据里出现过的分类（含只填到二级的）都进了候选
+    assert ["指示物", "鏖战", "鏖战说明卡"] in payload["triples"]
 
 
 def test_new_category_needs_no_code_change(client: TestClient, app) -> None:
-    """验收第 5 项（后半）：直接输入一个新分类名 = 新建了分类，导航树立刻出现。"""
+    """验收第 5 项：直接输入一个新分类名 = 新建了分类，导航树立刻出现。"""
     client.post("/new/card", data=card_payload(
         app, name="自定义分类令", category_1="指示物",
         category_2="自定义二级", category_3="自定义三级",
@@ -334,6 +337,36 @@ def test_new_category_needs_no_code_change(client: TestClient, app) -> None:
     body = client.get("/wiki/markers").text
     assert "自定义二级" in body
     assert "自定义三级" in body
+
+
+def test_blank_subcategories_save_and_display(client: TestClient, app, workdir: Path) -> None:
+    """二 / 三级分类可以留空：只填一级也能保存，列表不出现空分隔符。"""
+    response = client.post(
+        "/new/card",
+        data=card_payload(app, name="只有一级的令", category_1="指示物",
+                          category_2="", category_3=""),
+        follow_redirects=False,
+    )
+    assert response.status_code == 303, response.text
+
+    text = cards_yaml_text(workdir)
+    assert "只有一级的令" in text
+    assert "category_2: ''" in text and "category_3: ''" in text
+
+    assert "只有一级的令" in client.get("/wiki/markers").text
+    detail = client.get("/wiki/card/" + _card_id_of(workdir, "只有一级的令")).text
+    assert "只有一级的令" in detail
+    assert "（未填）" in detail          # 空的级别明确标成未填
+    assert " / " not in detail.split("二级分类")[1][:40]   # 不出现空分隔符
+
+
+def _card_id_of(workdir: Path, name: str) -> str:
+    """从落盘的 YAML 里按卡名取 id（真实数据 id 由系统派生，测试不写死）。"""
+    for path in (workdir / "data" / "cards").glob("*.yaml"):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if doc.get("name") == name:
+            return str(doc["id"])
+    raise AssertionError(f"没找到卡名 {name}")
 
 
 # ---------------------------------------------------------------- 验收 8：图片
@@ -558,10 +591,24 @@ def test_edit_mode_post_requires_csrf(client: TestClient) -> None:
 
 
 def test_marker_filters_are_scoped(client: TestClient, app) -> None:
-    """指示物页的筛选不应该带出游戏牌的拓展包。"""
+    """指示物页的拓展包候选只来自「category_1 == 指示物」的卡，不串游戏牌的。"""
     client.post("/new/card", data=card_payload(
         app, name="scoped-令", category_1="指示物", category_2="军令", category_3="军令四",
     ))
     body = client.get("/wiki/markers").text
-    # 游戏牌的拓展包名不该出现在指示物页的下拉里
-    assert "九变篇" not in body
+
+    cards = app.state.store.bundle.all("card").values()
+    marker_sets = {
+        str(card.card_set) for card in cards
+        if card.category_1 == "指示物" and card.card_set
+    }
+    play_only_sets = {
+        str(card.card_set) for card in cards
+        if card.category_1 == "游戏牌" and card.card_set
+    } - marker_sets
+
+    # 指示物自己用到的拓展包要出现；只在游戏牌上出现的拓展包不能出现
+    for name in marker_sets:
+        assert name in body
+    for name in play_only_sets:
+        assert name not in body, f"{name} 只被游戏牌使用，不该出现在指示物页的筛选里"

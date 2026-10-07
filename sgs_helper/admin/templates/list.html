@@ -96,7 +96,9 @@
         <tr>
           <td>
             <span class="tag-chip">{{ row.category_1 }}</span>
-            <div class="sub">{{ row.category_2 }} · {{ row.category_3 }}</div>
+            {# 二 / 三级分类可空：只显示填了的级别，不留空分隔符 #}
+            {% set sub_levels = [row.category_2, row.category_3] | select | list %}
+            {% if sub_levels %}<div class="sub">{{ sub_levels | join(' · ') }}</div>{% endif %}
           </td>
           <td>
             <a href="/view/{{ row.kind }}/{{ row.id }}">{{ row.name }}</a>

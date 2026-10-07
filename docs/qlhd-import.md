@@ -139,8 +139,9 @@ $DATA scripts/query.py stats
   `Product.card_sets` 里的「指示物」已删除；
 - 卡牌的 `card_set` 只表示游戏牌拓展包；把「指示物」写进 `card_set` 的卡会被校验器专门提示。
 
-将来要重新录入指示物时，在 `constants.CARD_CATEGORY_TREE` 里补上指示物分类、
-按一层 `Card` 的形状录即可。注意迁移脚本 `scripts/migrate_card_model.py` 是**一次性**的，
+将来要重新录入指示物时，按一层 `Card` 的形状录即可：一级分类写 `指示物`，
+二 / 三级分类**自由填写或留空**（不需要、也不应该去 `constants.CARD_CATEGORY_TREE` 里登记分类）。
+注意迁移脚本 `scripts/migrate_card_model.py` 是**一次性**的，
 再跑会拒绝，不会自动帮你恢复这批数据。
 
 ## 4. 还需要人工核对的点

@@ -223,14 +223,18 @@ class Card(StrictModel):
 
     三级分类表达“这张卡是什么”，``card_set`` 表达“它来自哪个拓展包”，两者完全独立。
 
+    分类是**自由填写**的：``category_1`` 必填（它决定这张卡属于「游戏牌」还是「指示物」入口），
+    ``category_2`` / ``category_3`` 都可以留空（例如只填一级，或只填一 / 二级）；
+    取值不受任何预设白名单约束，新增分类不需要改代码。
+
     同一规则卡因为花色 / 点数不同产生的多份实体印刷**不在这一层建模**：
     当前阶段只维护卡面资料，完整牌堆构成留给以后单独加的 ``deck_entries``。
     """
 
     id: Id
     category_1: Name
-    category_2: Name
-    category_3: Name
+    category_2: str = ""
+    category_3: str = ""
     name: Name
     #: 卡图文件名（相对 data/card_images/）
     image: str = ""

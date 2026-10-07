@@ -17,7 +17,7 @@ from typing import Any, Iterable
 
 from pydantic import ValidationError
 
-from .constants import CARD_CATEGORY_TREE, KIND_BY_NAME, KIND_ORDER, MODE_LABELS
+from .constants import KIND_BY_NAME, KIND_ORDER, MODE_LABELS
 from .loader import DataBundle, Issue, RawEntity, load_data_dir
 from .schema import MODEL_BY_KIND
 
@@ -598,26 +598,17 @@ def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> 
 #: 「指示物」是卡牌分类（``category_1``），不是游戏牌拓展包
 INDICATOR_CATEGORY = "指示物"
 
-#: 基本牌的三级分类只能是牌族（具体是哪一张牌写在 ``name`` 里），取自分类树
-BASIC_CARD_FAMILIES: tuple[str, ...] = tuple(
-    CARD_CATEGORY_TREE.get("游戏牌", {}).get("基本牌", ())
-)
-
-#: 指示物的二级分类候选（军令 / 鏖战事件 / 技能指示物 / 衍生技能牌 / 通用标记）。
-#: 只用于**告警**：分类体系允许以后继续增加新的二/三级分类，
-#: 所以命中不在候选里只提示、不报错。
-INDICATOR_SUBCATEGORIES: tuple[str, ...] = tuple(
-    CARD_CATEGORY_TREE.get(INDICATOR_CATEGORY, {})
-)
-
 
 def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> None:
-    """卡牌一致性：基本牌三级分类 / ``card_set`` 归属 / 技能版本绑定。
+    """卡牌一致性：``card_set`` 归属 + 技能版本绑定。
 
     ``Card`` 是单层的：``category_1/2/3`` 表达“这张卡是什么”，``card_set`` 表达
-    “它来自哪个拓展包”，两者完全独立。以下几条 pydantic 管不了，放在这里对账：
+    “它来自哪个拓展包”，两者完全独立。
 
-    - 基本牌的最后一级是 ``name``，``category_3`` 只放牌族（杀 / 闪 / 桃 / 酒）；
+    **分类不受任何预设白名单约束**：一 / 二 / 三级分类都可以自由填写，二 / 三级还允许留空，
+    校验器不对分类取值做任何提示（新增分类不需要改代码，也不要求“补进 constants”）。
+    这里只对账 pydantic 管不了的两件事：
+
     - ``card_set`` 非空时必须出现在**任一产品**的 ``Product.card_sets`` 里
       （拓展包名的候选全集由产品声明，卡牌不自己发明拓展包）；
     - ``effect.skills[].version_id`` 非空时必须属于同一个 ``skill_id``
@@ -630,39 +621,6 @@ def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> Non
 
     for entity_id, card in bundle.all("card").items():
         origin = bundle.origin_of("card", entity_id)
-
-        # 基本牌：三级分类只放牌族，具体是哪一张杀 / 闪 / 桃 / 酒写在 name 里
-        if card.category_2 == "基本牌" and card.category_3 not in BASIC_CARD_FAMILIES:
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "category_3",
-                    f'基本牌的三级分类应为牌族（{"、".join(BASIC_CARD_FAMILIES)}），'
-                    f'当前是 "{card.category_3}"；具体是哪一张牌写在 name（"{card.name}"）里',
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
-
-        # 指示物：二级分类不在已知子树里时只提示（分类体系允许继续扩展）
-        if (
-            card.category_1 == INDICATOR_CATEGORY
-            and INDICATOR_SUBCATEGORIES
-            and card.category_2 not in INDICATOR_SUBCATEGORIES
-        ):
-            result.warnings.append(
-                Issue(
-                    "warning",
-                    origin.path,
-                    "category_2",
-                    f'指示物的二级分类当前登记的是（{"、".join(INDICATOR_SUBCATEGORIES)}），'
-                    f'"{card.category_2}" 不在其中；'
-                    "如果是有意新增的分类可以忽略，之后把它补进 constants.CARD_CATEGORY_TREE 的「指示物」子树",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
 
         # card_set 归属：只要出现在任一产品的 card_sets 里就算对上了
         card_set = (card.card_set or "").strip()

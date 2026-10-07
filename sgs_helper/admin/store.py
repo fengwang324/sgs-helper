@@ -718,18 +718,24 @@ class AdminStore:
     def wiki_nav_tree(self, category_1: str, *, counts: bool = True) -> list[dict]:
         """某个 ``category_1`` 下的二级 / 三级分类树（Wiki 导航与筛选用）。
 
-        树 = ``CARD_CATEGORY_TREE`` 里登记的静态子树 ∪ **数据里实际出现过的值**。
-        后者让「在录入页直接输入一个新分类名」立刻出现在 Wiki 导航里
-        （不需要预先登记，也不需要新建实体）。
+        树 = ``CARD_CATEGORY_TREE`` 里登记的**候选**子树 ∪ **数据里实际出现过的值**。
+        两者都只是候选：在录入页直接输入一个新分类名，保存后这里立刻出现；
+        把某一类最后一条记录改名或删掉，旧分类就自动消失。
+        「指示物」在 constants 里刻意不预置子分类，所以它的导航完全由数据生成。
 
-        ``counts`` 为真时统计每个节点的卡牌数（指示物当前 0 条是正常状态）。
+        顺序：静态候选项在前（按 constants 里的写法），数据里新出现的按名称排序在后，
+        避免导航顺序随文件枚举顺序抖动。二 / 三级分类留空的记录不占分类节点
+        （它们照常出现在列表里）。
+
+        ``counts`` 为真时统计每个节点的卡牌数（某一类暂时 0 条是正常状态）。
         """
         from ..constants import CARD_CATEGORY_TREE
 
         static = CARD_CATEGORY_TREE.get(category_1, {})
-        # 二级 -> 三级，保序：先静态树的顺序，再补数据里新出现的
         levels: dict[str, list[str]] = {name: list(children) for name, children in static.items()}
         tally: dict[tuple[str, str], int] = {}
+        extra_level2: set[str] = set()
+        extra_level3: dict[str, set[str]] = {}
 
         for card in self.bundle.all("card").values():
             if (getattr(card, "category_1", "") or "") != category_1:
@@ -737,12 +743,19 @@ class AdminStore:
             c2 = (getattr(card, "category_2", "") or "").strip()
             c3 = (getattr(card, "category_3", "") or "").strip()
             if c2 and c2 not in levels:
-                levels[c2] = []
-            if c2 and c3 and c3 not in levels.setdefault(c2, []):
-                levels[c2].append(c3)
+                extra_level2.add(c2)
+            if c2 and c3 and c3 not in levels.get(c2, []):
+                extra_level3.setdefault(c2, set()).add(c3)
             if c2:
                 tally[(c2, c3)] = tally.get((c2, c3), 0) + 1
                 tally[(c2, "")] = tally.get((c2, ""), 0) + 1
+
+        # 静态候选在前，数据里新出现的按名称排序在后
+        for c2 in sorted(extra_level2):
+            levels.setdefault(c2, [])
+        for c2, children in extra_level3.items():
+            existing = levels.setdefault(c2, [])
+            existing.extend(sorted(child for child in children if child not in existing))
 
         tree: list[dict] = []
         for c2, children in levels.items():

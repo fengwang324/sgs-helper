@@ -85,9 +85,8 @@
   </p>
   <p>
     分类下拉是<strong>联动</strong>的：一级决定二级候选、二级决定三级候选；候选 = 分类树 ∪ 现有卡牌里出现过的值，
-    没有想要的可以<strong>直接输入新值</strong>。
-    <strong>基本牌</strong>的三级分类只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在<strong>卡名</strong>里
-    （所以三级候选里不会有「火杀」）。
+    没有想要的可以<strong>直接输入新值</strong>（新分类保存后自动进入候选与导航，不需要改代码）。
+    <strong>只有一级分类必填</strong>：二 / 三级都可以留空，只填一级、只填一 / 二级都合法。
   </p>
   <p>
     保存 = 写回 YAML → 完整校验 → 重建 SQLite；一次提交只写 1 张卡，任何一条不合法则全都不落盘。
@@ -102,7 +101,7 @@
     <label for="f-name">卡名 <span class="req">*</span></label>
     <input id="f-name" name="name" value="{{ values.get('name', '') }}" autofocus
            placeholder="例如 定澜夜明珠 / 杀 / 火杀">
-    <p class="help">基本牌这里写具体是哪一张（杀 / 火杀 / 雷杀 / 闪 / 掠闪 …），三级分类只写牌族。</p>
+    <p class="help">这张卡叫什么。基本牌习惯把具体牌名写在这里（杀 / 火杀 / 雷杀 / 闪 / 掠闪 …），三级分类写牌族——这只是本项目录入习惯，不是规则。</p>
     {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
   </div>
 
@@ -121,26 +120,26 @@
     </div>
 
     <div class="field {{ 'has-error' if error_map.get('category_2') else '' }}">
-      <label for="f-category_2-combo">二级分类 <span class="req">*</span></label>
+      <label for="f-category_2-combo">二级分类（可空）</label>
       <div class="combo" data-combo="category_2">
         <input id="f-category_2-combo" class="combo-input" autocomplete="off"
                placeholder="例如 基本牌 / 锦囊牌 / 装备牌" value="{{ values.get('category_2', '') }}">
         <input type="hidden" class="combo-value" name="category_2" value="{{ values.get('category_2', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">候选随一级分类变化。</p>
+      <p class="help">候选随一级分类变化（含数据里已有的分类）；留空表示只分到一级。</p>
       {% for message in error_map.get('category_2', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
 
     <div class="field {{ 'has-error' if error_map.get('category_3') else '' }}">
-      <label for="f-category_3-combo">三级分类 <span class="req">*</span></label>
+      <label for="f-category_3-combo">三级分类（可空）</label>
       <div class="combo" data-combo="category_3">
         <input id="f-category_3-combo" class="combo-input" autocomplete="off"
                placeholder="例如 非延时锦囊 / 武器 / 杀" value="{{ values.get('category_3', '') }}">
         <input type="hidden" class="combo-value" name="category_3" value="{{ values.get('category_3', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">候选随一 / 二级分类变化；基本牌这里只写牌族（杀 / 闪 / 桃 / 酒）。</p>
+      <p class="help">候选随一 / 二级分类变化；留空表示不再细分。</p>
       {% for message in error_map.get('category_3', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
