@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 import os
 import secrets
@@ -70,6 +71,12 @@ def default_db_path() -> Path:
 # ---------------------------------------------------------------- 模板
 
 
+def static_asset_url(name: str) -> str:
+    """内容变化时换 URL，让浏览器加载与当前模板配套的脚本 / 样式。"""
+    digest = hashlib.sha256((ADMIN_DIR / "static" / name).read_bytes()).hexdigest()[:12]
+    return f"/static/{name}?v={digest}"
+
+
 def build_templates() -> Jinja2Templates:
     # starlette 1.0 起 Jinja2Templates 不再接受 autoescape/trim_blocks 等
     # 环境参数，改为自行构造 jinja2.Environment 传进去（旧版本同样支持 env=）。
@@ -98,6 +105,7 @@ def build_templates() -> Jinja2Templates:
             "MODE_LABELS": MODE_LABELS,
             "SOURCE_LABELS": SOURCE_LABELS,
             "reference_fields": REFERENCE_FIELDS,
+            "static_asset_url": static_asset_url,
         }
     )
     return templates

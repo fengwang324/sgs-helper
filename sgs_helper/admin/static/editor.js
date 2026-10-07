@@ -876,6 +876,8 @@
   /* ------------------------------------------------------------------ 卡牌录入页（联动分类 / 卡图 / 拓展包） */
 
   function setupCardEditor(form) {
+    // 规则联动先独立启动，避免其他录入组件的问题使它失效。
+    var useRows = setupCardRules(form);
     var skillRows = setupSkillRows(form);
 
     var categoryData = { tree: {}, triples: [] };
@@ -1019,7 +1021,6 @@
     });
 
     /* ---- 草稿（sessionStorage）+ Ctrl/⌘+S */
-    var useRows = setupCardRules(form);
     setupDraft(form, function (state) {
       if (state.use_count != null) useRows.rebuild(Number(state.use_count) || 0);
       if (!skillRows) return;
@@ -1031,6 +1032,7 @@
       }
       skillRows.reindex();
     });
+    document.getElementById("card-interaction-status").hidden = true;
   }
 
   /* ------------------------------------------------------------------ 草稿 + 快捷键 */
@@ -1040,9 +1042,20 @@
     var count = document.getElementById("card-use-count");
     var template = document.getElementById("use-row-template");
     var section = document.getElementById("card-rules");
+    var notice = document.getElementById("inactive-rules-notice");
+    var consent = document.getElementById("confirm-inactive-rules");
+    var effectPanel = document.getElementById("card-effect-panel");
+    var previousProfile = null;
+    var previousInactive = "";
+    var kinds = { weapon: "攻击范围", mount: "距离修正", use: "使用说明", note: "整张牌的补充说明" };
+    function rows() { return Array.from(box.querySelectorAll(".use-row")); }
     function reindex() {
-      box.querySelectorAll(".use-row").forEach(function (row, index) {
+      var all = rows();
+      all.forEach(function (row, index) {
         row.dataset.index = String(index);
+        row.querySelector(".use-no").textContent = all.length > 1 ? "使用方式 " + (index + 1) : "使用说明";
+        row.querySelector(".use-remove").hidden = all.length <= 1;
+        row.querySelector("[data-use-label]").hidden = all.length <= 1 && !row.querySelector('[data-use-field="label"]').value.trim();
         row.querySelectorAll("textarea").forEach(function (input) {
           var field = input.dataset.useField;
           var oldId = input.id;
@@ -1052,10 +1065,11 @@
           if (label) label.htmlFor = input.id;
         });
       });
-      count.value = String(box.querySelectorAll(".use-row").length);
+      count.value = String(all.length);
+      document.getElementById("add-use-row").disabled = all.length >= 50;
     }
     function add() {
-      if (box.querySelectorAll(".use-row").length >= 50) return;
+      if (rows().length >= 50) return;
       box.appendChild(template.content.cloneNode(true));
       reindex();
     }
@@ -1066,30 +1080,81 @@
     function filled(node) {
       return Array.from(node.querySelectorAll("textarea")).some(function (input) { return input.value.trim(); });
     }
+    function profile() {
+      if (category(1) !== "游戏牌") return "free";
+      if (category(2) === "基本牌" || category(2) === "锦囊牌") return "use";
+      if (category(2) !== "装备牌") return "generic";
+      if (category(3) === "武器") return "weapon";
+      if (category(3) === "坐骑") return "mount";
+      if (category(3) === "防具" || category(3) === "宝物") return "equipment";
+      return "generic";
+    }
+    function active(kind, current) {
+      return current !== "free" && (current === "generic" || kind === "note" || kind === current);
+    }
     function update() {
-      // 分类变化时仍显示已有内容，避免隐藏后无法清空，也不静默丢弃。
-      section.hidden = category(1) !== "游戏牌" && !filled(section);
+      var current = profile();
+      if (current === "use" && !rows().length) add();
+      reindex();
+      section.hidden = current === "free" || current === "equipment";
+      document.getElementById("card-note-panel").hidden = current === "free";
+      document.getElementById("generic-rule-summary").hidden = current !== "generic";
+      if (current !== previousProfile) {
+        document.getElementById("game-rule-fields").open = current !== "generic" || filled(section);
+      }
+      var inactive = [];
       section.querySelectorAll("[data-rule-kind]").forEach(function (node) {
         var kind = node.dataset.ruleKind;
-        var matches = kind === "weapon" ? category(2) === "装备牌" && category(3) === "武器" :
-          kind === "mount" ? category(2) === "装备牌" && category(3) === "坐骑" :
-          category(2) === "基本牌" || category(2) === "锦囊牌";
-        node.hidden = !matches && !filled(node);
+        node.hidden = !active(kind, current);
+        if (node.hidden && filled(node)) inactive.push(kinds[kind]);
       });
+      var note = form.querySelector('[name="rules_note"]');
+      if (current === "free" && note.value.trim()) inactive.push(kinds.note);
+      var summary = inactive.join("、");
+      if (current !== previousProfile || summary !== previousInactive) consent.checked = false;
+      consent.required = Boolean(summary);
+      notice.hidden = !summary;
+      document.getElementById("inactive-rules-summary").textContent = summary ? summary + "不属于当前类型，已暂存。切回原类型可以恢复；保存当前类型将舍弃这些规则。" : "";
+      if (current !== previousProfile) effectPanel.open = current !== "use";
+      document.getElementById("card-effect-summary").textContent = current === "use" ? "原始卡面文字（可选）" : "效果";
+      document.getElementById("card-effect-label").textContent = current === "use" ? "原始卡面文字（可空）" : "效果（可空）";
+      document.getElementById("card-effect-help").textContent = current === "use" ?
+        "完整卡面原文可以留在这里；上方分别填写使用时机、目标和效果。" :
+        "可以填写自由效果说明；已有技能说明可以通过下方关联技能引用。";
+      previousProfile = current;
+      previousInactive = summary;
     }
     document.getElementById("add-use-row").addEventListener("click", function () {
       add();
+      update();
+      rows()[rows().length - 1].querySelector('[data-use-field="timing"]').focus();
       if (window.__sgsDraftTouch) window.__sgsDraftTouch();
     });
     box.addEventListener("click", function (event) {
-      if (!event.target.closest(".use-remove")) return;
-      event.target.closest(".use-row").remove();
-      reindex();
+      var button = event.target.closest(".use-remove");
+      if (!button || rows().length <= 1) return;
+      var row = button.closest(".use-row");
+      if (filled(row) && !window.confirm("删除这组使用说明？其余使用方式会保留。")) return;
+      row.remove();
+      update();
       if (window.__sgsDraftTouch) window.__sgsDraftTouch();
     });
     form.addEventListener("input", update);
     form.addEventListener("change", update);
     form.addEventListener("sgs-draft-restored", update);
+    // DOM 中的隐藏内容供切回类型和草稿恢复；只把当前类型的字段提交给服务端。
+    form.addEventListener("formdata", function (event) {
+      var current = profile();
+      if (!active("weapon", current)) event.formData.set("rules_attack_range", "");
+      if (!active("mount", current)) event.formData.set("rules_distance_modifier", "");
+      if (!active("use", current)) {
+        event.formData.set("use_count", "0");
+        Array.from(event.formData.keys()).forEach(function (key) {
+          if (/^use_\d+_/.test(key)) event.formData.delete(key);
+        });
+      }
+      if (current === "free") event.formData.set("rules_note", "");
+    });
     update();
     return { rebuild: function (total) {
       box.replaceChildren();
@@ -1104,6 +1169,7 @@
     function collect() {
       var data = {};
       form.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (element) {
+        if (element.name === "_csrf") return; // 服务重启后使用当前页面的 token。
         if (element.type === "checkbox") {
           data[element.name] = element.checked ? element.value || "1" : "";
         } else if (element.type !== "submit" && element.type !== "button") {
@@ -1131,6 +1197,7 @@
     function apply(payload) {
       if (beforeApply) beforeApply(payload.data || {});
       Object.keys(payload.data || {}).forEach(function (name) {
+        if (name === "_csrf") return; // 兼容旧草稿，避免恢复已失效的 token。
         var elements = form.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
         elements.forEach(function (element) {
           if (element.type === "checkbox") {

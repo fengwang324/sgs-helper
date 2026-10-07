@@ -371,4 +371,4 @@
 {% endif %}
 {% endblock %}
 
-{% block scripts %}<script src="/static/editor.js"></script><script src="/static/wiki-upload.js"></script>{% endblock %}
+{% block scripts %}<script src="{{ static_asset_url('editor.js') }}"></script><script src="{{ static_asset_url('wiki-upload.js') }}"></script>{% endblock %}

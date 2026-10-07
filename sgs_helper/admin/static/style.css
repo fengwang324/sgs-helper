@@ -20,6 +20,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -263,6 +264,8 @@ form.filters input[type="search"] { flex: 1 1 240px; }
 
 .entity-form { max-width: 860px; }
 .field { margin-bottom: 12px; }
+#card-effect-panel { margin: 18px 0; }
+#card-effect-panel > summary, #game-rule-fields > summary { cursor: pointer; font-weight: 600; margin-bottom: 10px; }
 .field label { display: block; font-weight: 600; margin-bottom: 3px; }
 .field.has-error input, .field.has-error textarea, .field.has-error select { border-color: var(--err); background: #fffaf9; }
 .field .req { color: var(--err); }

@@ -28,7 +28,7 @@
       </div>
       <p class="help combo-help">
         {% if row.skill_id %}
-          已选中 {{ row.skill_id }}{% if row.version_display %}，绑定版本 {{ row.version_display }}{% endif %}
+          已关联 {{ row.skill_name }}{% if row.version_display %}，版本 {{ row.version_display }}{% endif %}
         {% else %}
           输入技能名后从下拉里选择已有技能（卡牌只关联已有技能；技能文本在技能版本里维护）。
         {% endif %}
@@ -55,9 +55,9 @@
 
 {% macro use_row(index, values) %}
 <div class="use-row subblock" data-index="{{ index }}">
-  <div class="skill-row-head"><strong>使用方法</strong><button type="button" class="link-btn use-remove">删除此方法</button></div>
-  {% for name, label in [('label', '方法名称（可空）'), ('timing', '出牌时机'), ('target', '使用目标'), ('effect', '作用效果'), ('note', 'note · 补充说明')] %}
-  <div class="field">
+  <div class="skill-row-head"><strong class="use-no">使用说明</strong><button type="button" class="link-btn use-remove" hidden>删除此方式</button></div>
+  {% for name, label in [('label', '方式名称（可空）'), ('timing', '出牌时机'), ('target', '使用目标'), ('effect', '作用效果'), ('note', '补充说明（可空）')] %}
+  <div class="field" {{ 'data-use-label hidden' if name == 'label' else '' }}>
     <label for="f-use-{{ index }}-{{ name }}">{{ label }}</label>
     <textarea id="f-use-{{ index }}-{{ name }}" name="use_{{ index }}_{{ name }}" data-use-field="{{ name }}" rows="{{ 1 if name == 'label' else 2 }}">{{ values.get('use_' ~ index ~ '_' ~ name, '') }}</textarea>
   </div>
@@ -91,23 +91,18 @@
 {% endif %}
 
 <section class="hint">
-  <p>
-    <strong>一张卡只有一层</strong>：一 / 二 / 三级分类表达“这张卡是什么”，<strong>所属拓展包</strong>表达“它来自哪个拓展包”，
-    两者完全独立。同一规则卡的不同实体印刷<strong>不在这一层建模</strong>，卡牌也没有 source 字段。
-  </p>
-  <p>
-    分类下拉是<strong>联动</strong>的：一级决定二级候选、二级决定三级候选；候选 = 分类树 ∪ 现有卡牌里出现过的值，
-    没有想要的可以<strong>直接输入新值</strong>（新分类保存后自动进入候选与导航，不需要改代码）。
-    <strong>只有一级分类必填</strong>：二 / 三级都可以留空，只填一级、只填一 / 二级都合法。
-  </p>
-  <p>
-    保存 = 写回 YAML → 完整校验 → 重建 SQLite；一次提交只写 1 张卡，任何一条不合法则全都不落盘。
-  </p>
+  <p>选择卡牌类型后填写对应的说明。分类可以自由输入，只有卡名与一级分类必填；指示物无需遵循固定分类。</p>
 </section>
+<div class="banner warn" id="card-interaction-status" role="status">表单交互尚未加载。若此提示持续显示，请刷新页面后再录入。</div>
 
 <form method="post" action="{{ action }}" class="entity-form editor-form" data-editor="card" autocomplete="off">
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   <input type="hidden" name="_base_sha" value="{{ base_sha }}">
+  <div id="inactive-rules-notice" class="banner warn" hidden>
+    <p id="inactive-rules-summary"></p>
+    <label><input type="checkbox" id="confirm-inactive-rules"> 保存时舍弃上述规则，只保留当前类型的内容</label>
+    <p class="help">尚未保存时，切回原类型可继续编辑这些内容。</p>
+  </div>
 
   <div class="field {{ 'has-error' if error_map.get('name') else '' }}">
     <label for="f-name">卡名 <span class="req">*</span></label>
@@ -165,19 +160,19 @@
         <input type="hidden" class="combo-value" name="card_set" value="{{ values.get('card_set', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">候选来自所有产品的 <code>card_sets</code> + 已有卡牌的取值；跨拓展包或暂时无法确认来源就留空。</p>
+      <p class="help">填写这张卡所属的拓展包；跨拓展包或暂时无法确认来源时可以留空。</p>
     </div>
 
     <div class="field {{ 'has-error' if error_map.get('image') else '' }}">
       <label for="f-image-combo">卡图（可空）</label>
       <div class="combo" data-combo="image">
         <input id="f-image-combo" class="combo-input" autocomplete="off"
-               placeholder="例如 card_sha_qlhd_spade_4.jpg（留空 = 卡图待补）"
+               placeholder="选择已有卡图，或点击下方上传"
                value="{{ values.get('image', '') }}">
         <input type="hidden" class="combo-value" name="image" value="{{ values.get('image', '') }}">
         <div class="combo-list" hidden></div>
       </div>
-      <p class="help">候选是 <code>data/card_images/</code> 下真实存在的文件名；待补卡图（火杀 / 雷杀 / 掠闪…）留空即可。</p>
+      <p class="help">可以选择已有图片，也可以上传；暂缺图片时留空。</p>
       <p>
         <button type="button" class="btn js-upload-image"
                 data-upload-target="image" data-upload-preview="image-preview">上传卡图</button>
@@ -192,8 +187,10 @@
   </div>
 
   <section id="card-rules" {{ 'hidden' if values.get('category_1') != '游戏牌' and not error_map.get('category_1') else '' }}>
-    <h2 class="section-title">游戏牌规则</h2>
-    <p class="help">各项都可以留空，支持 X 与条件表达式。通用装备规则由规则关键词说明。</p>
+    <h2 class="section-title">规则说明</h2>
+    <p class="help">可以留空；全部按文本填写，支持 X、条件和换行。</p>
+    <details id="game-rule-fields" open>
+    <summary id="generic-rule-summary" hidden>其他规则资料（可选）</summary>
     <div class="field" data-rule-kind="weapon">
       <label for="f-rules_attack_range">攻击范围</label>
       <textarea id="f-rules_attack_range" name="rules_attack_range" rows="2">{{ values.get('rules_attack_range', '') }}</textarea>
@@ -203,28 +200,31 @@
       <textarea id="f-rules_distance_modifier" name="rules_distance_modifier" rows="2" placeholder="写清计算方向；可以填写 X 或特殊条件">{{ values.get('rules_distance_modifier', '') }}</textarea>
     </div>
     <div data-rule-kind="use">
-      <h3>使用方法</h3>
       <div id="card-use-rows">{% for index in range([values.get('use_count', '0') | int, 50] | min) %}{{ use_row(index, values) }}{% endfor %}</div>
       <input type="hidden" name="use_count" id="card-use-count" value="{{ values.get('use_count', '0') }}">
-      <button type="button" class="btn" id="add-use-row">+ 添加使用方法</button>
-      <p class="help">同一张牌的不同使用方法分别填写时机、目标、效果和补充说明。</p>
+      <button type="button" class="btn ghost" id="add-use-row">+ 添加另一种使用方式</button>
+      <p class="help">有多个使用时机或目标时，再添加另一种方式。</p>
       {% for message in error_map.get('use_count', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
-    <div class="field">
-      <label for="f-rules_note">note · 补充说明（可空）</label>
-      <textarea id="f-rules_note" name="rules_note" rows="3">{{ values.get('rules_note', '') }}</textarea>
-    </div>
+    </details>
   </section>
 
-  <div class="field {{ 'has-error' if error_map.get('effect_text') else '' }}">
-    <label for="f-effect_text">效果文本（可空）</label>
+  <details id="card-effect-panel" open>
+    <summary id="card-effect-summary">效果</summary>
+    <div class="field {{ 'has-error' if error_map.get('effect_text') else '' }}">
+    <label for="f-effect_text" id="card-effect-label">效果（可空）</label>
     <textarea id="f-effect_text" name="effect_text" rows="5"
               placeholder="卡面效果原文，逐字照抄；纯技能卡可以留空">{{ values.get('effect_text', '') }}</textarea>
     <p class="help">
-      照抄卡面文字，不要改写、不要补全。技能说明<strong>不要</strong>抄进来——那属于技能版本；
-      效果文本与关联技能同时为空也是合法的。
+      <span id="card-effect-help">可以填写卡面说明；已有技能说明可以通过下方关联技能引用。</span>
     </p>
     {% for message in error_map.get('effect_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+  </div>
+  </details>
+
+  <div class="field" id="card-note-panel">
+    <label for="f-rules_note">整张牌的补充说明（可空）</label>
+    <textarea id="f-rules_note" name="rules_note" rows="3">{{ values.get('rules_note', '') }}</textarea>
   </div>
 
   <h2 class="section-title">关联技能</h2>
@@ -274,4 +274,4 @@
 {% endif %}
 {% endblock %}
 
-{% block scripts %}<script src="/static/editor.js"></script><script src="/static/wiki-upload.js"></script>{% endblock %}
+{% block scripts %}<script src="{{ static_asset_url('editor.js') }}"></script><script src="{{ static_asset_url('wiki-upload.js') }}"></script>{% endblock %}

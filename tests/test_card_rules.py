@@ -17,6 +17,21 @@ from sgs_helper.repo import card_report, connect, search
 from sgs_helper.schema import Card
 
 
+def test_asset_versions_follow_file_contents(tmp_path: Path, monkeypatch):
+    from sgs_helper.admin import app
+
+    static = tmp_path / "static"
+    static.mkdir()
+    script = static / "editor.js"
+    script.write_text("first version", encoding="utf-8")
+    monkeypatch.setattr(app, "ADMIN_DIR", tmp_path)
+    first = app.static_asset_url("editor.js")
+    assert first.startswith("/static/editor.js?v=")
+    assert app.static_asset_url("editor.js") == first
+    script.write_text("updated version", encoding="utf-8")
+    assert app.static_asset_url("editor.js") != first
+
+
 def card_node(**overrides):
     return dict(id="card_rules_test", name="规则测试牌", category_1="游戏牌",
                 category_2="锦囊牌", category_3="非延时锦囊",

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if title %}{{ title }} · {% endif %}sgs-helper 资料管理</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="{{ static_asset_url('style.css') }}">
 </head>
 <body>
 <header class="topbar">
@@ -57,7 +57,7 @@
   <span>· SQLite：{{ db_state.built_at or '未构建' }}</span>
   <span>· 数据目录：<code>{{ db_state.meta.data_dir if db_state.meta else '—' }}</code></span>
 </footer>
-<script src="/static/app.js"></script>
+<script src="{{ static_asset_url('app.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
