@@ -117,9 +117,9 @@
     tests/test_relations.py tests/test_cli.py tests/test_migration.py tests/test_validate.py`
     → **194 passed**；
   - `tests/test_wiki.py` → **41 passed**；`tests/test_admin_editors.py` → **44 passed**；
-  - `tests/test_admin.py`：本机 pytest 的临时目录落在 MobaXterm 的慢挂载上（每个用例要先拷
-    28 MB 卡图 + 全量重建），整个文件要跑很久；按用户指示不再等它，**该文件未跑完**，
-    只对本轮改到的用例做了上述针对性冒烟。
+  - `tests/test_admin.py`：只跑本轮改到的 19 个用例 → **19 passed**（整个文件每个用例都要先拷
+    28 MB 卡图 + 全量重建，本机 pytest 临时目录又落在 MobaXterm 慢挂载上，耗时过长，
+    按用户指示不再等它跑完）。
 - 其他数据核查：`product 1 / general 163 / general_variant 163 / skill 311 /
   skill_version 297 / card 81` 与改动前完全一致（只有 faq 83→85、keyword 126→117、timing 30→0）。
 
