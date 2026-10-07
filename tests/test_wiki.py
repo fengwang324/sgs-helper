@@ -12,6 +12,10 @@
 7. 编辑模式开关（默认浏览；开启后列表页有「+新增」、详情页有 编辑/复制/删除）；
 8. 图片上传写进 ``data/card_images/``，实体里只存**文件名**。
 
+武将的身份键是**卡面编号**：``General.id`` / ``GeneralVariant.id`` / 卡图名都由编号派生
+（``G.SHU 004`` → ``general_g_shu_004`` / ``variant_g_shu_004`` / ``g_shu_004.jpg``），
+所以测试里按编号反查 id，不写死。
+
 所有测试都跑在 ``tmp_path`` 的真实 ``data/`` 副本上，不会碰仓库里的数据。
 """
 
@@ -27,8 +31,19 @@ from fastapi.testclient import TestClient
 
 from sgs_helper.admin.app import create_app
 
-#: 真实数据里的固定 id
-GENERAL_ID = "general_zhu_ge_liang"
+#: 真实数据里的固定 id。武将 id 由卡面编号派生，所以按编号反查，不写死。
+def _general_by_number(number: str) -> str:
+    from sgs_helper.loader import load_data_dir
+
+    raws, _ = load_data_dir(Path(__file__).resolve().parents[1] / "data")
+    variant = next(
+        r for r in raws
+        if r.kind == "general_variant" and r.data.get("general_number") == number
+    )
+    return str(variant.data["general_id"])
+
+
+GENERAL_ID = _general_by_number("G.SHU 004")   # 诸葛亮
 SKILL_ID = "skill_ji_zhi"
 CARD_ID = "card_sha"
 FAQ_ID = "faq_rule_flow_damage"
@@ -324,11 +339,15 @@ def test_new_category_needs_no_code_change(client: TestClient, app) -> None:
 # ---------------------------------------------------------------- 验收 8：图片
 
 
-def test_general_edit_page_has_image_field(client: TestClient) -> None:
-    """武将卡图字段以前没有任何页面能编辑，现在补上了。"""
+def test_general_edit_page_shows_number_and_derived_image(client: TestClient) -> None:
+    """武将录入页：编号是身份键（必填），卡图是它的只读派生值。"""
     body = client.get("/new/general").text
-    assert 'name="image"' in body
+    # 编号可填
+    assert 'name="general_number"' in body
+    # 卡图不再手工输入（由编号派生），但要有上传按钮与预览
     assert "js-upload-image" in body
+    assert "wiki-upload.js" in body
+    assert "由编号自动决定" in body
 
 
 def test_card_edit_page_has_upload_button(client: TestClient) -> None:

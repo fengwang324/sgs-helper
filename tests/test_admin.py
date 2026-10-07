@@ -35,10 +35,23 @@ from sgs_helper.validate import REFERENCE_FIELDS, validate_data_dir
 
 # ---------------------------------------------------------------- 真实数据里的固定 id
 
+def _general_by_number(number: str) -> str:
+    """按卡面编号找 General.id（编号是身份键，id 由它派生，所以不要在测试里写死 id）。"""
+    from sgs_helper.loader import load_data_dir
+
+    raws, _ = load_data_dir(Path(__file__).resolve().parents[1] / "data")
+    variant = next(
+        r for r in raws
+        if r.kind == "general_variant" and r.data.get("general_number") == number
+    )
+    return str(variant.data["general_id"])
+
+
 #: 真实数据现在只有一个产品（群狼环鼎），武将 / 技能等都挂在它下面
 PRODUCT_ID = "qlhd"
-GENERAL_ID = "general_zhu_ge_liang"
-#: 变体 id 由卡面编号决定：G.SHU 004 → variant_g_shu_004
+#: 诸葛亮（G.SHU 004）——id 由编号派生：general_g_shu_004
+GENERAL_ID = _general_by_number("G.SHU 004")
+#: 变体 id 同样由编号派生
 VARIANT_ID = "variant_g_shu_004"
 #: 卡牌：单层 Card（category_* + name + image + card_set + effect）
 CARD_ID = "card_sha"
@@ -966,7 +979,7 @@ def test_reverse_refs_and_delete_guard_agree(app) -> None:
 def test_create_general_from_form(client: TestClient, app, workdir: Path) -> None:
     payload = general_payload(
         app,
-        id="general_test_new",
+        id="general_qq_001",
         name="【测试】新武将",
         title="测试称号",
         general_number="qq-001",
@@ -984,12 +997,12 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     assert response.status_code == 303, response.text
 
     general = yaml.safe_load(
-        yaml_of(workdir, "general", "general_test_new").read_text(encoding="utf-8")
+        yaml_of(workdir, "general", "general_qq_001").read_text(encoding="utf-8")
     )
     assert set(general) == {"id", "name"}   # 武将个体只存名字
     # 模式/体力/称号/编号/系列/技能这些“版本属性”写在 GeneralVariant 里
     variant = yaml.safe_load(
-        find_variant_yaml(workdir, "general_test_new").read_text(encoding="utf-8")
+        find_variant_yaml(workdir, "general_qq_001").read_text(encoding="utf-8")
     )
     assert "source" not in variant           # 实体卡类没有 source
     assert "notes" not in variant
@@ -1005,7 +1018,7 @@ def test_create_general_from_form(client: TestClient, app, workdir: Path) -> Non
     db_path = workdir / "build" / "sgs.db"
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    report = general_report(conn, "general_test_new")
+    report = general_report(conn, "general_qq_001")
     conn.close()
     assert report["general"]["name"] == "【测试】新武将"
     assert report["variants"][0]["hp"] == 2.5

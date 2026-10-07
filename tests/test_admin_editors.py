@@ -39,12 +39,15 @@ from sgs_helper.admin.app import create_app
 from sgs_helper.repo import general_report
 from sgs_helper.schema import General, Product
 
-#: 真实数据里的固定 id（当前只有一个产品：群狼环鼎）
+#: 真实数据里的固定 id（当前只有一个产品：群狼环鼎）。
+#: 武将 / 变体的 id 由**卡面编号**派生，所以这里写明编号而不是写死 id。
 PRODUCT_ID = "qlhd"
-GENERAL_ID = "general_zhu_ge_liang"
-VARIANT_ID = "variant_zhu_ge_liang_guo_zhan_ban"
-HUANG_YUE_GENERAL_ID = "general_huang_yue_ying"
-HUANG_YUE_VARIANT_ID = "variant_huang_yue_ying_guo_zhan_ban"
+#: 诸葛亮 G.SHU 004
+GENERAL_ID = "general_g_shu_004"
+VARIANT_ID = "variant_g_shu_004"
+#: 黄月英 G.SHU 007
+HUANG_YUE_GENERAL_ID = "general_g_shu_007"
+HUANG_YUE_VARIANT_ID = "variant_g_shu_007"
 JI_ZHI_V1 = "skill_ji_zhi_guozhan_qlhd_v1"
 QI_CAI_V1 = "skill_qi_cai_guozhan_qlhd_v1"
 GUAN_XING_V1 = "skill_guan_xing_guozhan_qlhd_v1"
@@ -237,12 +240,29 @@ def test_generated_id_is_stable_for_ascii_names(client: TestClient, workdir: Pat
     assert entity_file(workdir, "general", general_id).exists()
 
 
-def test_generated_id_avoids_existing_taken_id(client: TestClient) -> None:
-    """重名（真实数据里已有 general_li_dian）时追加序号，绝不覆盖已有记录。"""
-    response = post(client, "/new/general", data=general_payload(client.app, name="Li Dian"))
+def test_generated_id_comes_from_card_number(client: TestClient) -> None:
+    """id 由**卡面编号**派生（不再是名字）：G.TEST 001 → general_g_test_001。"""
+    response = post(
+        client,
+        "/new/general",
+        data=general_payload(client.app, name="测试武将", general_number="G.TEST 001"),
+    )
     general_id = new_general_id(response)
-    assert general_id != "general_li_dian"
-    assert general_id.startswith("general_li_dian")
+    assert general_id == "general_g_test_001", general_id
+
+
+def test_duplicate_card_number_is_rejected(client: TestClient) -> None:
+    """两个不同编号若规范化后重名，必须报错而不是静默合并成同一个武将。"""
+    # G.TEST 001 与 G-TEST-001 都会 slug 成 g_test_001
+    post(client, "/new/general",
+         data=general_payload(client.app, name="甲", general_number="G.TEST 001"))
+    response = post(
+        client,
+        "/new/general",
+        data=general_payload(client.app, name="乙", general_number="G-TEST-001"),
+    )
+    assert response.status_code == 400
+    assert "已被另一个武将占用" in response.text or "占用" in response.text
 
 
 # ---------------------------------------------------------------- 3
