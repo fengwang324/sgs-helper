@@ -82,14 +82,13 @@ def test_old_version_is_kept_after_update(synth_db: Path) -> None:
     assert ids == {"skill_demo_identity_v1", "skill_demo_identity_v2"}
 
 
-def test_version_chain_and_review_note_are_recorded(synth_db: Path) -> None:
-    previous, review_note = _rows(
+def test_version_chain_is_recorded(synth_db: Path) -> None:
+    (previous,) = _rows(
         synth_db,
-        "SELECT previous_version_id, review_note FROM skill_versions "
+        "SELECT previous_version_id FROM skill_versions "
         "WHERE id = 'skill_demo_identity_v2'",
     )[0]
     assert previous == "skill_demo_identity_v1"
-    assert review_note == "演示用待复核说明"
 
 
 def test_skill_version_columns_drop_dates_and_lists(synth_db: Path) -> None:
@@ -102,9 +101,9 @@ def test_skill_version_columns_drop_dates_and_lists(synth_db: Path) -> None:
         "related_keywords",
         "related_timing_ids",
         "notes",
+        "review_note",       # 复核备注已整体删除
     ):
         assert removed not in columns
-    assert "review_note" in columns
     assert "source_key" in columns
 
 

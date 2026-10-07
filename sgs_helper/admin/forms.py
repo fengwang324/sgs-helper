@@ -30,7 +30,6 @@ from .yaml_writer import SOURCE_KEY_ORDER
 FIELD_LABELS: dict[str, str] = {
     "id": "记录 ID",
     "name": "名称",
-    "review_note": "复核备注",
     "mode": "模式",
     "release_year": "发行年份",
     "general_sets": "武将牌系列",
@@ -68,7 +67,6 @@ FIELD_LABELS: dict[str, str] = {
 FIELD_HELP: dict[str, str] = {
     "id": "小写字母开头，只能包含小写字母、数字、下划线；建议带业务前缀，如 general_xxx。修改 ID 会同时移动 YAML 文件。",
     "mode": "common 表示跨模式通用。",
-    "review_note": "需要人工对照卡图 / 实物复核的异常（OCR 误读、疑似错字…）。正常记录留空。",
     "category_1": "一级分类（游戏牌 / 指示物…）；用卡牌录入页的联动下拉选择，也可以自己输入新值。",
     "category_2": "二级分类（基本牌 / 锦囊牌 / 装备牌…）。",
     "category_3": "三级分类；基本牌这里只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 name。",
@@ -97,7 +95,6 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
         "answer",
         "definition",
         "description",
-        "review_note",
     }
 )
 

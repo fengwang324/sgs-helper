@@ -1163,7 +1163,6 @@ class AdminStore:
                     "product_id": version.product_id,
                     "product_name": self.name_of("product", version.product_id),
                     "previous_version_id": version.previous_version_id,
-                    "review_note": version.review_note,
                     "text": text,
                     "text_excerpt": truncate(text, 60),
                     "text_sha": hashlib.sha1(text.strip().encode("utf-8")).hexdigest(),

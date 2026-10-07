@@ -7,7 +7,7 @@
 3. 武将编号允许大小写字母/数字/-/_
 4. Product 简洁表单正确保存 general_sets / card_sets
 5. 编辑旧 Product 只写模型里还存在的字段（被删字段不会回来）
-6. 编辑旧 General 时表单没展示的字段（image / review_note）保留
+6. 编辑旧 General 时表单没展示的字段（image）保留
 7. 已有 Skill 可以搜索并绑定
 8. General 能显式绑定 SkillVersion
 9. version_id 必须属于对应 skill_id
@@ -115,7 +115,6 @@ def general_payload(app, **overrides) -> dict:
         "_variant_id": "",
         "_variant_sha": "",
         "variant_id": "",
-        "review_note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -360,7 +359,6 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
     general_before = load_yaml(general_path)
     variant_before = load_yaml(variant_path)
     assert variant_before["image"]          # 卡图属于“页面没展示的字段”
-    assert variant_before["review_note"]
 
     payload = general_edit(
         app,
@@ -378,8 +376,8 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
         skill_1_skill_id="skill_kong_cheng",
         skill_1_version_id=KONG_CHENG_V1,
     )
-    # 页面里没有 image，也不该因为“没提交”而被清空；review_note 同理
-    for key in ("review_note", "illustrator", "zhulianbihe"):
+    # 页面里没有 image，也不该因为“没提交”而被清空
+    for key in ("illustrator", "zhulianbihe"):
         payload.pop(key, None)
     response = post(client, f"/edit/general/{GENERAL_ID}", data=payload)
     assert response.status_code == 303, response.text
@@ -387,7 +385,6 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
     after_variant = load_yaml(variant_path)
     assert after_variant["image"] == variant_before["image"]
     assert after_variant["illustrator"] == variant_before["illustrator"]
-    assert after_variant["review_note"] == variant_before["review_note"]
     assert after_variant["hp"] == 2.5
     assert [ref["skill_id"] for ref in after_variant["skills"]] == [
         "skill_guan_xing",

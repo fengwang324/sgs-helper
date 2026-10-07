@@ -81,7 +81,6 @@ zhulianbihe:
   - 演示武将乙
 skills:
   - skill_id: skill_demo
-review_note: 演示用待复核说明
 """,
     "general_variants/demo_alpha_identity.yaml": """id: variant_demo_alpha_identity
 general_id: general_demo_alpha
@@ -110,7 +109,6 @@ name: 演示技能
 """,
     "skills/demo_other.yaml": """id: skill_demo_other
 name: 另一个演示技能
-review_note: 演示用技能名待复核
 """,
     "skill_versions/demo_other_v1.yaml": f"""id: skill_demo_other_v1
 skill_id: skill_demo_other
@@ -141,8 +139,7 @@ text: 身份局二代演示技能文本
 version_label: 平衡调整后
 product_id: null
 previous_version_id: skill_demo_identity_v1
-{SOURCE_YAML}review_note: 演示用待复核说明
-""",
+{SOURCE_YAML}""",
     "cards/demo_card.yaml": """id: card_demo
 category_1: 游戏牌
 category_2: 基本牌
@@ -153,7 +150,6 @@ card_set: null
 effect:
   text: ""
   skills: []
-review_note: 演示用待复核说明
 """,
     "cards/demo_trick.yaml": """id: card_demo_trick
 category_1: 游戏牌
@@ -167,7 +163,6 @@ effect:
   skills:
     - skill_id: skill_demo
       version_id: skill_demo_guozhan_v1
-review_note: ""
 """,
     "faq/demo_1.yaml": f"""id: faq_demo_1
 question: 演示问题：演示技能的结算？

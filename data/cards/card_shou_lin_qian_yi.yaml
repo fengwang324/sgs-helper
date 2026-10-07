@@ -8,4 +8,3 @@ card_set: null
 effect:
   text: 你使用【杀】的结算过程中，你攻击范围内的非目标角色不能使用牌（X为你的已损失体力值）。
   skills: []
-review_note: ''

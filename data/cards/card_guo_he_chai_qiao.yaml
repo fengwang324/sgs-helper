@@ -8,4 +8,3 @@ card_set: null
 effect:
   text: 出牌阶段，对一名区域内有牌的其他角色使用。你将其区域内的一张牌弃置。
   skills: []
-review_note: ''

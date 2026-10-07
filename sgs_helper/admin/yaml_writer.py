@@ -34,7 +34,6 @@ BLOCK_TEXT_FIELDS: frozenset[str] = frozenset(
         "answer",
         "definition",
         "description",
-        "review_note",
     }
 )
 

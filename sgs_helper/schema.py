@@ -8,7 +8,8 @@
 - 游戏牌 / 指示物：**一层** :class:`Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），
   同一规则卡不因为花色点数不同拆成多条；
 - 规则类（SkillVersion / Keyword / FAQ / Timing）只保留极简来源 ``type`` + ``reference``；
-- **没有通用 notes**：确实需要人工复核的地方用 ``review_note``。
+- **没有通用 notes，也没有 review_note**：需要留痕的异常写进对应正文，
+  或者记在 Git 提交信息里（字段级备注已整体删除）。
 
 约定：
 
@@ -144,8 +145,6 @@ class GeneralVariant(StrictModel):
     zhulianbihe: list[str] = Field(default_factory=list)
     #: 技能关系（含可选的具体版本绑定）；顺序即卡面上的技能顺序
     skills: list[SkillRef] = Field(default_factory=list)
-    #: 需要人工对照卡图/实物复核的异常（OCR 误读、疑似错字…）
-    review_note: str = ""
 
     @field_serializer("hp")
     def _serialize_hp(self, value: float | None) -> float | int | None:
@@ -183,8 +182,6 @@ class Skill(StrictModel):
 
     id: Id
     name: Name
-    #: 需要人工复核的异常（例如卡面 OCR 读出的技能名与核对结果不一致）
-    review_note: str = ""
 
 
 class SkillVersion(StrictModel):
@@ -202,8 +199,6 @@ class SkillVersion(StrictModel):
     product_id: Id | None = None
     previous_version_id: Id | None = None
     source: Source
-    #: 需要人工复核的异常（例如文本不是来自卡面、或 OCR 结果未核验）
-    review_note: str = ""
 
 
 # ---------------------------------------------------------------- 卡牌
@@ -240,8 +235,6 @@ class Card(StrictModel):
     #: 所属拓展包；允许为空（跨多个拓展包、或暂时无法确认来源时留空）
     card_set: str | None = None
     effect: CardEffect = Field(default_factory=CardEffect)
-    #: 需要人工对照卡图/实物复核的异常
-    review_note: str = ""
 
 
 # ---------------------------------------------------------------- FAQ / 关键词 / 时点

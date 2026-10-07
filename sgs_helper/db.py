@@ -44,16 +44,14 @@ COLUMNS: dict[str, tuple[str, ...]] = {
     "general_variant": (
         "general_id", "variant", "title", "general_number", "illustrator", "image",
         "mode", "faction", "hp", "gender", "product_id", "general_set", "zhulianbihe",
-        "review_note",
     ),
-    "skill": ("name", "review_note"),
+    "skill": ("name",),
     "skill_version": (
         "skill_id", "mode", "text", "version_label", "product_id", "previous_version_id",
-        "review_note",
     ),
     "card": (
         "category_1", "category_2", "category_3", "name", "image", "card_set",
-        "effect_text", "effect_skills", "review_note",
+        "effect_text", "effect_skills",
     ),
     "faq": ("question", "answer", "mode"),
     "keyword": ("name", "definition", "mode"),
@@ -347,14 +345,13 @@ def _search_row(
         name = f"{general_name}（{entity.variant}）"
         parts += [
             entity.variant, entity.title, entity.faction, entity.general_set or "",
-            general_name, "、".join(entity.zhulianbihe or []), entity.review_note,
+            general_name, "、".join(entity.zhulianbihe or []),
         ]
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
         if entity.general_number:
             parts.append(entity.general_number)
         parts.append(_names_of(bundle, "skill", [ref.skill_id for ref in entity.skills]))
     elif kind == "skill":
-        parts.append(entity.review_note)
         for version in bundle.all("skill_version").values():
             if version.skill_id == entity.id:
                 parts += [
@@ -366,7 +363,7 @@ def _search_row(
         skill_name = str(getattr(skill, "name", entity.skill_id))
         name = f"{skill_name} {entity.version_label}".strip()
         parts += [
-            entity.text, entity.version_label, entity.review_note,
+            entity.text, entity.version_label,
             MODE_LABELS.get(entity.mode, entity.mode), entity.skill_id,
         ]
         parts += mention_names(entity.text)
@@ -375,7 +372,7 @@ def _search_row(
         text = str(getattr(effect, "text", "") or "")
         parts += [
             entity.category_1, entity.category_2, entity.category_3,
-            entity.name, entity.card_set or "", entity.review_note, text,
+            entity.name, entity.card_set or "", text,
         ]
         parts.append(
             _names_of(bundle, "skill", [ref.skill_id for ref in (effect.skills if effect else [])])

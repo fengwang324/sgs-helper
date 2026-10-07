@@ -37,9 +37,6 @@
       旧版本永不覆盖。哪个武将版本用哪一版文本由 <code>GeneralVariant.skills[].version_id</code> 显式决定，
       没有显式绑定时才按 mode 回退。
     </p>
-    {% if entity.review_note %}
-      <p class="sub badge warn" style="display:block;padding:6px 8px;">复核备注：{{ entity.review_note }}</p>
-    {% endif %}
 
     {% for group in detail.modes %}
       <div class="subblock">
@@ -81,7 +78,6 @@
           <tr class="detail-row">
             <td colspan="7">
               {{ rich_text(v.segments) }}
-              {% if v.entity.review_note %}<div class="sub">复核备注：{{ v.entity.review_note }}</div>{% endif %}
             </td>
           </tr>
         {% endfor %}
@@ -141,9 +137,6 @@
           {% if item.product_name %} · 产品 {{ item.product_name }}{% endif %}
           {% if item.entity.zhulianbihe %} · 珠联璧合 {{ item.entity.zhulianbihe | join('、') }}{% endif %}
         </p>
-        {% if item.entity.review_note %}
-          <p class="sub badge warn" style="display:block;padding:6px 8px;">复核备注：{{ item.entity.review_note }}</p>
-        {% endif %}
         {% if item.entity.image %}
           <div class="card-preview">
             <img src="/card-images/{{ item.entity.image }}" alt="{{ entity.name }} {{ item.variant }} 卡图">
@@ -208,9 +201,6 @@
       一张卡只有一层：一 / 二 / 三级分类表达“这张卡是什么”，<code>card_set</code> 表达“它来自哪个拓展包”，
       两者完全独立。同一规则卡的不同实体印刷不在这一层建模。
     </p>
-    {% if entity.review_note %}
-      <p class="sub badge warn" style="display:block;padding:6px 8px;">复核备注：{{ entity.review_note }}</p>
-    {% endif %}
     <table class="kv">
       <tr><th>一级分类</th><td>{{ entity.category_1 }}</td></tr>
       <tr><th>二级分类</th><td>{{ entity.category_2 }}</td></tr>
@@ -407,7 +397,7 @@
             </ul>
           {% elif field.empty %}
             <span class="muted">—</span>
-          {% elif field.name in ('text', 'question', 'answer', 'definition', 'description', 'review_note') %}
+          {% elif field.name in ('text', 'question', 'answer', 'definition', 'description') %}
             <div class="rule-text">{{ field.text }}</div>
           {% else %}
             {{ field.text }}

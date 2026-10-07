@@ -114,16 +114,14 @@ def test_entity_card_kinds_have_no_source(data_dir: Path) -> None:
             assert "source" not in doc, f"{path} 不该再保存 source"
 
 
-def test_review_notes_only_on_allowed_kinds(data_dir: Path) -> None:
-    allowed = {"general_variants", "skill_versions", "skills", "cards"}
-    total = 0
+def test_review_note_is_gone_from_all_data(data_dir: Path) -> None:
+    """review_note 已整体删除：任何数据文件里都不该再有这个字段。"""
+    offenders = []
     for path in _yaml_files(data_dir):
         doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        if "review_note" in doc:
-            top = path.relative_to(data_dir).parts[0]
-            assert top in allowed, f"{path} 不该有 review_note"
-            total += 1
-    assert total > 0, "迁移后应当保留若干 review_note"
+        if isinstance(doc, dict) and "review_note" in doc:
+            offenders.append(str(path.relative_to(data_dir)))
+    assert offenders == [], f"这些文件仍带 review_note：{offenders[:5]}"
 
 
 def test_general_and_skill_are_name_only(data_dir: Path) -> None:
@@ -131,7 +129,7 @@ def test_general_and_skill_are_name_only(data_dir: Path) -> None:
         assert set(yaml.safe_load(path.read_text(encoding="utf-8"))) == {"id", "name"}
     for path in sorted((data_dir / "skills").glob("*.yaml")):
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert set(doc) <= {"id", "name", "review_note"}
+        assert set(doc) <= {"id", "name"}
 
 
 # ---------------------------------------------------------------- 校验层
@@ -343,19 +341,8 @@ def test_pending_basic_cards_have_no_image(data_dir: Path) -> None:
     assert seen == pending
 
 
-def test_multi_text_cards_are_flagged_for_review(data_dir: Path) -> None:
-    flagged = set()
+def test_cards_no_longer_carry_review_flags(data_dir: Path) -> None:
+    """卡牌原先用 review_note 标记「同名牌多种文本」等问题，该字段已删除。"""
     for path in sorted((data_dir / "cards").glob("*.yaml")):
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        if "种不同文本" in (doc.get("review_note") or ""):
-            flagged.add(doc["id"])
-    assert flagged == {
-        "card_bing_liang_cun_duan",
-        "card_huo_gong",
-        "card_huo_shao_lian_ying",
-        "card_le_bu_si_shu",
-        "card_lu_li_tong_xin",
-        "card_tie_suo_lian_huan",
-        "card_tu_qiong_bi_xian",
-        "card_wu_xie_ke_ji",
-    }
+        assert "review_note" not in doc, f"{path.name} 仍带 review_note"

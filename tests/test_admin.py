@@ -146,7 +146,7 @@ def general_payload(app, **overrides) -> dict:
     """构造一份“武将专用录入页会提交什么”的表单数据。
 
     注意：实体卡类（General / GeneralVariant）**没有** source 字段，
-    也没有 ``notes``；需要留痕的异常写 ``review_note``。
+    也没有 ``notes`` / ``review_note``（这两个字段都已删除）。
     """
     payload = {
         "_csrf": app.state.csrf,
@@ -166,7 +166,6 @@ def general_payload(app, **overrides) -> dict:
         "_variant_id": "",
         "_variant_sha": "",
         "variant_id": "",
-        "review_note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -478,17 +477,16 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
     version = client.get(f"/edit/skill_version/{JI_ZHI_V1}").text
     for needle in (
         "package", "effective_from", "effective_to", "change_note",
-        "related_keywords", "related_timing_ids", "notes",
+        "related_keywords", "related_timing_ids", "notes", "review_note",
     ):
         assert f'name="{needle}"' not in version, needle
-    assert 'name="review_note"' in version  # review_note 取代了 notes
 
     # 卡牌现在是专用录入页（templates/card_edit.html）：单层卡片的字段必须都在，
     # 两层时代 / 卡牌印刷时代的字段必须彻底消失（不是隐藏 input）。
     card = client.get(f"/edit/card/{CARD_ID}").text
     for needle in (
         "category_1", "category_2", "category_3", "card_set", "image",
-        "effect_text", "skill_count", "review_note",
+        "effect_text", "skill_count",
     ):
         assert f'name="{needle}"' in card, needle
     assert "关联技能" in card
@@ -1129,7 +1127,6 @@ def card_payload(app, **overrides) -> dict:
         "image": "",
         "effect_text": "",
         "skill_count": "0",
-        "review_note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -1144,7 +1141,7 @@ def test_card_edit_page_is_single_layer(client: TestClient) -> None:
     body = client.get(f"/edit/card/{CARD_ID}").text
     for needle in (
         "category_1", "category_2", "category_3", "card_set", "image",
-        "effect_text", "skill_count", "review_note",
+        "effect_text", "skill_count",
     ):
         assert f'name="{needle}"' in body, needle
     for combo in ("category_1", "category_2", "category_3", "card_set", "image"):
@@ -1216,7 +1213,7 @@ def test_create_card_with_effect_and_skill(client: TestClient, app, workdir: Pat
     doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_new").read_text(encoding="utf-8"))
     assert set(doc) == {
         "id", "category_1", "category_2", "category_3", "name", "image",
-        "card_set", "effect", "review_note",
+        "card_set", "effect",
     }
     assert doc["category_1"] == "游戏牌"
     assert doc["category_3"] == "非延时锦囊"
@@ -1329,7 +1326,7 @@ def test_edit_card_updates_effect_and_keeps_untouched_fields(
         skill_0_version_id="skill_zhi_heng_guozhan_qlhd_v1",
         _base_sha=app.state.store.entity_sha("card", CARD_WITH_SKILL_ID),
     )
-    payload.pop("review_note")            # 页面里没提交 -> 必须保留
+    payload.pop("image")                  # 页面里没提交 -> 必须保留
     response = post(client, f"/edit/card/{CARD_WITH_SKILL_ID}", data=payload)
     assert response.status_code == 303, response.text
 
@@ -1339,4 +1336,3 @@ def test_edit_card_updates_effect_and_keeps_untouched_fields(
     assert after["image"] == before["image"]
     assert after["effect"]["text"] == "【测试】改写后的效果"
     assert after["effect"]["skills"] == before["effect"]["skills"]
-    assert after["review_note"] == before["review_note"]

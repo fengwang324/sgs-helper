@@ -4,7 +4,7 @@
 
 - 实体卡类（Product / GeneralVariant / Card）**没有** ``source``；
 - ``Source`` 只剩 ``type`` + ``reference``；
-- 通用 ``notes`` 一律由 ``review_note`` 取代；
+- 通用 ``notes`` 与 ``review_note`` 都已整体删除；
 - 技能版本不再按日期推导，武将版本用 ``skills[].version_id`` 显式绑定；
 - ``Card`` 是**单层**的：``category_1/2/3`` 决定它是什么，``card_set`` 决定它来自哪个
   拓展包；同一张卡不再因为花色 / 点数不同拆成多条 ``CardPrinting``；
@@ -156,13 +156,11 @@ def test_card_is_single_layer() -> None:
         "image",
         "card_set",
         "effect",
-        "review_note",
     }
     card = _card()
     assert card.image == ""
     assert card.card_set is None
     assert card.effect == CardEffect()
-    assert card.review_note == ""
 
 
 def test_basic_card_category_three_is_the_family() -> None:
@@ -329,18 +327,19 @@ def test_general_skill_ref_binds_version_explicitly() -> None:
     assert variant.skills[1].version_id == "skill_y_v1"
 
 
-# ---------------------------------------------------------------- review_note / 已删字段
+# ---------------------------------------------------------------- 已删字段
 
 
-def test_notes_is_replaced_by_review_note() -> None:
-    assert set(Skill.model_fields) == {"id", "name", "review_note"}
-    skill = Skill(id="skill_x", name="X", review_note="待复核")
-    assert skill.review_note == "待复核"
+def test_review_note_is_gone_from_every_model() -> None:
+    """review_note 已整体删除：模型里没有它，写了必须报错。"""
+    assert set(Skill.model_fields) == {"id", "name"}
+    with pytest.raises(ValidationError):
+        Skill(id="skill_x", name="X", review_note="待复核")
     with pytest.raises(ValidationError):
         Skill(id="skill_x", name="X", notes="旧字段")
 
-    card = _card(review_note="待复核")
-    assert card.review_note == "待复核"
+    with pytest.raises(ValidationError):
+        _card(review_note="待复核")
     with pytest.raises(ValidationError):
         _card(notes="旧字段")
 

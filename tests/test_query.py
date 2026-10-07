@@ -93,13 +93,13 @@ def test_skill_report_keeps_every_mode_and_version(synth_conn) -> None:
     assert all(v["text"] for v in report["versions"])
 
 
-def test_version_chain_and_review_note(synth_conn) -> None:
+def test_version_chain_is_recorded(synth_conn) -> None:
     report = skill_report(synth_conn, "skill_demo")
     assert report is not None
     v2 = _version(report, "skill_demo_identity_v2")
     assert v2["previous_version_id"] == "skill_demo_identity_v1"
     assert v2["previous_version"]["id"] == "skill_demo_identity_v1"
-    assert v2["review_note"] == "演示用待复核说明"
+    assert "review_note" not in v2          # 复核备注已整体删除
     assert ["skill_demo_identity_v2", "skill_demo_identity_v1"] in report["history_chains"]
     assert "change_note" not in v2
 

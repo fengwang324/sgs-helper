@@ -8,7 +8,7 @@
 
 - **只有武将名字必填**；其余都可以先空着，以后再补。
 - 内部 ``id`` 由后端生成（用户不填也能保存），已存在的记录绝不无故重生 id。
-- 页面没展示的字段（image / review_note…）在编辑时**保留原值**：
+- 页面没展示的字段（例如 image）在编辑时**保留原值**：
   解析时以“已存在实体的 dump”为底，只覆盖表单里真的出现的字段。
 - 一次提交可以同时产生 General + 0..N Skill + 0..N SkillVersion，交给
   ``AdminStore.save_batch`` 一次性事务保存。
@@ -63,7 +63,7 @@ GENERAL_DEFAULTS: dict[str, Any] = {
 }
 
 #: 武将版本（GeneralVariant）：模式/势力/体力/称号/技能等版本属性都在这里。
-#: 实体类记录（武将版本 / 卡牌）没有 source；需要人工复核的异常写进 review_note。
+#: 实体类记录（武将版本 / 卡牌）没有 source。
 VARIANT_DEFAULTS: dict[str, Any] = {
     "id": "",
     "general_id": "",
@@ -80,7 +80,6 @@ VARIANT_DEFAULTS: dict[str, Any] = {
     "general_set": None,
     "zhulianbihe": [],
     "skills": [],
-    "review_note": "",
 }
 
 #: 版本标签的常用取值（下拉里可以直接选，也可以自己输）
@@ -99,7 +98,6 @@ CARD_DEFAULTS: dict[str, Any] = {
     "image": "",
     "card_set": None,
     "effect": {"text": "", "skills": []},
-    "review_note": "",
 }
 
 
@@ -426,7 +424,6 @@ def _new_version_change(
         "product_id": product_id,
         "previous_version_id": previous_version_id or None,
         "source": dict(DEFAULT_SOURCE),
-        "review_note": "",
     }
     generated.add(version_id)
     return version_id, Change(kind="skill_version", candidate=candidate)
@@ -548,8 +545,6 @@ def parse_general_form(
     if variant_data.get("product_id") and variant_data["product_id"] not in known_products:
         errors.append(FieldError("product_id", f"产品不存在：{variant_data['product_id']}"))
 
-    if "review_note" in form:
-        variant_data["review_note"] = _text(form, "review_note")
 
     # 版本 id 与卡图名同样由**卡面编号**决定（与 General.id 一样单向派生）：
     #   编号 G.WEI 001 → variant id = variant_g_wei_001，卡图 = g_wei_001.jpg
@@ -686,7 +681,6 @@ def parse_general_form(
                 candidate={
                     "id": skill_id,
                     "name": row.new_name,
-                    "review_note": "",
                 },
             )
         )
@@ -833,8 +827,6 @@ def parse_card_form(
         data["image"] = _text(form, "image")
     if "card_set" in form:
         data["card_set"] = _optional_text(form, "card_set")
-    if "review_note" in form:
-        data["review_note"] = _text(form, "review_note")
 
     # ---------------------------------------------------------------- 效果（嵌套映射）
     effect = dict(data.get("effect") or {})
@@ -920,7 +912,6 @@ def card_values(
         "image": "",
         "card_set": "",
         "effect_text": "",
-        "review_note": "",
     }
     if card is not None:
         values.update(values_from_entity("card", card))

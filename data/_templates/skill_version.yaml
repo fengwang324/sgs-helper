@@ -11,4 +11,3 @@ previous_version_id: null
 source:
   type: physical_card           # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
   reference: ""
-review_note: ""                 # 需要人工复核的异常（文本不是来自卡面、OCR 结果未核验…）

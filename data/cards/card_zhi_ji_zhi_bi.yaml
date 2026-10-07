@@ -8,4 +8,3 @@ card_set: null
 effect:
   text: 出牌阶段，对一名其他角色使用。观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
   skills: []
-review_note: ''

@@ -20,7 +20,6 @@
 <section>
   <h2>新模型下的几个约定</h2>
   <ul>
-    <li><strong>review_note</strong>（复核备注）只出现在 武将版本 / 技能版本 / 卡牌 / 技能 四类表单里。</li>
     <li><strong>卡牌是单层的</strong>：一 / 二 / 三级分类表达“这张卡是什么”，<code>card_set</code> 表达“它来自哪个拓展包”，两者完全独立；
         同一规则卡的不同实体印刷不在这一层建模，卡牌也<strong>没有</strong> mode / source 字段。</li>
     <li><strong>基本牌的最后一级是卡名</strong>：<code>游戏牌/基本牌/杀</code> 下面是 杀 / 火杀 / 雷杀，

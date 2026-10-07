@@ -24,4 +24,3 @@ general_set: 标准-灵心慧性         # 武将牌系列 / 武将牌包（可�
 skills:
   - skill_id: skill_change_me
     version_id: null
-review_note: ""                  # 需要人工对照卡图复核的异常（OCR 误读…）

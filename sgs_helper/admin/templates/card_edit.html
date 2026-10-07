@@ -201,24 +201,11 @@
     <span class="muted">0 行也合法；技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行。</span>
   </p>
 
-  <div class="field-grid">
-    <div class="field">
-      <label for="f-review_note">复核备注</label>
-      <textarea id="f-review_note" name="review_note" rows="2"
-                placeholder="需要人工对照卡图 / 实体卡复核的异常；正常记录留空">{{ values.get('review_note', '') }}</textarea>
-      <p class="help">卡牌没有 source；需要留痕的异常（OCR 多版本、拓展包归属待定…）写在这里。</p>
-    </div>
-  </div>
+  <div class="field-grid"></div>
 
-  <details class="advanced" {{ 'open' if error_map.get('id') else '' }}>
-    <summary>高级信息（内部 ID）</summary>
-    <div class="field {{ 'has-error' if error_map.get('id') else '' }}">
-      <label for="f-id">内部 ID</label>
-      <input id="f-id" name="id" value="{{ values.get('id', '') }}" placeholder="留空则按卡名自动生成">
-      <p class="help">YAML 文件名 / URL 都用它；已存在的卡牌不会被重新生成 ID。</p>
-      {% for message in error_map.get('id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-  </details>
+  {# 「高级信息（内部 ID）」与「复核备注」都已移除：
+     卡牌 id 由卡名自动生成、武将 id 由编号派生，都不需要手改；
+     review_note 字段已从模型整体删除。 #}
 
   <div class="form-actions">
     <button class="btn primary" type="submit" name="_action" value="save">保存</button>

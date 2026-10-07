@@ -87,7 +87,6 @@ def card_payload(app, **overrides) -> dict:
         "image": "",
         "effect_text": "",
         "skill_count": "0",
-        "review_note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload

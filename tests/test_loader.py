@@ -127,5 +127,5 @@ def test_empty_file_is_ignored(tmp_path: Path) -> None:
 def test_manifest_digest_changes_with_content(synth: Path) -> None:
     first = manifest_digest(synth)
     target = synth / "skills" / "demo.yaml"
-    target.write_text(target.read_text(encoding="utf-8") + "review_note: 改动\n", encoding="utf-8")
+    target.write_text(target.read_text(encoding="utf-8") + "# 改动\n", encoding="utf-8")
     assert manifest_digest(synth) != first

@@ -124,8 +124,6 @@ def render_skill(report: dict) -> str:
 
     lines = ["=" * 72, f"技能：{definition['name']}    （id：{definition['id']}）"]
     lines.append(f"  源文件：{fmt_location(definition)}")
-    if definition.get("review_note"):
-        lines.append(f"  待复核：{definition['review_note']}")
 
     if not versions:
         lines.append("  ⚠ 该技能没有任何 SkillVersion，尚无规则文本。")
@@ -159,8 +157,6 @@ def render_skill(report: dict) -> str:
                 )
             if version.get("previous_version_id"):
                 lines.append(f"      前一版本：{version['previous_version_id']}")
-            if version.get("review_note"):
-                lines.append(f"      待复核：{version['review_note']}")
             lines.append("")
 
     chains = [c for c in report["history_chains"] if len(c) > 1]
@@ -212,8 +208,6 @@ def render_general(report: dict) -> str:
             f"所属产品：{variant.get('product_id') or '（未关联）'}"
         )
         lines.append(f"  源文件：{fmt_location(variant)}")
-        if variant.get("review_note"):
-            lines.append(f"  待复核：{variant['review_note']}")
 
         lines.append("")
         lines.append(f"  技能（{len(variant['skills'])} 个；显式绑定的版本优先）")
@@ -246,8 +240,6 @@ def render_general(report: dict) -> str:
             )
             lines += _block("技能文本", version.get("text"), indent="          ")
             lines.append(f"        来源：{fmt_source(version.get('source'))}")
-            if version.get("review_note"):
-                lines.append(f"        待复核：{version['review_note']}")
     return "\n".join(lines)
 
 
@@ -266,7 +258,6 @@ def render_card(report: dict) -> str:
     )
     lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
     lines.append(f"  卡图：{card.get('image') or '未填'}")
-    lines.append(f"  待复核：{card.get('review_note') or '无'}")
     lines.append(f"  源文件：{fmt_location(card)}")
 
     effect_text = effect.get("text") or ""
