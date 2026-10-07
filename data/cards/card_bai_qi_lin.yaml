@@ -8,3 +8,6 @@ card_set: null
 effect:
   text: 你使用此牌时，对所有体力值大于你的角色依次造成1点雷电伤害。
   skills: []
+rules:
+  distance_modifier: ''
+  note: ''

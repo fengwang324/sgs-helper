@@ -157,6 +157,7 @@ def test_card_is_single_layer() -> None:
         "image",
         "card_set",
         "effect",
+        "rules",
     }
     card = _card()
     assert card.image == ""

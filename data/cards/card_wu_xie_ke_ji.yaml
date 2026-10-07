@@ -6,5 +6,15 @@ name: 无懈可击
 image: card_wu_xie_ke_ji_qlhd_club_13.jpg
 card_set: null
 effect:
-  text: 当一张锦囊牌对一名角色或一种势力生效前，抵消此牌对该角色或该势力的效果；或抵消另一张【无懈可击】的效果。
+  text: |-
+    当一张锦囊牌对一名角色或一种势力生效前，抵消此牌对该角色或该势力的效果；或抵消另一张【无懈可击】的效果。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: ''
+      target: ''
+      effect: |-
+        当一张锦囊牌对一名角色或一种势力生效前，抵消此牌对该角色或该势力的效果；或抵消另一张【无懈可击】的效果。
+      note: ''
+  note: ''

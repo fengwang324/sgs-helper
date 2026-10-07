@@ -783,7 +783,7 @@ class WikiRoutes:
         if effect.text:
             prose_blocks.append(
                 {
-                    "title": "效果文本",
+                    "title": "卡面原文" if card.rules and card.rules.use_methods else "效果文本",
                     "segments": live.annotate(effect.text),
                     "meta": "",
                     "note": "照抄卡面原文；技能规则正文由「技能」维护，不抄进这里。",
@@ -818,6 +818,7 @@ class WikiRoutes:
             "back_label": "指示物" if is_marker else "游戏牌",
             "fields": fields,
             "prose_blocks": prose_blocks,
+            "rule_blocks": view["rule_blocks"],
             "skill_rows": [],
             "version_rows": [],
             "owners": [],

@@ -1,0 +1,11 @@
+# 模板：指示物。分类与效果自由填写，不使用游戏牌 rules。
+id: card_change_me
+category_1: 指示物
+category_2: ""
+category_3: ""
+name: 指示物名
+image: ""
+card_set: null
+effect:
+  text: ""
+  skills: []

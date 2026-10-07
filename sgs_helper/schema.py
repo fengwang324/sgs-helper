@@ -10,8 +10,7 @@
 - 规则类（SkillVersion / FAQ / Keyword）只保留极简来源：SkillVersion 用结构化的
   ``type`` + ``reference``，FAQ 用一段**多行文本**（逐条列出来源属性），
   关键词不带来源字段；
-- **没有通用 notes，也没有 review_note**：需要留痕的异常写进对应正文，
-  或者记在 Git 提交信息里（字段级备注已整体删除）。
+- 游戏牌的 ``rules.note`` 是规则补充说明；没有通用 notes 或 review_note。
 
 约定：
 
@@ -218,6 +217,30 @@ class CardEffect(StrictModel):
     skills: list[SkillRef] = Field(default_factory=list)
 
 
+class CardUseMethod(StrictModel):
+    """一种使用方法。各字段都是原文文本，允许 X、条件、多个目标和暂缺资料。"""
+
+    label: str = ""
+    timing: str = ""
+    target: str = ""
+    effect: str = ""
+    note: str = ""
+
+
+class GameCardRules(StrictModel):
+    """游戏牌专用规则。通用装备规则由 Keyword 维护，不在每张卡重复。
+
+    基本牌 / 锦囊牌使用 use_methods；装备牌复用 Card.effect 的能力原文，
+    武器增加 attack_range，坐骑增加 distance_modifier；note 为规则补充说明。
+    所有标量均为文本。分类仍自由填写，这些字段是可选内容而非分类白名单。
+    """
+
+    use_methods: list[CardUseMethod] = Field(default_factory=list)
+    attack_range: str = ""
+    distance_modifier: str = ""
+    note: str = ""
+
+
 class Card(StrictModel):
     """一张有独立规则意义 / 独立卡面的卡（游戏牌与指示物共用这一层）。
 
@@ -241,6 +264,15 @@ class Card(StrictModel):
     #: 所属拓展包；允许为空（跨多个拓展包、或暂时无法确认来源时留空）
     card_set: str | None = None
     effect: CardEffect = Field(default_factory=CardEffect)
+    #: 游戏牌专用结构；指示物维持自由效果与技能引用，省略此字段。
+    rules: GameCardRules | None = None
+
+    @field_validator("rules")
+    @classmethod
+    def _game_rules_only(cls, value, info):
+        if value is not None and info.data.get("category_1") != "游戏牌":
+            raise ValueError("rules 是游戏牌专用字段；指示物及其他自由分类使用 effect")
+        return value
 
 
 # ---------------------------------------------------------------- FAQ / 关键词

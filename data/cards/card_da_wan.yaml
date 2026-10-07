@@ -6,5 +6,9 @@ name: 大宛
 image: card_da_wan_qlhd_spade_13.jpg
 card_set: null
 effect:
-  text: “大宛汗血古共知，青海龙种骨更奇；网丝旧画昔尝见，不意人间今见之。”《天马歌》
+  text: |-
+    “大宛汗血古共知，青海龙种骨更奇；网丝旧画昔尝见，不意人间今见之。”《天马歌》
   skills: []
+rules:
+  distance_modifier: ''
+  note: ''

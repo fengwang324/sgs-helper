@@ -233,6 +233,13 @@
       {% endif %}
     </div>
 
+    {% for block in detail.rule_blocks %}
+    <div class="subblock">
+      <h3>{{ block.title }}</h3>
+      {% for item in block.fields %}<h4>{{ item.label }}</h4>{{ rich_text(item.segments) }}{% endfor %}
+    </div>
+    {% endfor %}
+
     <div class="subblock">
       <h3>关联技能（{{ detail.skills | length }}）</h3>
       {% for entry in detail.skills %}

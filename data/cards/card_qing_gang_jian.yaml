@@ -8,3 +8,6 @@ card_set: null
 effect:
   text: 攻击范围 2
   skills: []
+rules:
+  attack_range: '2'
+  note: ''

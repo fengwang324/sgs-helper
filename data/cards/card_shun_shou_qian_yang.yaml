@@ -6,5 +6,14 @@ name: 顺手牵羊
 image: card_shun_shou_qian_yang_qlhd_spade_3.jpg
 card_set: null
 effect:
-  text: 出牌阶段，对距离为1且区域内有牌的一名其他角色使用。你获得其区域内的一张牌。
+  text: |-
+    出牌阶段，对距离为1且区域内有牌的一名其他角色使用。你获得其区域内的一张牌。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: 出牌阶段
+      target: 距离为1且区域内有牌的一名其他角色
+      effect: 你获得其区域内的一张牌。
+      note: ''
+  note: ''

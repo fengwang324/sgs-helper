@@ -6,5 +6,14 @@ name: 火烧连营
 image: card_huo_shao_lian_ying_qlhd_spade_3.jpg
 card_set: null
 effect:
-  text: 出牌阶段，对你的下家和所有与其处于同一列队的角色使用。每人受到1点火焰伤害。
+  text: |-
+    出牌阶段，对你的下家和所有与其处于同一列队的角色使用。每人受到1点火焰伤害。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: 出牌阶段
+      target: 你的下家和所有与其处于同一列队的角色
+      effect: 每人受到1点火焰伤害。
+      note: ''
+  note: ''

@@ -100,6 +100,7 @@ CARD_DEFAULTS: dict[str, Any] = {
     "image": "",
     "card_set": None,
     "effect": {"text": "", "skills": []},
+    "rules": None,
 }
 
 
@@ -825,7 +826,7 @@ def parse_card_form(
     - ``effect.skills`` 是 0～N 条 ``SkillRef``（``{skill_id, version_id}``）：
       卡牌**只关联已有技能**，技能文本继续由 Skill / SkillVersion 维护。
     """
-    result = EditorResult(values=echo_values(form))
+    result = EditorResult(values=card_values(store, existing) | echo_values(form))
     errors = result.errors
     data = _base(existing, CARD_DEFAULTS)
 
@@ -860,6 +861,32 @@ def parse_card_form(
     if "card_set" in form:
         data["card_set"] = _optional_text(form, "card_set")
 
+    # 游戏牌规则：字段没出现时保留原值，避免旧客户端 / 部分编辑丢失新内容。
+    rules = dict(data.get("rules") or {})
+    for name in ("attack_range", "distance_modifier", "note"):
+        if f"rules_{name}" in form:
+            rules[name] = _text(form, f"rules_{name}")
+    if "use_count" in form:
+        count = _text(form, "use_count")
+        if not count.isdecimal() or not 0 <= int(count) <= 50:
+            errors.append(FieldError("use_count", "使用方法数量应为 0～50"))
+        else:
+            methods = []
+            for index in range(int(count)):
+                method = {
+                    name: _text(form, f"use_{index}_{name}")
+                    for name in ("label", "timing", "target", "effect", "note")
+                }
+                if any(method.values()):
+                    methods.append(method)
+            rules["use_methods"] = methods
+    if data.get("category_1") == "游戏牌":
+        data["rules"] = rules
+    elif any(rules.values()):
+        errors.append(FieldError("category_1", "改为指示物或其他分类前，请清空游戏牌专用规则；效果原文会保留"))
+    else:
+        data["rules"] = None
+
     # ---------------------------------------------------------------- 效果（嵌套映射）
     effect = dict(data.get("effect") or {})
     if "effect_text" in form:
@@ -868,7 +895,7 @@ def parse_card_form(
         effect.setdefault("text", "")
 
     existing_skills = store.bundle.ids("skill")
-    refs: list[dict] = []
+    refs: list[dict] = list(effect.get("skills") or []) if "skill_count" not in form else []
     result.rows = []
     for row in parse_skill_rows(form):
         prefix = _row_prefix(row.index)
@@ -944,12 +971,23 @@ def card_values(
         "image": "",
         "card_set": "",
         "effect_text": "",
+        "rules_attack_range": "",
+        "rules_distance_modifier": "",
+        "rules_note": "",
+        "use_count": "0",
     }
     if card is not None:
         values.update(values_from_entity("card", card))
         effect = getattr(card, "effect", None)
         values["effect_text"] = str(getattr(effect, "text", "") or "")
         values["card_set"] = card.card_set or ""
+        if card.rules:
+            for name in ("attack_range", "distance_modifier", "note"):
+                values[f"rules_{name}"] = getattr(card.rules, name)
+            values["use_count"] = str(len(card.rules.use_methods))
+            for index, method in enumerate(card.rules.use_methods):
+                for name, value in method.model_dump().items():
+                    values[f"use_{index}_{name}"] = value
     if params:
         for key, value in params.items():
             if value not in (None, ""):

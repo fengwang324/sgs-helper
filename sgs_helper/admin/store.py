@@ -1634,6 +1634,12 @@ class AdminStore:
             return None
         bundle = self.bundle
         effect = entity.effect
+        from ..card_rules import rule_sections
+
+        rule_blocks = rule_sections(entity)
+        for block in rule_blocks:
+            for item in block["fields"]:
+                item["segments"] = self.annotate(item["text"])
         skills: list[dict] = []
         for position, ref in enumerate(effect.skills):
             all_versions = sorted(
@@ -1660,6 +1666,7 @@ class AdminStore:
             "kind": "card",
             "card": entity,
             "effect_text": self.annotate(effect.text) if (effect.text or "").strip() else [],
+            "rule_blocks": rule_blocks,
             "skills": skills,
         }
 

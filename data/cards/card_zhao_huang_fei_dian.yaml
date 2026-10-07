@@ -8,3 +8,6 @@ card_set: null
 effect:
   text: '+1'
   skills: []
+rules:
+  distance_modifier: '+1'
+  note: ''

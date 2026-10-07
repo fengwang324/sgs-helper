@@ -1221,7 +1221,7 @@ def test_create_card_with_effect_and_skill(client: TestClient, app, workdir: Pat
     doc = yaml.safe_load(yaml_of(workdir, "card", "card_test_new").read_text(encoding="utf-8"))
     assert set(doc) == {
         "id", "category_1", "category_2", "category_3", "name", "image",
-        "card_set", "effect",
+        "card_set", "effect", "rules",
     }
     assert doc["category_1"] == "游戏牌"
     assert doc["category_3"] == "非延时锦囊"

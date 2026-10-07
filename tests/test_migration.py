@@ -265,7 +265,7 @@ def test_entity_counts_are_stable(migration_db: Path) -> None:
             "product": 1,
             "general": 163,
             "general_variant": 163,
-            "skill": 310,
+            "skill": 297,
             "skill_version": 297,
             "card": 82,
             "faq": 85,

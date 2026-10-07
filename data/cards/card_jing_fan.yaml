@@ -6,5 +6,9 @@ name: 惊帆
 image: card_jing_fan_qlhd_heart_3.jpg
 card_set: 君主游戏牌
 effect:
-  text: “曹真有駃马，名为惊帆，言其驰骤如烈风之举帆疾也。”——裴松之《古令注·杂记》
+  text: |-
+    “曹真有駃马，名为惊帆，言其驰骤如烈风之举帆疾也。”——裴松之《古令注·杂记》
   skills: []
+rules:
+  distance_modifier: ''
+  note: ''

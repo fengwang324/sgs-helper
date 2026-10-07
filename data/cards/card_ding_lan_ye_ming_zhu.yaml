@@ -6,7 +6,10 @@ name: 定澜夜明珠
 image: card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg
 card_set: 九变篇
 effect:
-  text: 锁定技，你视为拥有“制衡”。若你已拥有“制衡”，则改为取消弃置牌数的限制。
+  text: |-
+    锁定技，你视为拥有“制衡”。若你已拥有“制衡”，则改为取消弃置牌数的限制。
   skills:
     - skill_id: skill_zhi_heng
       version_id: skill_zhi_heng_guozhan_qlhd_v1
+rules:
+  note: ''

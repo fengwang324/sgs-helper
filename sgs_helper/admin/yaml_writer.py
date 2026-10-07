@@ -34,6 +34,7 @@ BLOCK_TEXT_FIELDS: frozenset[str] = frozenset(
         "answer",
         "definition",
         "description",
+        "note",
     }
 )
 
@@ -200,6 +201,31 @@ def entity_to_yaml_dict(kind: str, entity: Any) -> dict:
     ordered: dict[str, Any] = {name: data.get(name) for name in order if name in data}
     for name in order:  # 模型里存在但 dump 没给的字段，补 null 保持完整
         ordered.setdefault(name, None)
+
+    if kind == "card":
+        rules = ordered.get("rules")
+        if rules is None:
+            ordered.pop("rules", None)
+        else:
+            # 空的非适用字段不落盘；已有内容无论分类如何都保留。
+            applicable = {"note"}
+            if data.get("category_2") in {"基本牌", "锦囊牌"}:
+                applicable.add("use_methods")
+            if data.get("category_2") == "装备牌":
+                if data.get("category_3") == "武器":
+                    applicable.add("attack_range")
+                if data.get("category_3") == "坐骑":
+                    applicable.add("distance_modifier")
+            ordered["rules"] = {
+                key: value for key, value in rules.items() if key in applicable or value
+            }
+            for key, value in ordered["rules"].items():
+                if isinstance(value, str) and value:
+                    ordered["rules"][key] = BlockStr(value)
+            for method in ordered["rules"].get("use_methods", []):
+                for key, value in method.items():
+                    if isinstance(value, str) and value:
+                        method[key] = BlockStr(value)
 
     for name in BLOCK_TEXT_FIELDS:
         value = ordered.get(name)

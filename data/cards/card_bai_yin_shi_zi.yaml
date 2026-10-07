@@ -6,5 +6,8 @@ name: 白银狮子
 image: card_bai_yin_shi_zi_qlhd_club_1.jpg
 card_set: null
 effect:
-  text: 锁定技，当你受到伤害时，若该伤害多于1点，则防止多余的伤害；当你失去装备区里的【白银狮子】时，你回复1点体力。
+  text: |-
+    锁定技，当你受到伤害时，若该伤害多于1点，则防止多余的伤害；当你失去装备区里的【白银狮子】时，你回复1点体力。
   skills: []
+rules:
+  note: ''

@@ -67,6 +67,8 @@ def get_meta(conn: sqlite3.Connection) -> dict[str, str]:
 
 def row_to_dict(kind: str, row: sqlite3.Row) -> dict:
     data = dict(row)
+    if kind == "card" and isinstance(data.get("rules"), str):
+        data["rules"] = json.loads(data["rules"])
     for column in JSON_COLUMNS:
         if column in data and isinstance(data[column], str):
             try:
@@ -522,6 +524,11 @@ def card_report(conn: sqlite3.Connection, query: str) -> dict | None:
     if entity is None:
         return None
     text = entity.get("effect_text") or ""
+    rules = entity.get("rules") or {}
+    related_text = "\n".join(
+        [text, rules.get("attack_range", ""), rules.get("distance_modifier", ""), rules.get("note", "")]
+        + [value for method in rules.get("use_methods", []) for value in method.values()]
+    )
     return {
         "kind": "card",
         "card": entity,
@@ -530,7 +537,7 @@ def card_report(conn: sqlite3.Connection, query: str) -> dict | None:
             "skills": _card_effect_skills(conn, entity),
         },
         # 卡牌效果文本里出现的技能名 / 关键词按名称自动识别（不含卡自己）
-        **_mentioned_entities(conn, text, exclude=("card", entity["id"])),
+        **_mentioned_entities(conn, related_text, exclude=("card", entity["id"])),
     }
 
 

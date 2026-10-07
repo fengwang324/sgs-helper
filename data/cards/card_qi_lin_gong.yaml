@@ -6,5 +6,9 @@ name: 麒麟弓
 image: card_qi_lin_gong_qlhd_heart_5.jpg
 card_set: null
 effect:
-  text: 当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
+  text: |-
+    当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
   skills: []
+rules:
+  attack_range: ''
+  note: ''

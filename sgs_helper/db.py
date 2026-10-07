@@ -35,7 +35,7 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "5"
+SCHEMA_VERSION = "6"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
@@ -51,7 +51,7 @@ COLUMNS: dict[str, tuple[str, ...]] = {
     ),
     "card": (
         "category_1", "category_2", "category_3", "name", "image", "card_set",
-        "effect_text", "effect_skills",
+        "effect_text", "effect_skills", "rules",
     ),
     "faq": ("question", "answer", "variant", "source"),
     "keyword": ("name", "definition", "variant"),
@@ -188,6 +188,9 @@ def _column_type(column: str) -> str:
 
 
 def _column_value(entity: Any, column: str) -> Any:
+    if column == "rules":
+        rules = getattr(entity, "rules", None)
+        return json.dumps(rules.model_dump(mode="json"), ensure_ascii=False) if rules else None
     if column == "effect_text":
         return str(getattr(getattr(entity, "effect", None), "text", "") or "")
     if column == "effect_skills":
@@ -376,6 +379,14 @@ def _search_row(
             _names_of(bundle, "skill", [ref.skill_id for ref in (effect.skills if effect else [])])
         )
         parts += mention_names(text)
+        rules = getattr(entity, "rules", None)
+        if rules:
+            rule_text = " ".join(
+                [rules.attack_range, rules.distance_modifier, rules.note]
+                + [value for method in rules.use_methods for value in method.model_dump().values()]
+            )
+            parts.append(rule_text)
+            parts += mention_names(rule_text)
     elif kind == "faq":
         name = entity.question if len(entity.question) <= 60 else entity.question[:60] + "…"
         parts += [entity.question, entity.answer, entity.variant]

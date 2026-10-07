@@ -261,6 +261,19 @@ def render_card(report: dict) -> str:
     lines.append(f"  卡图：{card.get('image') or '未填'}")
     lines.append(f"  源文件：{fmt_location(card)}")
 
+    rules = card.get("rules") or {}
+    for key, label in (("attack_range", "攻击范围"), ("distance_modifier", "距离修正")):
+        if rules.get(key):
+            lines += _block(label, rules[key], indent="  ")
+    for index, method in enumerate(rules.get("use_methods", []), 1):
+        lines.append(f"  {method.get('label') or f'使用方法 {index}'}：")
+        for key, label in (("timing", "出牌时机"), ("target", "使用目标"),
+                           ("effect", "作用效果"), ("note", "补充说明")):
+            if method.get(key):
+                lines += _block(label, method[key], indent="    ")
+    if rules.get("note"):
+        lines += _block("补充说明", rules["note"], indent="  ")
+
     effect_text = effect.get("text") or ""
     effect_text = effect_text if effect_text.strip() else "（卡面无独立效果文本）"
     lines += _block("效果文本", effect_text, indent="  ")

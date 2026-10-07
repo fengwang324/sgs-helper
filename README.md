@@ -15,15 +15,14 @@
 
 | 类型 | 来源 | 状态 |
 | --- | --- | --- |
-| 技能本体 311 / 技能版本 297 | 群狼环鼎实体卡照片（296 条 `source.type: physical_card`）+ 三国杀移动版官网武将页（1 条 `official_online`） | 卡面文本，待逐条对卡图核验 |
+| 技能本体 297 / 技能版本 297 | 群狼环鼎实体卡照片（296 条 `source.type: physical_card`）+ 三国杀移动版官网武将页（1 条 `official_online`） | 卡面文本，待逐条对卡图核验 |
 | FAQ / 裁定 85 | 《群狼环鼎规则资料包 v1.0》的人工核对稿（规则手册 19 页照片 + 实卡照片 + 通用规则网页 + B 站 UP 主文章） | 真实文本；`source` 是多行文本，逐条列出来源的 type / title / reference / author / displayed_date |
 | 规则关键词 117 | 同上（关键词核对版，依据是手册页码） | 真实定义；关键词不录来源字段 |
-| 武将 155 / 武将版本 163 | 群狼环鼎实体卡照片 + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) | 真实数据；`product_id` 全部指向 `qlhd`，mode 全是国战 |
-| 产品 1 / 卡牌 81 | 群狼环鼎（`product_id: qlhd`） | 真实数据；卡牌是一层 `Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），没有 `source` 字段 |
+| 武将 163 / 武将版本 163 | 群狼环鼎实体卡照片 + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) | 真实数据；`product_id` 全部指向 `qlhd`，mode 全是国战 |
+| 产品 1 / 卡牌 82 | 群狼环鼎（`product_id: qlhd`） | 真实数据；卡牌是一层 `Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），没有 `source` 字段 |
 
-实测口径（`python scripts/validate_data.py`）：**实体 1218 条 / 0 错误 / 14 警告**
-（14 条全是「技能本体没有任何 SkillVersion」；随 `CardPrinting` 一起删除的
-「同一产品同花色点数重复」那 46 条警告已消失）。
+实测口径（`python scripts/validate_data.py`）：**实体 1205 条 / 0 错误 / 0 警告**。
+已删除 13 个没有描述版本、没有结构化引用的空技能本体。
 
 - 结构化的 `source` 只有 `type` + `reference` 两个字段（**只有 SkillVersion 用**）；展示用的来源名在渲染时由 `reference` 推导
   （`constants.SOURCE_TITLE_BY_REFERENCE` → `SOURCE_LABELS`），不再单独存储。
@@ -235,6 +234,9 @@ effect:
 - `effect.text` 逐字保存卡面原文，允许为空；`effect.skills` 是 `[{skill_id, version_id}]`，0～N 个；
   技能文本仍由 Skill / SkillVersion 维护，**不要把技能说明抄进 `effect.text`**。
   检索用的规范化正文由 `db.py` 在构建 `search_index` 时**动态生成**，不是 YAML 字段。
+- 游戏牌专用 `rules`：基本牌 / 锦囊牌有多种使用方法（时机、目标、效果、note）；
+  武器增加文本攻击范围，坐骑增加文本距离修正，装备共用效果和 note。
+  指示物维持自由效果与技能引用，不填写 rules。完整约定见 [游戏牌规则](docs/card-rules.md)。
 - **同一规则卡的花色 / 点数印刷不在这一层建模**：`CardPrinting` 层、`data/card_printings/` 目录、
   相关校验、页面与测试引用已整体删除（完整牌堆构成留给以后单独加的 `deck_entries`）。
 - 校验器会告警：基本牌 `category_3` 不是牌族、`card_set` 没有被任何产品声明

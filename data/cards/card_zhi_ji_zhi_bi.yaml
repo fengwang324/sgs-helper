@@ -6,5 +6,15 @@ name: 知己知彼
 image: card_zhi_ji_zhi_bi_qlhd_club_3.jpg
 card_set: null
 effect:
-  text: 出牌阶段，对一名其他角色使用。观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+  text: |-
+    出牌阶段，对一名其他角色使用。观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: 出牌阶段
+      target: 一名其他角色
+      effect: |-
+        观看其一张暗置的武将牌或其手牌。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
+      note: ''
+  note: ''

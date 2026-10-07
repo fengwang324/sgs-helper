@@ -949,6 +949,7 @@
         },
         onPick: function (item, combo) {
           combo.setValue(item.value, item.value);
+          form.dispatchEvent(new Event("change"));
           if (window.__sgsDraftTouch) window.__sgsDraftTouch();
         },
       });
@@ -1018,7 +1019,9 @@
     });
 
     /* ---- 草稿（sessionStorage）+ Ctrl/⌘+S */
+    var useRows = setupCardRules(form);
     setupDraft(form, function (state) {
+      if (state.use_count != null) useRows.rebuild(Number(state.use_count) || 0);
       if (!skillRows) return;
       if (state.skill_count != null) {
         var total = Math.max(0, Math.min(50, Number(state.skill_count) || 0));
@@ -1031,6 +1034,68 @@
   }
 
   /* ------------------------------------------------------------------ 草稿 + 快捷键 */
+
+  function setupCardRules(form) {
+    var box = document.getElementById("card-use-rows");
+    var count = document.getElementById("card-use-count");
+    var template = document.getElementById("use-row-template");
+    var section = document.getElementById("card-rules");
+    function reindex() {
+      box.querySelectorAll(".use-row").forEach(function (row, index) {
+        row.dataset.index = String(index);
+        row.querySelectorAll("textarea").forEach(function (input) {
+          var field = input.dataset.useField;
+          var oldId = input.id;
+          input.name = "use_" + index + "_" + field;
+          input.id = "f-use-" + index + "-" + field;
+          var label = row.querySelector('label[for="' + oldId + '"]');
+          if (label) label.htmlFor = input.id;
+        });
+      });
+      count.value = String(box.querySelectorAll(".use-row").length);
+    }
+    function add() {
+      if (box.querySelectorAll(".use-row").length >= 50) return;
+      box.appendChild(template.content.cloneNode(true));
+      reindex();
+    }
+    function category(level) {
+      var input = form.querySelector('[data-combo="category_' + level + '"] .combo-input');
+      return input ? input.value.trim() : "";
+    }
+    function filled(node) {
+      return Array.from(node.querySelectorAll("textarea")).some(function (input) { return input.value.trim(); });
+    }
+    function update() {
+      // 分类变化时仍显示已有内容，避免隐藏后无法清空，也不静默丢弃。
+      section.hidden = category(1) !== "游戏牌" && !filled(section);
+      section.querySelectorAll("[data-rule-kind]").forEach(function (node) {
+        var kind = node.dataset.ruleKind;
+        var matches = kind === "weapon" ? category(2) === "装备牌" && category(3) === "武器" :
+          kind === "mount" ? category(2) === "装备牌" && category(3) === "坐骑" :
+          category(2) === "基本牌" || category(2) === "锦囊牌";
+        node.hidden = !matches && !filled(node);
+      });
+    }
+    document.getElementById("add-use-row").addEventListener("click", function () {
+      add();
+      if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+    });
+    box.addEventListener("click", function (event) {
+      if (!event.target.closest(".use-remove")) return;
+      event.target.closest(".use-row").remove();
+      reindex();
+      if (window.__sgsDraftTouch) window.__sgsDraftTouch();
+    });
+    form.addEventListener("input", update);
+    form.addEventListener("change", update);
+    form.addEventListener("sgs-draft-restored", update);
+    update();
+    return { rebuild: function (total) {
+      box.replaceChildren();
+      for (var index = 0; index < Math.min(50, Math.max(0, total)); index++) add();
+    }, update: update };
+  }
 
   function setupDraft(form, beforeApply) {
     var key = "sgs-draft:" + form.getAttribute("action");
@@ -1079,6 +1144,7 @@
         var element = document.getElementById(id);
         if (element) element.value = payload.displays[id];
       });
+      form.dispatchEvent(new Event("sgs-draft-restored"));
       form.querySelectorAll(".tag-input").forEach(function (node) {
         if (node._tagInput) node._tagInput.sync();
       });

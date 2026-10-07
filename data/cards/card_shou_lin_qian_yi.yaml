@@ -6,5 +6,9 @@ name: 兽鳞潜翼
 image: card_shou_lin_qian_yi_qlhd_spade_6.jpg
 card_set: null
 effect:
-  text: 你使用【杀】的结算过程中，你攻击范围内的非目标角色不能使用牌（X为你的已损失体力值）。
+  text: |-
+    你使用【杀】的结算过程中，你攻击范围内的非目标角色不能使用牌（X为你的已损失体力值）。
   skills: []
+rules:
+  attack_range: ''
+  note: ''

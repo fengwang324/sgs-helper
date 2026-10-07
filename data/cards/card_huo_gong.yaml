@@ -6,5 +6,15 @@ name: 火攻
 image: card_huo_gong_qlhd_heart_2.jpg
 card_set: null
 effect:
-  text: 出牌阶段，对一名有手牌的角色使用。该角色展示一张手牌。然后若你弃置一张与所展示牌相同花色的手牌，则【火攻】对其造成1点火焰伤害。
+  text: |-
+    出牌阶段，对一名有手牌的角色使用。该角色展示一张手牌。然后若你弃置一张与所展示牌相同花色的手牌，则【火攻】对其造成1点火焰伤害。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: 出牌阶段
+      target: 一名有手牌的角色
+      effect: |-
+        该角色展示一张手牌。然后若你弃置一张与所展示牌相同花色的手牌，则【火攻】对其造成1点火焰伤害。
+      note: ''
+  note: ''

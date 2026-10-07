@@ -1,14 +1,12 @@
 # SQLite 表结构（生成物，不需要手工维护）
 
-本文件由 `build/sgs.db` 导出，用于查阅；**不要手工改数据库**。
+本文件按本轮 `build/sgs.db` 的结构与元信息更新，用于查阅；**不要手工改数据库**。
 修改表结构请改 `sgs_helper/db.py` 的 `COLUMNS` / `INDEXES` / `SCHEMA_VERSION`，
 然后重新执行 `python scripts/build_db.py`。
 
-- schema 版本：`4`（卡牌单层化：游戏牌收敛成一层 `Card`；删除整个 `CardPrinting` 层、
-  `card_printings` 表与它的三个索引；新增 `idx_cards_category` / `idx_cards_card_set`；
-  `Product.card_sets` 只表示游戏牌拓展包）
-- 生成时间：`2026-10-06T16:00:19+08:00`
-- YAML 清单指纹：`ed863c0903e0b7a52222f392d89a5055a08c406e88dbabe3f09e4cfef6202ab7`
+- schema 版本：`6`（在单层 Card 中新增游戏牌专用 `rules` JSON；指示物为 NULL）
+- 生成时间：`2026-10-07T21:36:57+08:00`
+- YAML 清单指纹：`6170782463945e4de3cd38795f8d085b967788f371e406c3d31d60b3a261495d`
 - 全文检索 FTS5：`启用`
 
 ## 实体数量
@@ -16,14 +14,14 @@
 | 实体类型（kind / 表） | 行数 |
 | --- | --- |
 | `product` | 1 |
-| `general` | 155 |
+| `general` | 163 |
 | `general_variant` | 163 |
-| `skill` | 311 |
+| `skill` | 297 |
 | `skill_version` | 297 |
-| `card` | 81 |
+| `card` | 82 |
 | `faq` | 85 |
 | `keyword` | 117 |
-| **合计** | **1218** |
+| **合计** | **1205** |
 
 来源表 `sources` 2 行（`physical_card` 与 `official_online` 各一条）。
 FAQ / 关键词不再贡献来源行：FAQ 的来源是多行文本列，关键词没有来源字段。
@@ -136,6 +134,7 @@ CREATE TABLE cards (
   card_set TEXT,
   effect_text TEXT,
   effect_skills TEXT,
+  rules TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
@@ -143,6 +142,8 @@ CREATE TABLE cards (
 
 `effect_text` 就是 `Card.effect.text`；`effect_skills` 是 `Card.effect.skills`
 （`[{skill_id, version_id}]`）的 JSON 文本，查询层在 `repo._card_effect_skills` 里解析。
+`rules` 是 `Card.rules` 的 JSON 对象，查询层解码成对象；指示物为 SQL NULL。
+包含使用方法数组、文本攻击范围 / 距离修正及 note，详见 [游戏牌规则](card-rules.md)。
 卡与产品**没有外键**：两边的唯一关系是 `Card.card_set ∈ Product.card_sets`。
 **没有** `card_printings` 表（`CardPrinting` 层与 `data/card_printings/` 目录已删除）：
 同一规则卡的花色 / 点数印刷不在这一层建模，完整牌堆构成留给以后的 `deck_entries`。

@@ -38,17 +38,11 @@ def test_real_dataset_is_clean(data_dir: Path) -> None:
     assert result.counts_line()
 
 
-def test_real_dataset_warnings_are_only_skills_without_versions(data_dir: Path) -> None:
-    """真实数据 0 错误 / 13 警告。
-
-    13 条警告全部来自「技能本体没有任何 SkillVersion」；旧模型里的「同花色点数重复」
-    随 CardPrinting 一起消失，卡牌 / 卡图 / 拓展包校验在真实数据上都是干净的，
-    **分类取值也不产生任何警告**（分类不受预设白名单约束）。
-    """
+def test_real_dataset_has_no_warnings_or_empty_skills(data_dir: Path) -> None:
+    """清理无描述的空技能后，真实数据没有警告，也没有无版本技能。"""
     result = validate_data_dir(data_dir)
     assert result.ok, error_text(result)
-    assert {issue.field for issue in result.warnings} == {"id"}
-    assert all("没有任何 SkillVersion" in issue.message for issue in result.warnings)
+    assert result.warnings == [], warning_text(result)
 
     skills_without_version = {
         skill_id
@@ -57,9 +51,7 @@ def test_real_dataset_warnings_are_only_skills_without_versions(data_dir: Path) 
             sv.skill_id == skill_id for sv in result.bundle.all("skill_version").values()
         )
     }
-    assert {issue.entity_id for issue in result.warnings} == skills_without_version
-    # 数量不写死（删掉一个没有版本的技能本体就会少一条），但必须与数据集一致
-    assert len(result.warnings) == len(skills_without_version) >= 1
+    assert skills_without_version == set()
 
 
 # ---------------------------------------------------------------- 错误

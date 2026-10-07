@@ -8,3 +8,6 @@ card_set: null
 effect:
   text: ◆若场上没有与你势力相同的君主，你视为拥有你势力的君主技。
   skills: []
+rules:
+  distance_modifier: ''
+  note: ''

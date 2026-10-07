@@ -46,6 +46,16 @@
 {% endif %}
 
 {# ---------------------------------------------------------------- 正文（可点击实体） #}
+{% for block in detail.rule_blocks | default([]) %}
+<div class="wiki-section">
+  <div class="wiki-section__head"><h2 class="wiki-h2">{{ block.title }}</h2></div>
+  {% for item in block.fields %}
+  <h3 class="wiki-h3">{{ item.label }}</h3>
+  <div class="wiki-prose">{% for seg in item.segments %}{% if seg.text is defined %}{{ seg.text }}{% else %}<a class="wiki-mention" href="{{ url_for_entity(seg.kind, seg.id) }}">{{ seg.label }}</a>{% endif %}{% endfor %}</div>
+  {% endfor %}
+</div>
+{% endfor %}
+
 {% for block in detail.prose_blocks %}
 <div class="wiki-section">
   <div class="wiki-section__head">

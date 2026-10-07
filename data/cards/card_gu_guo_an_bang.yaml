@@ -6,5 +6,15 @@ name: 固国安邦
 image: card_gu_guo_an_bang_qlhd_heart_1.jpg
 card_set: 不臣篇
 effect:
-  text: 出牌阶段，对你使用。你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
+  text: |-
+    出牌阶段，对你使用。你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: 出牌阶段
+      target: 你
+      effect: |-
+        你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
+      note: ''
+  note: ''

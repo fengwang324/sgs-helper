@@ -8,3 +8,5 @@ card_set: 九变篇
 effect:
   text: ◆出牌阶段限两次，你可以变更副将。
   skills: []
+rules:
+  note: ''

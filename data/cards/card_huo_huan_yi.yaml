@@ -6,5 +6,8 @@ name: 火浣衣
 image: card_huo_huan_yi_qlhd_diamond_12.jpg
 card_set: 九变篇
 effect:
-  text: 防止你受到的属性伤害；当你成为【杀】的目标后，你可以弃置一张手牌对使用者造成1点火焰伤害。
+  text: |-
+    防止你受到的属性伤害；当你成为【杀】的目标后，你可以弃置一张手牌对使用者造成1点火焰伤害。
   skills: []
+rules:
+  note: ''

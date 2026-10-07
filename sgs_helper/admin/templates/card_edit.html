@@ -53,6 +53,18 @@
   </div>
 {% endmacro %}
 
+{% macro use_row(index, values) %}
+<div class="use-row subblock" data-index="{{ index }}">
+  <div class="skill-row-head"><strong>使用方法</strong><button type="button" class="link-btn use-remove">删除此方法</button></div>
+  {% for name, label in [('label', '方法名称（可空）'), ('timing', '出牌时机'), ('target', '使用目标'), ('effect', '作用效果'), ('note', 'note · 补充说明')] %}
+  <div class="field">
+    <label for="f-use-{{ index }}-{{ name }}">{{ label }}</label>
+    <textarea id="f-use-{{ index }}-{{ name }}" name="use_{{ index }}_{{ name }}" data-use-field="{{ name }}" rows="{{ 1 if name == 'label' else 2 }}">{{ values.get('use_' ~ index ~ '_' ~ name, '') }}</textarea>
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
 {% block content %}
 <div class="page-head">
   <h1>{% if mode == 'create' %}新增卡牌{% else %}编辑卡牌：{{ values.get('name') or target_id }}{% endif %}</h1>
@@ -179,6 +191,31 @@
     </div>
   </div>
 
+  <section id="card-rules" {{ 'hidden' if values.get('category_1') != '游戏牌' and not error_map.get('category_1') else '' }}>
+    <h2 class="section-title">游戏牌规则</h2>
+    <p class="help">各项都可以留空，支持 X 与条件表达式。通用装备规则由规则关键词说明。</p>
+    <div class="field" data-rule-kind="weapon">
+      <label for="f-rules_attack_range">攻击范围</label>
+      <textarea id="f-rules_attack_range" name="rules_attack_range" rows="2">{{ values.get('rules_attack_range', '') }}</textarea>
+    </div>
+    <div class="field" data-rule-kind="mount">
+      <label for="f-rules_distance_modifier">距离修正</label>
+      <textarea id="f-rules_distance_modifier" name="rules_distance_modifier" rows="2" placeholder="写清计算方向；可以填写 X 或特殊条件">{{ values.get('rules_distance_modifier', '') }}</textarea>
+    </div>
+    <div data-rule-kind="use">
+      <h3>使用方法</h3>
+      <div id="card-use-rows">{% for index in range([values.get('use_count', '0') | int, 50] | min) %}{{ use_row(index, values) }}{% endfor %}</div>
+      <input type="hidden" name="use_count" id="card-use-count" value="{{ values.get('use_count', '0') }}">
+      <button type="button" class="btn" id="add-use-row">+ 添加使用方法</button>
+      <p class="help">同一张牌的不同使用方法分别填写时机、目标、效果和补充说明。</p>
+      {% for message in error_map.get('use_count', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="f-rules_note">note · 补充说明（可空）</label>
+      <textarea id="f-rules_note" name="rules_note" rows="3">{{ values.get('rules_note', '') }}</textarea>
+    </div>
+  </section>
+
   <div class="field {{ 'has-error' if error_map.get('effect_text') else '' }}">
     <label for="f-effect_text">效果文本（可空）</label>
     <textarea id="f-effect_text" name="effect_text" rows="5"
@@ -218,6 +255,8 @@
     <span class="muted">Ctrl/⌘ + S 保存</span>
   </div>
 </form>
+
+<template id="use-row-template">{{ use_row('__i__', {}) }}</template>
 
 {# 新技能行模板：JS 克隆后把 __i__ 换成真实序号 #}
 <template id="skill-row-template">

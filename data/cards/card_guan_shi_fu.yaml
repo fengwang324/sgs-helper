@@ -6,5 +6,9 @@ name: 贯石斧
 image: card_guan_shi_fu_qlhd_diamond_5.jpg
 card_set: null
 effect:
-  text: 当你使用的【杀】被【闪】抵消时，你可以弃置两张牌，则此【杀】依然造成伤害。
+  text: |-
+    当你使用的【杀】被【闪】抵消时，你可以弃置两张牌，则此【杀】依然造成伤害。
   skills: []
+rules:
+  attack_range: ''
+  note: ''

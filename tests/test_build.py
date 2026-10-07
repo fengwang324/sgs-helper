@@ -122,6 +122,7 @@ def test_cards_table_matches_single_layer_model(synth_db: Path) -> None:
         "card_set",
         "effect_text",
         "effect_skills",
+        "rules",
         "yaml_file",
         "yaml_line",
     ]
@@ -242,7 +243,7 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "5"
+    assert meta["schema_version"] == "6"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
     assert meta["count.card"] == "2"

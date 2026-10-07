@@ -8,3 +8,11 @@ card_set: null
 effect:
   text: ''
   skills: []
+rules:
+  use_methods:
+    - label: ''
+      timing: ''
+      target: ''
+      effect: ''
+      note: ''
+  note: ''
