@@ -432,6 +432,61 @@ def test_new_general_renames_uploaded_image_to_card_number(
     assert not (images / "IMG_2043.png").exists()
 
 
+def test_editing_never_steals_another_records_image(
+    client: TestClient, workdir: Path
+) -> None:
+    """表单里出现别人家的图名时，绝不能把那张图改名/删掉。
+
+    真实触发场景：从模板或别的武将「复制新建」会预填源记录的 image；
+    若不看「这个文件是不是刚上传的」就改名，等于把源记录的图偷走。
+    """
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 48
+
+    def new_general(name: str, number: str) -> str:
+        uploaded = client.post(
+            "/api/upload-image",
+            files={"file": (f"{name}.png", png, "image/png")},
+        ).json()["file"]
+        payload = {
+            "_csrf": client.app.state.csrf, "_base_sha": "", "_action": "save",
+            "name": name, "variant": "群狼环鼎", "title": "测试称号",
+            "general_number": number, "mode": "guozhan", "faction": "魏",
+            "hp": "4", "gender": "male", "product_id": "", "general_set": "",
+            "skill_count": "0", "image": uploaded,
+        }
+        assert client.post("/new/general", data=payload,
+                           follow_redirects=False).status_code == 303
+        return uploaded
+
+    new_general("甲", "G.TST 001")
+    new_general("乙", "G.TST 009")
+
+    store = client.app.state.store
+    images = workdir / "data" / "card_images"
+    other = store.entity("general_variant", "variant_g_tst_009").image
+    before = (images / other).read_bytes()
+
+    # 编辑甲，故意把 image 指向乙的图（模拟复制新建/数据被改乱）
+    g = store.entity("general", "general_g_tst_001")
+    v = store.entity("general_variant", "variant_g_tst_001")
+    payload = {
+        "_csrf": client.app.state.csrf,
+        "_base_sha": store.entity_sha("general", "general_g_tst_001"),
+        "_action": "save", "skill_count": "0",
+        "name": g.name, "variant": v.variant, "title": v.title,
+        "general_number": "G.TST 001", "mode": v.mode, "faction": v.faction,
+        "hp": str(v.hp), "gender": v.gender, "product_id": v.product_id or "",
+        "general_set": v.general_set or "", "image": other,
+        "_variant_id": "variant_g_tst_001", "variant_id": "variant_g_tst_001",
+        "_variant_sha": store.entity_sha("general_variant", "variant_g_tst_001"),
+    }
+    assert client.post("/edit/general/general_g_tst_001", data=payload,
+                       follow_redirects=False).status_code == 303
+
+    assert (images / other).exists(), "乙的图被删掉了"
+    assert (images / other).read_bytes() == before, "乙的图被替换了"
+
+
 # ---------------------------------------------------------------- Phase 4：编辑模式
 
 

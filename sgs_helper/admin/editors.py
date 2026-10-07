@@ -563,28 +563,26 @@ def parse_general_form(
         # 卡图名一律由编号派生，**用户不用管文件名**：表单里带来什么名字无所谓。
         # 扩展名要保留（避免把 .png 改名成 .jpg 造成内容与后缀不符）：
         #   1) 用户刚上传/选中的那个文件名；
-        #   2) 磁盘上已经存在的同编号文件；
-        #   3) 旧文件名（仅当编号没变）；
+        #   2) 编辑已有记录且编号没变 → 用它自己那张图的扩展名；
+        #   3) 新增记录 → 看磁盘上是否已有同编号文件（用户刚上传的）；
         #   4) 都取不到才用 .jpg
         old_image = (getattr(variant, "image", "") or "").strip() if variant else ""
         suffix = Path(submitted_image).suffix.lower()
         if not suffix or suffix not in IMAGE_SUFFIXES:
-            images_dir = Path(store.data_dir) / "card_images"
-            on_disk = next(
-                (p for p in sorted(images_dir.glob(f"{number_slug}.*"))
-                 if p.suffix.lower() in IMAGE_SUFFIXES),
-                None,
-            )
-            if on_disk is not None:
-                suffix = on_disk.suffix.lower()
-            elif old_image and Path(old_image).stem == number_slug:
+            if old_image and Path(old_image).stem == number_slug:
                 suffix = Path(old_image).suffix.lower()
             else:
-                suffix = ".jpg"
-        image_name = f"{number_slug}{suffix}"
-        # 「用户实际选中的那个文件」交给 result 带走，由 store 在写盘后改名
-        variant_data["image"] = image_name
-        if submitted_image and submitted_image != image_name:
+                images_dir = Path(store.data_dir) / "card_images"
+                on_disk = next(
+                    (p for p in sorted(images_dir.glob(f"{number_slug}.*"))
+                     if p.suffix.lower() in IMAGE_SUFFIXES),
+                    None,
+                )
+                suffix = on_disk.suffix.lower() if on_disk is not None else ".jpg"
+        variant_data["image"] = f"{number_slug}{suffix}"
+        # 表单里出现的原始文件名交给 store 判断：只有「本进程刚上传的」才会被改名，
+        # 别的名字（可能是从模板/别的武将复制过来的图名）必须原样不动。
+        if submitted_image and submitted_image != variant_data["image"]:
             result.uploaded_image = submitted_image
     else:
         variant_id = ""

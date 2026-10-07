@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from ..constants import (
+    IMAGE_SUFFIXES,
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
@@ -303,6 +304,19 @@ class AdminStore:
         #: Wiki：``(kind, id) -> [相关 FAQ]`` 反向索引，按文件指纹缓存
         self._faq_index: dict[tuple[str, str], list[dict]] | None = None
         self._faq_index_fingerprint: str = ""
+        #: 本进程内**确实刚上传**的卡图文件名。保存时据此决定能不能把它改名成
+        #: 编号派生名——没有这个标记就分不清「用户刚上传的图」与「表单里预填的
+        #: 别人家的图名」，后者一旦改名就等于把别的记录的图偷走。
+        self._uploaded_images: set[str] = set()
+
+    def note_uploaded_image(self, name: str) -> None:
+        """登记一个刚上传到 ``data/card_images/`` 的文件名。"""
+        if name:
+            self._uploaded_images.add(name)
+
+    def was_uploaded_image(self, name: str) -> bool:
+        """这个文件名是不是本进程刚上传的（而不是别处预填进来的引用）。"""
+        return bool(name) and name in self._uploaded_images
 
     # ------------------------------------------------------------ 快照
 
@@ -1799,8 +1813,6 @@ class AdminStore:
 
             # 1. 并发检查 + 目标文件解析
             targets: list[tuple[Change, Path, Path | None]] = []
-            #: 顺带记下「改之前」的卡图名，写盘后用来把图片文件一起改名
-            image_moves: list[tuple[str, str]] = []
             for change in changes:
                 target, stale_path = self._resolve_target_file(
                     change.kind, change.entity_id, change.old_id
@@ -1818,17 +1830,8 @@ class AdminStore:
                     )
                 targets.append((change, target, stale_path))
 
-                # 卡图名由卡面编号派生：编号改了，图片文件也要跟着改名
-                old_entity = self.entity(change.kind, change.old_id) if change.old_id else None
-                old_image = (getattr(old_entity, "image", "") or "").strip()
-                new_image = (change.candidate.get("image") or "").strip()
-                if old_image and new_image and old_image != new_image:
-                    image_moves.append((old_image, new_image))
-                # 新建记录：磁盘上的文件是用户刚上传的（名字随意），
-                # 需要把它改成编号派生的名字
-                uploaded = (change.uploaded_image or "").strip()
-                if uploaded and new_image and uploaded != new_image:
-                    image_moves.append((uploaded, new_image))
+            # 1b. 卡图收尾方案（写盘后执行）
+            image_plan = self._plan_image_files(changes)
 
             # 2. 一次性合并进内存候选集合并完整校验
             raws, load_issues = load_data_dir(self.data_dir)
@@ -1879,8 +1882,8 @@ class AdminStore:
                         backup.stash(stale_path)
                         yaml_writer.remove_entity(stale_path, change.old_id or "")
                         backup.note_written(stale_path)
-                # 卡图改名：编号变了就把图片文件也改成派生名（YAML 已指向新名字）
-                moved_images = self._move_renamed_images(image_moves)
+                # 卡图收尾（YAML 已写盘、已指向新名字）。三步，顺序不能换：
+                #   1) 删掉被换掉的旧图；
             except (OSError, ValueError) as exc:
                 backup.rollback()
                 self.invalidate()
@@ -1911,6 +1914,20 @@ class AdminStore:
                     rolled_back=True,
                 )
 
+            # 5. 卡图文件收尾（YAML 与库都已是新状态，按引用关系收敛）。
+            #    放在 rebuild 之后：万一 rebuild 失败已回滚 YAML，就完全不动图片。
+            #    三步顺序不能换：
+            #      1) 删掉被换掉的旧图；
+            #      2) 把该保留的文件改成派生名（目标位置若只是无人引用的孤儿则覆盖，
+            #         **绝不能先删它**——那是新图要落到的位置）；
+            #      3) 收敛：同一编号（同主名）下只留被引用的那一张。
+            #    注意这里**不能**把派生名当「自己人」保护起来：如果该名字正被
+            #    别的记录引用（数据被手工改乱），保护它反而会把它当可替换文件删掉。
+            #    是否保留一律以「有没有实体引用」为准。
+            self._prune_stale_images(image_plan.drop)
+            moved_images = self._move_renamed_images(image_plan.moves, own=image_plan.own)
+            self._prune_stale_images(image_plan.prune)
+
             return SaveOutcome(
                 ok=True, kind=kind, entity_id=entity_id,
                 path=str(targets[0][1]) if targets else "",
@@ -1918,22 +1935,134 @@ class AdminStore:
                 written=written, moved_images=moved_images,
             )
 
-    def _move_renamed_images(self, moves: list[tuple[str, str]]) -> list[str]:
-        """把卡图文件改成新的派生名（编号改了 → 卡图名跟着改）。
+    @dataclass
+    class _ImagePlan:
+        """写盘后要对 ``data/card_images/`` 做的事。"""
 
-        ``moves`` 是 ``(旧文件名, 新文件名)``。只在旧文件存在、新文件不存在时移动，
-        并把结果记进 ``SaveOutcome.moved_images`` 供页面提示。
-        图片改名失败不算致命：YAML 已经指向新名字，validate 会把它报成「卡图不存在」，
-        用户能立刻看到，所以这里不抛异常、不触发回滚。
+        #: 要改名的文件：(旧名, 新名, 目标已存在时是否允许覆盖)
+        moves: list[tuple[str, str, bool]]
+        #: 明确作废、可以立刻删的文件（被换掉的旧图）
+        drop: list[str]
+        #: 改名完成后要收敛的主名（清掉同主名、无人引用的多余副本）
+        prune: list[str]
+        #: 本次正在改的记录自己的图 —— 不算「别人的图」，允许被替换
+        own: set[str]
+
+    def _plan_image_files(self, changes: list[Change]) -> "_ImagePlan":
+        """算出写盘后卡图文件该怎么收尾。
+
+        卡图名由卡面编号派生，用户不管文件名。每个改动分三种情况：
+
+        1. **换了编号、没换图** —— 旧图改名成新的派生名；
+        2. **换了图（本次有上传）** —— 旧图作废删掉，新上传的图改名成派生名；
+        3. **新建** —— 新上传的图改名成派生名。
+
+        执行顺序必须是「先删作废的旧图 → 再改名（必要时覆盖同名孤儿）→ 最后收敛」。
+        尤其不能先删派生名位置上的文件：那是新图要落到的位置，先删会把新图删没。
+        """
+        moves: list[tuple[str, str, bool]] = []
+        drop: list[str] = []
+        prune: list[str] = []
+        own: set[str] = set()
+
+        for change in changes:
+            old_entity = self.entity(change.kind, change.old_id) if change.old_id else None
+            old_image = (getattr(old_entity, "image", "") or "").strip()
+            new_image = (change.candidate.get("image") or "").strip()
+            uploaded = (change.uploaded_image or "").strip()
+            own |= {n for n in (old_image, new_image, uploaded) if n}
+
+            if not new_image:
+                continue
+            prune.append(new_image)
+
+            # 只把「本进程刚上传的文件」或「这条记录自己原来的图」改名成派生名。
+            # 表单里其它名字一律无视——那可能是别的记录的图（从模板/别的武将复制
+            # 新建时会预填进来），动它等于把别人的图偷走。
+            picked = ""
+            if uploaded and self.was_uploaded_image(uploaded):
+                picked = uploaded
+            elif old_image:
+                picked = old_image
+
+            if picked and picked != new_image:
+                moves.append((picked, new_image, True))
+                if old_image and old_image != picked:
+                    drop.append(old_image)          # 换图：旧图作废
+
+        return self._ImagePlan(moves=moves, drop=drop, prune=prune, own=own)
+
+    def _referenced_images(self, *, exclude: set[str] | None = None) -> set[str]:
+        """当前数据里所有被实体引用的卡图文件名。
+
+        ``exclude`` 里的名字会被剔除——用于「本次正在改动的记录自己的图」：
+        那不算别人的图，允许本次操作覆盖或替换掉。
+        """
+        used: set[str] = set()
+        for kind in ("general_variant", "card"):
+            for entity in self.bundle.all(kind).values():
+                name = (getattr(entity, "image", "") or "").strip()
+                if name:
+                    used.add(name)
+        if exclude:
+            used -= exclude
+        return used
+
+    def _prune_stale_images(self, names: list[str], *, protect: set[str] | None = None) -> None:
+        """收敛：同一编号（同主名）下只留被引用的那一张图。
+
+        删的是「主名相同、且没有任何实体引用」的多余文件。``protect`` 里的名字
+        额外保留（用于本次刚放好的新图）。绝不碰被引用的图。
         """
         images_dir = self.data_dir / "card_images"
+        if not images_dir.is_dir():
+            return
+        referenced = self._referenced_images() | (protect or set())
+        stems = {Path(n).stem for n in names if n}
+        for stem in stems:
+            for path in images_dir.glob(f"{stem}.*"):
+                if path.suffix.lower() not in IMAGE_SUFFIXES:
+                    continue
+                if path.name in referenced:
+                    continue
+                try:
+                    path.unlink()
+                except OSError:  # pragma: no cover - 权限/占用
+                    continue
+
+    def _move_renamed_images(
+        self, moves: list[tuple[str, str, bool]], *, own: set[str] | None = None
+    ) -> list[str]:
+        """把卡图文件改成新的派生名（编号改了或刚上传 → 卡图名跟着改）。
+
+        ``moves`` 每项是 ``(旧文件名, 新文件名, replace)``：
+
+        - 旧文件存在、新文件不存在 → 直接把旧文件改名过去；
+        - 两个都存在：
+          - ``replace=True``（用户本次就是要换图）→ 删掉目标再改名；但如果目标
+            **正被别的实体引用**，仍然不碰，宁可留下旧文件也不破坏别人的图；
+          - ``replace=False`` → 不动，避免用陈旧文件覆盖刚上传的新图；
+        - 旧文件不存在 → 跳过。
+
+        改名失败不算致命：YAML 已经指向新名字，validate 会把它报成
+        「卡图不存在」，用户能立刻看到，所以这里不抛异常、不触发回滚。
+        """
+        images_dir = self.data_dir / "card_images"
+        referenced = self._referenced_images(exclude=own)
         done: list[str] = []
-        for old, new in moves:
+        for old, new, replace in moves:
             if not old or not new or old == new:
                 continue
             src, dst = images_dir / old, images_dir / new
-            if not src.exists() or dst.exists():
+            if not src.exists():
                 continue
+            if dst.exists():
+                if not replace or new in referenced:
+                    continue
+                try:
+                    dst.unlink()      # 自己的孤儿，清掉好让位
+                except OSError:       # pragma: no cover - 权限/占用
+                    continue
             try:
                 src.rename(dst)
             except OSError:  # pragma: no cover - 权限/占用

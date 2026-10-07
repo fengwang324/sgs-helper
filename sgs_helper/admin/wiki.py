@@ -510,6 +510,10 @@ class WikiRoutes:
 
             target = images_dir / name
             target.write_bytes(data)
+            # 记下「这个文件确实是刚上传的」：保存时据此决定能不能把它改名成
+            # 编号派生名。没有这个标记就分不清「用户刚上传的图」和「表单里预填的
+            # 别人家的图名」——后者绝不能动，否则会把别的记录的图偷走。
+            live.note_uploaded_image(name)
             return JSONResponse(
                 {
                     "ok": True,
