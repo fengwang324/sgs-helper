@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Mapping
 
 from ..constants import (
     CARD_CATEGORY_TREE,
     GENDER_LABELS,
+    IMAGE_SUFFIXES,
     MODE_LABELS,
     Gender,
     Mode,
@@ -111,6 +113,8 @@ class EditorResult:
     record_id: str = ""
     #: 本次提交对应的武将版本 id（GeneralVariant）
     variant_id: str = ""
+    #: 新建武将时用户刚上传的卡图文件名（名字随意，保存后改成编号派生名）
+    uploaded_image: str = ""
     values: dict[str, str] = field(default_factory=dict)
     rows: list[dict] = field(default_factory=list)
 
@@ -555,16 +559,33 @@ def parse_general_form(
 
     if number_slug:
         variant_id = make_variant_id(card_number, existing_variant_ids)
-        image_name = f"{number_slug}.jpg"
-        current_image = (getattr(variant, "image", "") or "").strip() if variant else ""
         submitted_image = (str(form.get("image", "")) or "").strip()
-        # 卡图名由编号派生。只有在用户**明确**提交了一个非空的、不同的文件名时才保留它
-        # （例如从 data/card_images/ 里手工挑了一张）；空值一律按派生名处理，
-        # 这样「改编号」就会把卡图一起改名。
-        if not submitted_image:
-            variant_data["image"] = image_name
-        elif submitted_image != current_image:
-            variant_data["image"] = submitted_image
+        # 卡图名一律由编号派生，**用户不用管文件名**：表单里带来什么名字无所谓。
+        # 扩展名要保留（避免把 .png 改名成 .jpg 造成内容与后缀不符）：
+        #   1) 用户刚上传/选中的那个文件名；
+        #   2) 磁盘上已经存在的同编号文件；
+        #   3) 旧文件名（仅当编号没变）；
+        #   4) 都取不到才用 .jpg
+        old_image = (getattr(variant, "image", "") or "").strip() if variant else ""
+        suffix = Path(submitted_image).suffix.lower()
+        if not suffix or suffix not in IMAGE_SUFFIXES:
+            images_dir = Path(store.data_dir) / "card_images"
+            on_disk = next(
+                (p for p in sorted(images_dir.glob(f"{number_slug}.*"))
+                 if p.suffix.lower() in IMAGE_SUFFIXES),
+                None,
+            )
+            if on_disk is not None:
+                suffix = on_disk.suffix.lower()
+            elif old_image and Path(old_image).stem == number_slug:
+                suffix = Path(old_image).suffix.lower()
+            else:
+                suffix = ".jpg"
+        image_name = f"{number_slug}{suffix}"
+        # 「用户实际选中的那个文件」交给 result 带走，由 store 在写盘后改名
+        variant_data["image"] = image_name
+        if submitted_image and submitted_image != image_name:
+            result.uploaded_image = submitted_image
     else:
         variant_id = ""
         if variant is not None:
@@ -720,7 +741,12 @@ def parse_general_form(
     # ---------------------------------------------------------------- 组装成一批
     result.changes.insert(
         0,
-        Change(kind="general_variant", candidate=variant_data, old_id=variant.id if variant else None),
+        Change(
+            kind="general_variant",
+            candidate=variant_data,
+            old_id=variant.id if variant else None,
+            uploaded_image=result.uploaded_image or None,
+        ),
     )
     result.changes.insert(
         0,

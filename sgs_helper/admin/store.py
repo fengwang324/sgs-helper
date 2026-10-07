@@ -154,6 +154,9 @@ class Change:
     candidate: dict
     old_id: str | None = None
     expected_sha: str | None = None
+    #: 新建记录时，用户刚上传的卡图文件名（名字随意，保存后要改成编号派生名）。
+    #: 不放进 ``candidate``——模型是 ``extra="forbid"``，多余键会被校验拦下。
+    uploaded_image: str | None = None
 
     @property
     def entity_id(self) -> str:
@@ -1821,6 +1824,11 @@ class AdminStore:
                 new_image = (change.candidate.get("image") or "").strip()
                 if old_image and new_image and old_image != new_image:
                     image_moves.append((old_image, new_image))
+                # 新建记录：磁盘上的文件是用户刚上传的（名字随意），
+                # 需要把它改成编号派生的名字
+                uploaded = (change.uploaded_image or "").strip()
+                if uploaded and new_image and uploaded != new_image:
+                    image_moves.append((uploaded, new_image))
 
             # 2. 一次性合并进内存候选集合并完整校验
             raws, load_issues = load_data_dir(self.data_dir)

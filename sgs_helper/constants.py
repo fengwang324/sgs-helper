@@ -15,6 +15,10 @@ from enum import Enum
 #: 约定带业务前缀：product_ / general_ / skill_ / card_ / faq_ / keyword_ / timing_
 ID_PATTERN = r"^[a-z][a-z0-9_]*$"
 
+#: 允许的卡图扩展名（小写）。上传（admin/wiki.py）与卡图名派生（admin/editors.py）
+#: 共用这一份，避免两处口径漂移。
+IMAGE_SUFFIXES: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp")
+
 
 class Mode(str, Enum):
     """游戏模式。``common`` 表示跨模式通用（例如基础规则关键词）。"""

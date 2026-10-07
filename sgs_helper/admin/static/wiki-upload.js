@@ -6,8 +6,10 @@
              data-upload-target="image"
              data-upload-preview="image-preview">上传图片</button>
    点它 -> 选文件 -> POST /api/upload-image -> 把返回的**文件名**写进目标字段，
-   并刷新预览。<input type="file"> 是点击时临时创建的，不参与表单提交
-   （卡图名由目标字段提交，与 Card.image —— 相对 data/card_images/ 的文件名 —— 一致）。
+   并刷新预览。<input type="file"> 是点击时临时创建的，不参与表单提交。
+
+   注意：**用户不需要关心文件名**。武将卡图在保存时会被统一改成编号派生的名字
+   （G.WEI 001 -> g_wei_001.jpg），这里上传时用什么名字都无所谓。
    ========================================================================== */
 (function () {
   'use strict';
@@ -57,7 +59,7 @@
         var combo = document.querySelector('.combo[data-combo="' + target + '"] .combo-input');
         if (combo) combo.value = result.data.file;
         setPreview(previewId, result.data.url, result.data.file);
-        button.textContent = '已上传：' + result.data.file;
+        button.textContent = '已上传';
         window.setTimeout(function () {
           button.textContent = original;
           button.disabled = false;

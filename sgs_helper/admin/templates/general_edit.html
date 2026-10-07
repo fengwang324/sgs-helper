@@ -235,12 +235,15 @@
       {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
     <div class="field">
-      <label>卡图（由编号自动决定）</label>
+      <label>卡图</label>
       <p class="help">
-        文件名：<code>{{ values.get('image') or '（填了编号后自动生成）' }}</code>
         <button type="button" class="btn js-upload-image"
-                data-upload-target="image" data-upload-preview="variant-image-preview">上传卡图</button>
+                data-upload-target="image"
+                data-upload-preview="variant-image-preview">上传卡图</button>
+        选好图保存即可，**文件名不用管**：保存时会自动改成编号派生的名字
+        （<code>G.WEI 001</code> → <code>g_wei_001.jpg</code>），与内部 ID 保持一致。
       </p>
+      <input type="hidden" name="image" value="{{ values.get('image', '') }}">
       <div id="variant-image-preview">
         {% if values.get('image') %}<img src="/card-images/{{ values.get('image') }}" alt="卡图预览"
              style="max-width:150px;max-height:210px;border:1px solid #e5e7eb;border-radius:8px;display:block;margin-top:8px">{% endif %}

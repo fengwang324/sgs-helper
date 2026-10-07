@@ -30,6 +30,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from ..constants import (
     CARD_CATEGORY_1_FOR_WIKI,
     GENDER_LABELS,
+    IMAGE_SUFFIXES,
     KIND_BY_NAME,
     MODE_LABELS,
     SOURCE_LABELS,
@@ -63,8 +64,7 @@ FAQ_LIMIT = 6
 #: 列表页每页条数
 PER_PAGE = 48
 
-#: 图片上传白名单（与 validate._check_images 的口径保持一致）
-IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
+#: 图片上传白名单：直接复用 constants 里那一份（与 editors 的卡图名派生、
 IMAGE_MAX_BYTES = 8 * 1024 * 1024
 
 
@@ -470,8 +470,12 @@ class WikiRoutes:
         async def upload_image(request: Request, file: UploadFile = File(...)) -> JSONResponse:
             """上传卡图到 ``data/card_images/``，返回**文件名**（实体里只存相对名）。
 
-            与 ``validate._check_images`` 的口径保持一致：只接受
-            jpg / jpeg / png / webp，文件名做安全化处理并避免覆盖同名文件。
+            这里只负责把文件安全地落盘，**不关心文件名好不好看**：
+            清洗原始文件名并避免覆盖同名文件。武将卡图改由保存流程统一改成
+            编号派生的名字（``G.WEI 001`` → ``g_wei_001.jpg``）——用户不用管文件名，
+            选完图保存即可。
+
+            只接受 jpg / jpeg / png / webp，与 ``validate._check_images`` 的口径一致。
             """
             live: AdminStore = request.app.state.store
             original = os.path.basename((file.filename or "").replace("\\", "/"))
@@ -494,10 +498,10 @@ class WikiRoutes:
                     ),
                 )
 
-            stem = re.sub(r"[^A-Za-z0-9_\-]+", "_", Path(original).stem).strip("_") or "upload"
             images_dir = live.data_dir / "card_images"
             images_dir.mkdir(parents=True, exist_ok=True)
 
+            stem = re.sub(r"[^A-Za-z0-9_\-]+", "_", Path(original).stem).strip("_") or "upload"
             name = f"{stem}{suffix}"
             counter = 1
             while (images_dir / name).exists():

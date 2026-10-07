@@ -27,6 +27,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 from sgs_helper.admin.app import create_app
@@ -339,14 +340,14 @@ def test_new_category_needs_no_code_change(client: TestClient, app) -> None:
 
 
 def test_general_edit_page_shows_number_and_derived_image(client: TestClient) -> None:
-    """武将录入页：编号是身份键（必填），卡图是它的只读派生值。"""
+    """武将录入页：编号是身份键（必填），卡图只要上传，文件名不用用户填。"""
     body = client.get("/new/general").text
     # 编号可填
     assert 'name="general_number"' in body
-    # 卡图不再手工输入（由编号派生），但要有上传按钮与预览
+    # 卡图上传按钮在，且明确告诉用户不用管文件名
     assert "js-upload-image" in body
     assert "wiki-upload.js" in body
-    assert "由编号自动决定" in body
+    assert "文件名不用管" in body
 
 
 def test_card_edit_page_has_upload_button(client: TestClient) -> None:
@@ -386,6 +387,49 @@ def test_upload_deduplicates_same_name(client: TestClient) -> None:
     first = client.post("/api/upload-image", files={"file": ("dup.png", png, "image/png")}).json()
     second = client.post("/api/upload-image", files={"file": ("dup.png", png, "image/png")}).json()
     assert first["file"] != second["file"]
+
+
+def test_new_general_renames_uploaded_image_to_card_number(
+    client: TestClient, workdir: Path
+) -> None:
+    """用户不用管卡图文件名：上传时叫什么无所谓，保存后一律改成编号派生名。"""
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 48
+    uploaded = client.post(
+        "/api/upload-image",
+        files={"file": ("IMG_2043.png", png, "image/png")},
+    ).json()["file"]
+    assert uploaded == "IMG_2043.png"     # 上传阶段只负责落盘，不改名
+
+    payload = {
+        "_csrf": client.app.state.csrf,
+        "_base_sha": "",
+        "_action": "save",
+        "name": "测试武将",
+        "variant": "群狼环鼎",
+        "title": "测试称号",
+        "general_number": "G.TEST 001",
+        "mode": "guozhan",
+        "faction": "魏",
+        "hp": "4",
+        "gender": "male",
+        "product_id": "",
+        "general_set": "",
+        "skill_count": "0",
+        "image": uploaded,
+    }
+    response = client.post("/new/general", data=payload, follow_redirects=False)
+    assert response.status_code == 303, response.text
+
+    images = workdir / "data" / "card_images"
+    variant = yaml.safe_load(
+        (workdir / "data" / "general_variants" / "variant_g_test_001.yaml")
+        .read_text(encoding="utf-8")
+    )
+    # YAML 记的是编号派生名，扩展名保留上传时的格式
+    assert variant["image"] == "g_test_001.png"
+    assert (images / "g_test_001.png").exists()
+    # 上传时的原始文件名不该残留
+    assert not (images / "IMG_2043.png").exists()
 
 
 # ---------------------------------------------------------------- Phase 4：编辑模式
