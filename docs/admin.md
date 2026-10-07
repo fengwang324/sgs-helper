@@ -36,16 +36,15 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 | 路由 | 作用 |
 | --- | --- |
-| `GET /` | 首页：统一搜索框、各类型条数、核验状态分布、SQLite 状态、当前校验错误与警告 |
-| `GET /search?q=&kind=&status=&mode=` | 跨 9 类实体检索，显示类型 / 名称 / 模式 / 来源（规则类才有）/ 核验状态 / YAML 位置 |
-| `GET /list/{kind}?q=&mode=&status=&product=&set_name=&faction=&category_1=&category_2=&page=` | 分类列表 + 筛选 + 分页（`set_name` 是「系列 / 拓展包」筛选，武将侧对 `general_set`、卡牌侧对 `card_set`） |
+| `GET /` | 首页：统一搜索框、各类型条数、SQLite 状态、当前校验错误与警告 |
+| `GET /search?q=&kind=&mode=` | 跨 9 类实体检索，显示类型 / 名称 / 模式 / 来源（规则类才有）/ YAML 位置 |
+| `GET /list/{kind}?q=&mode=&product=&set_name=&faction=&category_1=&category_2=&page=` | 分类列表 + 筛选 + 分页（`set_name` 是「系列 / 拓展包」筛选，武将侧对 `general_set`、卡牌侧对 `card_set`） |
 | `GET /view/{kind}/{id}` | 详情页（技能 / 卡牌 / 武将有专门的分层展示） |
 | **`GET|POST /new/product`、`/edit/product/{id}`** | **产品专用录入页**（见第 3 节） |
 | **`GET|POST /new/general`、`/edit/general/{id}[?variant=…]`** | **武将专用录入页**（General + GeneralVariant，见第 3、4、5 节） |
 | **`GET|POST /new/card`、`/edit/card/{id}`** | **卡牌专用录入页**（分类联动 + 拓展包 + 卡图 + 效果文本 + 关联技能，见第 3.5 节） |
 | `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、FAQ、关键词、时点） |
 | `GET|POST /delete/{kind}/{id}` | 删除确认 + 引用检查 |
-| `GET /review[?status=]` | 待核验清单：`unverified` / `community` / `conflict` |
 | `POST /rebuild` | 手动按当前 YAML 全量重建 SQLite |
 | `GET /raw/{kind}/{id}` | 直接查看该记录所在 YAML 文件原文 |
 | `GET /healthz` | JSON 健康检查 |
@@ -123,15 +122,14 @@ python scripts/admin.py --port 8000 --reload # 开发用
 ```
 
 **只有名字是必填的**。其余字段都可以先留空，先把手头有的信息录进来，
-以后再补（详情页与待核验页会一直提醒缺什么）。
+以后再补（详情页会一直提醒缺什么）。
 
 两层怎么分：
 
 - **武将个体（General）**：`id` / `name`。官方武将名不同就是不同的武将
   （诸葛亮 / 界诸葛亮 / 神诸葛亮）。
 - **版本（GeneralVariant）**：`variant`（版本标签）+ `mode` + `faction` + `hp` + `gender`
-  + `title` + `general_number` + `general_set` + `product_id` + `skills`
-  + `verification_status` / `review_note`。
+  + `title` + `general_number` + `general_set` + `product_id` + `skills`。
   来源不在这里存：由 `product_id` 定位到具体产品。
   「标准版诸葛亮」和「国战诸葛亮」是同一个武将的两个版本，不是两个武将。
 - 给同一个武将再加一个版本：详情页点「+ 新增版本」（= `/edit/general/<id>?variant=new`），
@@ -169,7 +167,6 @@ python scripts/admin.py --port 8000 --reload # 开发用
 ── 效果 ──────────────────────────────────────
 效果文本 [ 锁定技，你视为拥有“制衡”… ]
 关联技能：搜索已有技能 + 指定版本（0～N 行，顺序即卡面顺序）
-核验状态 [ 未核验 ▼ ]   复核备注 [ ]
 [保存]
 ```
 
@@ -188,16 +185,16 @@ python scripts/admin.py --port 8000 --reload # 开发用
   技能说明**不要**抄进来——那属于技能版本。
 - **关联技能（`effect.skills`）**：0～N 行，只能关联**已有技能**（卡牌页没有内联新建技能那套），
   可指定具体版本；留空表示按该技能的 `mode` 匹配唯一一条版本。
-- **核验状态 / 复核备注**：卡牌没有 `source`；OCR 多版本、拓展包归属待定等异常写进 `review_note`。
+- **没有核验状态 / 复核备注**：卡牌没有 `source`；OCR 多版本、拓展包归属待定等异常记在 Git 提交信息里。
 - 详情页不再有「实体卡印刷（N 条）」：卡牌就是一层的，同一规则卡的花色 / 点数印刷不在这里建模。
 
 ### 内部 ID 与“编号”是两件事
 
-- 页面上的「编号」是实体卡编号（`general_number`，自由字符串）。
-- 真正的内部 `id`（YAML 文件名 / URL / 外键）放在「高级信息」里，**默认留空**：
-  后端按名字生成合法且唯一的 ID（ASCII 名字直接转写，例如 `Zhang Liao` → `general_zhang_liao`；
-  中文名退化成稳定短哈希，例如 `general_n93d5cfd3`），冲突时追加 `_2` / `_3`。
-- 已存在的记录**绝不会**被重新生成 ID；改 ID 会同时移动 YAML 文件，被引用时会被校验拦下。
+- 页面上的「编号」是实体卡编号（`general_number`，自由字符串，与卡面完全一致）。
+- **武将的身份键就是编号**：内部 `id` 由它派生，页面不提供手改入口
+  （`G.WEI 001` → `general_g_wei_001` / `variant_g_wei_001` / `g_wei_001.jpg`）。
+  核验时改编号，这三者与引用它的 `general_id` 会一起跟着改。
+- 两个不同编号若规范化后重名，保存会被直接拒绝（不会静默合并）。
 
 ---
 
@@ -358,13 +355,12 @@ skills:
 
 ---
 
-## 10. 待核验流程
+## 10. 来源与核对
 
-`/review` 按 `verification_status` 汇总 `unverified` / `community` / `conflict`。
-逐条打开 → 对着实体卡核验 → 改核验状态 → 保存。
 实体卡类实体（GeneralVariant / Card）没有 `source`：武将版本的来源由 `product_id` 定位、卡牌由 `card_set` 定位；
 只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才填 `source`（只有 `type` + `reference`，
-展示名由 `reference` 推导）。日常录卡可以先不管核验状态（默认 `unverified`，会进待核验页面）。
+展示名由 `reference` 推导）。日常录卡先把卡面文字照抄准；对不上的地方写进实体自己的正文，
+卡牌这种正文必须逐字照抄卡面的，就记在 Git 提交信息里。
 
 ---
 
@@ -374,8 +370,8 @@ skills:
    （保留的是：字段值、字段顺序、文件顶部注释块、文件结构）。
 2. **一个文件多条记录**（例如手工把多条 keyword 放进同一个列表文件）编辑其中一条会整文件重写；
    其他记录的**内容**不变，但格式也会被规范化一次。当前 `data/` 里一条记录一个文件。
-3. **中文名生成的内部 ID 是短哈希**（`general_n93d5cfd3`）。想要可读的 ID，
-   在「高级信息 → 内部 ID」或技能行的「内部 ID」里自己填。
+3. **武将的内部 ID 由卡面编号派生**，不再按名字生成短哈希；
+   想换 ID 就改编号（id / 文件名 / 卡图名会一起改）。技能行的「内部 ID」仍需手填。
 4. **版本选择是原生 `<select>`**：选项文本里带了版本标签 / 模式 / 产品 / 文本摘要，
    选中后下面还有一段预览。没有做成两行富文本下拉（保持键盘与无 JS 可用）。
 5. **并发保护是记录级哈希**：只改注释不会触发冲突（这是刻意的，避免同文件多记录互相干扰）。

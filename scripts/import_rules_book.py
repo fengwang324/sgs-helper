@@ -3,7 +3,7 @@
 
 数据来源：https://gltjk.com/sanguosha/rules/
 内容为凌天翼规则集 3.0，网页版由 gltjk.com 制作（社区整理，非游卡官方发布物），
-导入后统一写成 ``source.type=official_rule`` + ``verification_status=community``。
+导入后统一写成 ``source.type=official_rule``（社区整理，非官方发布物）。
 
 导入什么：
 
@@ -354,7 +354,6 @@ def import_skills() -> dict:
                     "product_id": None,
                     "previous_version_id": None,
                     "source": SOURCE,
-                    "verification_status": "community",
                 }
             )
             write_entity("skill_version", version)
@@ -421,7 +420,6 @@ def import_rule_faqs() -> list[dict]:
                 "answer": answer,
                 "mode": "common",
                 "source": SOURCE,
-                "verification_status": "community",
                 "title": title,
                 "kind": kind,
             }
@@ -460,7 +458,6 @@ def import_ruling_faqs(skill_index: dict[str, str]) -> list[dict]:
                     "answer": text,
                     "mode": mode,
                     "source": SOURCE,
-                    "verification_status": "community",
                     "skill_id": skill_id,
                 }
             )
@@ -515,7 +512,6 @@ def import_keywords() -> list[dict]:
                     "definition": body,
                         "mode": "common",
                     "source": SOURCE,
-                    "verification_status": "community",
                 }
             )
     return entries
@@ -548,7 +544,6 @@ def import_timings() -> list[dict]:
                 "description": body,
                 "mode": "common",
                 "source": SOURCE,
-                "verification_status": "community",
             }
         )
     return entries

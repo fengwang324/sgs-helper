@@ -20,8 +20,7 @@
 技能
 ----
 技能按名字挂到已有的 ``Skill`` 上（规则集导入的技能已经覆盖标准包）。
-**不新建技能版本**：技能文本继续用规则集那份，避免同一 (技能, 模式) 出现两条重叠版本；
-每个武将版本的 ``review_note`` 里写明“文本与卡面用词可能不同，待按实体卡核验”。
+**不新建技能版本**：技能文本继续用规则集那份，避免同一 (技能, 模式) 出现两条重叠版本。
 
 用法（容器内、仓库根目录）
 --------------------------
@@ -272,11 +271,6 @@ def main() -> int:
                 "product_id": None,
                 "general_set": row["pack"],
                 "skills": refs,
-                "verification_status": "community",
-                "review_note": (
-                    f"来自{WIKI_TITLE}武将页「{row['page']}」（{WIKI_BASE}{row['page']}）"
-                    "的经典版本（身份局标准版），社区 WIKI，未按实体卡核验；" + NOTE
-                ),
             }
         )
         print(

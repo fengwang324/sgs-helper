@@ -6,7 +6,7 @@
 
 规则：
 - 一张有独立规则意义的卡 = 一条 Card（同一 card_id 的多份花色/点数印刷合并成一条）；
-- 印刷文本不一致时取“多数 → 最长 → 字典序”的那一版，并在 review_note 里写明有几种文本；
+- 印刷文本不一致时取“多数 → 最长 → 字典序”的那一版，具体有几种文本由脚本打印出来；
 - 指示物卡牌（card_type=other / subtype=指示物）本次**全部舍弃**，连同印刷移入备份目录；
 - 旧的花色/点数/数量/角标/编号等牌堆字段不写进新模型，但旧文件整体备份，供以后
   新增 deck_entries 使用。
@@ -173,8 +173,6 @@ def extra_basic_cards() -> list[dict]:
             "image": "",
             "card_set": None,
             "effect": {"text": "", "skills": []},
-            "verification_status": "unverified",
-            "review_note": "",
         })
     return out
 
@@ -203,16 +201,8 @@ def main() -> int:
         sets = {CARD_SET_FIX.get(str(p.get("card_set")), p.get("card_set")) for p in ps}
         card_set = sets.pop() if len(sets) == 1 else None
 
-        notes = []
         if len(counter) > 1:
             multi_text.append(f"{cid}（{len(counter)} 种文本）")
-            notes.append(
-                f"卡面存在 {len(counter)} 种不同文本："
-                + "；".join(f"{n} 张「{(t or '（空）')[:24]}…」" for t, n in counter.most_common())
-                + f"。本条取 {counter[text]} 张一致的那一版，请对照卡图确认"
-            )
-        if (card.get("review_note") or "").strip() and "指示物卡牌" not in card["review_note"]:
-            notes.append(card["review_note"].strip())
 
         new_cards.append({
             "id": cid,
@@ -223,8 +213,6 @@ def main() -> int:
             "image": rep.get("image") or "",
             "card_set": card_set,
             "effect": {"text": text, "skills": skill_refs(text, skills, versions)},
-            "verification_status": rep.get("verification_status") or "unverified",
-            "review_note": "".join(notes),
         })
         kept_ids.append(cid)
         set_stats[card_set] += 1
@@ -240,14 +228,13 @@ def main() -> int:
     for c in new_cards:
         skills_txt = "、".join(r["skill_id"] for r in c["effect"]["skills"]) or "-"
         print(f"   {c['category_1']}/{c['category_2']}/{c['category_3']:6s} {c['name']:8s}"
-              f" set={str(c['card_set']):10s} 技能={skills_txt:24s} 文本={len(c['effect']['text'])} 字"
-              f"{'  ⚠复核' if c['review_note'] else ''}")
+              f" set={str(c['card_set']):10s} 技能={skills_txt:24s} 文本={len(c['effect']['text'])} 字")
 
     print("\n=== 舍弃的指示物卡 ===")
     for d in dropped:
         print(f"   {d['card']['id']:32s} {d['card']['name']:8s} 印刷 {len(d['printings'])} 张")
 
-    print("\n多文本卡（自动取多数版 + 写 review_note）：", "，".join(multi_text) or "无")
+    print("\n多文本卡（自动取多数版）：", "，".join(multi_text) or "无")
 
     extras = extra_basic_cards()
     print("\n=== 额外补录的基本牌（用户指明先记录、卡图后续补）===")

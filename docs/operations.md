@@ -33,7 +33,6 @@ git add -A && git commit -m "data: ..." && git push
    - 需要改技能文本时用「+ 为这个技能新增版本」，旧版本永远保留。
 3. 同一盒卡连续录：用「保存并新增下一位武将」（可继承产品信息），
    或详情页的「以此武将为模板新增」。
-4. 录完随时看 `/review`，把 `unverified` / `community` / `conflict` 的记录逐条核验掉。
 
 ## 1. 现在的数据构成
 
@@ -61,10 +60,9 @@ python scripts/import_rules_book.py --stage all         # 写 data/（会覆盖�
 python scripts/validate_data.py && python scripts/build_db.py && python -m pytest -q
 ```
 
-导入的规则侧统一带 `source.type: official_rule` + `verification_status: unverified`
-（网页版是社区整理、未按实体卡核验）。**核验一条就升一条**：对着实体卡逐字比对之后，
-把 `verification_status` 改成 `physical_verified`；需要记差异就写 `review_note`
-（没有该字段的 FAQ / Keyword / Timing 写进正文）。
+导入的规则侧统一带 `source.type: official_rule`（网页版是社区整理、未按实体卡核验）。
+**核验一条就核对一条**：对着实体卡逐字比对，需要记差异就写进对应实体的正文
+（卡牌这类正文要逐字照抄卡面的，记在 Git 提交信息里）。
 
 ## 1.1 武将是两层：General + GeneralVariant
 
@@ -91,37 +89,24 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
    是游戏牌拓展包的候选全集（九变篇 / 势备篇 / 不臣篇 / 君主游戏牌 / 阵 / 君临天下·权…）。
    注意「指示物」是卡牌分类，不是拓展包。
 2. **再建卡牌**（一层 `Card`，管理页专用录入页 `/new/card`）：按
-   卡名 → 一级/二级/三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 0～N → 核验状态 →
-   复核备注 的顺序录。基本牌的三级分类写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里。
+   卡名 → 一级/二级/三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 0～N
+   的顺序录。基本牌的三级分类写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里。
 3. **归属检查**：跑 `validate_data.py`，卡牌 `card_set` 没有被任何产品声明、基本牌三级分类
    不是牌族、卡图文件不存在都会告警；把「指示物」写进 `card_set` 会得到专门提示。
 
-登记时的三条纪律：
+登记时的两条纪律：
 
 - 卡面效果文字逐字抄进 `effect.text`，**不要改写原文**（检索正文由构建时生成，不用手填）；
   `effect.text` 与 `effect.skills` 都允许为空，纯技能卡可以留空；
-- 只有亲眼核过实体卡，才把 `verification_status` 改成 `physical_verified`；
-- 拿不准就留 `unverified`，需要人工对着卡图复核的异常写进 `review_note`。
+- 只有亲眼核过实体卡才敢下结论；拿不准的就别写死，需要人工对着卡图复核的异常
+  记在 Git 提交信息里。
 
-## 2. 核验状态的用法
+## 2. 来源不一致怎么记
 
-| 值 | 什么时候用 |
-| --- | --- |
-| `unverified` | 只是抄来/听说，还没核 |
-| `community` | 来自社区资料库或 wiki，多条互相印证 |
-| `official` | 有官方规则 / 官方 FAQ / 官方公告依据 |
-| `physical_verified` | 已照着本人实体卡逐字核对 |
-| `conflict` | 两个来源说法不一致，**两边都保留**；有 `review_note` 的实体写进 `review_note`，其余（FAQ / Keyword / Timing）写进正文 |
-
-```yaml
-source:
-  type: discussion
-  reference: ""
-verification_status: conflict
-review_note: >
-  来源 A（社区资料库）说“可以重复触发”；来源 B（官方 FAQ 第 N 版）说“每回合一次”。
-  两边都保留，待按实体卡与最新官方规则核验。
-```
+两个来源说法不一致时**两边都保留**，不要删掉任何一边：
+把“来源 A（社区资料库）说……；来源 B（官方 FAQ 第 N 版）说……”写进实体自己的正文
+（FAQ 写进 `answer`，技能写进 SkillVersion 的 `text`，关键词 / 时点写进定义或说明；
+卡牌这种正文必须逐字照抄卡面的，差异记在 Git 提交信息里），以后按实体卡与最新官方规则核验。
 
 （`source` 只有 `type` + `reference`，展示名由 `reference` 推导。）
 
@@ -150,7 +135,7 @@ review_note: >
 ## 4. 新增/修改时的自检清单
 
 - [ ] 新记录有唯一的 `id`，并且符合前缀约定；
-- [ ] 规则类实体（SkillVersion / FAQ / Keyword / Timing）填了 `source`，且 `verification_status` 与实际情况相符；
+- [ ] 规则类实体（SkillVersion / FAQ / Keyword / Timing）填了 `source`；
 - [ ] 武将版本的 `product_id` 指向正确的产品；卡牌的 `card_set` 是某个产品声明过的拓展包（或留空）；
 - [ ] 卡牌的基本牌三级分类只写牌族，`image` 指向的文件真的在 `data/card_images/` 下；
 - [ ] 技能文本一字不改地来自实体卡/官方资料；

@@ -525,7 +525,6 @@ class WikiRoutes:
 
         q = (params.get("q") or "").strip()
         mode = params.get("mode") or ""
-        status = params.get("status") or ""
         set_name = params.get("set_name") or ""
         category_1 = CARD_CATEGORY_1_FOR_WIKI.get(section, "")
         category_2 = params.get("category_2") or ""

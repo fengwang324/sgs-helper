@@ -61,7 +61,7 @@
     </select>
   {% endif %}
   <button type="submit">筛选</button>
-  {% if q or mode or status or product or set_name or faction or category_1 or category_2 %}
+  {% if q or mode or product or set_name or faction or category_1 or category_2 %}
     <a class="btn ghost" href="/list/{{ kind }}">清除条件</a>
   {% endif %}
 </form>

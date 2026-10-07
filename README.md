@@ -15,8 +15,8 @@
 
 | 类型 | 来源 | 状态 |
 | --- | --- | --- |
-| 技能本体 311 / 技能版本 297 | 群狼环鼎实体卡照片（296 条 `source.type: physical_card`）+ 三国杀移动版官网武将页（1 条 `official_online`） | 卡面文本，`verification_status` 基本都是 `unverified`，待逐条对卡图核验 |
-| FAQ / 裁定 83 | gltjk.com 网页版《三国杀官方规则集 3.0》（规则专题与流程章节 + 武将页的 ◆ 裁定） | 真实文本，`source.type: official_rule`，`verification_status: unverified` |
+| 技能本体 311 / 技能版本 297 | 群狼环鼎实体卡照片（296 条 `source.type: physical_card`）+ 三国杀移动版官网武将页（1 条 `official_online`） | 卡面文本，待逐条对卡图核验 |
+| FAQ / 裁定 83 | gltjk.com 网页版《三国杀官方规则集 3.0》（规则专题与流程章节 + 武将页的 ◆ 裁定） | 真实文本，`source.type: official_rule`，未按实体卡核验 |
 | 规则关键词 126 / 时点 30 | 同上（用语、游戏的流程） | 同上 |
 | 武将 155 / 武将版本 163 | 群狼环鼎实体卡照片 + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) | 真实数据；`product_id` 全部指向 `qlhd`，mode 全是国战 |
 | 产品 1 / 卡牌 81 | 群狼环鼎（`product_id: qlhd`） | 真实数据；卡牌是一层 `Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），没有 `source` 字段 |
@@ -33,12 +33,12 @@
 - 每个技能按模式各留一条版本：国战取群狼环鼎的卡面文本，身份局取**标准版**印次的文本；
   同一技能在其它印次（界限突破、台湾版、铜雀台…）还有不同文本时，再单独补一条 SkillVersion。
 - 规则文本逐字照抄网页版，包括站点本身的排版细节；**未按实体卡核验**，
-  所以规则侧目前统一是 `unverified`，可以随时在管理页里逐条核对升级成 `physical_verified`。
+  可以随时在管理页里逐条打开、对着实体卡核对。
 - 武将的两层结构见下文《数据模型一览》：`General`（个体）只存 `id / name`，
   模式 / 势力 / 体力 / 称号 / 编号 / 技能都在 `GeneralVariant`（版本）上。
   同一武将的多个版本靠 `variant` 标签与 `mode` 区分（群狼环鼎 / 群狼环鼎·君主 / 群狼环鼎·晋…）。
 - 实体卡文本来自卡面照片 OCR，与 WIKI 原文在个别用词上可能不同；
-  需要人工对照卡图/实物复核的异常写在 `review_note` 里。
+  需要人工对照卡图/实物复核的异常写进正文，或者记在 Git 提交信息里。
 - 数据维护与核验方法见《日常操作手册》和 [docs/qlhd-import.md](docs/qlhd-import.md)。
 
 ---
@@ -116,7 +116,7 @@ sgs-helper/
 2. **不手工修改 SQLite**；`build/sgs.db` 不进 Git（在 `.gitignore` 里）。
 3. **技能两层、卡牌一层**：技能定义与版本文本分离；卡牌只有一层 `Card`，**旧版本永不覆盖**。
 4. **来源可追溯**：每条数据都记 YAML 文件与行号；规则类实体另带 `source`（只有 `type` + `reference`），构建物里记录 Git commit。
-5. **不确定的规则不编造**：拿不准就标 `unverified` / 冲突就标 `conflict`，两边都留着。
+5. **不确定的规则不编造**：拿不准的就别写死，两种说法冲突就都留着（写进正文）。
 
 ---
 
@@ -159,11 +159,6 @@ sgs-helper/
   + `card_set`（来自哪个拓展包）+ `effect: {text, skills}`。
   同一规则卡因花色 / 点数不同产生的多份实体印刷**不在这里建模**（以后另加 `deck_entries`）；
   基本牌的三级分类是**牌族**（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`（杀 / 火杀 / 雷杀…）。
-- `verification_status`：`unverified` / `community` / `official` / `physical_verified` / `conflict`；
-  只出现在 `GeneralVariant` / `SkillVersion` / `Card` / `FAQ` / `Keyword` / `Timing` 上
-  （`Product` / `General` / `Skill` 没有这个字段）。
-- `review_note`：只出现在 `GeneralVariant` / `SkillVersion` / `Card` / `Skill` 上，
-  只写“需要人工对照卡图/实物复核的异常”，不再有通用的 `notes`。
 - `source.type`：`physical_card`（本人实体卡）/ `official_rule` / `official_faq` / `official_online` / `community_db` / `wiki` / `discussion`。
 - `source` 只在 `SkillVersion` / `FAQ` / `Keyword` / `Timing` 上是**必填**；
   `Product` / `GeneralVariant` / `Card` **没有** `source` 字段（来源由 `product_id` / `card_set` 定位）。
@@ -298,11 +293,12 @@ effect:
    “武将还没有任何版本”也会告警。
 
 同名武将在不同产品/版本下会互相覆盖吗？——不会：`id` 唯一即可并存，
-管理页会自动生成内部 `id`，卡面编号放在版本的 `general_number` 里。
+**武将的身份键是卡面编号**，`id` 由编号派生（`G.WEI 001` → `general_g_wei_001`），
+编号不同就是不同武将，可以并存。
 
 ### 新增一个技能
 
-1. `cp data/_templates/skill.yaml data/skills/my_skill.yaml` → 只需 `id` / `name`（另可写 `review_note`）；
+1. `cp data/_templates/skill.yaml data/skills/my_skill.yaml` → 只需 `id` / `name`；
 2. 再新增至少一条 SkillVersion（下一步），否则校验会告警“没有任何 SkillVersion”。
 
 ### 技能平衡更新时增加新版本
@@ -322,8 +318,6 @@ previous_version_id: my_skill_guozhan_v1   # ← 指向旧版本
 source:
   type: official_rule
   reference: ""
-verification_status: official
-review_note: ""                  # 需要人工对照卡图/实物复核时才写（可选）
 ```
 
 要让某个武将版本用上新文本，把它的 `skills[].version_id` 指到新版本；
@@ -336,32 +330,31 @@ review_note: ""                  # 需要人工对照卡图/实物复核时才�
 
 1. 打开 `/new/card`（或 `cp data/_templates/card.yaml data/cards/my_card.yaml`），按录入顺序填：
    卡名 → 一级 / 二级 / 三级分类（联动）→ 拓展包（`card_set`，可空）→ 卡图（`image`，待补可留空）
-   → 效果文本（`effect.text`，照抄卡面，可空）→ 关联技能 0～N（`effect.skills`，搜索已有技能、可指定版本）
-   → 核验状态 → 复核备注。
+   → 效果文本（`effect.text`，照抄卡面，可空）→ 关联技能 0～N（`effect.skills`，搜索已有技能、可指定版本）。
 2. `card_set` 非空时，必须是某个产品 `Product.card_sets` 里声明过的拓展包名（产品侧补上即可）；
    「指示物」要写到 `category_1`，不能当拓展包。
 3. 基本牌的三级分类只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里。
 4. 卡图放在 `data/card_images/` 下，`image` 只填文件名；待补卡图的（火杀 / 雷杀 / 掠闪）留空。
 
-查询能力：`query.py card 定澜夜明珠` 会显示分类、卡图、拓展包、效果文本、关联技能与核验状态；
+查询能力：`query.py card 定澜夜明珠` 会显示分类、卡图、拓展包、效果文本与关联技能；
 `query.py product qlhd` 会列出「该产品游戏牌（N 条）」（按 `Card.card_set ∈ Product.card_sets` 关联）。
 
 ### 增加 FAQ
 
 `cp data/_templates/faq.yaml data/faq/faq_0006.yaml`，填 `question` / `answer` / `mode` /
-`source`（只有 `type` / `reference`）+ `verification_status`。
+`source`（只有 `type` / `reference`）。
 **关联的武将 / 技能 / 卡牌 / 关键词 / 时点不用手写**：构建索引与详情页会按实体名称从
 question/answer 正文里自动识别。
 
-- 官方结论 → `verification_status: official`，`source.type: official_faq`；
-- 只是社区共识 → `community` / `source.type: community_db`；
-- **两边说法不一致 → 不要删掉任何一边**：各留一条记录，把冲突条目标 `conflict`，
-  把“来源 A 说……，来源 B 说……，待核验”写进 `answer` 正文（FAQ 没有 `notes` / `review_note` 字段）。
+- 官方结论 → `source.type: official_faq`；
+- 只是社区共识 → `source.type: community_db`；
+- **两边说法不一致 → 不要删掉任何一边**：各留一条记录，
+  把“来源 A 说……，来源 B 说……，待核验”写进 `answer` 正文。
 
 ### 增加关键词 / 时点
 
 - 关键词：`cp data/_templates/keyword.yaml data/keywords/xxx.yaml`，写 `definition` + `mode`
-  + `source`（只有 `type` / `reference`）+ `verification_status`。
+  + `source`（只有 `type` / `reference`）。
 - 时点：`cp data/_templates/timing.yaml data/timings/xxx.yaml`，写 `name` + `description`，
   用于“时点速查”；**没有**父子 / 前后 / 关联关系字段（只有名称与说明）。
 - 两者的关联不再手工维护：正文里出现其它实体名（武将 / 技能 / 卡牌 / 关键词）时，
@@ -409,10 +402,10 @@ python scripts/build_db.py --db build/sgs.db --no-fts
 ## 查询
 
 ```bash
-python scripts/query.py skill 集智              # 各模式 / 各版本文本 / 来源 / 校验状态
+python scripts/query.py skill 集智              # 各模式 / 各版本文本 / 来源
 python scripts/query.py skill skill_ji_zhi --json
 python scripts/query.py general 孔融            # 含“获得技能后的完整技能说明”
-python scripts/query.py card 定澜夜明珠         # 分类 / 卡图 / 拓展包 / 效果文本 / 关联技能 / 核验状态
+python scripts/query.py card 定澜夜明珠         # 分类 / 卡图 / 拓展包 / 效果文本 / 关联技能
 python scripts/query.py faq 伤害
 python scripts/query.py keyword 濒死状态
 python scripts/query.py timing 伤害结算
@@ -435,20 +428,19 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 
 打开 <http://127.0.0.1:8000>：
 
-- `/` 统一搜索框（9 类实体）+ 数据量与核验状态分布 + 当前校验错误；
-- `/list/{kind}` 分类列表，可按 `mode` / `verification_status` / `product` / `set_name`
+- `/` 统一搜索框（9 类实体）+ 数据量 + 当前校验错误；
+- `/list/{kind}` 分类列表，可按 `mode` / `product` / `set_name`
   （标签「系列 / 拓展包」：武将侧筛 `general_set`、卡牌侧筛 `card_set`）/ `category_1` / `category_2` 筛选；
-- `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 各 SkillVersion（模式/文本/来源/校验状态）`，
+- `/view/{kind}/{id}` 详情：技能显示 `SkillDefinition → 各 SkillVersion（模式/文本/来源）`，
   卡牌显示单层 `Card`（一/二/三级分类 · 卡名 · 拓展包 · 效果文本 · 关联技能），
   武将显示 `General → GeneralVariant（每个版本的势力/体力/称号/技能）→ SkillVersion`；
 - **`/new/product`、`/new/general`、`/new/card`：产品 / 武将 / 卡牌专用录入页** ——
   产品只要 名称/年份/模式/武将牌/游戏牌；武将**只有名字必填**，
   技能行支持搜索已有技能、内联新建技能、内联新增版本、指定版本、排序；
-  卡牌按 卡名 → 三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 → 核验状态 → 复核备注 的顺序录；
+  卡牌按 卡名 → 三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 的顺序录；
 - `/new/{kind}`、`/edit/{kind}/{id}`：其余低频实体的 generic 表单（字段由 Pydantic 模型生成）；
 - 武将页支持「保存并新增下一位」（可继承上一位的产品信息）、「以此武将为模板新增」、
   Ctrl/⌘+S 保存、搜索框 ↑↓/Enter/Esc、sessionStorage 草稿恢复、同名武将与重复版本提醒；
-- `/review` 汇总 `unverified` / `community` / `conflict`，方便拿实体卡逐条核验；
 - 删除前检查引用关系（含 `skills[].version_id` 这种嵌套引用），被引用就拒绝删除并列出引用方。
 
 武将录入页一次提交可能同时产生 `1 个 General + 1 个 GeneralVariant + N 个 Skill + N 个 SkillVersion`，
@@ -507,7 +499,7 @@ python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本�
 查询（显式绑定版本与按 mode 回退、模式分组、版本链、检索、FAQ 按名称自动关联）、CLI 端到端、
 本地管理网页（页面可启动、搜索可用、编辑 YAML 后重建数据库、非法修改被 validate 拦截且不落盘、
 新增 SkillVersion 不覆盖旧版本、被引用实体不能删除、YAML 往返无损、CSRF 与并发保护），
-以及产品/武将/卡牌专用录入页（只填名字也能建、自动生成内部 ID、编号格式、`general_sets` / `card_sets`、
+以及产品/武将/卡牌专用录入页（武将内部 ID 由卡面编号派生、编号格式、`general_sets` / `card_sets`、
 隐藏字段不丢、技能搜索与绑定、显式绑定版本、卡牌三级分类联动与拓展包校验、
 批量保存只 rebuild 一次、批量失败一个文件都不写、rebuild 失败全部回滚）。
 
@@ -569,6 +561,6 @@ python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本�
 - 技能文本没有结构化（没有 effects/targets/conditions 字段）：这是完整的规则引擎，超出当前阶段。
 - 来源只记一条：规则类实体带 `source`（type + reference），实体卡类实体干脆不记 source
   （武将版本由 `product_id`、卡牌由 `card_set` 定位）；
-  需要多来源并列时，目前用 `verification_status: conflict` + `review_note` 说明；
+  需要多来源并列时，目前把两边说法都写进实体自己的正文里；
   以后可以扩展成来源关联表。
 - 时点关系只记录先后，不做完整结算顺序模拟。

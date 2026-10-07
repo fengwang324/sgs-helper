@@ -27,7 +27,6 @@ cd /data/wf/1002/sgs-helper
 | 武将版本 | `/list/general_variant` |
 | 卡牌列表（游戏牌） | `/list/card` |
 | 技能版本 | `/list/skill_version` |
-| 待核验清单 | `/review` |
 
 常用页面上的内容：
 
@@ -82,7 +81,7 @@ $DATA scripts/query.py stats
 
 实体卡类数据（武将版本 / 卡牌）**没有 `source` 字段**：武将版本来源由
 `product_id: qlhd`（群狼环鼎）定位、卡牌来源由 `card_set` 定位；卡图与卡面文字来自实体卡照片 OCR，
-`verification_status` 当前基本都是 `unverified`，需要逐条对卡图核验后再升到 `physical_verified`。
+**还没有逐条对卡图核验**，需要人工再过一遍。
 技能版本是本批技能文本的载体（297 条，`product_id` 全部指向 `qlhd`），
 其中 296 条 `source.type: physical_card`、1 条来自三国杀移动版官网武将页（`official_online`）。
 
@@ -107,7 +106,7 @@ $DATA scripts/query.py stats
 - 整卡 OCR 用的是 `PP-OCRv6`（405 张全部跑完，含 236 张底边放大补漏）。
 - 技能说明**以卡面文本为准**：本产品 297 条技能版本的文字都取自群狼环鼎卡面；
   这批卡是国战版 / 做过平衡调整，多数条目的用词与 WIKI 国战段落有出入，只有少数逐字相同
-  （需要判断差异时看 `review_note`，或直接在管理页对比 WIKI 段落）。
+  （需要判断差异时直接在管理页对比 WIKI 段落）。
 - `PaddleOCR-VL-1.6` 也接好了（能读竖排艺术字），但评测期间该服务明显降级：同一张图时好时坏、
   大量空返回、单张要 100s+ 排队，因此**没有**把它作为最终来源；服务恢复后可用同一套脚本重跑升级。
 - 卡牌切分用 OpenCV 网格/接缝（这些图是黑底卡牌拼图，卡与卡紧贴、无透视旋转）。
@@ -145,15 +144,15 @@ $DATA scripts/query.py stats
 ## 4. 还需要人工核对的点
 
 1. **称号（最需要人工核对）**：群狼环鼎把称号印成**竖排艺术字**，Paddle 对它的识别率不高。
-   当前 163 条国战版本里 162 条有称号，全部是 Paddle 的读数；其中 102 条在 `review_note` 里
-   同时写了三国杀 WIKI 的称号与逐位相同字数，供你对照卡图判断（例如 蒋干：Paddle 读「絹摘悬信」、
-   WIKI 为「锋镝悬信」）。**建议按 `review_note` 抽查修正。**
+   当前 163 条国战版本里 162 条有称号，全部是 Paddle 的读数；三国杀 WIKI 的称号整理在
+   [qlhd-generals.md](qlhd-generals.md) 的「称号建议」列，供你对照卡图判断
+   （例如 蒋干：Paddle 读「絹摘悬信」、WIKI 为「锋镝悬信」）。**建议对照卡图抽查修正。**
 2. **卡面文本有多个 OCR 版本**：国战是多个牌堆混装（国战标准 / 势备篇 / 九变篇 / 不臣篇 /
-   君临天下各包 / 纵横捭阖），同一牌名的不同印刷在文字上略有差异。当前 9 张卡带 `review_note`，
-   其中 8 张写明「卡面存在 N 种不同文本」并记录本条取了哪一种：`card_bing_liang_cun_duan`、
-   `card_huo_gong`、`card_huo_shao_lian_ying`、`card_le_bu_si_shu`、`card_lu_li_tong_xin`、
-   `card_tie_suo_lian_huan`、`card_tu_qiong_bi_xian`、`card_wu_xie_ke_ji`；
-   另外 `card_zhao_shu`（诏书）的 `review_note` 记录的是类型标签按卡面改判为装备·宝物。
+   君临天下各包 / 纵横捭阖），同一牌名的不同印刷在文字上略有差异。已知有 8 张卡存在多种文本，
+   需要重点核对：`card_bing_liang_cun_duan`、`card_huo_gong`、`card_huo_shao_lian_ying`、
+   `card_le_bu_si_shu`、`card_lu_li_tong_xin`、`card_tie_suo_lian_huan`、`card_tu_qiong_bi_xian`、
+   `card_wu_xie_ke_ji`；另外 `card_zhao_shu`（诏书）的类型标签按卡面改判为装备·宝物。
+   录入时取了哪一版、有哪几种写法，记在 Git 提交信息里。
    原来的「同一产品同花色点数重复」46 条警告已随 `CardPrinting` 删除而消失。
 3. **军令 / 纵横等指示物**：6 张「军令」与 3 张《纵横》衍生技能牌本质是指示物，
    本次已随指示物整体舍弃，备份在 `_ai_work/removed_card_model/indicator_cards/`。
@@ -186,18 +185,7 @@ $DATA scripts/query.py stats
   `_ai_work/removed_card_model/indicator_cards/`（用户以后自己加）。
 - **诏书**：卡面左下角印的是「裝備/寶物」→ 已从普通锦囊改成 装备·宝物。
 
-## 4.6 核验状态（改成一个复选框）
-
-- `General`（武将个体）**本身没有核验状态字段**——之前「武将列表」全都显示未核验、
-  「武将版本列表」显示已核验，就是因为两边读的东西不一样。
-- 现在**武将的状态由它的版本推导**：取最保守的那个（`unverified < conflict < community
-  < official < physical_verified`），列表徽章、状态筛选、`/review` 汇总都用这个派生值，
-  两个列表显示的永远一致。
-- 武将编辑页把原来的「核验状态」下拉换成**一个复选框**：勾上 = 实体卡已核验
-  （`physical_verified`），不勾 = 未核验。（用「复选框 + 同名 hidden」保证不勾时也会提交。）
-- 武将版本列表里**点名字就直接进编辑页**（列表右侧另有「看武将」）。
-
-## 4.7 武将牌系列：不再做独立实体
+## 4.6 武将牌系列：不再做独立实体
 
 - `GeneralSet` 实体与对应的数据目录**已删除**，也没有父子 / 排序这类层级字段。
   系列名只在两处维护：
@@ -215,6 +203,7 @@ $DATA scripts/query.py stats
 - **武将列表 / 武将页按编号排序**（`G.AM 001 → G.WEI 089`），筛选前后一致；
 - **势力筛选**除魏/蜀/吴/群/晋外，还把编号前缀里的 **野心家**（G.AM）与 **君主**（G.EM）做成可筛选值；
 - 武将版本列表里的「编辑」直接跳到专用录入页（`/edit/general/<general_id>?variant=<id>`）；
+- 武将版本列表里**点名字就直接进编辑页**（列表右侧另有「看武将」）；
 - **武将编辑页显示卡图**（右侧悬浮预览 + 画师/编号），并把技能版本标签与产品名重复的部分去掉，
   技能版本下拉现在只显示两个前缀：`国战 · 群狼环鼎 · 技能文本`；
 - 武将编辑页每个技能下多了「✎ 查看 / 修改这个技能版本的描述」，**可原页内直接改技能描述**，

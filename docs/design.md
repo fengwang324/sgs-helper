@@ -26,9 +26,8 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 
 数据来源策略：规则侧数据（SkillVersion / FAQ / 关键词 / 时点）来自
 [《三国杀官方规则集 3.0》的网页版](https://gltjk.com/sanguosha/rules/)，实体卡数据来自
-群狼环鼎卡面照片；按“内容是什么”标 `source.type`（`official_rule` / `physical_card` …），
-按“来源可靠到什么程度”标 `verification_status`（目前基本都是 `unverified`）——
-两者分开记录，核验一条就升一条，不因为文档名称里带“官方”就默认可信。
+群狼环鼎卡面照片；用 `source.type`（`official_rule` / `physical_card` …）记录“内容是什么”，
+不因为文档名称里带“官方”就默认可信。
 实体卡类实体（Product / GeneralVariant / Card）不存 `source`，来源由 `product_id` / `card_set` 定位。
 
 解析性能：数据长到近千个 YAML 之后，`loader` 做了两件事 ——
@@ -76,15 +75,17 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
    不为空时必须属于同一个 `skill_id`（校验器强制，SQLite 落到
    `variant_skills(variant_id, general_id, skill_id, version_id, position)`）。
    不用两个平行数组，避免顺序错位。
-3. **内部 id 与卡面编号分开**：
-   `id` 继续做内部主键（YAML 文件名 / URL / 外键），卡面编号放
-   `GeneralVariant.general_number`（自由字符串，允许大小写与 `-` / `_`）。
-   录入页不要求填 `id`：后端按名字生成合法唯一 id（ASCII 直接转写，中文退化为稳定短哈希），
-   已存在的记录绝不重新生成。
+3. **内部 id 与卡面编号分开存，但 id 由编号派生**：
+   `id` 做内部主键（YAML 文件名 / URL / 外键），卡面编号放
+   `GeneralVariant.general_number`（自由字符串，**与卡面完全一致**：大小写、点、空格、`&` 都保留）。
+   `id` 是编号的规范化形式（`general_` + 编号小写、非字母数字换下划线），
+   所以编号一改，`General.id` / `GeneralVariant.id` / 卡图文件名 / 引用它的 `general_id`
+   会一起跟着改——批量 OCR 录入后按卡图核验修正编号是常规操作，不能要求手工同步四份。
+   编号本身不做字符替换，保证前端展示与卡面一致。
 
 另外，武将的 `hp`（勾玉）与 `mode` 允许为空：**只有名字必填**。
 这是刻意的取舍 —— 资料库要允许“先录手头有的信息，以后再补全”，
-缺东西最多产生 warning 进待核验页面，不能因为缺一个字段就整条存不下来。
+缺东西最多产生 warning，不能因为缺一个字段就整条存不下来。
 
 ### 1.3 一次提交 = 一个事务
 
@@ -169,7 +170,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
   `cards(category_1, category_2)`、`cards(card_set)`、
   `general_variants(general_id)` / `general_variants(mode)` / `general_variants(product_id)` 等。
 - 统一的 `search_index(kind, entity_id, name, body)` 承担检索：
-  `body` 在构建时拼好（技能版本正文、FAQ 问答、`review_note`、关联对象名称等），
+  `body` 在构建时拼好（技能版本正文、FAQ 问答、关联对象名称等），
   查询层不需要复杂 SQL。关联对象**不再手工维护**：构建时按实体名称在正文里自动识别，
   把命中的名字拼进 `body`，详情页也用同一套识别生成可点击链接。
 - 检索顺序：精确名称 → 名称前缀 → 名称包含 → 正文包含；数据量很小，够用且结果可解释。

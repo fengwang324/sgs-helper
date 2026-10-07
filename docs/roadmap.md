@@ -9,7 +9,7 @@
 - [x] Pydantic 校验 + 交叉引用 + 一致性检查（错误 / 警告分级）
 - [x] SQLite 全量重建（幂等、可追溯、FTS5 可选）
 - [x] 查询工具（skill / general / card / faq / keyword / timing / product / search，支持 `--json`）
-- [x] pytest 测试（108 个）
+- [x] pytest 测试（328 个）
 - [x] 示例占位数据
 
 ## 阶段 1：换成真实资料（最高优先级）
@@ -17,8 +17,8 @@
 目标：让库里的内容真正可用。
 
 1. 按 `docs/operations.md` 的顺序，用实体产品 + 官方资料替换 SAMPLE 数据；
-2. 每核验一条就把 `verification_status` 升级（`community` → `official` / `physical_verified`）；
-3. 遇到来源冲突就记 `conflict` 并写清两边说法，不要删数据；
+2. 每核对一条就留下痕迹：对不上的写进实体正文，或在 Git 提交信息里说明；
+3. 遇到来源冲突就把两边说法都写进正文，不要删数据；
 4. 补充本人常打的国战武将包与身份局常用武将（先窄后广，别追求覆盖全部）。
 
 验收：`validate_data.py` 零错误；能用 `query.py` 回答“这个技能现在怎么写的”“这张卡的角标是什么”。
@@ -65,7 +65,7 @@
 1. 先用“检索 + 拼接引用”的方式：`search()` 找候选 → 把技能文本/FAQ/关键词原文喂给模型 →
    要求回答**必须给出 `entity_id` 与 `yaml_file:line`**，便于人工复核；
 2. 检索层就用现有 SQLite（必要时把 `search_index` 升级成分词表），不要一上来引入向量库；
-3. 明确区分：`verification_status` 为 `unverified`/`conflict` 的内容必须在回答里标注“待核验/存在冲突”；
+3. 明确区分：正文里写明“待核验”或“两边说法不一致”的内容，回答时必须标注出来；
 4. 模型只允许引用库里已有的原文，不允许自行生成规则；
 5. 有真实需求后，再考虑 RAG（embedding + 重排），并保留“答案必须可溯源到 id”这条底线。
 

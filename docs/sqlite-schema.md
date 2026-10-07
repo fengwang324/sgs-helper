@@ -79,8 +79,6 @@ CREATE TABLE general_variants (
   product_id TEXT,
   general_set TEXT,
   zhulianbihe TEXT,
-  verification_status TEXT,
-  review_note TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
@@ -88,13 +86,12 @@ CREATE TABLE general_variants (
 
 ### `skills`
 
-技能本体；文本与来源都在 `skill_versions`，这里只有名称与待复核说明。
+技能本体；文本与来源都在 `skill_versions`，这里只有 `id` / `name`。
 
 ```sql
 CREATE TABLE skills (
   id TEXT PRIMARY KEY,
   name TEXT,
-  review_note TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
@@ -111,8 +108,6 @@ CREATE TABLE skill_versions (
   version_label TEXT,
   product_id TEXT,
   previous_version_id TEXT,
-  verification_status TEXT,
-  review_note TEXT,
   source_key TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
@@ -140,8 +135,6 @@ CREATE TABLE cards (
   card_set TEXT,
   effect_text TEXT,
   effect_skills TEXT,
-  verification_status TEXT,
-  review_note TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
@@ -161,7 +154,6 @@ CREATE TABLE faqs (
   question TEXT,
   answer TEXT,
   mode TEXT,
-  verification_status TEXT,
   source_key TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
@@ -179,7 +171,6 @@ CREATE TABLE keywords (
   name TEXT,
   definition TEXT,
   mode TEXT,
-  verification_status TEXT,
   source_key TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
@@ -194,7 +185,6 @@ CREATE TABLE timings (
   name TEXT,
   description TEXT,
   mode TEXT,
-  verification_status TEXT,
   source_key TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
