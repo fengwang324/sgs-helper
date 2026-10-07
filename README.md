@@ -106,7 +106,7 @@ sgs-helper/
 ├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py / admin.py
 ├── tests/                    # pytest 测试（当前 328 个）
 ├── build/                    # 生成物目录（sgs.db，**不进 Git**）
-├── docs/                     # 设计说明、操作手册、路线图
+├── docs/                     # 设计说明、操作手册、路线图、更新记录（updates.md）
 ├── README.md  pyproject.toml  requirements*.txt  .gitignore
 ```
 
@@ -516,12 +516,23 @@ python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本�
 ## Git 工作流
 
 ```text
-新增 / 修改 YAML  →  validate_data.py  →  build_db.py  →  pytest  →  git commit
+新增 / 修改 YAML  →  validate_data.py  →  build_db.py  →  pytest  →  写 docs/updates.md  →  自查  →  git commit / push
 ```
 
 - **提交**：`data/` 下的 YAML、`sgs_helper/`、`scripts/`、`tests/`、`docs/`、README、pyproject 等。
 - **不提交**：`build/`（含 `build/sgs.db`）、`__pycache__`、`.pytest_cache`、`*.egg-info`、虚拟环境。
 - 每次改动 YAML 后请把 `build/sgs.db` 重新生成一遍再提交代码（数据库本身不入库）。
+
+### 每次改动都必须写更新记录并自查
+
+改完先写 [`docs/updates.md`](docs/updates.md)，再做一次自查：
+
+1. **写记录**：目标、改动清单（含顺手做的事）、验证结果，全部如实写进 `updates.md`。
+2. **自查翻不偏移**：逐条对照目标，检查这次改动有没有做**多余的事**、有没有偏离方向。
+   - 有偏移 → **不 commit**，把多做的部分回退掉，重新做这个任务。
+   - 无偏移 → 正常 `commit` + `push`。
+3. 「顺带但必要」的改动（例如删字段后必然要跟着删的测试与文档）可以在记录里说明理由后保留，
+   但**必须写出来**，不能瞒着当成没发生。
 
 ## 后续接微信小程序建议从哪里开始
 
