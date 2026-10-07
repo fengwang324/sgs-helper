@@ -1,0 +1,16 @@
+id: variant_g_jin_016
+general_id: general_g_jin_016
+variant: 群狼环鼎
+title: 经国之木
+general_number: G.JIN 016
+illustrator: 凝聚永恒
+image: g_jin_016.jpg
+mode: guozhan
+faction: 晋
+hp: 1.5
+gender: unknown
+product_id: qlhd
+general_set: null
+skills:
+  - skill_id: skill_zhuo_sheng
+    version_id: skill_zhuo_sheng_guozhan_qlhd_v1

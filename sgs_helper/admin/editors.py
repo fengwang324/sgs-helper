@@ -477,16 +477,47 @@ def parse_general_form(
     if not str(general_data.get("name") or "").strip():
         errors.append(FieldError("name", "武将名字必填"))
 
-    raw_id = _text(form, "id")
-    if raw_id:
-        general_data["id"] = raw_id
-    elif existing is None:
-        general_data["id"] = make_entity_id(
-            "general_", str(general_data.get("name") or "general"), store.bundle.ids("general")
-        )
-
     # ---------------------------------------------------------------- Variant
     variant_data = _base(variant, VARIANT_DEFAULTS)
+
+    # 卡面编号（**武将的身份键**，先读出来，general id 由它派生）
+    if "general_number" in form:
+        variant_data["general_number"] = _optional_text(form, "general_number")
+    card_number = variant_data.get("general_number")
+    number_slug = slug_card_number(card_number)
+
+    # General.id 由卡面编号派生：G.WEI 001 → general_g_wei_001
+    # 编号是 OCR 出来的、最容易出错，所以采用**单向派生**：
+    # 核验时改编号，id / YAML 文件名 / 卡图名 / 引用它的 general_id 一起跟着改。
+    known_general_ids = set(store.bundle.ids("general"))
+    if existing is not None:
+        known_general_ids.discard(existing.id)   # 自己的 id 不算占用
+
+    if number_slug:
+        candidate = f"general_{number_slug}"
+        # 碰撞校验：不同编号若 slug 出同一个 id，必须报错而不是静默合并
+        if candidate in known_general_ids:
+            errors.append(
+                FieldError(
+                    "general_number",
+                    f"编号「{card_number}」生成的内部 id 是 {candidate}，"
+                    f"已被另一个武将占用（两个不同编号规范化后重名）。"
+                    f"请核对编号是否写错，或给其中一个改用可区分的写法。",
+                )
+            )
+        general_data["id"] = candidate if not errors else str(general_data.get("id") or candidate)
+    else:
+        # 编号为空：保留原 id（编辑）或按名字兜底生成（新增）
+        raw_id = _text(form, "id")
+        if raw_id:
+            general_data["id"] = raw_id
+        elif existing is not None:
+            general_data["id"] = existing.id
+        else:
+            general_data["id"] = make_entity_id(
+                "general_", str(general_data.get("name") or "general"), known_general_ids
+            )
+
     variant_data["general_id"] = str(general_data.get("id") or "")
 
     if "variant" in form:
@@ -502,8 +533,6 @@ def parse_general_form(
         variant_data["illustrator"] = _text(form, "illustrator")
     if "zhulianbihe" in form:
         variant_data["zhulianbihe"] = _name_list(form, "zhulianbihe")
-    if "general_number" in form:
-        variant_data["general_number"] = _optional_text(form, "general_number")
     if "general_set" in form:
         variant_data["general_set"] = _optional_text(form, "general_set")
     if "product_id" in form:
@@ -522,12 +551,9 @@ def parse_general_form(
     if "review_note" in form:
         variant_data["review_note"] = _text(form, "review_note")
 
-    # 版本 id 与卡图名都由**卡面编号**决定：
-    #   编号 G.WEI 001 → id = variant_g_wei_001，卡图 = g_wei_001.jpg
-    # 这样「一个武将 = 名字 + 称号」唯一之后，内部 id 与卡图名不再需要手工维护，
-    # 改编号时两者会一起跟着改。
-    card_number = variant_data.get("general_number")
-    number_slug = slug_card_number(card_number)
+    # 版本 id 与卡图名同样由**卡面编号**决定（与 General.id 一样单向派生）：
+    #   编号 G.WEI 001 → variant id = variant_g_wei_001，卡图 = g_wei_001.jpg
+    # 核验时改编号，id / 文件名 / 卡图名一起跟着改，不需要手工维护。
     existing_variant_ids = set(store.bundle.ids("general_variant"))
     if variant is not None:
         existing_variant_ids.discard(variant.id)  # 自己的 id 不算占用
