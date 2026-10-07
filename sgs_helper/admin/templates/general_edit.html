@@ -223,11 +223,21 @@
              placeholder="卡面版权行 Illustration: 后面的名字">
     </div>
     <div class="field">
-      <label for="f-image">卡图（可空）</label>
-      <input id="f-image" name="image" value="{{ values.get('image', '') }}"
-             placeholder="例如 variant_zhu_ge_liang_guo_zhan_ban.jpg">
+      <label for="f-general_number">编号 <span class="req">*</span></label>
+      <input id="f-general_number" name="general_number" value="{{ values.get('general_number', '') }}"
+             placeholder="例如 G.WEI 001 / G.WEI&amp;SHU 079">
       <p class="help">
-        存的是 <code>data/card_images/</code> 下的**文件名**（不是完整路径）。
+        实体卡上的编号，**与卡面完全一致**（点、空格、<code>&amp;</code> 原样写）。
+        它是这个武将的身份键：<strong>内部 ID 与卡图文件名都由它自动生成</strong>
+        （<code>G.WEI 001</code> → <code>general_g_wei_001</code> / <code>variant_g_wei_001</code> /
+        <code>g_wei_001.jpg</code>）。核验时改编号，三者会一起跟着改。
+      </p>
+      {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label>卡图（由编号自动决定）</label>
+      <p class="help">
+        文件名：<code>{{ values.get('image') or '（填了编号后自动生成）' }}</code>
         <button type="button" class="btn js-upload-image"
                 data-upload-target="image" data-upload-preview="variant-image-preview">上传卡图</button>
       </p>
@@ -235,13 +245,6 @@
         {% if values.get('image') %}<img src="/card-images/{{ values.get('image') }}" alt="卡图预览"
              style="max-width:150px;max-height:210px;border:1px solid #e5e7eb;border-radius:8px;display:block;margin-top:8px">{% endif %}
       </div>
-    </div>
-    <div class="field">
-      <label for="f-general_number">编号</label>
-      <input id="f-general_number" name="general_number" value="{{ values.get('general_number', '') }}"
-             placeholder="WEI001 / shu-01">
-      <p class="help">实体卡上的编号；和内部 ID 无关。</p>
-      {% for message in error_map.get('general_number', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
   </div>
 

@@ -562,10 +562,14 @@ def parse_general_form(
         variant_id = make_variant_id(card_number, existing_variant_ids)
         image_name = f"{number_slug}.jpg"
         current_image = (getattr(variant, "image", "") or "").strip() if variant else ""
-        # 只在编号变了、且旧图确实存在时才跟着改，避免把手工挑的图改掉
-        if "image" not in form and current_image and current_image != image_name:
-            if (store.data_dir / "card_images" / current_image).exists():
-                variant_data["image"] = image_name
+        submitted_image = (str(form.get("image", "")) or "").strip()
+        # 卡图名由编号派生。只有在用户**明确**提交了一个非空的、不同的文件名时才保留它
+        # （例如从 data/card_images/ 里手工挑了一张）；空值一律按派生名处理，
+        # 这样「改编号」就会把卡图一起改名。
+        if not submitted_image:
+            variant_data["image"] = image_name
+        elif submitted_image != current_image:
+            variant_data["image"] = submitted_image
     else:
         variant_id = ""
         if variant is not None:

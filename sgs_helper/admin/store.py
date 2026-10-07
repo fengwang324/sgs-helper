@@ -178,6 +178,8 @@ class SaveOutcome:
     rolled_back: bool = False
     #: 本次真正写入/删除的 YAML 文件
     written: list[str] = field(default_factory=list)
+    #: 本次跟着改名的卡图文件（编号变了 → 卡图名跟着派生）
+    moved_images: list[str] = field(default_factory=list)
     #: 校验错误按实体分组：{"skill_xxx": [Issue, ...]}，页面按技能/字段定位问题
     issues_by_entity: dict[str, list[Issue]] = field(default_factory=dict)
     #: 非错误的提示（例如“复用了内容完全相同的已有技能版本”）
@@ -1795,6 +1797,8 @@ class AdminStore:
 
             # 1. 并发检查 + 目标文件解析
             targets: list[tuple[Change, Path, Path | None]] = []
+            #: 顺带记下「改之前」的卡图名，写盘后用来把图片文件一起改名
+            image_moves: list[tuple[str, str]] = []
             for change in changes:
                 target, stale_path = self._resolve_target_file(
                     change.kind, change.entity_id, change.old_id
@@ -1811,6 +1815,13 @@ class AdminStore:
                         ok=False, kind=kind, entity_id=entity_id, conflict=True, error=conflict
                     )
                 targets.append((change, target, stale_path))
+
+                # 卡图名由卡面编号派生：编号改了，图片文件也要跟着改名
+                old_entity = self.entity(change.kind, change.old_id) if change.old_id else None
+                old_image = (getattr(old_entity, "image", "") or "").strip()
+                new_image = (change.candidate.get("image") or "").strip()
+                if old_image and new_image and old_image != new_image:
+                    image_moves.append((old_image, new_image))
 
             # 2. 一次性合并进内存候选集合并完整校验
             raws, load_issues = load_data_dir(self.data_dir)
@@ -1843,6 +1854,7 @@ class AdminStore:
             # 3. 备份 + 全部写盘
             backup = FileBackup()
             written: list[str] = []
+            moved_images: list[str] = []
             try:
                 for change, target, stale_path in targets:
                     entity = pre.bundle.get(change.kind, change.entity_id)
@@ -1860,6 +1872,8 @@ class AdminStore:
                         backup.stash(stale_path)
                         yaml_writer.remove_entity(stale_path, change.old_id or "")
                         backup.note_written(stale_path)
+                # 卡图改名：编号变了就把图片文件也改成派生名（YAML 已指向新名字）
+                moved_images = self._move_renamed_images(image_moves)
             except (OSError, ValueError) as exc:
                 backup.rollback()
                 self.invalidate()
@@ -1894,8 +1908,31 @@ class AdminStore:
                 ok=True, kind=kind, entity_id=entity_id,
                 path=str(targets[0][1]) if targets else "",
                 build=build, warnings=list(build.warnings), issues=[],
-                written=written,
+                written=written, moved_images=moved_images,
             )
+
+    def _move_renamed_images(self, moves: list[tuple[str, str]]) -> list[str]:
+        """把卡图文件改成新的派生名（编号改了 → 卡图名跟着改）。
+
+        ``moves`` 是 ``(旧文件名, 新文件名)``。只在旧文件存在、新文件不存在时移动，
+        并把结果记进 ``SaveOutcome.moved_images`` 供页面提示。
+        图片改名失败不算致命：YAML 已经指向新名字，validate 会把它报成「卡图不存在」，
+        用户能立刻看到，所以这里不抛异常、不触发回滚。
+        """
+        images_dir = self.data_dir / "card_images"
+        done: list[str] = []
+        for old, new in moves:
+            if not old or not new or old == new:
+                continue
+            src, dst = images_dir / old, images_dir / new
+            if not src.exists() or dst.exists():
+                continue
+            try:
+                src.rename(dst)
+            except OSError:  # pragma: no cover - 权限/占用
+                continue
+            done.append(new)
+        return done
 
     def delete(
         self, kind: str, entity_id: str, *, expected_sha: str | None = None
