@@ -104,8 +104,7 @@ def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> No
         ("general", "诸葛亮"),
         ("card", "杀"),
         ("faq", "伤害"),
-        ("keyword", "濒死状态"),
-        ("timing", "判定阶段"),
+        ("keyword", "濒死"),
         ("product", "群狼环鼎"),
         ("search", "集智"),
     ],
@@ -229,7 +228,6 @@ def test_query_card_json_is_single_layer(cli_db: Path) -> None:
         "skills",
         "cards",
         "keywords",
-        "timings",
     }
     assert "printings" not in payload
     assert payload["card"]["name"] == "杀"

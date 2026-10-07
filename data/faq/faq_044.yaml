@@ -1,0 +1,18 @@
+id: faq_044
+question: 咄咄逼人目标不换副将，还受伤吗？
+answer: |-
+  仍须结算伤害。实卡把“目标可以变更副将”与“然后你对目标造成一点伤害”分成前后两项：可选择的是变更副将，后面的伤害并未写成“若其如此做”。
+  顺序为：目标选择是否变更副将；选择变更则先完成变更，拒绝则略过变更；随后由使用者对该目标造成一点伤害，再处理减伤、防止、濒死等可能插入的效果。
+  所以拒绝换将本身不能免掉伤害；选择换将也不等于直接扣血后再选新副将。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 本地仓库实卡照片：咄咄逼人
+    reference: 核对资料/实卡照片/card_duo_duo_bi_ren_qlhd_spade_10.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：技能描述用语
+    reference: https://gltjk.com/sanguosha/rules/glossary/description.html
+    author: ''
+    displayed_date: null

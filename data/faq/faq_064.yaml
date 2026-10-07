@@ -1,0 +1,18 @@
+id: faq_064
+question: 武将技能优先，是否代表全场所有武将技能都先于装备？
+answer: |-
+  不代表。“武将技能优先于卡牌效果、卡牌效果优先于基本规则”解决的是条文相互矛盾时遵从哪条规定，不是让全场所有武将技能集中先结算。
+  同一时机有多名角色响应，先按当前回合角色起的逆时针行动顺序，轮到各角色再处理其内部效果。通用规则中，同一角色内部通常先武将技能、再装备技能、最后牌响应。
+  例如，甲、乙同一时机都有响应，甲先获得机会时，可以先结算甲自己的武将和装备效果；不能因为乙也有武将技能，就强行把乙插到甲的装备效果之前。若先执行的操作产生新的事件，先完成该插入事件，再回到原流程。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第7页：伤害、濒死、明暗置、势力、最高原则
+    reference: 核对资料/手册原图/P07.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：结算的原则
+    reference: https://gltjk.com/sanguosha/rules/rule/principle.html
+    author: ''
+    displayed_date: null

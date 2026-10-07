@@ -1,11 +1,16 @@
 # 模板：FAQ / 裁定。答案必须带来源。
 # 关联的武将 / 技能 / 卡牌 / 关键词不手写：构建索引与详情页会按实体名称自动识别。
+# variant 是版本 / 产品标签（本轮全部是「群狼环鼎」）。
 id: faq_0000
 question: >
   问题……
 answer: >
   结论……（并说明依据）
-mode: common                     # common/guozhan/identity/ol/mobile/other
-source:
-  type: official_faq             # physical_card/official_rule/official_faq/official_online/community_db/wiki/discussion
-  reference: ""
+variant: 群狼环鼎
+# source 是一段多行文本：逐条写出来源的各个属性
+source: |-
+  - type: official_faq
+    title: 来源标题
+    reference: ""
+    author: ""
+    displayed_date: null

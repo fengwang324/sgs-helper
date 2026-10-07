@@ -1,7 +1,0 @@
-id: keyword_fan_mian
-name: 翻面
-definition: 一名角色将其正/背面朝上的武将牌翻转至背/正面朝上的操作。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

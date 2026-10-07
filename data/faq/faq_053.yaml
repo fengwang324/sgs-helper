@@ -1,0 +1,18 @@
+id: faq_053
+question: 杀的使用者死亡，正在结算的杀全部作废吗？
+answer: |-
+  不会仅因使用者或伤害来源在结算中死亡，就自动取消已经开始结算的杀。先完成插入的死亡结算，再继续尚未完成的杀结算；技能明确终止效果或游戏已结束时才停止相应后续流程。
+  例如，杀在某个响应技能中使使用者先死亡，这张已使用的杀并不凭此撤回。死亡的角色不能再自行发起新的使用，但已经产生的待结算效果仍须处理。
+  若死亡者正是当前回合角色，其回合结束；正在进行的外层牌或技能事件仍先结算完，再处理后续回合衔接。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第7页：伤害、濒死、明暗置、势力、最高原则
+    reference: 核对资料/手册原图/P07.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：死亡事件
+    reference: https://gltjk.com/sanguosha/rules/flow/death.html
+    author: ''
+    displayed_date: null

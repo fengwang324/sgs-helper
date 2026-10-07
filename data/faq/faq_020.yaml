@@ -1,0 +1,18 @@
+id: faq_020
+question: 君主死亡，同势力队友会怎样？
+answer: |-
+  已明置的君主死亡后，其余与该君主势力相同的角色变为野心家，不再因原本属于同一势力而彼此作为同势力队友。
+  君主存活且明置时，原本因同势力人数过多而成为野心家的角色会保持或恢复原势力。君主死亡会结束这一保护，并执行其余同势力角色变为野心家的处理。
+  牌面本来就是野心家的主将不属于君主原势力；不能因为其副将牌面同势力，就将已经明置野心家主将的角色也当作君主队友。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第11页：君主、阵法召唤、围攻与队列
+    reference: 核对资料/手册原图/P11.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第16页：野心家武将、暴露野心、拉拢人心
+    reference: 核对资料/手册原图/P16.jpg
+    author: ''
+    displayed_date: null

@@ -35,6 +35,98 @@
 
 ---
 
+## 2026-10-07 关键词 / FAQ 按《群狼环鼎规则资料包》核对稿重录，「时点」整体舍弃
+
+**目标**（用户原话要点）：重构关键词和 FAQ，现有数据可以删除，然后按 `录入资料/` 下的
+两份 md（`群狼环鼎_关键词_核对版_待录入.md`、`群狼环鼎_FAQ_重写版_待录入.md`）录入，
+「不要搞多余的词条，也不要少了」；另外「时点」已被舍弃，删除相关资料及测试；
+完成后只做轻量版测试，确保没有涉及到其他方面的数据；然后 commit 并 push。
+
+**录入口径（动手前逐条与用户确认过）**
+
+| 问题 | 结论 |
+| --- | --- |
+| md 的 `Variant` 字段 | 用小写 `variant`；md 没有 `mode`，所以关键词 / FAQ **不再有 mode** |
+| FAQ 的 `sources`（列表，含 type/title/reference/author/displayed_date） | `Faq.source` 改成 **string**：把每条来源的全部属性当多行文本写进去（用户说「我后面自己再改」） |
+| 关键词的来源 | 只要 md 的四个字段 `id/name/definition/variant`，**不录来源** |
+| 来源类型 `bilibili_up` | source 已是纯文本，不需要新增枚举 |
+
+**改动清单**
+
+- 数据（重录，不多不少）
+  - 删除旧 `data/keywords/`（126，规则集 3.0 用语页）与 `data/faq/`（83，规则集 3.0 专题 + 武将裁决）；
+  - 按关键词核对版写入 **117** 条 `keyword_001…keyword_117`（id/name/definition/variant，definition 逐字照抄 md）；
+  - 按 FAQ 重写版写入 **85** 条 `faq_001…faq_085`（id/question/answer/variant/source 文本）；
+  - 用一次性的转换脚本（未入库）解析 md 的 YAML 代码块并断言「编号连续、数量一致」，
+    写入时走 `yaml_writer`，所以文件格式与管理页保存出来的完全一致。
+- 数据（时点整体舍弃）：删除 `data/timings/`（30 条）与 `data/_templates/timing.yaml`。
+- 代码：`constants.KINDS` 去掉 `timing`；`schema` 删除 `Timing` 模型，
+  `Faq` 改为 `variant: str` + `source: str`，`Keyword` 改为 `id/name/definition/variant`。
+- 代码：`db` —— `SCHEMA_VERSION` 4→5；`COLUMNS` 去 `timings` 表、`faqs` 用
+  `(question, answer, variant, source)`、`keywords` 用 `(name, definition, variant)`；
+  索引 `idx_faqs_mode`/`idx_keywords_mode` → `idx_faqs_variant`/`idx_keywords_variant`，
+  删 `idx_timings_mode`；`SOURCE_KINDS` 只剩 `skill_version`；`NAME_KINDS` 去 `timing`；
+  `_insert_sources` 只遍历 `SOURCE_KINDS`（FAQ 的 source 是文本列，不能再当结构化来源写 `sources` 表）。
+- 代码：`repo` 删 `timing_report`、`MENTION_GROUPS`/`mentions` 去 timing；
+  `render` 删 `render_timing`、FAQ 来源按多行文本原样输出、关键词改显示 `variant`；
+  `cli` 删 `timing` 子命令。
+- 代码（管理页 / Wiki）：`forms` 只有 **对象型** source 才生成 `source.*` 子字段
+  （FAQ 的 `source` 走普通 textarea），`values_from_entity` 不再 `pop("source")`
+  （否则编辑 FAQ 会把来源清空）；`store` 新增 `source_text()`、`describe()` 带
+  `variant` / `source_text`，`MENTION_KINDS` 去 timing；`wiki` 的 FAQ 列表 / 详情改显示
+  `variant` 与文本来源，规则页与「相关时点」分组删除；模板同步
+  （`base/help/_macros/detail/wiki/*`）。
+- 代码（导入工具）：`scripts/import_rules_book.py` 删掉 `faq` / `keyword` / `timing`
+  三个 stage（它们按旧字段写 YAML，模型 `extra="forbid"`，重跑必然产出非法数据），
+  只保留仍在用的 `skills`；顺手删掉因此不再使用的 `import yaml`。
+- 文档：README + `design/admin/operations/roadmap/sqlite-schema/wiki/wiki-plan` 里的
+  数量（关键词 117 / FAQ 85 / 合计 1218 / sources 行数）、表结构、索引、来源字段说明、
+  查询示例、API 对应表全部跟进；`qlhd-import.md` 的历史记录只补一句「后来被替换 / 舍弃」，
+  不改写历史。
+- 测试：`conftest` 合成数据集去掉 timings、faq/keyword 改成新字段；
+  `test_schema`（Timing 不存在、Keyword 无 source）、`test_build`（表 / 索引 / schema 版本 5 /
+  实体总数 18）、`test_query`、`test_relations`、`test_loader`、`test_validate`、
+  `test_cli`、`test_migration`（数量 117/85、移除 kind 增加 timing）全部跟进。
+
+**自查（有无多余 / 偏移）**
+
+- [x] 没有超出目标：只动了「关键词 / FAQ 的数据与字段」和「时点的整体删除」，没碰
+  产品 / 武将 / 技能 / 卡牌的任何数据或字段。
+- 说明：`SCHEMA_VERSION` 递增、`SOURCE_KINDS` 收窄、`scripts/import_rules_book.py`
+  删三个 stage、模板里的「关键词 / 来源」文案，都是上面两件事的**必要后果**，
+  不是顺手重构（留着就是必然报错或必然骗人的死代码 / 死文案）。
+- 说明：`forms.values_from_entity` 原来是 `data.pop("source")`，在 FAQ 的 source 变成
+  文本后会把来源读成空串、保存即清空——这是**必须**一起改的 bug，不是可选项。
+- 说明：md 里的 `variant` 一律写「群狼环鼎」（= 产品名），与 `GeneralVariant.variant`
+  的既有写法一致；关键词 / FAQ 不再有 `mode` 列。
+- 被舍弃的改动：没有为 `bilibili_up` 新增 `SourceType` 枚举值（source 已是文本）；
+  没有把 `录入资料/` 的照片拷进仓库（来源引用保持 md 里的相对路径，用户以后自己换站内地址）。
+- 遗留（记录在案，未改）：`data/keywords/keyword_077.yaml` 的 name 就是「时点」——
+  它来自关键词核对稿本身，属于规则术语，与这次删除的 **Timing 实体类型**是两回事。
+
+**验证**（轻量版，按用户要求不做 NPU / 服务级测试）
+
+- `python scripts/validate_data.py` → 0 错误 / 14 警告（14 条仍是「技能本体没有 SkillVersion」，
+  与本次改动无关）。
+- `python scripts/build_db.py` → 总计 **1218** 条实体（FAQ 85 / 关键词 117，`timings` 表已不存在，
+  `sources` 表 2 行）。
+- `python scripts/query.py keyword 明置` / `query.py faq 野心家` → 正常出结果与来源文本。
+- 表单往返冒烟（FAQ 的 `source` 文本不会被 `values_from_entity` 清空、关键词只有四个字段）→ 通过。
+- pytest：
+  - `tests/test_schema.py tests/test_loader.py tests/test_build.py tests/test_query.py
+    tests/test_relations.py tests/test_cli.py tests/test_migration.py tests/test_validate.py`
+    → **194 passed**；
+  - `tests/test_wiki.py` → **41 passed**；`tests/test_admin_editors.py` → **44 passed**；
+  - `tests/test_admin.py`：本机 pytest 的临时目录落在 MobaXterm 的慢挂载上（每个用例要先拷
+    28 MB 卡图 + 全量重建），整个文件要跑很久；按用户指示不再等它，**该文件未跑完**，
+    只对本轮改到的用例做了上述针对性冒烟。
+- 其他数据核查：`product 1 / general 163 / general_variant 163 / skill 311 /
+  skill_version 297 / card 81` 与改动前完全一致（只有 faq 83→85、keyword 126→117、timing 30→0）。
+
+**提交**：见下方 commit
+
+---
+
 ## 2026-10-07 卡图收尾流程加固：修掉 4 个边界 bug
 
 **目标**：用户要求「确保你现在的版本是无问题的」。对上一版上传/改名逻辑做穷举式边界验证，

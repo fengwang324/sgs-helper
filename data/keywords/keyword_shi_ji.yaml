@@ -1,7 +1,0 @@
-id: keyword_shi_ji
-name: 时机
-definition: 时机是一个瞬间，一个事件发生时会产生若干个时机。所有结算都是事件在合理的时机插入发生后所进行的处理过程，因此凡是插入发生的事件都会导致正在进行的结算暂停，先进行插入的事件的结算。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

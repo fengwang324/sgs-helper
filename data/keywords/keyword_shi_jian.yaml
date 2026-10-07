@@ -1,7 +1,0 @@
-id: keyword_shi_jian
-name: 事件
-definition: 角色使用或打出牌、发动技能或处于某些状态时，都是在发生一个事件。事件是若干个相关的结算过程的总和，可能被其他事件响应。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,0 +1,18 @@
+id: faq_021
+question: 阵法技是不是每次都要先主动召唤？
+answer: |-
+  不需要把主动“阵法召唤”当作所有阵法技的统一开关。阵法技能否发挥效果，先看拥有该技能的武将是否明置、技能是否有效，以及队列、围攻等座位条件是否成立。
+  阵法召唤是拥有阵法技的角色在出牌阶段限一次可进行的操作：符合该阵法要求的未确定势力角色依行动顺序选择是否明置一张武将牌，由此形成或改变队列、围攻关系。被召唤者可以拒绝，不强制亮将。
+  如果已有足够的明置角色满足某阵法技的条件，不必再召唤一次才获得效果；触发型阵法技仍须等其自身的触发时机。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第11页：君主、阵法召唤、围攻与队列
+    reference: 核对资料/手册原图/P11.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：国战用语
+    reference: https://gltjk.com/sanguosha/rules/glossary/guo.html
+    author: ''
+    displayed_date: null

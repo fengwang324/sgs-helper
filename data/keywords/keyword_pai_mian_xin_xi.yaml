@@ -1,7 +1,0 @@
-id: keyword_pai_mian_xin_xi
-name: 牌面信息
-definition: 实体牌上的一切信息，如点数、花色、势力、性别、（【杀】的）属性等。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,7 +1,0 @@
-id: keyword_shu_zhi_zui_da_xiao
-name: （数值）最大/小
-definition: 允许有多名角色的该数值并列最大/小，即这些角色中的每一名都是该数值最大/小的。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

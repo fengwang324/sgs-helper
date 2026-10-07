@@ -1,7 +1,0 @@
-id: keyword_kou_zhi_yu_kou_zhi_ru
-name: 扣置于/扣置入
-definition: 将牌移动到目标区域且背面朝上放置。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

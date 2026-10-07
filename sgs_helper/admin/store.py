@@ -64,16 +64,16 @@ from . import yaml_writer
 from .yaml_writer import BlockStr  # noqa: F401  （供模板/其它模块引用）
 
 #: 正文里自动识别的实体类型（与 repo.mentions 的默认值一致）
-MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
+MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword")
 
 
 # ---------------------------------------------------------------- 展示辅助
 
 
 def source_dict(entity: Any) -> dict | None:
-    """展示用的 source：新模型只有 ``type`` + ``reference``。"""
+    """展示用的结构化 source（只有 SkillVersion 有）：``type`` + ``reference``。"""
     source = getattr(entity, "source", None)
-    if source is None:
+    if source is None or isinstance(source, str):
         return None
     source_type = getattr(source, "type", "")
     return {
@@ -81,6 +81,12 @@ def source_dict(entity: Any) -> dict | None:
         "type_label": SOURCE_LABELS.get(str(source_type), str(source_type)),
         "reference": getattr(source, "reference", "") or "",
     }
+
+
+def source_text(entity: Any) -> str:
+    """展示用的文本 source（FAQ）：多行文本原样返回。"""
+    source = getattr(entity, "source", None)
+    return source if isinstance(source, str) else ""
 
 
 def truncate(text: str, limit: int = 60) -> str:
@@ -502,8 +508,6 @@ class AdminStore:
             return truncate(getattr(entity, "answer", ""), 60)
         if kind == "keyword":
             return truncate(getattr(entity, "definition", ""), 60)
-        if kind == "timing":
-            return truncate(getattr(entity, "description", ""), 60)
         return ""
 
     def variants_of(self, general_id: str) -> list[Any]:
@@ -566,7 +570,9 @@ class AdminStore:
             "effect_text": str(getattr(getattr(entity, "effect", None), "text", "") or ""),
             "mode": mode,
             "mode_label": MODE_LABELS.get(mode, mode) if mode else "",
+            "variant": getattr(entity, "variant", "") or "",
             "source": source_dict(entity),
+            "source_text": source_text(entity),
             "file": f"data/{origin.path}" if origin else "",
             "line": origin.line if origin else 0,
             "entity": entity,

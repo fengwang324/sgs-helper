@@ -1,7 +1,0 @@
-id: keyword_zhu_gong_ji
-name: 主公技
-definition: 只有该角色的身份是主公时才有效的技能。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

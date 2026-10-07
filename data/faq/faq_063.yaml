@@ -1,0 +1,23 @@
+id: faq_063
+question: 锁定技能总要先于非锁定技能吗？
+answer: |-
+  不是所有锁定技都先于非锁定技。锁定表示在有效、满足条件时强制产生相应效果，并不赋予越过其他时机或行动顺序的特权。
+  先比较发动时机；同一时机涉及多名角色时，按行动顺序处理；轮到同一角色时，再按武将技能、装备技能、牌响应的类别处理。同一角色同一时机的多个武将技能，通常由该角色选择顺序，锁定技仍须执行。
+  因此，不能因为甲的技能写着锁定技，就跳过本应先响应的乙；也不能把暗置武将的锁定技当作已经有效、必须亮将执行。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第7页：伤害、濒死、明暗置、势力、最高原则
+    reference: 核对资料/手册原图/P07.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：结算的原则
+    reference: https://gltjk.com/sanguosha/rules/rule/principle.html
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：锁定技与优先级
+    reference: https://gltjk.com/sanguosha/rules/rule/forced.html
+    author: ''
+    displayed_date: null

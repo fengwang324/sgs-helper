@@ -57,7 +57,6 @@ FIELD_LABELS: dict[str, str] = {
     "question": "问题",
     "answer": "回答/裁定",
     "definition": "定义",
-    "description": "说明",
     "source": "资料来源",
     "source.type": "来源类型",
     "source.reference": "来源引用（URL / 页码）",
@@ -73,6 +72,7 @@ FIELD_HELP: dict[str, str] = {
     "image": "data/card_images/ 下的文件名；暂时没有卡图就留空。",
     "card_set": "所属拓展包（九变篇、君临天下·权…）；候选来自所有产品的 card_sets，允许留空。",
     "text": "技能规则原文。更新技能请新增一条 SkillVersion，不要改旧版本。",
+    "source": "FAQ 的来源是一段文本：逐条写出来源的 type / title / reference / author / displayed_date（一行一项，也可以按核对资料原文照抄）。",
     "source.reference": "如果是 URL，页面上可以直接点击打开。",
     "previous_version_id": "指向被本版本取代的旧版本；旧版本保持原样。",
     "product_id": "填 null 或不填表示不绑定具体产品。",
@@ -81,7 +81,7 @@ FIELD_HELP: dict[str, str] = {
     "card_sets": "一行一项：这个产品里的游戏牌拓展包（九变篇、君主游戏牌…）；它同时是卡牌 card_set 的候选来源。",
     "title": "武将卡上的称号，例如“独眼的罗刹”。",
     "general_number": "实体卡上的编号，例如 WEI001 / shu-01；和内部 ID 是两回事。",
-    "variant": "这个版本叫什么：标准版 / 国战版 / 界限突破 / OL / 手杀 / 其他。",
+    "variant": "这条记录属于哪个版本 / 产品：武将版本写 群狼环鼎 / 标准版；关键词与 FAQ 写 群狼环鼎。",
     "general_id": "指向武将个体（General）；一个武将可以有多个版本。",
     "hp": "勾玉数量，支持 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5；允许留空以后再补。",
     "skills": "武将的技能关系（含可选的具体版本绑定）；日常录入请用“武将录入页”。",
@@ -94,7 +94,7 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
         "question",
         "answer",
         "definition",
-        "description",
+        "source",
     }
 )
 
@@ -207,8 +207,9 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
         )
         spec.ref_kind = REFERENCE_TARGETS.get((kind, name)) or REFERENCE_TARGET_BY_FIELD.get(name)
 
-        if name == "source":
-            # source 是内嵌对象：本身不渲染输入框，由 source.* 子字段负责
+        if name == "source" and resolved.get("type") == "object":
+            # SkillVersion 的 source 是内嵌对象：本身不渲染输入框，由 source.* 子字段负责。
+            # FAQ 的 source 是普通多行文本，走下面的常规分支（textarea）。
             spec.widget = "source"
             spec.required = False
             specs.append(spec)
@@ -304,7 +305,10 @@ def value_to_text(spec: FieldSpec, value: Any) -> str:
 def values_from_entity(kind: str, entity: Any) -> dict[str, str]:
     values: dict[str, str] = {}
     data = entity.model_dump(mode="json") if hasattr(entity, "model_dump") else dict(entity)
-    source = data.pop("source", None) or {}
+    raw_source = data.get("source")
+    # 只有内嵌对象型 source（SkillVersion）才拆成 source.* 子字段；
+    # 文本型 source（FAQ）由下面常规分支原样回填。
+    source = raw_source if isinstance(raw_source, dict) else {}
     for spec in form_specs(kind):
         if spec.name.startswith("source."):
             values[spec.name] = str(source.get(spec.name.split(".", 1)[1], "") or "")
@@ -372,13 +376,16 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
     candidate: dict[str, Any] = {}
     source: dict[str, Any] = {}
     model = MODEL_BY_KIND[kind]
+    specs = form_specs(kind)
+    #: 内嵌对象型 source（SkillVersion）才有 source.* 子字段；FAQ 的 source 是普通文本
+    has_source_object = any(spec.name.startswith("source.") for spec in specs)
 
-    for spec in form_specs(kind):
+    for spec in specs:
         raw = str(form.get(spec.name, "") or "").strip()
         if spec.name.startswith("source."):
             source[spec.name.split(".", 1)[1]] = raw
             continue
-        if spec.name in {"source", "skills"} or spec.widget in {"source", "object"}:
+        if spec.name == "skills" or spec.widget in {"source", "object"}:
             continue  # 内嵌结构由专用录入页 / source.* 子字段处理
         if spec.widget == "list":
             # 一行一项。**不做逗号切分**：系列名里完全可能带逗号。
@@ -393,8 +400,7 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
             FieldError("id", "ID 只能使用小写字母、数字、下划线，且必须以小写字母开头")
         )
 
-    if "source" in model.model_fields:
-        # 只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才有 source 字段
+    if has_source_object:
         source_required = "source" in set(model.model_json_schema().get("required", []))
         if any(source.values()) or source_required:
             if not source.get("type"):

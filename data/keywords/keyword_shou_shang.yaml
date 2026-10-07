@@ -1,7 +1,0 @@
-id: keyword_shou_shang
-name: 受伤
-definition: 若一名角色的体力值小于其体力上限，称为该角色已受伤；若一名角色的体力值等于其体力上限，称为该角色未受伤。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

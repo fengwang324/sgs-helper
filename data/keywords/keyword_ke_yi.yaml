@@ -1,9 +1,0 @@
-id: keyword_ke_yi
-name: 可以
-definition: |-
-  表示角色拥有选择权。
-  例如：刘禅跳过出牌阶段发动【放权】后，在回合结束时可以选择不弃置一张手牌，放弃执行“令一名其他角色进行一个额外的回合”的效果。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,7 +1,0 @@
-id: keyword_jue_se_de_qu_yu
-name: 角色的区域
-definition: 每名角色的区域包括手牌区、装备区和判定区。一名角色的判定区里不能有两张以上同名的牌。角色判定区里的牌不为任何角色所拥有。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,7 +1,0 @@
-id: keyword_xu_2
-name: 须
-definition: 表示强制角色执行操作。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

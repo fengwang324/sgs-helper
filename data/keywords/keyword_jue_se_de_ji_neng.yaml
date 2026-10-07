@@ -1,7 +1,0 @@
-id: keyword_jue_se_de_ji_neng
-name: 角色的技能
-definition: 仅指角色的武将技能。角色的装备技能是角色拥有的技能，但非角色的技能。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

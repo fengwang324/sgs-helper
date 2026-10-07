@@ -1,7 +1,0 @@
-id: timing_jie_shu_jie_duan
-name: 结束阶段
-description: 暂时没有作用。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,7 +1,0 @@
-id: keyword_a_cao_zuo_suo_you_pai
-name: A操作…所有…牌
-definition: 若A没有这样的牌，视为A未执行此操作。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -9,10 +9,11 @@
 
 - ``--stage skills``  武将页（card/hero/*）的「技能名——技能描述」→ SkillDefinition + SkillVersion
                       （每个技能按模式取一个印次的文本；其它印次暂不单独录入版本）
-- ``--stage faq``     规则专题/流程/用语章节 → FAQ；武将页的 ◆ 裁定 → FAQ（挂在对应技能上）
-- ``--stage keyword`` 用语页的术语 → Keyword
-- ``--stage timing``  「游戏的流程」页的时机 → Timing
-- ``--stage all``     全部
+- ``--stage all``     目前等同 skills
+
+FAQ / 规则关键词 / 时点三类数据已不再来自本脚本：
+FAQ 与关键词改由《群狼环鼎规则资料包》的人工核对稿录入（见 docs/updates.md），
+「时点」这个概念整体舍弃，因此这里删掉了对应的三个 stage。
 
 用法（在容器里、仓库根目录执行）::
 
@@ -40,8 +41,6 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-
-import yaml
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -389,166 +388,6 @@ def write_entity_by_id(kind: str, entity_id: str, entity) -> Path:
     return path
 
 
-# ---------------------------------------------------------------- FAQ
-
-
-def faq_question(title: str, kind: str) -> str:
-    title = title.strip().rstrip("。")
-    if title.endswith("？") or title.endswith("?"):
-        return title
-    if any(key in title for key in ("的关系", "的优先级", "条件", "原则", "要素", "分类")):
-        return f"{title}是什么？"
-    if title.endswith("流程"):
-        return f"{title}是怎样的？"
-    return f"{title}？"
-
-
-def import_rule_faqs() -> list[dict]:
-    entries: list[dict] = []
-    for page, (title, kind) in RULE_PAGES.items():
-        lines = page_blocks(page)
-        if not lines:
-            continue
-        body = lines[1:] if lines and lines[0] == title else lines
-        answer = "\n".join(body).strip()
-        if len(answer) < 30:
-            continue
-        entries.append(
-            {
-                "id": f"faq_rule_{page}",
-                "question": faq_question(title, kind),
-                "answer": answer,
-                "mode": "common",
-                "source": SOURCE,
-                "title": title,
-                "kind": kind,
-            }
-        )
-    return entries
-
-
-def import_ruling_faqs(skill_index: dict[str, str]) -> list[dict]:
-    """武将页里的 ◆ 裁定 → FAQ（问题里的技能名会在构建索引时按名称自动识别）。"""
-    groups, _ = parse_hero_pages()
-    entries: list[dict] = []
-    seen: set[str] = set()
-    counter: dict[str, int] = {}
-    for group in groups:
-        mode = None
-        for variant in group.variants:
-            resolved = mode_of(variant)
-            if resolved:
-                mode = resolved
-                break
-        if mode is None:
-            continue
-        for skill_name, text in group.rulings:
-            key = text[:120]
-            if key in seen:
-                continue
-            seen.add(key)
-            skill_id = skill_index.get(skill_name) if skill_name else None
-            prefix = f"faq_ruling_{skill_id or slug_of(group.general)}"
-            counter[prefix] = counter.get(prefix, 0) + 1
-            faq_id = f"{prefix}_{counter[prefix]}"
-            entries.append(
-                {
-                    "id": faq_id,
-                    "question": ruling_question(skill_name, text),
-                    "answer": text,
-                    "mode": mode,
-                    "source": SOURCE,
-                    "skill_id": skill_id,
-                }
-            )
-    return entries
-
-
-def ruling_question(skill_name: str | None, text: str) -> str:
-    body = text.strip()
-    body = re.sub(r"^你发动【([^】]+)】", r"【\1】", body)
-    body = re.sub(r"^你", "", body)
-    cut = body.find("。")
-    clause = (body if cut == -1 else body[:cut]).strip("，。：；")
-    if len(clause) > 80:
-        clause = clause[:80]
-    if any(word in clause for word in ("是否", "吗", "如何", "哪", "能不能", "可不可以")):
-        return clause if clause.endswith("？") else clause + "？"
-    head = f"【{skill_name}】" if skill_name and f"【{skill_name}】" not in clause else ""
-    return f"{head}{clause}"
-
-
-# ---------------------------------------------------------------- 关键词
-
-
-def import_keywords() -> list[dict]:
-    """用语页的 h3 术语 → Keyword。"""
-    id_alloc = IdAllocator("keyword_")
-    entries: list[dict] = []
-    for page in RULE_PAGES:
-        title, kind = RULE_PAGES[page]
-        if kind != "术语":
-            continue
-        inner = page_inner(page)
-        # 按 h3 切块
-        parts = re.split(r"<h3[^>]*>(.*?)</h3>", inner, flags=re.S)
-        if len(parts) < 3:
-            continue
-        for index in range(1, len(parts), 2):
-            term = re.sub(r"<[^>]+>", "", parts[index]).strip()
-            body = "\n".join(block_text(parts[index + 1])).strip()
-            if not term or len(body) < 10 or len(term) > 20:
-                continue
-            base = f"keyword_{slug_of(term)}"
-            candidate, suffix = base, 2
-            while candidate in id_alloc.used:
-                candidate = f"{base}_{suffix}"
-                suffix += 1
-            id_alloc.reserve(candidate)
-            entries.append(
-                {
-                    "id": candidate,
-                    "name": term,
-                    "definition": body,
-                        "mode": "common",
-                    "source": SOURCE,
-                }
-            )
-    return entries
-
-
-# ---------------------------------------------------------------- 时点
-
-
-def import_timings() -> list[dict]:
-    """游戏的流程页的 h3 时点 → Timing。"""
-    entries: list[dict] = []
-    inner = page_inner("flow_game")
-    parts = re.split(r"<h3[^>]*>(.*?)</h3>", inner, flags=re.S)
-    used: set[str] = set()
-    for index in range(1, len(parts), 2):
-        term = re.sub(r"<[^>]+>", "", parts[index]).strip()
-        body = "\n".join(block_text(parts[index + 1])).strip()
-        if not term:
-            continue
-        base = f"timing_{slug_of(term)}"
-        candidate, suffix = base, 2
-        while candidate in used:
-            candidate = f"{base}_{suffix}"
-            suffix += 1
-        used.add(candidate)
-        entries.append(
-            {
-                "id": candidate,
-                "name": term,
-                "description": body,
-                "mode": "common",
-                "source": SOURCE,
-            }
-        )
-    return entries
-
-
 # ---------------------------------------------------------------- 主流程
 
 
@@ -577,45 +416,19 @@ def main() -> int:
     if args.pages_dir:
         RULES_DIR = Path(args.pages_dir).resolve()
 
-    skill_index: dict[str, str] = {}
-    if args.stage in {"all", "skills"}:
-        report = import_skills()
-        skill_index = report["name_to_id"]
-        print(
-            f"技能：{len(report['skills'])} 个 SkillDefinition，"
-            f"{len(report['versions'])} 个 SkillVersion"
-        )
-        modes = {}
-        for (_name, mode) in report["candidates"]:
-            modes[mode] = modes.get(mode, 0) + 1
-        print("  (技能名, 模式) 候选数：", modes)
+    if args.stage not in {"all", "skills"}:
+        print(f"未知的 stage：{args.stage}（现在只支持 skills / all）")
+        return 2
 
-    if args.stage in {"all", "faq"}:
-        if not skill_index:
-            for path in sorted((ROOT / "data" / "skills").glob("*.yaml")):
-                data = yaml.safe_load(path.read_text(encoding="utf-8"))
-                skill_index[data["name"]] = data["id"]
-        rules = import_rule_faqs()
-        rulings = import_ruling_faqs(skill_index)
-        for entry in rules + rulings:
-            payload = {key: value for key, value in entry.items() if key not in {"title", "kind", "skill_id"}}
-            entity = MODEL_BY_KIND["faq"].model_validate(payload)
-            write_entity_by_id("faq", entity.id, entity)
-        print(f"FAQ：规则章节 {len(rules)} 条 + 武将裁定 {len(rulings)} 条")
-
-    if args.stage in {"all", "keyword"}:
-        entries = import_keywords()
-        for entry in entries:
-            entity = MODEL_BY_KIND["keyword"].model_validate(entry)
-            write_entity_by_id("keyword", entity.id, entity)
-        print(f"关键词：{len(entries)} 条")
-
-    if args.stage in {"all", "timing"}:
-        entries = import_timings()
-        for entry in entries:
-            entity = MODEL_BY_KIND["timing"].model_validate(entry)
-            write_entity_by_id("timing", entity.id, entity)
-        print(f"时点：{len(entries)} 条")
+    report = import_skills()
+    print(
+        f"技能：{len(report['skills'])} 个 SkillDefinition，"
+        f"{len(report['versions'])} 个 SkillVersion"
+    )
+    modes = {}
+    for (_name, mode) in report["candidates"]:
+        modes[mode] = modes.get(mode, 0) + 1
+    print("  (技能名, 模式) 候选数：", modes)
 
     ok = validate_all()
     if ok:

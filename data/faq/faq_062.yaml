@@ -1,0 +1,18 @@
+id: faq_062
+question: 多个角色同时有技能，能任意选谁先吗？
+answer: |-
+  不能由玩家任意选全场谁先。首先确认这些效果确实处于同一时机；处于不同阶段或有插入事件时，应先完成较早时机及插入事件，不能混成同时发动。
+  同一时机有多名角色可以响应，通常从当前回合角色开始，按逆时针方向依次处理。轮到一名角色时，先处理其武将技能，再处理装备技能，最后处理牌的响应；同类武将技能在同一时机可由该角色选择顺序，但每次仍须重新检查条件和消耗。
+  已经结束的响应时机不能倒回去补发动。当前回合角色在外层结算中死亡后，涉及回合外顺序的部分，按所引通用规则从其下家衔接；不能重新任意指定一个起点。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第6页：区域、技能标签、使用与打出
+    reference: 核对资料/手册原图/P06.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：结算的原则
+    reference: https://gltjk.com/sanguosha/rules/rule/principle.html
+    author: ''
+    displayed_date: null

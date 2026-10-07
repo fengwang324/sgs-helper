@@ -1,7 +1,0 @@
-id: keyword_dai_ti
-name: 代替
-definition: 角色用/打出A牌代替B牌即将A牌置入B牌所在区域同时将B牌置入弃牌堆。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

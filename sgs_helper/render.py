@@ -22,7 +22,6 @@ _LINK_GROUPS: tuple[tuple[str, str], ...] = (
     ("generals", "general"),
     ("cards", "card"),
     ("keywords", "keyword"),
-    ("timings", "timing"),
 )
 
 
@@ -100,7 +99,7 @@ def render_search(query: str, results: list[dict]) -> str:
         lines.append(f"  [{label}] {item['id']}")
         lines.append(f"        {item['name']}")
     lines.append("")
-    lines.append("提示：用 query.py skill/general/card/faq/keyword/timing/product 查看详情。")
+    lines.append("提示：用 query.py skill/general/card/faq/keyword/product 查看详情。")
     return "\n".join(lines)
 
 
@@ -301,18 +300,21 @@ def render_card(report: dict) -> str:
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------- FAQ / 关键词 / 时点 / 产品
+# ---------------------------------------------------------------- FAQ / 关键词 / 产品
 
 
 def render_faq(report: dict) -> str:
     faq = report["faq"]
-    lines = ["=" * 72, f"FAQ：{faq['id']}    （模式：{mode_label(faq.get('mode'))}）"]
+    lines = ["=" * 72, f"FAQ：{faq['id']}    （变体：{faq.get('variant') or '未填'}）"]
     lines += _block("问题", faq.get("question"), indent="  ")
     lines += _block("回答", faq.get("answer"), indent="  ")
     related = _link_text(report)
     if related:
         lines.append("  关联：" + related)
-    lines.append(f"  来源：{fmt_source(faq.get('source'))}")
+    # 来源是一段多行文本（逐条列出来源属性），原样缩进输出，不折行
+    source_lines = str(faq.get("source") or "").splitlines()
+    lines.append("  来源：")
+    lines += [f"    {row}" for row in source_lines] or ["    （空）"]
     lines.append(f"  源文件：{fmt_location(faq)}")
     return "\n".join(lines)
 
@@ -320,27 +322,12 @@ def render_faq(report: dict) -> str:
 def render_keyword(report: dict) -> str:
     keyword = report["keyword"]
     lines = ["=" * 72, f"关键词：{keyword['name']}    （id：{keyword['id']}）"]
-    lines.append(f"  模式：{mode_label(keyword.get('mode'))}")
+    lines.append(f"  变体：{keyword.get('variant') or '未填'}")
     lines += _block("规则定义", keyword.get("definition"), indent="  ")
     related = _link_text(report)
     if related:
         lines.append("  相关：" + related)
-    lines.append(f"  来源：{fmt_source(keyword.get('source'))}")
     lines.append(f"  源文件：{fmt_location(keyword)}")
-    return "\n".join(lines)
-
-
-def render_timing(report: dict) -> str:
-    timing = report["timing"]
-    lines = ["=" * 72, f"时点：{timing['name']}    （id：{timing['id']}）"]
-    lines.append(f"  模式：{mode_label(timing.get('mode'))}")
-    if timing.get("description"):
-        lines += _block("说明", timing["description"], indent="  ")
-    related = _link_text(report)
-    if related:
-        lines.append("  相关：" + related)
-    lines.append(f"  来源：{fmt_source(timing.get('source'))}")
-    lines.append(f"  源文件：{fmt_location(timing)}")
     return "\n".join(lines)
 
 

@@ -21,12 +21,12 @@
 | `skill` | 311 |
 | `skill_version` | 297 |
 | `card` | 81 |
-| `faq` | 83 |
-| `keyword` | 126 |
-| `timing` | 30 |
-| **合计** | **1247** |
+| `faq` | 85 |
+| `keyword` | 117 |
+| **合计** | **1218** |
 
-来源表 `sources` 3 行（`physical_card` / `official_rule` / `official_online` 各一条）。
+来源表 `sources` 2 行（`physical_card` 与 `official_online` 各一条）。
+FAQ / 关键词不再贡献来源行：FAQ 的来源是多行文本列，关键词没有来源字段。
 
 ## 表
 
@@ -153,14 +153,14 @@ CREATE TABLE faqs (
   id TEXT PRIMARY KEY,
   question TEXT,
   answer TEXT,
-  mode TEXT,
-  source_key TEXT,
+  variant TEXT,
+  source TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
 ```
 
-关联的武将 / 技能 / 卡牌 / 关键词 / 时点不落库：构建 `search_index` 与渲染详情时
+关联的武将 / 技能 / 卡牌 / 关键词不落库：构建 `search_index` 与渲染详情时
 按实体名称从 question/answer 里自动识别。
 
 ### `keywords`
@@ -170,28 +170,11 @@ CREATE TABLE keywords (
   id TEXT PRIMARY KEY,
   name TEXT,
   definition TEXT,
-  mode TEXT,
-  source_key TEXT,
+  variant TEXT,
   yaml_file TEXT,
   yaml_line INTEGER
 );
 ```
-
-### `timings`
-
-```sql
-CREATE TABLE timings (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  description TEXT,
-  mode TEXT,
-  source_key TEXT,
-  yaml_file TEXT,
-  yaml_line INTEGER
-);
-```
-
-时点用于“时点速查”，**没有**父子 / 前后 / 关联列。
 
 ### `variant_skills`
 
@@ -257,15 +240,14 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
 
 - `idx_cards_card_set`：cards(card_set)
 - `idx_cards_category`：cards(category_1, category_2)
-- `idx_faqs_mode`：faqs(mode)
+- `idx_faqs_variant`：faqs(variant)
 - `idx_general_variants_general`：general_variants(general_id)
 - `idx_general_variants_mode`：general_variants(mode)
 - `idx_general_variants_product`：general_variants(product_id)
-- `idx_keywords_mode`：keywords(mode)
+- `idx_keywords_variant`：keywords(variant)
 - `idx_search_index_kind`：search_index(kind)
 - `idx_skill_versions_prev`：skill_versions(previous_version_id)
 - `idx_skill_versions_skill`：skill_versions(skill_id, mode)
-- `idx_timings_mode`：timings(mode)
 - `idx_variant_skills_skill`：variant_skills(skill_id)
 - `idx_variant_skills_variant`：variant_skills(variant_id)
 
@@ -277,8 +259,9 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
   `data/general_variants/variant_cao_ren_guo_zhan_ban.yaml`；
 - `yaml_line`：该条记录在文件中的起始行号。
 
-只有还会保存来源的实体（`skill_versions` / `faqs` / `keywords` / `timings`）多一列
-`source_key`，指向 `sources` 表；`products` / `general_variants` / `cards` 没有它
+只有 `skill_versions` 多一列 `source_key`，指向 `sources` 表（结构化的 `type` + `reference`）；
+`faqs` 的来源是文本列 `source`，`keywords` 没有来源列，
+`products` / `general_variants` / `cards` 没有 `source_key`
 （来源由 `product_id` / `card_set` 定位），`generals` / `skills` 也不需要。
 
 `meta` 表另有 `git_commit` / `git_branch` / `git_dirty` / `yaml_manifest_sha256`，

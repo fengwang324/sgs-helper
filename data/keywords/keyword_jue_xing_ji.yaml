@@ -1,7 +1,0 @@
-id: keyword_jue_xing_ji
-name: 觉醒技
-definition: 一种特殊的技能，其特点是：1.于其发动时机若能发动则必须发动；2.于一局游戏内只能发动一次。发动觉醒技通常会改变角色的某种状态（例如体力上限），然后让该角色获得新的技能或失去原有技能，此状态不可逆转。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

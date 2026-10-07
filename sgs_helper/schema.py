@@ -7,7 +7,9 @@
 - 武将牌：``Product.general_sets`` + ``GeneralVariant.general_set`` 两处维护系列；
 - 游戏牌 / 指示物：**一层** :class:`Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），
   同一规则卡不因为花色点数不同拆成多条；
-- 规则类（SkillVersion / Keyword / FAQ / Timing）只保留极简来源 ``type`` + ``reference``；
+- 规则类（SkillVersion / FAQ / Keyword）只保留极简来源：SkillVersion 用结构化的
+  ``type`` + ``reference``，FAQ 用一段**多行文本**（逐条列出来源属性），
+  关键词不带来源字段；
 - **没有通用 notes，也没有 review_note**：需要留痕的异常写进对应正文，
   或者记在 Git 提交信息里（字段级备注已整体删除）。
 
@@ -237,11 +239,15 @@ class Card(StrictModel):
     effect: CardEffect = Field(default_factory=CardEffect)
 
 
-# ---------------------------------------------------------------- FAQ / 关键词 / 时点
+# ---------------------------------------------------------------- FAQ / 关键词
 
 
 class Faq(StrictModel):
     """规则问答 / 裁定。
+
+    与 SkillVersion 不同，FAQ 的 ``source`` 是一段**多行文本**：逐条写出来源的
+    type / title / reference / author / displayed_date（本轮按核对资料原样写入，
+    以后需要结构化再单独迁移）。
 
     关联的武将 / 技能 / 卡牌 / 关键词不再手工维护：构建索引与渲染详情时
     按实体名称从 question/answer 里自动识别。
@@ -250,28 +256,24 @@ class Faq(StrictModel):
     id: Id
     question: RuleText
     answer: RuleText
-    mode: Mode = Mode.common
-    source: Source
+    #: 变体 / 版本标签（本轮全部是产品名「群狼环鼎」）
+    variant: str = ""
+    #: 来源：多行文本，逐条列出来源的各个属性
+    source: RuleText
 
 
 class Keyword(StrictModel):
-    """规则关键词，用于规则解释跳转。"""
+    """规则关键词，用于规则解释跳转。
+
+    只有 id / name / definition / variant 四个字段：本轮关键词核对版的依据
+    （手册页码）不录入，留在录入资料里供人工核对。
+    """
 
     id: Id
     name: Name
     definition: RuleText
-    mode: Mode = Mode.common
-    source: Source
-
-
-class Timing(StrictModel):
-    """规则时点，用于“时点速查”（不是规则结算引擎）。"""
-
-    id: Id
-    name: Name
-    description: str = ""
-    mode: Mode = Mode.common
-    source: Source
+    #: 变体 / 版本标签（本轮全部是产品名「群狼环鼎」）
+    variant: str = ""
 
 
 #: kind -> 模型类
@@ -284,5 +286,4 @@ MODEL_BY_KIND: dict[str, type[StrictModel]] = {
     "card": Card,
     "faq": Faq,
     "keyword": Keyword,
-    "timing": Timing,
 }

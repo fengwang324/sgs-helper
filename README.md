@@ -16,19 +16,19 @@
 | 类型 | 来源 | 状态 |
 | --- | --- | --- |
 | 技能本体 311 / 技能版本 297 | 群狼环鼎实体卡照片（296 条 `source.type: physical_card`）+ 三国杀移动版官网武将页（1 条 `official_online`） | 卡面文本，待逐条对卡图核验 |
-| FAQ / 裁定 83 | gltjk.com 网页版《三国杀官方规则集 3.0》（规则专题与流程章节 + 武将页的 ◆ 裁定） | 真实文本，`source.type: official_rule`，未按实体卡核验 |
-| 规则关键词 126 / 时点 30 | 同上（用语、游戏的流程） | 同上 |
+| FAQ / 裁定 85 | 《群狼环鼎规则资料包 v1.0》的人工核对稿（规则手册 19 页照片 + 实卡照片 + 通用规则网页 + B 站 UP 主文章） | 真实文本；`source` 是多行文本，逐条列出来源的 type / title / reference / author / displayed_date |
+| 规则关键词 117 | 同上（关键词核对版，依据是手册页码） | 真实定义；关键词不录来源字段 |
 | 武将 155 / 武将版本 163 | 群狼环鼎实体卡照片 + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) | 真实数据；`product_id` 全部指向 `qlhd`，mode 全是国战 |
 | 产品 1 / 卡牌 81 | 群狼环鼎（`product_id: qlhd`） | 真实数据；卡牌是一层 `Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），没有 `source` 字段 |
 
-实测口径（`python scripts/validate_data.py`）：**实体 1247 条 / 0 错误 / 14 警告**
+实测口径（`python scripts/validate_data.py`）：**实体 1218 条 / 0 错误 / 14 警告**
 （14 条全是「技能本体没有任何 SkillVersion」；随 `CardPrinting` 一起删除的
 「同一产品同花色点数重复」那 46 条警告已消失）。
 
-- `source` 只有 `type` + `reference` 两个字段；展示用的来源名在渲染时由 `reference` 推导
+- 结构化的 `source` 只有 `type` + `reference` 两个字段（**只有 SkillVersion 用**）；展示用的来源名在渲染时由 `reference` 推导
   （`constants.SOURCE_TITLE_BY_REFERENCE` → `SOURCE_LABELS`），不再单独存储。
-- 只有规则类（SkillVersion / FAQ / Keyword / Timing）带 `source`：
-  规则侧统一写成 `source.type: official_rule`、`source.reference: https://gltjk.com/sanguosha/rules/`。
+- `FAQ.source` 是一段**多行文本**：逐条写出来源的 type / title / reference / author / displayed_date；
+  `Keyword` 没有来源字段（依据留在录入资料里供人工核对）。
   实体卡类（Product / GeneralVariant / Card）**没有** `source`，来源由 `product_id` / `card_set` 定位。
 - 每个技能按模式各留一条版本：国战取群狼环鼎的卡面文本，身份局取**标准版**印次的文本；
   同一技能在其它印次（界限突破、台湾版、铜雀台…）还有不同文本时，再单独补一条 SkillVersion。
@@ -59,8 +59,7 @@ python scripts/query.py skill 集智         # 4. 查询
 python scripts/query.py general 孔融
 python scripts/query.py card 杀
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死状态
-python scripts/query.py timing 伤害结算
+python scripts/query.py keyword 濒死
 python scripts/query.py product 国战
 python scripts/query.py search 集智
 
@@ -83,7 +82,6 @@ sgs-helper/
 │   ├── cards/                # Card：一层卡牌（分类 + 卡名 + 卡图 + 拓展包 + 效果）
 │   ├── faq/                  # FAQ / 裁定
 │   ├── keywords/             # 规则关键词
-│   ├── timings/              # 时点
 │   └── _templates/           # 新增数据用的模板（目录名以 _ 开头，不参与校验）
 ├── sgs_helper/               # ★ 核心代码（可被以后的 FastAPI 直接复用）
 │   ├── constants.py          # 枚举、中文标签、目录约定
@@ -132,11 +130,10 @@ sgs-helper/
 | card | `data/cards/` | `cards` | **Card**：一层卡牌（分类 + 卡名 + 卡图 + 拓展包 + 效果） |
 | faq | `data/faq/` | `faqs` | FAQ / 裁定 |
 | keyword | `data/keywords/` | `keywords` | 规则关键词 |
-| timing | `data/timings/` | `timings` | 时点 |
 
 公共约定：
 
-- `id`：`^[a-z][a-z0-9_]*$`，带业务前缀（`product_` / `general_` / `skill_` / `card_` / `faq_` / `keyword_` / `timing_`）。
+- `id`：`^[a-z][a-z0-9_]*$`，带业务前缀（`product_` / `general_` / `skill_` / `card_` / `faq_` / `keyword_`）。
   它是**内部主键**（YAML 文件名 / URL / 外键），管理页会自动生成；实体卡上的编号放 `general_number`（自由字符串）。
 - 一个 YAML 文件可以放**一条**记录（推荐）、**一个列表**，或 `items: [ ... ]` 包装。
 - 文件放在哪个目录决定它是什么类型；目录名以 `_` 开头的文件/目录会被跳过。
@@ -160,7 +157,7 @@ sgs-helper/
   同一规则卡因花色 / 点数不同产生的多份实体印刷**不在这里建模**（以后另加 `deck_entries`）；
   基本牌的三级分类是**牌族**（杀 / 闪 / 桃 / 酒），具体哪一张写在 `name`（杀 / 火杀 / 雷杀…）。
 - `source.type`：`physical_card`（本人实体卡）/ `official_rule` / `official_faq` / `official_online` / `community_db` / `wiki` / `discussion`。
-- `source` 只在 `SkillVersion` / `FAQ` / `Keyword` / `Timing` 上是**必填**；
+- `source` 只在 `SkillVersion`（结构化 type + reference）与 `FAQ`（多行文本）上是**必填**；
   `Product` / `GeneralVariant` / `Card` **没有** `source` 字段（来源由 `product_id` / `card_set` 定位）。
 
 完整 SQLite 表结构见 [docs/sqlite-schema.md](docs/sqlite-schema.md)。
@@ -341,23 +338,22 @@ source:
 
 ### 增加 FAQ
 
-`cp data/_templates/faq.yaml data/faq/faq_0006.yaml`，填 `question` / `answer` / `mode` /
-`source`（只有 `type` / `reference`）。
-**关联的武将 / 技能 / 卡牌 / 关键词 / 时点不用手写**：构建索引与详情页会按实体名称从
+`cp data/_templates/faq.yaml data/faq/faq_0006.yaml`，填 `question` / `answer` / `variant` /
+`source`；`variant` 写版本 / 产品标签（本轮全部是「群狼环鼎」），
+`source` 是一段多行文本，逐条写出这条答案的来源属性（type / title / reference / author / displayed_date）。
+**关联的武将 / 技能 / 卡牌 / 关键词不用手写**：构建索引与详情页会按实体名称从
 question/answer 正文里自动识别。
 
-- 官方结论 → `source.type: official_faq`；
-- 只是社区共识 → `source.type: community_db`；
+- 官方结论 → 来源里写 `type: official_faq`；
+- 只是社区共识 → 来源里写 `type: community_db`；
 - **两边说法不一致 → 不要删掉任何一边**：各留一条记录，
   把“来源 A 说……，来源 B 说……，待核验”写进 `answer` 正文。
 
-### 增加关键词 / 时点
+### 增加关键词
 
-- 关键词：`cp data/_templates/keyword.yaml data/keywords/xxx.yaml`，写 `definition` + `mode`
-  + `source`（只有 `type` / `reference`）。
-- 时点：`cp data/_templates/timing.yaml data/timings/xxx.yaml`，写 `name` + `description`，
-  用于“时点速查”；**没有**父子 / 前后 / 关联关系字段（只有名称与说明）。
-- 两者的关联不再手工维护：正文里出现其它实体名（武将 / 技能 / 卡牌 / 关键词）时，
+- `cp data/_templates/keyword.yaml data/keywords/xxx.yaml`，写 `name` / `definition` /
+  `variant`（版本 / 产品标签）四个字段；关键词**不录来源字段**。
+- 关联不再手工维护：正文里出现其它实体名（武将 / 技能 / 卡牌 / 关键词）时，
   构建索引与详情页会自动识别成可点击链接。
 
 ---
@@ -407,8 +403,7 @@ python scripts/query.py skill skill_ji_zhi --json
 python scripts/query.py general 孔融            # 含“获得技能后的完整技能说明”
 python scripts/query.py card 定澜夜明珠         # 分类 / 卡图 / 拓展包 / 效果文本 / 关联技能
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死状态
-python scripts/query.py timing 伤害结算
+python scripts/query.py keyword 濒死
 python scripts/query.py product 国战
 python scripts/query.py search 集智             # 跨类型检索
 python scripts/query.py stats                   # 数据库构建元信息
@@ -473,7 +468,7 @@ uvicorn sgs_helper.admin.app:app --host 127.0.0.1 --port 8000
 - 「游戏牌」与「指示物」**直接按 `category_1` 筛选**；
   三级分类回答「这张卡是什么」，与「来自哪个拓展包」（`card_set`）是两套独立信息；
 - 详情页之间**互相跳转**：武将 → 技能、技能 → 所属武将、卡牌 → 关联技能、
-  各实体 → 相关 FAQ、FAQ → 相关武将 / 技能 / 卡牌 / 关键词 / 时点；
+  各实体 → 相关 FAQ、FAQ → 相关武将 / 技能 / 卡牌 / 关键词；
 - **相关 FAQ 是反向索引**：关联沿用「实体名在正文里自动识别」，
   但按命中位置算相关度，避免超长规则专题把关联区刷满（详见 [docs/wiki.md](docs/wiki.md)）；
 - **编辑模式**（右上角开关，cookie `sgs_edit`）：默认浏览；开启后列表页有「+新增」、
@@ -556,7 +551,6 @@ python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本�
 | `GET /api/cards/{id}` | `card_report(conn, id)` |
 | `GET /api/faq?q=伤害` | `faq_search(conn, q)` |
 | `GET /api/keywords/{id}` | `keyword_report(conn, id)` |
-| `GET /api/timings/{id}` | `timing_report(conn, id)` |
 
 建议的推进顺序：① 把示例数据换成真实数据（最重要的价值来源）→ ② 用 `--json` 校验返回结构 →
 ③ 加 FastAPI（只读、无鉴权、单进程，读 SQLite 即可）→ ④ 再做基于资料库的 AI QA。
@@ -570,8 +564,7 @@ python -m pytest -q          # 328 个测试（核心 194 + 管理页 95 + 本�
 - 武将只有 `General` + `GeneralVariant` 两层：同一个武将的不同玩法/版本各写一条 `GeneralVariant`
   （各自带 `mode` / `hp` / `product_id` / `skills`），不需要「武将印刷」层。
 - 技能文本没有结构化（没有 effects/targets/conditions 字段）：这是完整的规则引擎，超出当前阶段。
-- 来源只记一条：规则类实体带 `source`（type + reference），实体卡类实体干脆不记 source
-  （武将版本由 `product_id`、卡牌由 `card_set` 定位）；
+- 来源只记一条：SkillVersion 带结构化的 `source`（type + reference），FAQ 的来源是一段多行文本，
+  关键词没有来源字段，实体卡类实体干脆不记 source（武将版本由 `product_id`、卡牌由 `card_set` 定位）；
   需要多来源并列时，目前把两边说法都写进实体自己的正文里；
   以后可以扩展成来源关联表。
-- 时点关系只记录先后，不做完整结算顺序模拟。

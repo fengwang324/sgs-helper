@@ -36,7 +36,7 @@ from ..constants import (
     SOURCE_LABELS,
     SOURCE_TITLE_BY_REFERENCE,
 )
-from .store import AdminStore, truncate
+from .store import AdminStore, source_text, truncate
 
 #: Wiki 一级入口。``rules`` 只预留，不渲染内容。
 WIKI_SECTIONS: tuple[tuple[str, str, str], ...] = (
@@ -208,7 +208,7 @@ class WikiRoutes:
             )
 
         elif kind == "faq":
-            subtitle = MODE_LABELS.get(row.get("mode") or "", "") or "通用"
+            subtitle = str(row.get("variant") or "")
             excerpt = truncate(str(getattr(entity, "answer", "") or ""), 110)
 
         else:
@@ -284,7 +284,6 @@ class WikiRoutes:
                     overview=overview,
                     rules_reserved={
                         "keywords": counts.get("keyword", 0),
-                        "timings": counts.get("timing", 0),
                     },
                 ),
             )
@@ -322,7 +321,6 @@ class WikiRoutes:
                     title="规则",
                     section="rules",
                     keywords=counts.get("keyword", 0),
-                    timings=counts.get("timing", 0),
                 ),
             )
 
@@ -339,7 +337,7 @@ class WikiRoutes:
                 by_kind: dict[str, list[dict]] = {}
                 for row in hits:
                     kind = row["kind"]
-                    if kind in ("general_variant", "skill_version", "product", "keyword", "timing"):
+                    if kind in ("general_variant", "skill_version", "product", "keyword"):
                         continue  # Wiki 五个入口只收这几类
                     by_kind.setdefault(kind, []).append(row)
 
@@ -822,7 +820,7 @@ class WikiRoutes:
         }
 
     def _faq_detail(self, live: AdminStore, faq: Any) -> dict:
-        # FAQ 正文里的武将 / 技能 / 卡牌 / 关键词 / 时点名自动变成可点击链接
+        # FAQ 正文里的武将 / 技能 / 卡牌 / 关键词名自动变成可点击链接
         segments = live.annotate(faq.answer)
         mentions = live.mentions(faq.answer, limit=40)
 
@@ -835,7 +833,6 @@ class WikiRoutes:
             ("skill", "相关技能"),
             ("card", "相关卡牌 / 指示物"),
             ("keyword", "相关关键词"),
-            ("timing", "相关时点"),
         ):
             hits = buckets.get(kind) or []
             if not hits:
@@ -862,7 +859,7 @@ class WikiRoutes:
             "subtitle": "",
             "image_url": "",
             "tags": [
-                {"text": MODE_LABELS.get(faq.mode, faq.mode), "class": ""},
+                {"text": faq.variant or "未填版本", "class": ""},
             ],
             "edit_url": f"/edit/faq/{faq.id}",
             "copy_url": f"/new/faq?from={faq.id}",
@@ -870,8 +867,8 @@ class WikiRoutes:
             "back_url": "/wiki/faq",
             "back_label": "FAQ",
             "fields": [
-                {"k": "模式", "v": MODE_LABELS.get(faq.mode, faq.mode)},
-                {"k": "来源", "v": _source_label(faq)},
+                {"k": "版本标签", "v": faq.variant or ""},
+                {"k": "来源", "v": source_text(faq)},
             ],
             "prose_blocks": [
                 {

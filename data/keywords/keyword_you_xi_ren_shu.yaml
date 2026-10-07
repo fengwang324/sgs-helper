@@ -1,7 +1,0 @@
-id: keyword_you_xi_ren_shu
-name: 游戏人数
-definition: 游戏开始时参与本局游戏的玩家数量。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,7 +1,0 @@
-id: keyword_xing_bie
-name: 性别
-definition: 牌面中提到的性别都是指玩家使用的武将的性别。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -55,6 +55,9 @@
                 {% else %}{{ row.source.reference }}{% endif %}
               </div>
             {% endif %}
+          {% elif row.source_text %}
+            {# FAQ 的来源是多行文本：列表里只显示摘录，完整内容在详情页 #}
+            <div class="sub">{{ row.source_text | short(60) }}</div>
           {% else %}<span class="muted">未记录</span>{% endif %}
         </td>
         <td><code class="file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code></td>

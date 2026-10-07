@@ -164,31 +164,27 @@ effect:
     - skill_id: skill_demo
       version_id: skill_demo_guozhan_v1
 """,
-    "faq/demo_1.yaml": f"""id: faq_demo_1
+    "faq/demo_1.yaml": """id: faq_demo_1
 question: 演示问题：演示技能的结算？
 answer: 演示答案：演示技能与演示卡牌一起结算。
-mode: identity
-{SOURCE_YAML}""",
-    "keywords/demo.yaml": f"""id: keyword_demo
+variant: 群狼环鼎
+source: |-
+  - type: community_db
+    title: 演示来源
+    reference: ""
+    author: ""
+    displayed_date: null
+""",
+    "keywords/demo.yaml": """id: keyword_demo
 name: 演示关键词
 definition: 演示用规则关键词定义
-mode: common
-{SOURCE_YAML}""",
-    "timings/demo.yaml": f"""id: timing_demo
-name: 演示时点
-description: 演示用时点说明
-mode: common
-{SOURCE_YAML}""",
-    "timings/demo_next.yaml": f"""id: timing_demo_next
-name: 演示后续时点
-description: 演示用的后续时点
-mode: common
-{SOURCE_YAML}""",
-    "keywords/demo2.yaml": f"""id: keyword_demo2
+variant: 群狼环鼎
+""",
+    "keywords/demo2.yaml": """id: keyword_demo2
 name: 演示关键词二
 definition: 第二个演示关键词
-mode: common
-{SOURCE_YAML}""",
+variant: 群狼环鼎
+""",
 }
 
 

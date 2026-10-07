@@ -1,7 +1,0 @@
-id: keyword_zhen_fa_ji
-name: 阵法技
-definition: 一种特殊的技能，其特点是：1.非状态类阵法技若能发动则必须发动；2、状态类阵法技若能产生影响则必须产生影响；3.若存活的角色数小于4，阵法技无效；4.以角色的位置关系作为条件。拥有阵法技的角色可在其准备阶段开始时或出牌阶段的空闲时间点发起“阵法召唤”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

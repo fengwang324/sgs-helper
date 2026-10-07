@@ -11,8 +11,8 @@
     2. 为空时，按该实体的 ``mode`` 去匹配该技能**唯一一条**同模式版本作为回退；
     3. 匹配不到（0 条，或多条并列）就是“这个技能在此实体上没有文本”。
 
-FAQ / 关键词 / 时点的关联不再人工维护，而是在正文里按实体名称自动识别
-（见 :func:`mentions`）。
+FAQ / 关键词的关联不再人工维护，而是在正文里按实体名称自动识别
+（见 :func:`mentions`）。FAQ 的来源是一段多行文本，直接原样展示。
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from .constants import (
 from .db import JSON_COLUMNS, SOURCE_KINDS, fts_query
 
 #: 参与“按名称自动识别”的实体类型（与构建期 ``db.NAME_KINDS`` 保持一致）
-NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
+NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword")
 
 #: 自动识别的 kind -> 报告里的分组键名
 MENTION_GROUPS: dict[str, str] = {
@@ -39,7 +39,6 @@ MENTION_GROUPS: dict[str, str] = {
     "skill": "skills",
     "card": "cards",
     "keyword": "keywords",
-    "timing": "timings",
 }
 
 
@@ -91,7 +90,10 @@ def source_of(conn: sqlite3.Connection, key: str | None) -> dict | None:
 
 
 def with_source(conn: sqlite3.Connection, data: dict, kind: str | None = None) -> dict:
-    """只给仍有来源的实体（skill_version / faq / keyword / timing）补 source 字段。"""
+    """只给仍有**结构化来源**的实体（skill_version）补 source 字段。
+
+    FAQ 的 source 是普通文本列，随行一起取回；关键词没有来源字段。
+    """
     if (kind or data.get("kind")) in SOURCE_KINDS:
         data["source"] = source_of(conn, data.get("source_key"))
     return data
@@ -118,7 +120,7 @@ def _fetch_all(conn: sqlite3.Connection, kind: str, sql: str, params: Iterable =
 
 
 def name_index(conn: sqlite3.Connection) -> dict[str, tuple[str, str]]:
-    """``name -> (kind, id)``，覆盖 general / skill / card / keyword / timing。
+    """``name -> (kind, id)``，覆盖 general / skill / card / keyword。
 
     规则与构建期 ``db.build_name_index`` 一致：单字名称不参与（避免整段规则文本
     被刷成链接）；同名时按 :data:`NAME_KINDS` 的顺序取第一个。
@@ -137,7 +139,7 @@ def name_index(conn: sqlite3.Connection) -> dict[str, tuple[str, str]]:
 def mentions(
     conn: sqlite3.Connection,
     text: str,
-    kinds: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing"),
+    kinds: tuple[str, ...] = ("general", "skill", "card", "keyword"),
     limit: int = 12,
 ) -> list[dict]:
     """在 ``text`` 里按实体名称做最长优先匹配。
@@ -168,7 +170,7 @@ def _mentioned_entities(
 ) -> dict[str, list[dict]]:
     """把 ``mentions()`` 的结果按 kind 分组并取回实体。
 
-    返回的键固定为 ``generals / skills / cards / keywords / timings``，
+    返回的键固定为 ``generals / skills / cards / keywords``，
     与渲染层和 admin 模板约定一致（替代原来的手工关联字段）。
     """
     grouped: dict[str, list[dict]] = {key: [] for key in MENTION_GROUPS.values()}
@@ -564,19 +566,6 @@ def keyword_report(conn: sqlite3.Connection, query: str) -> dict | None:
         # 目录里自己的名字可能就写在定义里，别把自身当成“相关”
         **_mentioned_entities(
             conn, entity.get("definition") or "", exclude=("keyword", entity["id"])
-        ),
-    }
-
-
-def timing_report(conn: sqlite3.Connection, query: str) -> dict | None:
-    entity, _candidates = resolve(conn, "timing", query)
-    if entity is None:
-        return None
-    return {
-        "kind": "timing",
-        "timing": entity,
-        **_mentioned_entities(
-            conn, entity.get("description") or "", exclude=("timing", entity["id"])
         ),
     }
 

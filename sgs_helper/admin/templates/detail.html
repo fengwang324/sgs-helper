@@ -371,7 +371,7 @@
     <h2>自动识别到的关联实体</h2>
     <p class="muted">
       关联关系不再手工维护：页面对 <code>question + answer</code> 调用
-      <code>repo.mentions(conn, text)</code>，按实体名称自动识别（武将 / 技能 / 卡牌 / 关键词 / 时点）。
+      <code>repo.mentions(conn, text)</code>，按实体名称自动识别（武将 / 技能 / 卡牌 / 关键词）。
     </p>
     {{ mention_list(detail.mentions) }}
   </section>
@@ -397,7 +397,7 @@
             </ul>
           {% elif field.empty %}
             <span class="muted">—</span>
-          {% elif field.name in ('text', 'question', 'answer', 'definition', 'description') %}
+          {% elif field.name in ('text', 'question', 'answer', 'definition', 'source') %}
             <div class="rule-text">{{ field.text }}</div>
           {% else %}
             {{ field.text }}
@@ -408,10 +408,10 @@
   </table>
 </section>
 
-{% if source or kind in ('skill_version', 'faq', 'keyword', 'timing') %}
+{% if source or source_text or kind == 'skill_version' %}
 <section>
   <h2>资料来源</h2>
-  {{ source_block(source) }}
+  {% if source %}{{ source_block(source) }}{% else %}<div class="rule-text">{{ source_text }}</div>{% endif %}
 </section>
 {% endif %}
 

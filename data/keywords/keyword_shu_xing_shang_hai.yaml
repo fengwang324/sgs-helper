@@ -1,9 +1,0 @@
-id: keyword_shu_xing_shang_hai
-name: 属性伤害
-definition: |-
-  具有火焰或雷电属性的伤害。
-  ◆游戏牌或技能的效果凡是表述为“造成…点伤害”，没有说明属性，都是指造成普通伤害。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

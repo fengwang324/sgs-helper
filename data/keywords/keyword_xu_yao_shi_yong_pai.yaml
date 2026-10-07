@@ -1,7 +1,0 @@
-id: keyword_xu_yao_shi_yong_pai
-name: 需要使用牌
-definition: 包含在此牌的使用时机和非使用时机使用此牌这两种情况。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

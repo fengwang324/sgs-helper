@@ -1,9 +1,0 @@
-id: keyword_bu_ke_jian
-name: （不）可见
-definition: |-
-  （不）可以观看。
-  注意：一张牌可见或不可见与此牌是正面朝上放置还是背面朝上放置无关。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

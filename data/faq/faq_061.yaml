@@ -1,0 +1,18 @@
+id: faq_061
+question: 在自己的出牌阶段进入濒死，能临时发动普通主动回血技能吗？
+answer: |-
+  不能仅因仍是自己的出牌阶段，就在濒死中发动普通的出牌阶段主动回血技能。此时正在插入的濒死结算中，不是自由使用牌、发动普通主动技能的空闲时点。
+  应按濒死流程响应：到自己的救援机会时，使用合法的桃、酒，或发动明确允许在濒死时使用的技能；“出牌阶段，你可以……”本身不提供濒死中的发动许可。
+  救活且原结算完成后，若出牌阶段仍可继续，才恢复普通主动操作。鏖战时桃只能当酒，自己可依法救自己，不能以普通桃的用途救其他角色。
+variant: 群狼环鼎
+source: |-
+  - type: wiki
+    title: 2014规则集3.0：游戏的流程
+    reference: https://gltjk.com/sanguosha/rules/flow/game.html
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：濒死事件
+    reference: https://gltjk.com/sanguosha/rules/flow/neardeath.html
+    author: ''
+    displayed_date: null

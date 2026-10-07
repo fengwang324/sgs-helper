@@ -1,7 +1,0 @@
-id: keyword_lian_huan_shang_hai
-name: 连环伤害
-definition: 不会触发连环传导的属性伤害。判断一个属性伤害是否为连环伤害的方法：1.因连环传导而造成的伤害是连环伤害；2.因转移一个连环伤害而造成的伤害是连环伤害。除此之外的属性伤害都不是连环伤害。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

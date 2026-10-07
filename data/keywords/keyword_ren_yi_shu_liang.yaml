@@ -1,7 +1,0 @@
-id: keyword_ren_yi_shu_liang
-name: 任意数量
-definition: 表示此数量可以为0。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -3,7 +3,8 @@
 精简后的模型只保留实际会展示 / 查询 / 核验的字段：
 
 - 实体卡类（Product / GeneralVariant / Card）**没有** ``source``；
-- ``Source`` 只剩 ``type`` + ``reference``；
+- ``Source``（只给 SkillVersion 用）只剩 ``type`` + ``reference``；
+  FAQ 的 ``source`` 是一段多行文本，关键词不带来源字段；
 - 通用 ``notes`` 与 ``review_note`` 都已整体删除；
 - 技能版本不再按日期推导，武将版本用 ``skills[].version_id`` 显式绑定；
 - ``Card`` 是**单层**的：``category_1/2/3`` 决定它是什么，``card_set`` 决定它来自哪个
@@ -29,7 +30,6 @@ from sgs_helper.schema import (
     SkillRef,
     SkillVersion,
     Source,
-    Timing,
 )
 
 SOURCE = {"type": "community_db", "reference": ""}
@@ -134,12 +134,13 @@ def test_entity_card_kinds_have_no_source() -> None:
 def test_source_is_required_where_rules_demand_it() -> None:
     with pytest.raises(ValidationError):
         SkillVersion(id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本")
+    # FAQ 的 source 是多行文本，仍然必填
     with pytest.raises(ValidationError):
         Faq(id="faq_x", question="问题", answer="回答")
+    # 关键词只有 id / name / definition / variant 四个字段，没有来源字段
+    assert Keyword(id="keyword_x", name="关键词", definition="定义").variant == ""
     with pytest.raises(ValidationError):
-        Keyword(id="keyword_x", name="关键词", definition="定义")
-    with pytest.raises(ValidationError):
-        Timing(id="timing_x", name="时点")
+        Keyword(id="keyword_x", name="关键词", definition="定义", source=SOURCE)
 
 
 # ---------------------------------------------------------------- 卡牌（单层）
@@ -348,27 +349,32 @@ def test_removed_relation_fields_are_rejected() -> None:
     """related_* / parent_id / previous_ids / next_ids 全部删除，写了必须报错。"""
     with pytest.raises(ValidationError):
         Faq(
-            id="faq_x", question="问题", answer="回答", source=SOURCE,
+            id="faq_x", question="问题", answer="回答", source="- type: community_db",
             related_skill_ids=["skill_x"],
         )
     with pytest.raises(ValidationError):
         Keyword(
-            id="keyword_x", name="关键词", definition="定义", source=SOURCE,
+            id="keyword_x", name="关键词", definition="定义",
             related_keyword_ids=["keyword_y"], notes="旧字段",
         )
     with pytest.raises(ValidationError):
         Keyword(
-            id="keyword_x", name="关键词", definition="定义", source=SOURCE,
+            id="keyword_x", name="关键词", definition="定义",
             related_timing_ids=["timing_x"],
         )
-    with pytest.raises(ValidationError):
-        Timing(id="timing_x", name="时点", source=SOURCE, parent_id="timing_y")
-    with pytest.raises(ValidationError):
-        Timing(id="timing_x", name="时点", source=SOURCE, previous_ids=["timing_y"])
+
+
+def test_timing_kind_is_gone_from_every_model() -> None:
+    """「时点」整体舍弃：模型里不再有 Timing，关键词也不再有 related_timing_ids。"""
+    import sgs_helper.schema as schema
+
+    assert not hasattr(schema, "Timing")
+    assert "timing" not in schema.MODEL_BY_KIND
+    assert set(Keyword.model_fields) == {"id", "name", "definition", "variant"}
 
 
 def test_verification_status_is_gone_from_every_model() -> None:
     """核验状态已从数据模型整体删除，任何实体都不该再有这个字段。"""
     for model in (Product, General, GeneralVariant, Skill, SkillVersion,
-                  Card, Keyword, Faq, Timing):
+                  Card, Keyword, Faq):
         assert "verification_status" not in model.model_fields, model.__name__

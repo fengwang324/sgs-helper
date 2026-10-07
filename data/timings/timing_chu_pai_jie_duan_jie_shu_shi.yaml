@@ -1,7 +1,0 @@
-id: timing_chu_pai_jie_duan_jie_shu_shi
-name: 出牌阶段结束时
-description: 能发动的技能/能执行的技能效果：【精策】、【生息】、【献图】失去体力的效果、【暴凌】。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

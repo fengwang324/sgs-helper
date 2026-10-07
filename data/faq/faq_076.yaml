@@ -1,0 +1,13 @@
+id: faq_076
+question: 体力上限减为零，还能求桃吗？
+answer: |-
+  按所引通用规则，不能。体力上限减至零会直接进入死亡处理，不先进入濒死救援，因此没有用桃将其救回的普通响应窗口。
+  桃回复的是当前体力，不提高体力上限，不能以“先回到一点”绕过零上限死亡。若某技能明确替代死亡或提高体力上限，须在它实际允许的时机处理；不能凭有桃就自行插入使用。
+  这个问题与当前体力降到零不同：上限仍大于零、当前体力降到零或以下，才是通常可通过合法救援脱离的濒死情形。
+variant: 群狼环鼎
+source: |-
+  - type: wiki
+    title: 2014规则集3.0：减体力上限
+    reference: https://gltjk.com/sanguosha/rules/flow/decreaselifemax.html
+    author: ''
+    displayed_date: null

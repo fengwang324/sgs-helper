@@ -1,7 +1,0 @@
-id: keyword_jie_suan
-name: 结算
-definition: 处理一个事件的过程。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,0 +1,18 @@
+id: faq_027
+question: 被换下来的副将以后还能抽回来吗？
+answer: |-
+  按当前版本讲解，原副将移出游戏，不回到武将牌堆，不会在之后变更副将时再次被翻到。
+  变更时亮出的其他、未被选中的武将牌洗混置于武将牌堆底；它们与原副将的去向不同。
+  手册第13页前段有把原副将与其他亮出武将一同置底的表述，后段又明确原副将移出游戏。这里采用其后段及当前版本讲解一致的处理；不是两种去向同时执行。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第13页：变更副将、扩展珠联关系
+    reference: 核对资料/手册原图/P13.jpg
+    author: ''
+    displayed_date: null
+  - type: bilibili_up
+    title: 【蓄锷】线下国战特大更新!! 陆抗、曹洪、张任、卞夫人等重做，飞舞翻身，《群狼环鼎》（三之一）
+    reference: https://www.bilibili.com/opus/1232894122090561589/
+    author: 紫髯的小乔
+    displayed_date: '2026'

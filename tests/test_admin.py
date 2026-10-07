@@ -218,9 +218,8 @@ def test_pages_start(client: TestClient, workdir: Path) -> None:
         "skill": "skill_ji_zhi",
         "skill_version": JI_ZHI_V1,
         "card": CARD_ID,
-        "faq": "faq_rule_flow_damage",
-        "keyword": "keyword_shi_yong",
-        "timing": "timing_hui_he_jie_shu_shi",
+        "faq": "faq_056",
+        "keyword": "keyword_001",
     }
     urls = ["/", "/search?q=集智", "/help", "/healthz"]
     for kind, entity_id in seed.items():
@@ -232,9 +231,9 @@ def test_pages_start(client: TestClient, workdir: Path) -> None:
         response = client.get(url)
         assert response.status_code == 200, url
     # 编辑页与删除确认页
-    assert client.get("/edit/faq/faq_rule_flow_damage").status_code == 200
-    assert client.get("/delete/faq/faq_rule_flow_damage").status_code == 200
-    assert client.get("/raw/faq/faq_rule_flow_damage").status_code == 200
+    assert client.get("/edit/faq/faq_056").status_code == 200
+    assert client.get("/delete/faq/faq_056").status_code == 200
+    assert client.get("/raw/faq/faq_056").status_code == 200
     # 卡牌走专用录入页（分类 / 卡图 / 效果 / 关联技能）
     assert client.get(f"/edit/card/{CARD_ID}").status_code == 200
     assert client.get(f"/delete/card/{CARD_ID}").status_code == 200
@@ -308,21 +307,21 @@ def test_search_supports_kind_and_mode_filters(client: TestClient) -> None:
 
 
 def test_search_by_id_works(client: TestClient) -> None:
-    response = client.get("/search?q=keyword_shi_yong")
-    assert "keyword_shi_yong" in response.text
+    response = client.get("/search?q=keyword_001")
+    assert "keyword_001" in response.text
 
 
 # ---------------------------------------------------------------- 3. 编辑后重建数据库
 
 
 def test_edit_writes_yaml_and_rebuilds_sqlite(client: TestClient, app, workdir: Path) -> None:
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】改写后的回答")
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】改写后的回答")
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 303
-    assert response.headers["location"].startswith("/view/faq/faq_rule_flow_damage")
+    assert response.headers["location"].startswith("/view/faq/faq_056")
 
     # YAML 落盘
-    text = yaml_of(workdir, "faq", "faq_rule_flow_damage").read_text(encoding="utf-8")
+    text = yaml_of(workdir, "faq", "faq_056").read_text(encoding="utf-8")
     assert "【测试】改写后的回答" in text
 
     # SQLite 已由 YAML 重建，且与 YAML 完全同步
@@ -336,21 +335,21 @@ def test_edit_writes_yaml_and_rebuilds_sqlite(client: TestClient, app, workdir: 
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    report = faq_report(conn, "faq_rule_flow_damage")
+    report = faq_report(conn, "faq_056")
     conn.close()
     assert report["faq"]["answer"] == "【测试】改写后的回答"
 
     # 页面本身也立即读到新值（读的是 YAML）
-    page = client.get("/view/faq/faq_rule_flow_damage")
+    page = client.get("/view/faq/faq_056")
     assert "【测试】改写后的回答" in page.text
 
 
 def test_edit_keeps_yaml_readable(client: TestClient, app, workdir: Path) -> None:
     payload = form_payload(
-        app, "faq", "faq_rule_flow_damage", answer="第一行\n第二行\n第三行"
+        app, "faq", "faq_056", answer="第一行\n第二行\n第三行"
     )
-    post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
-    text = yaml_of(workdir, "faq", "faq_rule_flow_damage").read_text(encoding="utf-8")
+    post(client, "/edit/faq/faq_056", data=payload)
+    text = yaml_of(workdir, "faq", "faq_056").read_text(encoding="utf-8")
     assert "answer: |-" in text  # 多行文本用块状标量，不会被折行
     reloaded = yaml.safe_load(text)
     assert reloaded["answer"] == "第一行\n第二行\n第三行"
@@ -422,16 +421,14 @@ def test_unknown_field_cannot_be_injected(client: TestClient, app, workdir: Path
 
 
 def keyword_payload(app, **overrides) -> dict:
-    """规则类实体的表单：source 只剩 type + reference。"""
+    """关键词表单：只有 id / name / definition / variant 四个字段（不录来源）。"""
     payload = {
         "_csrf": app.state.csrf,
         "_base_sha": "",
         "id": "",
         "name": "",
         "definition": "",
-        "mode": "common",
-        "source.type": "community_db",
-        "source.reference": "",
+        "variant": "群狼环鼎",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -441,7 +438,7 @@ def test_duplicate_id_is_blocked(client: TestClient, app) -> None:
     response = post(
         client,
         "/new/keyword",
-        data=keyword_payload(app, id="keyword_shi_yong", name="重复 id 测试", definition="测试"),
+        data=keyword_payload(app, id="keyword_001", name="重复 id 测试", definition="测试"),
     )
     assert response.status_code == 400
     assert "id 重复" in response.text
@@ -450,9 +447,9 @@ def test_duplicate_id_is_blocked(client: TestClient, app) -> None:
 def test_bad_id_is_rejected_without_touching_disk(
     client: TestClient, app, workdir: Path
 ) -> None:
-    payload = form_payload(app, "faq", "faq_rule_flow_damage")
+    payload = form_payload(app, "faq", "faq_056")
     payload["id"] = "../../etc/passwd"
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 400
     assert "ID 只能" in response.text
     assert not (workdir / "etc").exists()
@@ -463,12 +460,24 @@ def test_bad_id_is_rejected_without_touching_disk(
 
 
 def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
-    """被删字段在表单里**彻底消失**（不是隐藏），source 只剩 type + reference。"""
-    faq = client.get("/edit/faq/faq_rule_flow_damage").text
+    """被删字段在表单里**彻底消失**（不是隐藏）。
+
+    FAQ 的 source 是普通多行文本，所以拆成 source.type / source.reference 的旧结构
+    必须消失；关键词则完全没有来源字段。
+    """
+    faq = client.get("/edit/faq/faq_056").text
     for needle in REMOVED_FORM_FIELDS:
         assert f'name="{needle}"' not in faq, needle
-    assert 'name="source.type"' in faq
-    assert 'name="source.reference"' in faq
+    assert 'name="source"' in faq
+    assert 'name="variant"' in faq
+    assert 'name="source.type"' not in faq
+    assert 'name="source.reference"' not in faq
+    assert 'name="mode"' not in faq
+
+    keyword = client.get("/edit/keyword/keyword_001").text
+    assert 'name="variant"' in keyword
+    assert 'name="source"' not in keyword
+    assert 'name="mode"' not in keyword
 
     skill = client.get("/edit/skill/skill_ji_zhi").text
     assert 'name="notes"' not in skill
@@ -498,10 +507,6 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
     ):
         assert f'name="{needle}"' not in card, needle
 
-    timing = client.get("/edit/timing/timing_hui_he_jie_shu_shi").text
-    for needle in ("parent_id", "previous_ids", "next_ids", "related_timing_ids", "notes"):
-        assert f'name="{needle}"' not in timing, needle
-
     product = client.get("/new/product").text
     for needle in (
         "series", "publisher", "edition", "release_date",
@@ -510,29 +515,20 @@ def test_removed_fields_are_gone_from_forms(client: TestClient) -> None:
         assert f'name="{needle}"' not in product, needle
 
 
-def test_timing_detail_is_flat_and_has_no_relations(client: TestClient) -> None:
-    """时点页变成平铺速查：没有父子 / 前后关系。"""
-    body = client.get("/view/timing/timing_hui_he_jie_shu_shi").text
-    assert "回合结束时" in body
-    for needle in ("父子", "上一时点", "下一时点"):
-        assert needle not in body
-
-
 def test_faq_detail_auto_links_mentions(client: TestClient) -> None:
     """FAQ 的手工 related_* 没了：关联实体按名称自动识别并渲染成可点击链接。"""
-    body = client.get("/view/faq/faq_ruling_skill_bu_qu_1").text
+    body = client.get("/view/faq/faq_056").text
     assert "自动识别到的关联实体" in body
-    assert 'href="/view/skill/skill_bu_qu"' in body
-    assert 'href="/view/keyword/keyword_ti_li"' in body
-    assert 'href="/view/keyword/keyword_qi_pai_dui"' in body
+    assert 'href="/view/skill/skill_yi_ji"' in body
+    assert 'href="/view/skill/skill_fan_kui"' in body
+    assert 'href="/view/keyword/keyword_092"' in body
 
 
 def test_skill_version_text_auto_links_entities(client: TestClient) -> None:
-    """技能文本里的技能名 / 关键词名 / 卡牌名 / 时点名自动变成链接。"""
+    """技能文本里的关键词名 / 卡牌名自动变成链接。"""
     body = client.get(f"/view/skill_version/{KONG_CHENG_V1}").text
-    assert 'href="/view/keyword/keyword_suo_ding_ji"' in body
-    assert 'href="/view/card/card_jue_dou"' in body
-    assert 'href="/view/timing/timing_mo_pai_jie_duan_kai_shi_shi"' in body
+    assert 'href="/view/keyword/keyword_102"' in body   # 锁定技
+    assert 'href="/view/card/card_jue_dou"' in body      # 决斗
 
 
 def test_card_is_single_layer_without_mode_or_product(store, client: TestClient) -> None:
@@ -612,8 +608,7 @@ def test_new_skill_version_keeps_history(client: TestClient, app, workdir: Path)
         "effective_from": "2024-01-01",
         "effective_to": "2024-12-31",
         "change_note": "【测试】",
-        "related_keywords": "keyword_shi_yong",
-        "related_timing_ids": "timing_hui_he_jie_shu_shi",
+        "related_keywords": "keyword_001",
         "notes": "旧备注",
         "source.type": "official_rule",
         "source.reference": "https://example.com/notice",
@@ -750,28 +745,28 @@ def test_delete_confirm_page_lists_references(client: TestClient) -> None:
 
 
 def test_post_without_csrf_token_is_rejected(client: TestClient, app, workdir: Path) -> None:
-    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    path = yaml_of(workdir, "faq", "faq_056")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】不该写入")
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】不该写入")
     payload.pop("_csrf")
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 403
     assert path.read_text(encoding="utf-8") == before
 
 
 def test_edit_form_contains_csrf_and_base_sha(client: TestClient) -> None:
-    body = client.get("/edit/faq/faq_rule_flow_damage").text
+    body = client.get("/edit/faq/faq_056").text
     assert 'name="_csrf"' in body
     assert 'name="_base_sha"' in body
 
 
 def test_post_without_base_sha_is_rejected(client: TestClient, app, workdir: Path) -> None:
     """并发校验字段不能“省略即放过”——否则任何脚本都能覆盖页面打开后的修改。"""
-    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    path = yaml_of(workdir, "faq", "faq_056")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】不该写入")
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】不该写入")
     payload.pop("_base_sha")
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 400
     assert "_base_sha" in response.text
     assert path.read_text(encoding="utf-8") == before
@@ -781,15 +776,15 @@ def test_rollback_restores_file_when_untouched(
     client: TestClient, app, workdir: Path, monkeypatch
 ) -> None:
     """重建失败且文件没被别人动过：回滚到原内容。"""
-    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    path = yaml_of(workdir, "faq", "faq_056")
     before = path.read_text(encoding="utf-8")
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】会被回滚")
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】会被回滚")
 
     def boom():
         raise RuntimeError("模拟重建失败")
 
     monkeypatch.setattr(app.state.store, "_build_atomic", boom)
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 400
     assert "已回滚" in response.text
     assert path.read_text(encoding="utf-8") == before
@@ -799,8 +794,8 @@ def test_rollback_does_not_clobber_external_edit(
     client: TestClient, app, workdir: Path, monkeypatch
 ) -> None:
     """重建失败 + 期间有人改了同一个文件：绝不回滚覆盖别人的修改。"""
-    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】失败保存")
+    path = yaml_of(workdir, "faq", "faq_056")
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】失败保存")
 
     def failing_build_with_external_edit():
         path.write_text(
@@ -811,7 +806,7 @@ def test_rollback_does_not_clobber_external_edit(
     monkeypatch.setattr(
         app.state.store, "_build_atomic", failing_build_with_external_edit
     )
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 400
     text = path.read_text(encoding="utf-8")
     assert "外部追加的注释" in text   # 别人的改动保住了
@@ -821,15 +816,15 @@ def test_rollback_does_not_clobber_external_edit(
 
 def test_concurrent_modification_is_detected(client: TestClient, app, workdir: Path) -> None:
     """页面打开后文件被别人改过：必须拒绝写入，而不是覆盖。"""
-    payload = form_payload(app, "faq", "faq_rule_flow_damage", answer="【测试】来自旧页面")
-    path = yaml_of(workdir, "faq", "faq_rule_flow_damage")
+    payload = form_payload(app, "faq", "faq_056", answer="【测试】来自旧页面")
+    path = yaml_of(workdir, "faq", "faq_056")
     external = yaml.safe_load(path.read_text(encoding="utf-8"))
     external["answer"] = "别人改过的内容"
     path.write_text(
         yaml.safe_dump(external, allow_unicode=True, sort_keys=False), encoding="utf-8"
     )
 
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, "/edit/faq/faq_056", data=payload)
     assert response.status_code == 400
     assert "没有写入任何文件" in response.text
     after = path.read_text(encoding="utf-8")
@@ -875,10 +870,8 @@ def test_multi_entity_file_keeps_other_records(tmp_path: Path) -> None:
     (data_dir / "keywords").mkdir(parents=True)
     (data_dir / "keywords" / "group.yaml").write_text(
         "# 顶部注释\n\n"
-        "- id: keyword_a\n  name: 甲\n  definition: 甲的说明\n  mode: common\n"
-        "  source:\n    type: wiki\n    reference: ''\n"
-        "- id: keyword_b\n  name: 乙\n  definition: 乙的说明\n  mode: common\n"
-        "  source:\n    type: wiki\n    reference: ''\n",
+        "- id: keyword_a\n  name: 甲\n  definition: 甲的说明\n  variant: 群狼环鼎\n"
+        "- id: keyword_b\n  name: 乙\n  definition: 乙的说明\n  variant: 群狼环鼎\n",
         encoding="utf-8",
     )
     path = data_dir / "keywords" / "group.yaml"
@@ -891,8 +884,7 @@ def test_multi_entity_file_keeps_other_records(tmp_path: Path) -> None:
             "id": "keyword_a",
             "name": "甲（改）",
             "definition": "甲的说明",
-            "mode": "common",
-            "source": {"type": "wiki", "reference": ""},
+            "variant": "群狼环鼎",
         }
     )
     yaml_writer.upsert_entity(path, "keyword", entity)
@@ -910,8 +902,7 @@ def test_remove_only_entity_deletes_file(tmp_path: Path) -> None:
     data_dir.mkdir(parents=True)
     path = data_dir / "solo.yaml"
     path.write_text(
-        "id: keyword_solo\nname: 单条\ndefinition: 说明\nmode: common\n"
-        "source:\n  type: wiki\n  reference: ''\n",
+        "id: keyword_solo\nname: 单条\ndefinition: 说明\nvariant: 群狼环鼎\n",
         encoding="utf-8",
     )
     assert yaml_writer.remove_entity(path, "keyword_solo") is True
@@ -1052,27 +1043,37 @@ def test_create_general_with_defaults(client: TestClient, app, workdir: Path) ->
 
 
 def test_source_required_entity_needs_source(client: TestClient, app, workdir: Path) -> None:
-    payload = keyword_payload(
-        app,
-        id="keyword_test_nosource",
-        name="【测试】缺来源关键词",
-        definition="测试",
-        **{"source.type": ""},
-    )
-    response = post(client, "/new/keyword", data=payload)
+    """来源必填的实体：SkillVersion 必须有结构化的 source.type。"""
+    payload = {
+        "_csrf": app.state.csrf,
+        "_base_sha": "",
+        "id": "skill_test_nosource_guozhan_v1",
+        "skill_id": "skill_ji_zhi",
+        "mode": "guozhan",
+        "text": "【测试】缺来源的技能版本",
+        "version_label": "",
+        "product_id": "",
+        "previous_version_id": "",
+        "source.type": "",
+        "source.reference": "",
+    }
+    response = post(client, "/new/skill_version", data=payload)
     assert response.status_code == 400
     assert "来源类型必填" in response.text
-    assert not yaml_of(workdir, "keyword", "keyword_test_nosource").exists()
+    assert not yaml_of(
+        workdir, "skill_version", "skill_test_nosource_guozhan_v1"
+    ).exists()
 
 
 def test_edit_source_reference_url_is_clickable(client: TestClient, app) -> None:
     payload = form_payload(
-        app, "faq", "faq_rule_flow_damage", **{"source.reference": "https://example.com/faq"}
+        app, "skill_version", KONG_CHENG_V1,
+        **{"source.reference": "https://example.com/notice"},
     )
-    response = post(client, "/edit/faq/faq_rule_flow_damage", data=payload)
+    response = post(client, f"/edit/skill_version/{KONG_CHENG_V1}", data=payload)
     assert response.status_code == 303
-    page = client.get("/view/faq/faq_rule_flow_damage")
-    assert 'href="https://example.com/faq"' in page.text
+    page = client.get(f"/view/skill_version/{KONG_CHENG_V1}")
+    assert 'href="https://example.com/notice"' in page.text
     assert 'rel="noopener noreferrer"' in page.text
 
 

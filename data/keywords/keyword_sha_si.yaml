@@ -1,7 +1,0 @@
-id: keyword_sha_si
-name: 杀死
-definition: 当目标角色因受到一个来源对其造成的伤害而进行濒死结算且未于此次濒死结算中被挽救，则此来源杀死了目标角色。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

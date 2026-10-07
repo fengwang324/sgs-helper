@@ -1,7 +1,0 @@
-id: keyword_cha
-name: 差
-definition: 两个数值相减得到的数值的绝对值。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

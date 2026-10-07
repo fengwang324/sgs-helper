@@ -1,0 +1,18 @@
+id: faq_078
+question: 没有官方FAQ的新交互，能用玩家文章直接判成官方答案吗？
+answer: |-
+  不能。玩家文章提供的是解释或修订意见，文章标题含“官方规则集”也不代表其中每项新增处理都经官方确认。
+  用于桌上裁定时，应把能由手册或实卡明确确定的结论直接写出；只有玩家解释的部分注明“按所引玩家解释”；来源自己仍在提问、或补充步骤与原规则不一致的部分写清具体待确认问题，不能改称官方 FAQ。
+  全桌可以在开局前共同采用某个明确的处理办法，但那是本局约定，不能反过来替来源证明官方已有定论。
+variant: 群狼环鼎
+source: |-
+  - type: bilibili_up
+    title: 三国杀国战群狼环鼎規則FAQ
+    reference: https://www.bilibili.com/opus/1255489386701652032/
+    author: 一紙清規
+    displayed_date: '2026'
+  - type: bilibili_up
+    title: 【三国杀官方规则集】中郎将笔记：死亡事件
+    reference: https://www.bilibili.com/opus/683722531350249480/
+    author: 軍師中郎將
+    displayed_date: '2022'

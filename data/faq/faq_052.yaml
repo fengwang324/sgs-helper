@@ -1,0 +1,23 @@
+id: faq_052
+question: 有君无野会让天然野心家主将失去野心家身份吗？
+answer: |-
+  不会。君主的“有君无野”处理本势力角色因人数过多而成为野心家的身份；牌面本来是野心家的武将，势力本身就是野心家，与该君主势力不同。
+  例如，野心家主将配魏副将，主将尚暗置、只有副将明置时暂按魏处理；野心家主将明置后便为野心家，不能因场上有魏君主而继续算魏。
+  不能把“因人数过半取得野心家身份”与“使用野心家武将”混为一类。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第11页：君主、阵法召唤、围攻与队列
+    reference: 核对资料/手册原图/P11.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第16页：野心家武将、暴露野心、拉拢人心
+    reference: 核对资料/手册原图/P16.jpg
+    author: ''
+    displayed_date: null
+  - type: bilibili_up
+    title: 三国杀国战群狼环鼎規則FAQ
+    reference: https://www.bilibili.com/opus/1255489386701652032/
+    author: 一紙清規
+    displayed_date: '2026'

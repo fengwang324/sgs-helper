@@ -1,7 +1,0 @@
-id: keyword_wei_gong
-name: 围攻
-definition: 一名角色的上家和下家势力相同且与该角色势力不同时，其“被围攻”，称为“被围攻角色”。其上家和下家对其“围攻”，称为“围攻角色”。“围攻角色”和“被围攻角色”处于同一“围攻关系”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

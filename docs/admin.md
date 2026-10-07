@@ -43,7 +43,7 @@ python scripts/admin.py --port 8000 --reload # 开发用
 | **`GET|POST /new/product`、`/edit/product/{id}`** | **产品专用录入页**（见第 3 节） |
 | **`GET|POST /new/general`、`/edit/general/{id}[?variant=…]`** | **武将专用录入页**（General + GeneralVariant，见第 3、4、5 节） |
 | **`GET|POST /new/card`、`/edit/card/{id}`** | **卡牌专用录入页**（分类联动 + 拓展包 + 卡图 + 效果文本 + 关联技能，见第 3.5 节） |
-| `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、FAQ、关键词、时点） |
+| `GET|POST /new/{kind}`、`/edit/{kind}/{id}` | generic 表单，服务其余低频实体（技能本体、技能版本、FAQ、关键词） |
 | `GET|POST /delete/{kind}/{id}` | 删除确认 + 引用检查 |
 | `POST /rebuild` | 手动按当前 YAML 全量重建 SQLite |
 | `GET /raw/{kind}/{id}` | 直接查看该记录所在 YAML 文件原文 |
@@ -69,7 +69,7 @@ python scripts/admin.py --port 8000 --reload # 开发用
 
 日常录入的真实顺序是「拿着实体卡从上往下抄」，不是「按数据库字段顺序填」。
 所以产品、武将与卡牌改成**专用页面**：字段顺序、分类联动、内联新建技能/版本都是为录卡服务的。
-其余低频实体（技能本体、技能版本、FAQ、关键词、时点）继续用 generic 表单，
+其余低频实体（技能本体、技能版本、FAQ、关键词）继续用 generic 表单，
 两者的解析代码也分开：generic 在 `forms.py`，专用在 `editors.py`。
 
 ### 产品录入页
@@ -358,8 +358,9 @@ skills:
 ## 10. 来源与核对
 
 实体卡类实体（GeneralVariant / Card）没有 `source`：武将版本的来源由 `product_id` 定位、卡牌由 `card_set` 定位；
-只有规则类实体（SkillVersion / FAQ / Keyword / Timing）才填 `source`（只有 `type` + `reference`，
-展示名由 `reference` 推导）。日常录卡先把卡面文字照抄准；对不上的地方写进实体自己的正文，
+只有 `SkillVersion` 填结构化的 `source`（只有 `type` + `reference`，展示名由 `reference` 推导）；
+`FAQ` 的 `source` 是一段多行文本（逐条写出 type / title / reference / author / displayed_date），
+关键词**没有**来源字段。日常录卡先把卡面文字照抄准；对不上的地方写进实体自己的正文，
 卡牌这种正文必须逐字照抄卡面的，就记在 Git 提交信息里。
 
 ---

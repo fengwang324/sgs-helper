@@ -1,0 +1,13 @@
+id: faq_066
+question: 摸至四张，原来已有五张，要弃一张吗？
+answer: |-
+  不要。“摸至四张”只补足不足的数量，不把超出的手牌减到四张。
+  当前手牌少于四张，摸四减去当前张数的差额；等于或多于四张，不执行摸牌，也不因此弃牌。例如，原有两张摸两张，原有四张不摸，原有五张仍保留五张。
+  之后若到弃牌阶段仍超过自己的手牌上限，才因弃牌阶段的规则弃牌；那不是“摸至四张”本身的效果。
+variant: 群狼环鼎
+source: |-
+  - type: wiki
+    title: 2014规则集3.0：游戏牌操作
+    reference: https://gltjk.com/sanguosha/rules/glossary/gamecard.html
+    author: ''
+    displayed_date: null

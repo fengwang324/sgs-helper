@@ -1,0 +1,23 @@
+id: faq_054
+question: 一名角色一体力受到三伤害，一张桃够救吗？
+answer: |-
+  通常不够。无额外改伤或回复效果时，一点体力受到三点伤害，实际体力为负二；使用一张桃回复一点后是负一，仍未脱离濒死。
+  须总共回复三点，才从负二达到一点体力并脱离濒死。桌面体力牌最多遮到零，不代表超出的负体力被忽略。
+  因此，救援时要记录实际欠缺的回复量；不能只看体力牌表面显示零，就把任意一张桃当作一定救活。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第8页：基本牌的通用使用规则
+    reference: 核对资料/手册原图/P08.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：数值
+    reference: https://gltjk.com/sanguosha/rules/glossary/value.html
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：濒死事件
+    reference: https://gltjk.com/sanguosha/rules/flow/neardeath.html
+    author: ''
+    displayed_date: null

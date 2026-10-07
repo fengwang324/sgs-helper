@@ -1,9 +1,0 @@
-# 模板：时点（规则时点速查；不是规则结算引擎，不维护父子 / 前后关系）
-id: timing_change_me
-name: 时点名
-description: >
-  时点说明……
-mode: common
-source:
-  type: official_rule
-  reference: ""

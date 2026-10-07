@@ -35,7 +35,7 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "4"
+SCHEMA_VERSION = "5"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
@@ -53,9 +53,8 @@ COLUMNS: dict[str, tuple[str, ...]] = {
         "category_1", "category_2", "category_3", "name", "image", "card_set",
         "effect_text", "effect_skills",
     ),
-    "faq": ("question", "answer", "mode"),
-    "keyword": ("name", "definition", "mode"),
-    "timing": ("name", "description", "mode"),
+    "faq": ("question", "answer", "variant", "source"),
+    "keyword": ("name", "definition", "variant"),
 }
 
 #: 以 JSON 文本落库的多值列
@@ -64,8 +63,8 @@ JSON_COLUMNS: frozenset[str] = frozenset({"general_sets", "card_sets", "zhulianb
 _INT_COLUMNS = frozenset({"release_year", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
 
-#: 还会保存来源的实体（其余实体的来源由 product_id 定位）
-SOURCE_KINDS: frozenset[str] = frozenset({"skill_version", "faq", "keyword", "timing"})
+#: 还会保存结构化来源的实体（其余实体的来源由 product_id 定位，FAQ 的来源是文本列）
+SOURCE_KINDS: frozenset[str] = frozenset({"skill_version"})
 
 #: source_key 列（只有 SOURCE_KINDS 有）
 SOURCE_TRACE_COLUMN = "source_key"
@@ -74,7 +73,7 @@ SOURCE_TRACE_COLUMN = "source_key"
 TRACE_COLUMNS: tuple[str, ...] = ("yaml_file", "yaml_line")
 
 #: 用于“按名称自动识别关联”的实体类型
-NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword", "timing")
+NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword")
 
 #: 索引：(名称, 定义)
 INDEXES: tuple[tuple[str, str], ...] = (
@@ -87,9 +86,8 @@ INDEXES: tuple[tuple[str, str], ...] = (
     ("idx_skill_versions_prev", "skill_versions(previous_version_id)"),
     ("idx_cards_category", "cards(category_1, category_2)"),
     ("idx_cards_card_set", "cards(card_set)"),
-    ("idx_faqs_mode", "faqs(mode)"),
-    ("idx_keywords_mode", "keywords(mode)"),
-    ("idx_timings_mode", "timings(mode)"),
+    ("idx_faqs_variant", "faqs(variant)"),
+    ("idx_keywords_variant", "keywords(variant)"),
     ("idx_search_index_kind", "search_index(kind)"),
 )
 
@@ -380,14 +378,11 @@ def _search_row(
         parts += mention_names(text)
     elif kind == "faq":
         name = entity.question if len(entity.question) <= 60 else entity.question[:60] + "…"
-        parts += [entity.question, entity.answer, MODE_LABELS.get(entity.mode, entity.mode)]
+        parts += [entity.question, entity.answer, entity.variant]
         parts += mention_names(f"{entity.question}\n{entity.answer}")
     elif kind == "keyword":
-        parts += [entity.definition, MODE_LABELS.get(entity.mode, entity.mode)]
+        parts += [entity.definition, entity.variant]
         parts += mention_names(entity.definition)
-    elif kind == "timing":
-        parts += [entity.description, MODE_LABELS.get(entity.mode, entity.mode)]
-        parts += mention_names(entity.description)
 
     return name, " ".join(str(p) for p in parts if p)
 
@@ -420,7 +415,7 @@ def _insert_entities(conn: sqlite3.Connection, bundle: DataBundle) -> dict[str, 
 
 def _insert_sources(conn: sqlite3.Connection, bundle: DataBundle) -> int:
     rows: dict[str, tuple] = {}
-    for kind in KIND_ORDER:
+    for kind in SOURCE_KINDS:
         for entity in bundle.all(kind).values():
             source = getattr(entity, "source", None)
             key = source_key(source)

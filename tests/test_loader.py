@@ -20,11 +20,11 @@ def test_real_data_dir_loads(data_dir: Path) -> None:
         "card",
         "faq",
         "keyword",
-        "timing",
     } <= kinds
-    # GeneralSet 实体与目录已删除；CardPrinting 层也整体删除了
+    # GeneralSet 实体与目录已删除；CardPrinting 层与「时点」也整体删除了
     assert "general_set" not in kinds
     assert "card_printing" not in kinds
+    assert "timing" not in kinds
 
 
 def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
@@ -72,20 +72,20 @@ def test_single_mapping_file(synth: Path) -> None:
 def test_list_file(tmp_path: Path) -> None:
     path = tmp_path / "list.yaml"
     path.write_text(
-        "- id: timing_a\n  name: A\n  definition: x\n"
-        "- id: timing_b\n  name: B\n  definition: y\n",
+        "- id: keyword_a\n  name: A\n  definition: x\n"
+        "- id: keyword_b\n  name: B\n  definition: y\n",
         encoding="utf-8",
     )
-    entities, issues = load_yaml_file(path, "timings/list.yaml", "timing")
+    entities, issues = load_yaml_file(path, "keywords/list.yaml", "keyword")
     assert issues == []
-    assert [e.data["id"] for e in entities] == ["timing_a", "timing_b"]
+    assert [e.data["id"] for e in entities] == ["keyword_a", "keyword_b"]
     assert [e.origin.line for e in entities] == [1, 4]
 
 
 def test_items_wrapper_file(tmp_path: Path) -> None:
     path = tmp_path / "items.yaml"
-    path.write_text("items:\n  - id: timing_a\n  - id: timing_b\n", encoding="utf-8")
-    entities, issues = load_yaml_file(path, "timings/items.yaml", "timing")
+    path.write_text("items:\n  - id: keyword_a\n  - id: keyword_b\n", encoding="utf-8")
+    entities, issues = load_yaml_file(path, "keywords/items.yaml", "keyword")
     assert issues == []
     assert [e.origin.line for e in entities] == [2, 3]
 

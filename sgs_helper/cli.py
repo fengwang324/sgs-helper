@@ -26,7 +26,6 @@ from .repo import (
     search,
     skill_report,
     stats,
-    timing_report,
 )
 from .validate import validate_data_dir
 
@@ -38,7 +37,6 @@ QUERY_KINDS: dict[str, str] = {
     "general": "general",
     "card": "card",
     "keyword": "keyword",
-    "timing": "timing",
     "product": "product",
 }
 
@@ -209,7 +207,6 @@ def query_main(argv: list[str] | None = None) -> int:
         "card": "查询卡牌：分类、卡图、拓展包、效果文本、关联技能与核验状态",
         "faq": "查询 FAQ / 裁定：按问题、回答或自动识别出的关联对象搜索",
         "keyword": "查询规则关键词",
-        "timing": "查询时点与结算顺序",
         "product": "查询实体产品：收录武将、技能版本与游戏牌拓展包",
         "search": "跨类型模糊检索",
         "stats": "显示数据库构建元信息与实体统计",
@@ -280,8 +277,6 @@ def query_main(argv: list[str] | None = None) -> int:
             report = card_report(conn, args.query)
         elif args.command == "keyword":
             report = keyword_report(conn, args.query)
-        elif args.command == "timing":
-            report = timing_report(conn, args.query)
         else:
             report = product_report(conn, args.query)
 
@@ -307,7 +302,6 @@ def query_main(argv: list[str] | None = None) -> int:
             "general": render.render_general,
             "card": render.render_card,
             "keyword": render.render_keyword,
-            "timing": render.render_timing,
             "product": render.render_product,
         }[kind]
         print(renderer(report))

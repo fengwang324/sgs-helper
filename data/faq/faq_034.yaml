@@ -1,0 +1,18 @@
+id: faq_034
+question: 群狼环鼎鏖战的桃还能当杀、闪吗？
+answer: |-
+  不能仅凭鏖战规则将桃当杀或闪。群狼环鼎手册规定：鏖战中桃只能当酒使用。
+  因此，桃可以按酒的合法时机使用：自己的出牌阶段使用，为本回合下一张杀增加一点伤害；自己濒死时使用，回复自己一点体力。作为酒使用时，仍受酒的次数和使用条件限制。
+  不能用桃直接响应杀当闪，也不能在决斗中直接当杀打出；其他国战版本的“桃当杀／闪”规则不适用于此手册。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第4页：游戏结束、珠联璧合、鏖战、标记使用
+    reference: 核对资料/手册原图/P04.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第8页：基本牌的通用使用规则
+    reference: 核对资料/手册原图/P08.jpg
+    author: ''
+    displayed_date: null

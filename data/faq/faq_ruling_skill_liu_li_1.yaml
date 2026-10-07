@@ -1,9 +1,0 @@
-id: faq_ruling_skill_liu_li_1
-question: 发动【流离】的目标角色须为此【杀】的使用者使用此【杀】的合法目标（不进行使用牌的距离合法性检测）
-answer: |-
-  发动【流离】的目标角色须为此【杀】的使用者使用此【杀】的合法目标（不进行使用牌的距离合法性检测）。
-  例如：大乔在成为【杀】的目标时会受到【空城】的影响不可以对没有手牌的诸葛亮（标）发动【流离】。
-mode: identity
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

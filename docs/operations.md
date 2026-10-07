@@ -36,15 +36,16 @@ git add -A && git commit -m "data: ..." && git push
 
 ## 1. 现在的数据构成
 
-规则侧（技能 / FAQ / 关键词 / 时点）从
-[《三国杀官方规则集 3.0》网页版](https://gltjk.com/sanguosha/rules/)导入，
+技能版本来自
+[《三国杀官方规则集 3.0》网页版](https://gltjk.com/sanguosha/rules/)，
+FAQ 与规则关键词来自《群狼环鼎规则资料包 v1.0》的人工核对稿，
 武将 / 卡牌侧来自群狼环鼎（`qlhd`）实体卡照片：
 
 | 目录 | 现状 | 来源 |
 | --- | --- | --- |
 | `data/skills/`（311）、`data/skill_versions/`（297） | 真实技能文本 | 群狼环鼎卡面 OCR（296 条）+ 规则集武将页（1 条） |
-| `data/faq/`（83） | 真实裁定 | 规则集专题/流程章节 + 武将页 ◆ 裁定 |
-| `data/keywords/`（126）、`data/timings/`（30） | 真实定义 | 规则集「用语」「游戏的流程」 |
+| `data/faq/`（85） | 真实裁定，`source` 是多行文本 | 《群狼环鼎规则资料包 v1.0》核对稿（手册照片 + 实卡照片 + 通用规则网页 + B 站 UP 主） |
+| `data/keywords/`（117） | 真实定义（只有 id / name / definition / variant） | 同上（关键词核对版，依据是手册页码，不录来源字段） |
 | `data/generals/`（155）、`data/general_variants/`（163） | 真实数据，全是国战版本 | 群狼环鼎卡面 OCR + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) |
 | `data/products/`（1）、`data/cards/`（81） | 真实数据（产品 `qlhd`） | 群狼环鼎实体卡，卡牌为一层 `Card` |
 
@@ -105,10 +106,11 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 
 两个来源说法不一致时**两边都保留**，不要删掉任何一边：
 把“来源 A（社区资料库）说……；来源 B（官方 FAQ 第 N 版）说……”写进实体自己的正文
-（FAQ 写进 `answer`，技能写进 SkillVersion 的 `text`，关键词 / 时点写进定义或说明；
+（FAQ 写进 `answer`，技能写进 SkillVersion 的 `text`，关键词写进 `definition`；
 卡牌这种正文必须逐字照抄卡面的，差异记在 Git 提交信息里），以后按实体卡与最新官方规则核验。
 
-（`source` 只有 `type` + `reference`，展示名由 `reference` 推导。）
+（SkillVersion 的 `source` 只有 `type` + `reference`，展示名由 `reference` 推导；
+FAQ 的 `source` 是多行文本，原样展示。）
 
 ## 3. 常见报错与处理
 
@@ -135,7 +137,7 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 ## 4. 新增/修改时的自检清单
 
 - [ ] 新记录有唯一的 `id`，并且符合前缀约定；
-- [ ] 规则类实体（SkillVersion / FAQ / Keyword / Timing）填了 `source`；
+- [ ] `SkillVersion` 填了结构化 `source`、`FAQ` 填了文本 `source`（关键词没有来源字段）；
 - [ ] 武将版本的 `product_id` 指向正确的产品；卡牌的 `card_set` 是某个产品声明过的拓展包（或留空）；
 - [ ] 卡牌的基本牌三级分类只写牌族，`image` 指向的文件真的在 `data/card_images/` 下；
 - [ ] 技能文本一字不改地来自实体卡/官方资料；

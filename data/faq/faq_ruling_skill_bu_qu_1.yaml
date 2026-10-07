@@ -1,7 +1,0 @@
-id: faq_ruling_skill_bu_qu_1
-question: 【不屈】若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆
-answer: 若你的武将牌上有“创”，你回复1点体力改为将任意一张“创”置入弃牌堆。每当你将最后一张“创”置入弃牌堆后，即你将体力值回复至1点。
-mode: identity
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -167,15 +167,15 @@ def test_previous_version_cycle_is_detected(synth: Path) -> None:
 
 
 def test_removed_fields_are_rejected_not_ignored(synth: Path) -> None:
-    """旧字段必须报未知字段，不能静默丢弃（Timing.parent_id 只是其中一个代表）。"""
+    """旧字段必须报未知字段，不能静默丢弃（keyword 的 mode 只是其中一个代表）。"""
     replace_in(
-        synth / "timings" / "demo_next.yaml", "id: timing_demo_next\n",
-        "id: timing_demo_next\nparent_id: timing_demo\n",
+        synth / "keywords" / "demo.yaml", "id: keyword_demo\n",
+        "id: keyword_demo\nmode: common\n",
     )
     result = validate_data_dir(synth)
     assert not result.ok
     text = error_text(result)
-    assert "parent_id" in text
+    assert "mode" in text
     assert "未知字段" in text
 
 

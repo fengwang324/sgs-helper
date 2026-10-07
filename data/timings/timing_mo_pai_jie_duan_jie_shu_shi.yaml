@@ -1,9 +1,0 @@
-id: timing_mo_pai_jie_duan_jie_shu_shi
-name: 摸牌阶段结束时
-description: |-
-  角色摸牌后。
-  能发动的技能：【七星②】。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

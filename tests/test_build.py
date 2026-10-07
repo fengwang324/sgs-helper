@@ -33,14 +33,13 @@ EXPECTED_TABLES = {
     "cards",
     "faqs",
     "keywords",
-    "timings",
     "sources",
     "search_index",
     "meta",
 }
 
 #: 模型精简后已删除的表
-REMOVED_TABLES = {"general_sets", "card_printings"}
+REMOVED_TABLES = {"general_sets", "card_printings", "timings"}
 
 #: 卡牌单层化后删掉的列
 REMOVED_CARD_COLUMNS = (
@@ -148,7 +147,7 @@ def test_build_creates_db_file(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "nested" / "sgs.db"
     result = build_database(synth, db_path)
     assert db_path.exists()
-    assert result.total == 20
+    assert result.total == 18
     assert result.db_path == db_path
 
 
@@ -162,8 +161,7 @@ def test_counts_match_bundle(synth: Path, tmp_path: Path) -> None:
     assert result.counts["card"] == 2
     assert result.counts["faq"] == 1
     assert result.counts["keyword"] == 2
-    assert result.counts["timing"] == 2
-    assert result.total == 20
+    assert result.total == 18
 
 
 def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
@@ -244,12 +242,12 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "4"
+    assert meta["schema_version"] == "5"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
     assert meta["count.card"] == "2"
     assert "count.card_printing" not in meta
-    assert meta["entity_total"] == "20"
+    assert meta["entity_total"] == "18"
     assert meta["fts5"] in {"0", "1"}
     assert "built_at" in meta
 

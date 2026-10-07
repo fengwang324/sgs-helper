@@ -47,7 +47,7 @@ def _general_by_number(number: str) -> str:
 GENERAL_ID = _general_by_number("G.SHU 004")   # 诸葛亮
 SKILL_ID = "skill_ji_zhi"
 CARD_ID = "card_sha"
-FAQ_ID = "faq_rule_flow_damage"
+FAQ_ID = "faq_056"
 
 
 # ---------------------------------------------------------------- 夹具

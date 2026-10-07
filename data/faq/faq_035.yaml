@@ -1,0 +1,18 @@
+id: faq_035
+question: 鏖战的桃能救别人吗？
+answer: |-
+  不能。鏖战中桃只能当酒使用，而酒的濒死回复用途只能救使用者自己，不能救其他濒死角色。
+  例如，甲濒死时，乙不能把桃当酒对甲使用；轮到甲本人响应救援时，甲可以将自己的桃当酒使用，回复自己一点体力。若甲的实际体力仍未达到一点，还须继续接受合法救援才能脱离濒死。
+  桃的普通救人用途在鏖战中不可用；其他牌或技能提供的合法救援机会不因这条规则自动消失。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第4页：游戏结束、珠联璧合、鏖战、标记使用
+    reference: 核对资料/手册原图/P04.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第8页：基本牌的通用使用规则
+    reference: 核对资料/手册原图/P08.jpg
+    author: ''
+    displayed_date: null

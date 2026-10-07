@@ -1,0 +1,18 @@
+id: faq_040
+question: 抢到奇珍是直接装备吗？
+answer: |-
+  默认加入获得者的手牌，不直接放入装备区。奇珍规则只写“获得”，没有写“使用”“装备”或“置入装备区”。
+  例如，从受伤角色装备区获得九州鼎，应将它移入自己的手牌。之后要让它成为自己的装备，须在允许使用装备牌的时机合法使用；不能在伤害结算中因获得它就直接替换自己的装备。
+  该牌离开原角色装备区时，相关失去装备的效果仍按实际移动判断。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第19页：紫凤衔佩、九变篇、奇珍、掠闪
+    reference: 核对资料/手册原图/P19.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：游戏牌操作
+    reference: https://gltjk.com/sanguosha/rules/glossary/gamecard.html
+    author: ''
+    displayed_date: null

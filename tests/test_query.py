@@ -4,7 +4,7 @@
 版本由 ``GeneralVariant.skills[].version_id`` 决定，为空时按 ``mode`` 回退到唯一一条版本。
 
 ``Card`` 单层化之后：``card_report`` 返回
-``{kind, card, effect, generals, skills, cards, keywords, timings}``（没有 ``printings``）；
+``{kind, card, effect, generals, skills, cards, keywords}``（没有 ``printings``）；
 ``product_report`` 返回 ``{kind, product, variants, cards, skill_versions}``，
 卡与产品之间没有外键，只能按 ``Card.card_set ∈ Product.card_sets`` 关联。
 """
@@ -29,7 +29,6 @@ from sgs_helper.repo import (
     search,
     skill_report,
     stats,
-    timing_report,
 )
 
 
@@ -316,7 +315,6 @@ def test_card_report_is_single_layer(synth_conn) -> None:
         "skills",
         "cards",
         "keywords",
-        "timings",
     }
     assert "printings" not in report
 
@@ -354,7 +352,7 @@ def test_card_report_detects_mentions_but_not_itself(synth_conn) -> None:
     assert report is not None
     assert [e["id"] for e in report["skills"]] == ["skill_demo"]
     assert report["cards"] == []
-    assert report["generals"] == [] and report["keywords"] == [] and report["timings"] == []
+    assert report["generals"] == [] and report["keywords"] == []
 
 
 def test_card_report_without_effect(synth_conn) -> None:
@@ -397,27 +395,22 @@ def test_faq_report_groups_detected_entities(synth_conn) -> None:
     assert [e["id"] for e in report["cards"]] == ["card_demo"]
     assert report["generals"] == []
     assert report["keywords"] == []
-    assert report["timings"] == []
 
 
-def test_keyword_and_timing_reports(synth_conn) -> None:
+def test_keyword_report_has_variant_and_groups(synth_conn) -> None:
     keyword = keyword_report(synth_conn, "演示关键词")
     assert keyword is not None
     assert keyword["keyword"]["id"] == "keyword_demo"
+    assert keyword["keyword"]["variant"] == "群狼环鼎"
     # 自动识别的分组键固定存在（没有命中就是空列表）
-    assert keyword["timings"] == [] and keyword["skills"] == []
-
-    timing = timing_report(synth_conn, "演示时点")
-    assert timing is not None
-    assert timing["timing"]["id"] == "timing_demo"
-    assert timing["keywords"] == []
+    assert keyword["skills"] == []
 
 
 def test_stats_reports_meta(synth_conn) -> None:
     payload = stats(synth_conn)
     assert payload["counts"]["skill_version"] == 4
     assert payload["counts"]["card"] == 2
-    assert payload["meta"]["schema_version"] == "4"
+    assert payload["meta"]["schema_version"] == "5"
 
 
 def test_json_serializable(synth_conn) -> None:

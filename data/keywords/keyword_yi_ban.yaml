@@ -1,7 +1,0 @@
-id: keyword_yi_ban
-name: 一半
-definition: 一个数值若为奇数，则它的一半默认向下取整。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

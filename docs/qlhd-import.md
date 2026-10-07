@@ -73,7 +73,9 @@ $DATA scripts/query.py stats
 
 > 表里的数量是**清掉旧数据之后**的：之前从 WIKI / 规则集导入的 26 条「标准版」武将版本、
 > 396 条技能版本，以及没有任何卡片使用的 152 个技能本体都已删除（备份在
-> `_ai_work/removed_*/`，需要可以找回）；**没有**删 FAQ / 规则关键词 / 时点。
+> `_ai_work/removed_*/`，需要可以找回）；这一轮**没有**删 FAQ / 规则关键词 / 时点
+> （FAQ 与关键词后来按《群狼环鼎规则资料包 v1.0》核对稿整体替换、「时点」整体舍弃，见
+> [updates.md](updates.md)）。
 > 之后的「卡牌单层化」重构又把 13 个指示物 card_id / 20 张印刷移入
 > `_ai_work/removed_card_model/indicator_cards/`，旧的 `card_printings/` 整体备份在
 > `_ai_work/removed_card_model/card_printings/` 与 `_ai_work/data_backup_before_card_model.tgz`；

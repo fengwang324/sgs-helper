@@ -1,7 +1,0 @@
-id: timing_you_xi_kai_shi_qian_liang_chu_wu_jiang_pai_hou
-name: 游戏开始前亮出武将牌后
-description: 能发动的技能：【化身①】。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

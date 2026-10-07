@@ -1,7 +1,0 @@
-id: keyword_dui_lie
-name: 队列
-definition: 两名或两名以上连续相邻且势力相同的角色处于同一队列。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

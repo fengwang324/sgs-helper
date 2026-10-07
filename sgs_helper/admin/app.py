@@ -358,6 +358,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 yaml_path=row["file"],
                 action_error=action_error,
                 source=row["source"],
+                source_text=row["source_text"],
             ),
         )
 
@@ -1426,7 +1427,7 @@ def _detail_fields(live: AdminStore, kind: str, entity: Any) -> list[dict]:
     outgoing = live.outgoing_refs(kind, entity)
     out: list[dict] = []
     for spec in forms.form_specs(kind):
-        if spec.name.startswith("source.") or spec.widget in {"source", "object"}:
+        if spec.name == "source" or spec.name.startswith("source.") or spec.widget in {"source", "object"}:
             continue  # source 单独一个区块；skills 之类由品类专属区块展示
         value = getattr(entity, spec.name, None)
         if spec.widget == "list":

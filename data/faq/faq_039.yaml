@@ -1,0 +1,18 @@
+id: faq_039
+question: 被杀造成两点伤害，能抢两张奇珍吗？
+answer: |-
+  不能。一张杀一次造成两点或更多伤害，仍是一次伤害；奇珍规则在这次杀的伤害后给来源一次选择，最多获得受伤角色装备区里的一张奇珍牌。
+  不是每扣一点体力就获得一张。例如，酒杀造成两点伤害，对方装备三张奇珍，你仍只能选择其中一张获得。
+  若确实发生两次独立的、符合条件的杀伤害，则分别判断每次伤害后的夺取机会；伤害点数与伤害次数不能混算。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第9页：操作用语、拼点、叠置与取消
+    reference: 核对资料/手册原图/P09.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第19页：紫凤衔佩、九变篇、奇珍、掠闪
+    reference: 核对资料/手册原图/P19.jpg
+    author: ''
+    displayed_date: null

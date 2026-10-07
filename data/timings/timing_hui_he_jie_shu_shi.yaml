@@ -1,9 +1,0 @@
-id: timing_hui_he_jie_shu_shi
-name: 回合结束时
-description: |-
-  该角色的回合所有阶段均执行完毕，回合即将结束。
-  能发动的技能/能执行的技能效果：【横江②】、【放权】弃置一张手牌令一名其他角色进行一个额外的回合的效果、【谦逊】获得所有“节”的效果、【窃听】、【咒缚】获得角色武将牌旁的“咒”的效果。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

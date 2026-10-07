@@ -1,9 +1,0 @@
-id: keyword_ling_yi_ming_jue_se
-name: 另一名角色
-definition: |-
-  区分于“一名角色”。
-  例如：汉献帝发动【密诏】将全部的两张手牌交给法正，法正对汉献帝发动【恩怨①】令汉献帝摸一张牌，此时汉献帝继续执行【密诏】的效果，可以令法正与汉献帝自己拼点。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

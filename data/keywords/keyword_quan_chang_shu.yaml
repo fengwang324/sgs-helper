@@ -1,7 +1,0 @@
-id: keyword_quan_chang_shu
-name: （全场）…数
-definition: 这些数值在计算时都不考虑已经死亡的角色。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

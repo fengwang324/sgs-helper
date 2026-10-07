@@ -1,7 +1,0 @@
-id: keyword_die_zhi
-name: 叠置
-definition: 处于平/叠置状态的角色改为处于叠/平置状态的操作。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

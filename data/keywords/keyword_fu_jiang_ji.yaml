@@ -1,7 +1,0 @@
-id: keyword_fu_jiang_ji
-name: 副将技
-definition: 此武将牌为副将时才有效的技能。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

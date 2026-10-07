@@ -1,7 +1,0 @@
-id: timing_pan_ding_jie_duan_yu_mo_pai_jie_duan_jian
-name: 判定阶段与摸牌阶段间
-description: 能发动的技能：【裸衣】、【巧变】。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

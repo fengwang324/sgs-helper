@@ -24,8 +24,9 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 关键点：**校验与构建是分开的两次执行**（`validate_data.py` / `build_db.py`），
 `build_db.py` 内部也会先校验一遍，校验不过就退出（返回码 2），避免生成半成品数据库。
 
-数据来源策略：规则侧数据（SkillVersion / FAQ / 关键词 / 时点）来自
-[《三国杀官方规则集 3.0》的网页版](https://gltjk.com/sanguosha/rules/)，实体卡数据来自
+数据来源策略：规则侧数据分两批 —— 技能版本来自
+[《三国杀官方规则集 3.0》的网页版](https://gltjk.com/sanguosha/rules/)，
+FAQ 与规则关键词来自《群狼环鼎规则资料包 v1.0》的人工核对稿（规则手册 19 页照片 + 实卡照片 + 通用规则网页 + B 站 UP 主文章）；实体卡数据来自
 群狼环鼎卡面照片；用 `source.type`（`official_rule` / `physical_card` …）记录“内容是什么”，
 不因为文档名称里带“官方”就默认可信。
 实体卡类实体（Product / GeneralVariant / Card）不存 `source`，来源由 `product_id` / `card_set` 定位。
@@ -155,9 +156,9 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 | 层 | 记录内容 | 用途 |
 | --- | --- | --- |
-| YAML | 规则类实体内嵌 `source`（只有 type + reference） | 人工判断依据 |
+| YAML | SkillVersion 内嵌 `source`（只有 type + reference）；FAQ 的 `source` 是多行文本 | 人工判断依据 |
 | 装载 | 每个实体记录来源文件、起始行、文件 sha256 | 报错精确定位；判断是否改动过 |
-| 数据库 | 每行带 `yaml_file` / `yaml_line`；只有规则类表（skill_version / faq / keyword / timing）另带 `source_key`，`sources` 表去重 | 任何一条查询结果都能回溯到文件与行 |
+| 数据库 | 每行带 `yaml_file` / `yaml_line`；只有 `skill_versions` 另带 `source_key`（FAQ 的 source 已是文本列、关键词无来源），`sources` 表去重 | 任何一条查询结果都能回溯到文件与行 |
 | 构建 | `meta` 表记录 schema 版本、构建时间、YAML 清单指纹、Git commit/branch/dirty | 判断数据库是否过期、对应哪次提交 |
 
 刻意**没做**的：内容级哈希、逐字段血缘、来源多对多关联表。数据量小，上面这些已经够查。
@@ -216,8 +217,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 | 边界 | 现状 | 将来的做法 |
 | --- | --- | --- |
 | 同名武将跨产品/玩法 | 同一个 `general.id`，每个玩法各写一条 `GeneralVariant`（各自带 `mode` / `product_id` / `skills`） | 不需要「武将印刷」层 |
-| 一个实体多来源 | 规则类实体带单条 `source`（type + reference），实体卡类实体由 `product_id` / `card_set` 定位、不记 source | 抽 `entity_sources` 关联表 |
+| 一个实体多来源 | SkillVersion 带单条 `source`（type + reference），FAQ 的来源是多行文本，关键词不记来源；实体卡类实体由 `product_id` / `card_set` 定位、不记 source | 抽 `entity_sources` 关联表 |
 | 产品级规则特例 | 以显式 `version_id` 优先，未做产品级优先级 | 给 SkillVersion 加 `scope` / `rule_priority` |
-| 时点结算顺序 | 时点只存名称与说明（“时点速查”），不记录先后关系 | 需要时再引入顺序号与嵌套时点 |
 | 技能效果检索 | 全文检索规则文本 | 需要时再加结构化字段（不与文本混用） |
 | 表结构变更 | `SCHEMA_VERSION` + 每次全量重建 | 数据量变大后再考虑迁移脚本 |

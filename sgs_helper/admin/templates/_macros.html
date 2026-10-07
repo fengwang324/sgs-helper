@@ -35,7 +35,7 @@
 {%- endmacro %}
 
 {# 自动识别出来的关联实体（repo.mentions 的返回值）：渲染成可点击链接 #}
-{% macro mention_list(mentions, empty='正文里没有识别到对应的武将 / 技能 / 卡牌 / 关键词 / 时点。') -%}
+{% macro mention_list(mentions, empty='正文里没有识别到对应的武将 / 技能 / 卡牌 / 关键词。') -%}
   {%- if mentions -%}
     <ul class="inline-list mentions">
       {%- for item in mentions -%}

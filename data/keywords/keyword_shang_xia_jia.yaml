@@ -1,9 +1,0 @@
-id: keyword_shang_xia_jia
-name: 上/下家
-definition: |-
-  对于一名角色来说，其左/右手边的角色即其上/下家。
-  ◆全场只有两名角色时，他们互为对方的上家且同时也互为对方的下家。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

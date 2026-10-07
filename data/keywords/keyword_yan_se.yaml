@@ -1,7 +1,0 @@
-id: keyword_yan_se
-name: 颜色
-definition: 游戏牌按颜色分为红色、黑色两种。红桃/方块花色的牌的颜色为红色，黑桃/梅花花色的牌的颜色为黑色。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

@@ -1,9 +1,0 @@
-id: keyword_kou_jian_ti_li
-name: 扣减体力
-definition: |-
-  失去体力和受到伤害都会导致角色扣减体力。
-  ◆失去体力与受到伤害不同：失去体力没有来源，不需要进行伤害结算，角色因失去体力死亡也没有角色需要执行奖惩；受到伤害会产生伤害事件，要进行伤害事件的结算，角色受到伤害死亡，需要对来源执行奖惩。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

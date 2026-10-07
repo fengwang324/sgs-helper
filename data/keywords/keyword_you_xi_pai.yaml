@@ -1,7 +1,0 @@
-id: keyword_you_xi_pai
-name: 游戏牌
-definition: 在游戏过程中所有角色共用的牌。游戏牌分为基本牌、锦囊牌和装备牌三个类别。每张游戏牌的左上角均标有花色和点数。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

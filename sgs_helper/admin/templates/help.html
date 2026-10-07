@@ -25,8 +25,10 @@
     <li><strong>基本牌的最后一级是卡名</strong>：<code>游戏牌/基本牌/杀</code> 下面是 杀 / 火杀 / 雷杀，
         所以基本牌的 <code>category_3</code> 只写牌族（杀 / 闪 / 桃 / 酒），具体是哪一张写在 <code>name</code>。</li>
     <li><strong>自动关联</strong>：FAQ 详情页对 <code>question + answer</code>、技能详情页对技能文本调用
-        <code>repo.mentions(conn, text)</code>，按实体名称自动识别武将 / 技能 / 卡牌 / 关键词 / 时点并渲染成可点击链接；
+        <code>repo.mentions(conn, text)</code>，按实体名称自动识别武将 / 技能 / 卡牌 / 关键词并渲染成可点击链接；
         手工维护的关联 id 字段已全部删除。</li>
+    <li><strong>FAQ 的来源是一段文本</strong>：逐条写出来源的 type / title / reference / author / displayed_date；
+        只有技能版本（SkillVersion）还保留结构化的 <code>type</code> + <code>reference</code>，关键词不带来源字段。</li>
     <li><strong>武将牌系列只维护两处</strong>：产品里的 <code>general_sets</code>（候选全集）与武将版本的 <code>general_set</code>（具体归属）。</li>
     <li><strong>游戏牌拓展包只维护两处</strong>：产品里的 <code>card_sets</code>（候选全集）与卡牌的 <code>card_set</code>（具体归属），卡牌自己不能发明拓展包名。</li>
   </ul>

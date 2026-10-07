@@ -1,7 +1,0 @@
-id: keyword_yi_chu
-name: 移除
-definition: 将被移除的武将牌置入游戏外的武将牌堆。被移除武将牌的角色用一张“士兵牌”代替被移除的武将牌。“士兵牌”的性别、势力与被移除的武将牌相同，但没有技能。移除武将牌并不会影响该角色的体力上限。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

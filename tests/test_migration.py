@@ -59,7 +59,7 @@ REMOVED_FIELDS = {
 }
 
 #: 已删除的实体类型
-REMOVED_KINDS = {"general_set", "card_printing"}
+REMOVED_KINDS = {"general_set", "card_printing", "timing"}
 
 
 def _yaml_files(data_dir: Path):
@@ -95,16 +95,27 @@ def test_general_set_directory_is_gone(data_dir: Path) -> None:
     assert not (data_dir / "general_sets").exists()
 
 
-def test_source_is_type_plus_reference_only(data_dir: Path) -> None:
-    seen = 0
+def test_source_shape_depends_on_kind(data_dir: Path) -> None:
+    """来源的形状按实体分开：SkillVersion 结构化、FAQ 多行文本、关键词完全没有来源。"""
+    structured = 0
+    text_sources = 0
     for path in _yaml_files(data_dir):
-        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        source = (doc or {}).get("source")
-        if source is None:
+        dirname = path.parent.name
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        source = doc.get("source") if isinstance(doc, dict) else None
+        if dirname == "keywords":
+            assert "source" not in doc, f"{path} 的关键词不该有来源字段"
             continue
-        seen += 1
-        assert set(source) == {"type", "reference"}, f"{path} 的 source 不是精简结构：{source}"
-    assert seen > 0, "规则类数据应当保留精简来源"
+        if dirname == "faq":
+            assert isinstance(source, str) and source.strip(), f"{path} 的 source 不是多行文本"
+            text_sources += 1
+            continue
+        if dirname == "skill_versions":
+            assert set(source) == {"type", "reference"}, f"{path} 的 source 不是精简结构：{source}"
+            structured += 1
+            continue
+        assert source is None, f"{path} 不该保存 source"
+    assert structured > 0 and text_sources > 0
 
 
 def test_entity_card_kinds_have_no_source(data_dir: Path) -> None:
@@ -205,7 +216,7 @@ def test_sources_and_search_index_are_slim(migration_db: Path) -> None:
             "source_key", "type", "reference"]
         assert [r[1] for r in conn.execute("PRAGMA table_info(search_index)")] == [
             "kind", "entity_id", "name", "body"]
-        assert conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 2
     finally:
         conn.close()
 
@@ -236,7 +247,7 @@ def test_search_still_finds_skill_text_without_normalized_text(migration_db: Pat
         names = [r[0] for r in conn.execute("SELECT name FROM skills")]
         faq_body = conn.execute(
             "SELECT body FROM search_index WHERE kind = 'faq' AND entity_id = ?",
-            ("faq_ruling_skill_bu_qu_1",),
+            ("faq_056",),
         ).fetchone()[0]
         assert any(name in faq_body for name in names if len(str(name)) >= 2)
     finally:
@@ -257,18 +268,27 @@ def test_entity_counts_are_stable(migration_db: Path) -> None:
             "skill": 311,
             "skill_version": 297,
             "card": 81,
-            "faq": 83,
-            "keyword": 126,
-            "timing": 30,
+            "faq": 85,
+            "keyword": 117,
         }
     finally:
         conn.close()
 
 
 def test_models_reject_removed_fields() -> None:
-    """写错字段名必须报错，不能静默丢弃。"""
+    """写错字段名必须报错，不能静默丢弃。
+
+    ``source_key`` 列只为**结构化来源**的实体生成（现在只剩 SkillVersion）：
+    FAQ 的 source 是普通文本列，关键词没有来源字段。
+    """
     for kind, model in MODEL_BY_KIND.items():
         assert "notes" not in model.model_fields, f"{kind} 仍保留 notes"
+        if kind == "faq":
+            assert model.model_fields["source"].annotation is str
+            continue
+        if kind == "keyword":
+            assert "source" not in model.model_fields
+            continue
         assert "source" not in model.model_fields or kind in SOURCE_KINDS
 
 

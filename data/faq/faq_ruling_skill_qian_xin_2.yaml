@@ -1,7 +1,0 @@
-id: faq_ruling_skill_qian_xin_2
-question: 【潜心】当你因执行【荐言】的效果而亮出牌堆的最后一张牌（不为此类别/颜色）后：若弃牌堆里的牌均不为此类别/颜色，则洗牌，然后你不重复此流程；若弃牌堆里有此类别/颜色的牌
-answer: 当你因执行【荐言】的效果而亮出牌堆的最后一张牌（不为此类别/颜色）后：若弃牌堆里的牌均不为此类别/颜色，则洗牌，然后你不重复此流程；若弃牌堆里有此类别/颜色的牌，则先洗牌再重复此流程；若弃牌堆里没有牌，则你不重复此流程。
-mode: identity
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

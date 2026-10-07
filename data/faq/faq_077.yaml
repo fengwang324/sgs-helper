@@ -1,0 +1,24 @@
+id: faq_077
+question: 普通死亡流程要把死亡者体力强制改成零吗？
+answer: |-
+  不能把“所有死亡角色的体力都强制改为零”当作已核实的统一规则。
+  2014 年通用死亡流程没有这一重设步骤；中郎将笔记则另加“死亡角色体力大于零时改为零”，并明确文章含对原规则的改动。该句也不是把负体力一律抹成零。
+  例如，某角色因直接死亡效果死亡时仍有一点体力，是否在死亡技能结算前改为零，会影响检查体力的效果；仅看体力牌遮到零，不能代替这一步的规则依据。
+  群狼环鼎手册未明确选择上述哪一套。涉及死亡时检查体力的交互，需先确认采用的死亡流程；不能直接将玩家新增步骤当作官方规定。
+variant: 群狼环鼎
+source: |-
+  - type: wiki
+    title: 2014规则集3.0：死亡事件
+    reference: https://gltjk.com/sanguosha/rules/flow/death.html
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：数值
+    reference: https://gltjk.com/sanguosha/rules/glossary/value.html
+    author: ''
+    displayed_date: null
+  - type: bilibili_up
+    title: 【三国杀官方规则集】中郎将笔记：死亡事件
+    reference: https://www.bilibili.com/opus/683722531350249480/
+    author: 軍師中郎將
+    displayed_date: '2022'

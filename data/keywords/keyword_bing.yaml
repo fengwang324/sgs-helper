@@ -1,7 +1,0 @@
-id: keyword_bing
-name: 并
-definition: 用于两个操作之间的连词，表示这两个操作是同时执行的。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

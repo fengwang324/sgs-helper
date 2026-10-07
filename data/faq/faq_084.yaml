@@ -1,0 +1,24 @@
+id: faq_084
+question: 与原副将牌面势力相同的角色，是否一定包括该牌面势力的野心家？
+answer: |-
+  现有手册不足以给出“一定包括”或“一定不包括”的统一结论，须区分比较对象。
+  角色与角色比较同势力时，已明确：野心家与其他角色视为不同势力，不能因为原牌面同为魏就认作魏队友。
+  所引玩家 FAQ 另提出：比较角色与一张未被角色使用的武将牌的牌面势力时，忽略普通武将因规则取得的野心家身份。因此，原副将牌面为魏时，该解释会把原牌面魏、后来成为野心家的角色包括进去；牌面本来为野心家的主将仍不包括。
+  后一种比较规范未在当前手册中明确，涉及“原副将牌面势力”等实际技能选人时仍需确认，不能把它替换成普通的“与你势力相同”。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第3页：暗将、势力人数与死亡奖惩
+    reference: 核对资料/手册原图/P03.jpg
+    author: ''
+    displayed_date: null
+  - type: official_rule
+    title: 用户提供规则手册第16页：野心家武将、暴露野心、拉拢人心
+    reference: 核对资料/手册原图/P16.jpg
+    author: ''
+    displayed_date: null
+  - type: bilibili_up
+    title: 三国杀国战群狼环鼎規則FAQ
+    reference: https://www.bilibili.com/opus/1255489386701652032/
+    author: 一紙清規
+    displayed_date: '2026'

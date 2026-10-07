@@ -1,7 +1,0 @@
-id: timing_hui_he_kai_shi_qian
-name: 回合开始前
-description: 该角色的回合即将开始。若其武将牌背面朝上，则其翻面，然后跳过此回合，直接进入下回合的“回合开始前”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

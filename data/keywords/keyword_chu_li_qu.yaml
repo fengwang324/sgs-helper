@@ -1,7 +1,0 @@
-id: keyword_chu_li_qu
-name: 处理区
-definition: 大多数情况下处理游戏牌的区域。处理区里的牌须正面朝上放置。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

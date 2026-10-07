@@ -1,7 +1,0 @@
-id: keyword_jin_nang_pai
-name: 锦囊牌
-definition: 锦囊牌上带有“锦囊”标识。锦囊牌分为两类，带有沙漏标识的为“延时类锦囊牌”，没有沙漏标识的为“非延时类锦囊牌”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

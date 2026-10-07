@@ -1,7 +1,0 @@
-id: keyword_zhen_fa_zhao_huan
-name: 阵法召唤
-definition: 由拥有阵法技的角色发起，满足此阵法技条件的未确定势力角色可以明置一张武将牌来响应阵法召唤。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

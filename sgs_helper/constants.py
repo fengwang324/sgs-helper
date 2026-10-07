@@ -12,7 +12,7 @@ from enum import Enum
 # ---------------------------------------------------------------- 通用约束
 
 #: 所有实体 id 的格式：小写字母开头，只含小写字母、数字、下划线。
-#: 约定带业务前缀：product_ / general_ / skill_ / card_ / faq_ / keyword_ / timing_
+#: 约定带业务前缀：product_ / general_ / skill_ / card_ / faq_ / keyword_
 ID_PATTERN = r"^[a-z][a-z0-9_]*$"
 
 #: 允许的卡图扩展名（小写）。上传（admin/wiki.py）与卡图名派生（admin/editors.py）
@@ -152,7 +152,6 @@ KINDS: tuple[KindSpec, ...] = (
     KindSpec("card", "cards", "cards", "卡牌", "card_"),
     KindSpec("faq", "faqs", "faq", "FAQ/裁定", "faq_"),
     KindSpec("keyword", "keywords", "keywords", "规则关键词", "keyword_"),
-    KindSpec("timing", "timings", "timings", "时点", "timing_"),
 )
 
 KIND_BY_NAME: dict[str, KindSpec] = {k.kind: k for k in KINDS}

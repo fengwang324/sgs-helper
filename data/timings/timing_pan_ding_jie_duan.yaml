@@ -1,7 +1,0 @@
-id: timing_pan_ding_jie_duan
-name: 判定阶段
-description: 角色须检测其判定区里是否有延时类锦囊牌：若有，进行其中最后置入其判定区里的那张延时类锦囊牌的使用结算，然后重复此流程；若没有，进入“判定阶段结束时”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

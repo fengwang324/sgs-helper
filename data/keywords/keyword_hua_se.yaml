@@ -1,7 +1,0 @@
-id: keyword_hua_se
-name: 花色
-definition: 标识于游戏牌的左上角，分为红桃♥、方块♦、黑桃♠、梅花♣四种。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

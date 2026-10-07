@@ -1,7 +1,0 @@
-id: keyword_a_ling_b
-name: A令B
-definition: A令B执行某操作，即指令由A发出，动作由B执行。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

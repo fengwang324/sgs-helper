@@ -3,9 +3,9 @@
 仍然成立的核心不变量：**旧版本永远不被新版本覆盖**；卡与产品之间没有外键，
 只能按 ``Card.card_set ∈ Product.card_sets`` 关联。
 
-新模型下 FAQ / 关键词 / 时点的关联不再手工维护（``related_*`` 全部删除），
+新模型下 FAQ / 关键词的关联不再手工维护（``related_*`` 全部删除），
 而是在正文里按实体名称自动识别（``repo.mentions`` / ``db.detect_mentions``）；
-``CardPrinting`` 层整体删除，卡牌只有 ``cards`` 一张表。
+``CardPrinting`` 层与「时点」整体删除，卡牌只有 ``cards`` 一张表。
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ from sgs_helper.repo import (
     keyword_report,
     product_report,
     skill_report,
-    timing_report,
 )
 
 
@@ -216,22 +215,16 @@ def test_faq_relations_are_detected_by_name(synth_db: Path, synth_conn) -> None:
     assert [e["id"] for e in report["cards"]] == ["card_demo"]
     assert report["generals"] == []
     assert report["keywords"] == []
-    assert report["timings"] == []
     # 关联不再落库
     assert not any(column.startswith("related_") for column in _columns(synth_db, "faqs"))
 
 
-def test_keyword_and_timing_mentions_are_detected(synth: Path, tmp_path: Path) -> None:
+def test_keyword_mentions_are_detected(synth: Path, tmp_path: Path) -> None:
     """正文里写到其它实体名称，就会被识别成“相关”，并且不把自己算进去。"""
     replace_in(
         synth / "keywords" / "demo.yaml",
         "definition: 演示用规则关键词定义",
-        "definition: 演示关键词不再手工关联：这里的演示技能与演示时点、演示卡牌都按名称识别",
-    )
-    replace_in(
-        synth / "timings" / "demo.yaml",
-        "description: 演示用时点说明",
-        "description: 演示时点会提到演示关键词与演示技能",
+        "definition: 演示关键词不再手工关联：这里的演示技能与演示关键词二、演示卡牌都按名称识别",
     )
 
     db_path = tmp_path / "mentions.db"
@@ -241,15 +234,8 @@ def test_keyword_and_timing_mentions_are_detected(synth: Path, tmp_path: Path) -
         keyword = keyword_report(conn, "keyword_demo")
         assert keyword is not None
         assert [e["id"] for e in keyword["skills"]] == ["skill_demo"]
-        assert [e["id"] for e in keyword["timings"]] == ["timing_demo"]
         assert [e["id"] for e in keyword["cards"]] == ["card_demo"]
-        assert keyword["keywords"] == []  # 自己的名字写在定义里，也不算“相关”
+        assert [e["id"] for e in keyword["keywords"]] == ["keyword_demo2"]
         assert keyword["generals"] == []
-
-        timing = timing_report(conn, "timing_demo")
-        assert timing is not None
-        assert [e["id"] for e in timing["keywords"]] == ["keyword_demo"]
-        assert [e["id"] for e in timing["skills"]] == ["skill_demo"]
-        assert timing["timings"] == []  # 时点自身被排除
     finally:
         conn.close()

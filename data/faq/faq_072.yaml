@@ -1,0 +1,13 @@
+id: faq_072
+question: 拼点点数相同，发起者算赢吗？
+answer: |-
+  不赢。拼点比较双方牌的点数：较大的一方赢，较小的一方没赢；点数相同，双方都没赢。
+  因此，同点既不判发起者赢，也不判被拼点者赢。技能若以“你赢”为条件，同点不满足；若以“你没赢”为条件，同点满足。
+  确定结果并处理对应效果后，将仍在处理区的拼点牌置入弃牌堆；不能仅因同点就自行重拼一次。
+variant: 群狼环鼎
+source: |-
+  - type: wiki
+    title: 2014规则集3.0：拼点事件
+    reference: https://gltjk.com/sanguosha/rules/flow/rankcompare.html
+    author: ''
+    displayed_date: null

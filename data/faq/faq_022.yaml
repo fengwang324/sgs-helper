@@ -1,0 +1,18 @@
+id: faq_022
+question: 阵法召唤能在准备阶段发起吗？
+answer: |-
+  群狼环鼎手册规定的阵法召唤时机是自己的出牌阶段，限一次；不是准备阶段。
+  准备阶段可以利用一般明置规则亮出武将，但“亮出阵法武将”和“发动阵法召唤”不是同一操作。拥有阵法技后，要到出牌阶段才能按召唤规则给符合条件的暗置角色亮将机会。
+  2014 年网站记录的准备阶段召唤属于旧版规则，不能覆盖当前手册的出牌阶段规定。
+variant: 群狼环鼎
+source: |-
+  - type: official_rule
+    title: 用户提供规则手册第11页：君主、阵法召唤、围攻与队列
+    reference: 核对资料/手册原图/P11.jpg
+    author: ''
+    displayed_date: null
+  - type: wiki
+    title: 2014规则集3.0：国战用语
+    reference: https://gltjk.com/sanguosha/rules/glossary/guo.html
+    author: ''
+    displayed_date: null

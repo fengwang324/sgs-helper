@@ -1,7 +1,0 @@
-id: keyword_ji_ben_pai
-name: 基本牌
-definition: 基本牌上除花色和点数外，仅标识了牌的名称和插图。基本牌是数量占比最多的游戏牌，有最简单而实用的功能。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

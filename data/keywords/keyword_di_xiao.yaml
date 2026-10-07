@@ -1,7 +1,0 @@
-id: keyword_di_xiao
-name: 抵消
-definition: 在一张牌对一个目标的结算过程中抵消此牌，即此牌对该目标不生效。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

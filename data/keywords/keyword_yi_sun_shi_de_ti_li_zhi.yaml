@@ -1,7 +1,0 @@
-id: keyword_yi_sun_shi_de_ti_li_zhi
-name: 已损失的体力值
-definition: 此数值由角色的体力上限减去体力值得到。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

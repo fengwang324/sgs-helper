@@ -1,9 +1,0 @@
-id: keyword_shi_yong_zhe
-name: 使用者
-definition: |-
-  一张牌的使用者即使用此牌的角色。
-  ◆若A使用的牌的使用者改为B，则之后进行的使用结算流程中，此牌都算作是B使用而非A使用的。另外，在这种情况下，A和B都使用过此牌。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

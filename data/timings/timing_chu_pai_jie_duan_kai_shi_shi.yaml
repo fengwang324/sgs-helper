@@ -1,7 +1,0 @@
-id: timing_chu_pai_jie_duan_kai_shi_shi
-name: 出牌阶段开始时
-description: 能发动的技能：【司敌②】、【巧说】、【强识】、【献图】、【燕语】、【双刃】、【鸩毒】。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

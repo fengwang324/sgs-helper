@@ -1,7 +1,0 @@
-id: keyword_ping_zhi_zhuang_tai
-name: 平置状态
-definition: 一名角色的两张武将牌以副将在左主将在右的形式放置即其处于“平置状态”。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/

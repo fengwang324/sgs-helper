@@ -1,7 +1,0 @@
-id: keyword_pin_dian
-name: 拼点
-definition: 两名有手牌的角色各以一张手牌进行点数大小的比较，然后根据结果执行相应效果的操作。
-mode: common
-source:
-  type: official_rule
-  reference: https://gltjk.com/sanguosha/rules/
