@@ -4,7 +4,8 @@ category_2: 装备牌
 category_3: 坐骑
 name: 六龙骖驾
 image: card_liu_long_can_jia_qlhd_heart_13.jpg
-card_set: 君临天下·权
+card_set: 君主游戏牌
 effect:
-  text: ◆锁定技，当此牌进入你的装备区时，弃置你装备区里其他坐骑牌。只要此牌在你的装备区里，你的装备区便不能放入其他坐骑牌。
+  text: |-
+    ◆锁定技，当此牌进入你的装备区时，弃置你装备区里其他坐骑牌。只要此牌在你的装备区里，你的装备区便不能放入其他坐骑牌。
   skills: []

@@ -1,7 +1,7 @@
 id: qlhd
 name: 群狼环鼎
-mode: guozhan
 release_year: 2026
+mode: guozhan
 general_sets:
   - 紫凤衔佩
   - 金印紫绶
@@ -22,5 +22,3 @@ card_sets:
   - 九变篇
   - 不臣篇
   - 君主游戏牌
-  - 阵
-  - 君临天下·权
