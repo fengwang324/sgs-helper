@@ -1300,6 +1300,22 @@ def test_card_form_requires_name_and_category_1(client: TestClient, app, workdir
     assert doc["category_2"] == "" and doc["category_3"] == ""
 
 
+def test_card_edit_exposes_legacy_effect_text(client: TestClient) -> None:
+    """旧数据里已经写了 ``effect.text`` 的卡：编辑页必须标明“已有内容”。
+
+    录入页会按类型折叠「效果」块（基本牌 / 锦囊牌 归到「原始卡面文字」），
+    但**有内容时不能折叠**，否则用户看到的就是“这个框没了”，改不了也删不掉。
+    页面用 ``data-has-content`` 把这个信号交给前端脚本。
+    """
+    legacy = client.get("/edit/card/card_jue_dou").text          # 锦囊牌，旧数据有 effect.text
+    assert 'data-has-content="1"' in legacy
+    assert "出牌阶段，对一名其他角色使用" in legacy                  # 文本确实回填在框里
+
+    empty = client.get("/edit/card/card_sha").text                # 基本牌，effect.text 为空
+    assert 'data-has-content="0"' in empty
+    assert 'name="effect_text"' in empty                          # 空的时候框也还在（只是折叠）
+
+
 def test_card_form_rejects_unknown_skill_and_foreign_version(
     client: TestClient, app, workdir: Path
 ) -> None:

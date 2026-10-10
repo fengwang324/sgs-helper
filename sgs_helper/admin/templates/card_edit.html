@@ -209,7 +209,9 @@
     </details>
   </section>
 
-  <details id="card-effect-panel" open>
+  {# data-has-content：这条卡本来就有 effect.text（旧数据）时给 JS 一个信号，
+     让它不要按类型把这块折叠起来——否则「有内容却看不到、改不了、删不掉」。#}
+  <details id="card-effect-panel" open data-has-content="{{ '1' if values.get('effect_text') else '0' }}">
     <summary id="card-effect-summary">效果</summary>
     <div class="field {{ 'has-error' if error_map.get('effect_text') else '' }}">
     <label for="f-effect_text" id="card-effect-label">效果（可空）</label>

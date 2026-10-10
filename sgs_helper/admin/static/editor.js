@@ -1045,6 +1045,8 @@
     var notice = document.getElementById("inactive-rules-notice");
     var consent = document.getElementById("confirm-inactive-rules");
     var effectPanel = document.getElementById("card-effect-panel");
+    // 旧数据里已经写了 effect.text 的卡：这块必须保持展开，否则「有内容却看不到、改不了、删不掉」
+    var effectHasContent = effectPanel && effectPanel.dataset.hasContent === "1";
     var previousProfile = null;
     var previousInactive = "";
     var kinds = { weapon: "攻击范围", mount: "距离修正", use: "使用说明", note: "整张牌的补充说明" };
@@ -1115,8 +1117,10 @@
       consent.required = Boolean(summary);
       notice.hidden = !summary;
       document.getElementById("inactive-rules-summary").textContent = summary ? summary + "不属于当前类型，已暂存。切回原类型可以恢复；保存当前类型将舍弃这些规则。" : "";
-      if (current !== previousProfile) effectPanel.open = current !== "use";
-      document.getElementById("card-effect-summary").textContent = current === "use" ? "原始卡面文字（可选）" : "效果";
+      if (current !== previousProfile) effectPanel.open = current !== "use" || effectHasContent;
+      document.getElementById("card-effect-summary").textContent = current === "use"
+        ? (effectHasContent ? "原始卡面文字（已有内容，可修改或清空）" : "原始卡面文字（可选）")
+        : "效果";
       document.getElementById("card-effect-label").textContent = current === "use" ? "原始卡面文字（可空）" : "效果（可空）";
       document.getElementById("card-effect-help").textContent = current === "use" ?
         "完整卡面原文可以留在这里；上方分别填写使用时机、目标和效果。" :

@@ -35,6 +35,51 @@
 
 ---
 
+## 2026-10-07 修复：有旧 effect.text 的卡在编辑页看不到「效果」框
+
+**目标**（用户原话要点）：游戏牌编辑时，有些卡之前录入过效果文本，但编辑页没有这个框了，
+需要能修改或删除。
+
+**问题（按代码路径确认，不是猜的）**
+
+- 模板里 `<textarea name="effect_text">` 一直都在（服务端 200 且回填了旧文本）；
+- 上一轮「录入表单按类型切换」给前端脚本加了按类型折叠：`基本牌 / 锦囊牌` 归到 `use` 方案时
+  `effectPanel.open = false` 并把标题改成「原始卡面文字（可选）」——于是 **33 张锦囊牌**
+  的旧效果文本被折叠成一个不起眼的标题行，用户看到的就是“框没了”，既改不了也删不掉。
+- 实测：`/edit/card/card_jue_dou`（锦囊牌）的 `effect.text` 有 58 字，页面里文本框确实带内容，
+  只是被折叠。
+
+**改动清单**
+
+- 模板 `card_edit.html`：`#card-effect-panel` 增加 `data-has-content="1|0"`（服务端按
+  `values.effect_text` 是否为空渲染），把“这条卡本来就有内容”这个事实交给前端。
+- `static/editor.js`：改成 `effectPanel.open = current !== "use" || effectHasContent`——
+  有旧内容时**永不折叠**；折叠标题也改成「原始卡面文字（已有内容，可修改或清空）」，
+  明确告诉用户可以改或清空。没有内容的卡保持原来的折叠（不打扰新录入）。
+- 测试 `tests/test_admin.py`：新增 `test_card_edit_exposes_legacy_effect_text`，
+  断言有旧文本的卡（`card_jue_dou`）带 `data-has-content="1"` 且文本回填，
+  空文本的卡（`card_sha`）带 `"0"` 且文本框仍在。
+
+**自查（有无多余 / 偏移）**
+
+- [x] 只动「效果框是否可见」这一件事：没有改数据、没有改保存逻辑、没有动其他类型面板。
+- 说明：`data-has-content` 用服务端渲染而不是让 JS 读文本框值，是为了让这个信号在
+  脚本初始化前就存在（也便于用 pytest 守住，无头浏览器在本机沙箱里跑不起来）。
+- 说明：空内容的卡仍然保持折叠——那是上一轮刻意的整洁化设计，本次只修「有内容却被藏起来」。
+
+**验证**
+
+- `node --check sgs_helper/admin/static/editor.js` → 通过。
+- 起服务后实测：`/edit/card/card_jue_dou`、`card_wu_xie_ke_ji`（锦囊牌）、
+  `card_ding_lan_ye_ming_zhu`（装备牌）→ `data-has-content="1"` 且文本在框里；
+  `card_sha`（基本牌，无文本）→ `"0"`；页面引用的脚本版本号已随内容变化（`editor.js?v=87ac6e520d28`），
+  浏览器会自动取到新脚本。
+- `pytest -k "legacy_effect_text or card_form_requires or card_is_single_layer" tests/test_admin.py` → **3 passed**。
+
+**提交**：见下方 commit
+
+---
+
 ## 2026-10-07 紫骍：补上距离修正 -1（用户手改，单独提交）
 
 **目标**（用户原话要点）：工作区里剩下的改动也要 commit + push。
