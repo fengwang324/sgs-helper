@@ -1,10 +1,5 @@
 id: skill_shen_zhi_guozhan_qlhd_v1
 skill_id: skill_shen_zhi
 mode: guozhan
-text: 准备阶段，你可以弃置一名角色一个区域内的最后一张牌，然后其回复1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，你可以弃置一名角色一个区域内的最后一张牌，然后其回复1点体力。

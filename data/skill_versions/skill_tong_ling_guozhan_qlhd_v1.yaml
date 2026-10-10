@@ -1,10 +1,5 @@
 id: skill_tong_ling_guozhan_qlhd_v1
 skill_id: skill_tong_ling
 mode: guozhan
-text: 出牌阶段限一次，当你对势力与你不同的角色造成伤害后，你可以选择一名势力与你相同的角色，令其可以对受到此伤害的角色使用一张牌当此牌结算结束后，若此牌造成过伤害，则你与其各摸两张牌，否则受到你伤害的角色获得你对其造成伤害的牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，当你对势力与你不同的角色造成伤害后，你可以选择一名势力与你相同的角色，令其可以对受到此伤害的角色使用一张牌当此牌结算结束后，若此牌造成过伤害，则你与其各摸两张牌，否则受到你伤害的角色获得你对其造成伤害的牌。

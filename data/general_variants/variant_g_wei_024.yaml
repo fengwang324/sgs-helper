@@ -1,6 +1,5 @@
 id: variant_g_wei_024
 general_id: general_g_wei_024
-variant: 群狼环鼎
 title: 讨暴坚垒
 general_number: G.WEI 024
 illustrator: biou09
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 君临天下·权
 zhulianbihe: []
 skills:
-  - skill_id: skill_jie_yue
-    version_id: skill_jie_yue_guozhan_qlhd_v1
+- skill_id: skill_jie_yue
+  version_id: skill_jie_yue_guozhan_qlhd_v1

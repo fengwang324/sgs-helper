@@ -1,6 +1,5 @@
 id: variant_g_wei_wu_080
 general_id: general_g_wei_wu_080
-variant: 群狼环鼎
 title: 勇而无算
 general_number: G.WEI&WU 080
 illustrator: 匠人绘-零二
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_jin_fa
-    version_id: skill_jin_fa_guozhan_qlhd_v1
+- skill_id: skill_jin_fa
+  version_id: skill_jin_fa_guozhan_qlhd_v1

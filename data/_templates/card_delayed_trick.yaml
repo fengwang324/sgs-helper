@@ -1,0 +1,14 @@
+# 模板：延时锦囊。牌堆信息只按已录入的实物卡牌资料填写。
+id: card_change_me
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 延时锦囊
+name: 卡牌名
+image: ""
+card_set: null
+deck_info: ''
+rules:
+  use_methods:
+    - timing: ''
+      target: ''
+      effect: ''

@@ -33,7 +33,6 @@ from ..constants import (
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
-    SOURCE_LABELS,
     mode_sort_key,
 )
 from ..db import (
@@ -68,19 +67,6 @@ MENTION_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword")
 
 
 # ---------------------------------------------------------------- 展示辅助
-
-
-def source_dict(entity: Any) -> dict | None:
-    """展示用的结构化 source（只有 SkillVersion 有）：``type`` + ``reference``。"""
-    source = getattr(entity, "source", None)
-    if source is None or isinstance(source, str):
-        return None
-    source_type = getattr(source, "type", "")
-    return {
-        "type": source_type,
-        "type_label": SOURCE_LABELS.get(str(source_type), str(source_type)),
-        "reference": getattr(source, "reference", "") or "",
-    }
 
 
 def source_text(entity: Any) -> str:
@@ -129,24 +115,6 @@ def _detect_mentions(
     """只保留指定 kind 的自动识别结果（``db.detect_mentions`` 已按名称长度降序）。"""
     allowed = set(kinds)
     return [row for row in detect_mentions(text, index) if row[1] in allowed][:limit]
-
-
-def _history_chains(rows: list[dict]) -> list[list[str]]:
-    """按 ``previous_id`` 串出历史版本链（返回 id 列表，只保留真正成链的）。"""
-    by_id = {row["id"]: row for row in rows}
-    referenced = {row["previous_id"] for row in rows if row.get("previous_id")}
-    chains: list[list[str]] = []
-    for start in sorted(by_id.values(), key=lambda row: row["id"]):
-        if start["id"] in referenced:
-            continue
-        chain: list[str] = []
-        cursor: str | None = start["id"]
-        while cursor and cursor in by_id and cursor not in chain:
-            chain.append(cursor)
-            cursor = by_id[cursor].get("previous_id")
-        if len(chain) > 1:
-            chains.append(chain)
-    return chains
 
 
 @dataclass
@@ -412,14 +380,17 @@ class AdminStore:
         if kind == "skill_version":
             skill = self.bundle.get("skill", getattr(entity, "skill_id", ""))
             base = getattr(skill, "name", "") or getattr(entity, "skill_id", "")
-            label = getattr(entity, "version_label", "") or ""
-            return f"{base} {label}".strip()
+            product_name = self.name_of("product", getattr(entity, "product_id", None))
+            mode = MODE_LABELS.get(getattr(entity, "mode", ""), getattr(entity, "mode", "") or "")
+            return f"{base}（{product_name or mode}）".strip()
         if kind == "faq":
             return truncate(getattr(entity, "question", ""), 50)
         if kind == "general_variant":
             general = self.bundle.get("general", getattr(entity, "general_id", ""))
             base = getattr(general, "name", "") or getattr(entity, "general_id", "")
-            return f"{base}（{getattr(entity, 'variant', '')}）"
+            product_name = self.name_of("product", getattr(entity, "product_id", None))
+            mode = MODE_LABELS.get(getattr(entity, "mode", ""), getattr(entity, "mode", "") or "")
+            return f"{base}（{product_name or mode or entity.id}）"
         return getattr(entity, "name", "") or entity.id
 
     def name_of(self, kind: str, entity_id: str | None) -> str:
@@ -448,7 +419,7 @@ class AdminStore:
             bits = []
             bits.append(f"{len(variants)} 个版本")
             if variants:
-                bits.append("、".join(sorted(v.variant for v in variants)))
+                bits.append("、".join(sorted(self.name_of("product", v.product_id) or MODE_LABELS.get(v.mode or "", v.mode or "") or v.id for v in variants)))
             return " · ".join(bits)
         if kind == "general_variant":
             bits = [
@@ -480,8 +451,7 @@ class AdminStore:
                 label = product          # 标签与产品名重复时，用产品名占这个位置
             return f"{mode} · {label}".strip(" ·")
         if kind == "card":
-            effect = getattr(entity, "effect", None)
-            text = str(getattr(effect, "text", "") or "")
+            text = str(getattr(entity, "effect", "") or "")
             category = "/".join(
                 b
                 for b in (
@@ -494,15 +464,9 @@ class AdminStore:
             bits = [category]
             if getattr(entity, "card_set", None):
                 bits.append(f"拓展包 {entity.card_set}")
-            skills = [
-                self.display_name("skill", bundle.get("skill", ref.skill_id))
-                for ref in (getattr(effect, "skills", None) or [])
-            ]
             summary = " · ".join(b for b in bits if b)
             if text:
                 summary += f"　{truncate(text, 40)}"
-            elif skills:
-                summary += "　技能：" + "、".join(skills)
             return summary
         if kind == "faq":
             return truncate(getattr(entity, "answer", ""), 60)
@@ -518,7 +482,7 @@ class AdminStore:
                 for v in self.bundle.all("general_variant").values()
                 if v.general_id == general_id
             ),
-            key=lambda v: (v.variant, v.id),
+            key=lambda v: (self.name_of("product", v.product_id), v.mode or "", v.id),
         )
 
     def variants_using_version(self, version_id: str) -> list[dict]:
@@ -567,11 +531,11 @@ class AdminStore:
             "category_3": getattr(entity, "category_3", "") or "",
             "card_set": getattr(entity, "card_set", None),
             "image": getattr(entity, "image", "") or "",
-            "effect_text": str(getattr(getattr(entity, "effect", None), "text", "") or ""),
+            "effect_text": str(getattr(entity, "effect", "") or ""),
             "mode": mode,
             "mode_label": MODE_LABELS.get(mode, mode) if mode else "",
             "variant": getattr(entity, "variant", "") or "",
-            "source": source_dict(entity),
+            "source": None,
             "source_text": source_text(entity),
             "file": f"data/{origin.path}" if origin else "",
             "line": origin.line if origin else 0,
@@ -1145,7 +1109,7 @@ class AdminStore:
         ]
 
     def version_display_label(self, version: Any) -> str:
-        """给编辑页用：与产品名/模式名重复的版本标签不再单独显示一次。"""
+        """给编辑页用：由产品名或模式派生版本的显示名称。"""
         if version is None:
             return ""
         return self._display_label(
@@ -1156,13 +1120,8 @@ class AdminStore:
 
     @staticmethod
     def _display_label(version: Any, product_name: str, mode_label: str) -> str:
-        """版本标签如果与产品名/模式名重复，就不必再显示（避免「群狼环鼎 · 国战 · 群狼环鼎」）。"""
-        label = (getattr(version, "version_label", "") or "").strip()
-        if not label:
-            return ""
-        if label in {product_name.strip(), mode_label.strip()}:
-            return ""
-        return label
+        """产品名是首选显示名，未关联产品时回退到模式名。"""
+        return product_name.strip() or mode_label.strip()
 
     def skill_version_options(
         self, skill_id: str, *, mode: str | None = None, product_id: str | None = None
@@ -1189,7 +1148,7 @@ class AdminStore:
             rows.append(
                 {
                     "id": version.id,
-                    "version_label": version.version_label or "",
+                    "product_name": self.name_of("product", version.product_id),
                     "display_label": self._display_label(
                         version, self.name_of("product", version.product_id),
                         MODE_LABELS.get(version.mode, version.mode or ""),
@@ -1198,7 +1157,6 @@ class AdminStore:
                     "mode_label": MODE_LABELS.get(version.mode, version.mode),
                     "product_id": version.product_id,
                     "product_name": self.name_of("product", version.product_id),
-                    "previous_version_id": version.previous_version_id,
                     "text": text,
                     "text_excerpt": truncate(text, 60),
                     "text_sha": hashlib.sha1(text.strip().encode("utf-8")).hexdigest(),
@@ -1207,7 +1165,7 @@ class AdminStore:
                     "same_mode": bool(mode and version.mode == mode),
                 }
             )
-        rows.sort(key=lambda r: (r["rank"], r["version_label"], r["id"]))
+        rows.sort(key=lambda r: (r["rank"], r["product_name"], r["mode"], r["id"]))
         return rows
 
     def version_by_content(
@@ -1225,7 +1183,7 @@ class AdminStore:
             if (version.product_id or None) != (product_id or None):
                 continue
             if (version.text or "").strip() == target:
-                return {"id": version.id, "version_label": version.version_label or ""}
+                return {"id": version.id, "product_name": self.name_of("product", version.product_id)}
         return None
 
     def product_search(self, query: str, limit: int = 20) -> list[dict]:
@@ -1351,7 +1309,7 @@ class AdminStore:
                 continue
             variants = sorted(
                 (v for v in bundle.all("general_variant").values() if v.general_id == general_id),
-                key=lambda v: (v.variant, v.id),
+                key=lambda v: (self.name_of("product", v.product_id), v.mode or "", v.id),
             )
             first = variants[0] if variants else None
             rows.append(
@@ -1366,7 +1324,7 @@ class AdminStore:
                     "product_name": self.name_of("product", first.product_id) if first else "",
                     "general_set": (first.general_set or "") if first else "",
                     "general_number": (first.general_number or "") if first else "",
-                    "variant_labels": [v.variant for v in variants],
+                    "variant_labels": [self.name_of("product", v.product_id) or MODE_LABELS.get(v.mode or "", v.mode or "") for v in variants],
                     "variant_count": len(variants),
                     "exact": general.name == text,
                 }
@@ -1427,23 +1385,14 @@ class AdminStore:
             version = self.entity("skill_version", entity_id)
             if version is not None:
                 bound = [item["name"] for item in self.variants_using_version(entity_id)]
-                successors = [
-                    v.id
-                    for v in self.bundle.all("skill_version").values()
-                    if v.previous_version_id == entity_id
-                ]
                 impact["is_current"] = bool(bound)
                 impact["bound_by"] = bound
                 if bound:
                     impact["lines"].append(
                         "有武将版本显式绑定这一版：" + "、".join(bound) + "；删除后它们会失去技能文本。"
                     )
-                if successors:
-                    impact["lines"].append(
-                        "有更新的版本把它当作前一版本：" + "、".join(successors) + "。"
-                    )
-                if not bound and not successors:
-                    impact["lines"].append("既没有武将版本绑定它，也没有后继版本引用它，删除属于历史清理。")
+                if not bound:
+                    impact["lines"].append("没有武将版本绑定它，删除不会影响武将技能展示。")
         elif kind == "skill":
             versions = [v.id for v in self.bundle.all("skill_version").values() if v.skill_id == entity_id]
             impact["lines"].append(
@@ -1519,7 +1468,7 @@ class AdminStore:
         versions = [
             v for v in bundle.all("skill_version").values() if v.skill_id == skill_id
         ]
-        versions.sort(key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id))
+        versions.sort(key=lambda v: (mode_sort_key(v.mode), self.name_of("product", v.product_id), v.id))
 
         rows = []
         for version in versions:
@@ -1528,10 +1477,6 @@ class AdminStore:
                     "entity": version,
                     "id": version.id,
                     "product_name": self.name_of("product", version.product_id),
-                    "previous_id": version.previous_version_id,
-                    "successor_ids": [
-                        v.id for v in versions if v.previous_version_id == version.id
-                    ],
                     # 技能文本里的技能名 / 关键词名 / 卡牌名自动变成链接
                     "segments": self.annotate(version.text),
                 }
@@ -1550,7 +1495,7 @@ class AdminStore:
                 }
                 for mode in sorted({v.mode for v in versions}, key=mode_sort_key)
             ],
-            "chains": _history_chains(rows),
+            "chains": [],
         }
 
     def general_view(self, general_id: str) -> dict | None:
@@ -1562,7 +1507,7 @@ class AdminStore:
         variants = []
         for variant in sorted(
             (v for v in bundle.all("general_variant").values() if v.general_id == general_id),
-            key=lambda v: (v.variant, v.id),
+            key=lambda v: (self.name_of("product", v.product_id), v.mode or "", v.id),
         ):
             skills = []
             for position, ref in enumerate(variant.skills):
@@ -1572,7 +1517,7 @@ class AdminStore:
                         for v in bundle.all("skill_version").values()
                         if v.skill_id == ref.skill_id
                     ),
-                    key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id),
+                    key=lambda v: (mode_sort_key(v.mode), self.name_of("product", v.product_id), v.id),
                 )
                 pinned = bundle.get("skill_version", ref.version_id) if ref.version_id else None
                 chosen = pinned or self._fallback_version(all_versions, variant.mode)
@@ -1594,9 +1539,8 @@ class AdminStore:
                 {
                     "entity": variant,
                     "id": variant.id,
-                    "variant": variant.variant,
-                    "skills": skills,
                     "product_name": self.name_of("product", variant.product_id),
+                    "skills": skills,
                     "product_mode": getattr(product, "mode", None),
                     "set_display": self.set_display(variant.general_set),
                     "edit_url": f"/edit/general/{general_id}?variant={variant.id}",
@@ -1633,41 +1577,18 @@ class AdminStore:
         if entity is None:
             return None
         bundle = self.bundle
-        effect = entity.effect
         from ..card_rules import rule_sections
 
         rule_blocks = rule_sections(entity)
         for block in rule_blocks:
             for item in block["fields"]:
                 item["segments"] = self.annotate(item["text"])
-        skills: list[dict] = []
-        for position, ref in enumerate(effect.skills):
-            all_versions = sorted(
-                (v for v in bundle.all("skill_version").values() if v.skill_id == ref.skill_id),
-                key=lambda v: (mode_sort_key(v.mode), v.version_label or "", v.id),
-            )
-            pinned = bundle.get("skill_version", ref.version_id) if ref.version_id else None
-            # 卡牌没有 mode：回退时只认 common（跨模式通用）那一条唯一版本
-            chosen = pinned or self._fallback_version(all_versions, None)
-            skills.append(
-                {
-                    "position": position,
-                    "skill_id": ref.skill_id,
-                    "skill": bundle.get("skill", ref.skill_id),
-                    "version_id": ref.version_id,
-                    "pinned": pinned,
-                    "current": chosen,
-                    "pinned_missing": bool(ref.version_id and pinned is None),
-                    "all_versions": all_versions,
-                    "segments": self.annotate(chosen.text) if chosen is not None else [],
-                }
-            )
         return {
             "kind": "card",
             "card": entity,
-            "effect_text": self.annotate(effect.text) if (effect.text or "").strip() else [],
+            "effect_text": self.annotate(entity.effect) if (entity.effect or "").strip() else [],
             "rule_blocks": rule_blocks,
-            "skills": skills,
+            "skills": [],
         }
 
     def product_view(self, product_id: str) -> dict | None:
@@ -1679,12 +1600,12 @@ class AdminStore:
         for variant in variants:
             general = bundle.get("general", variant.general_id)
             variant_name = getattr(general, "name", variant.general_id)
-            variant._display_name = f"{variant_name}（{variant.variant}）"  # type: ignore[attr-defined]
+            variant._display_name = f"{variant_name}（{self.name_of('product', variant.product_id) or variant.mode or variant.id}）"  # type: ignore[attr-defined]
         versions = [v for v in bundle.all("skill_version").values() if v.product_id == product_id]
         return {
             "kind": "product",
             "product": entity,
-            "variants": sorted(variants, key=lambda v: (v.general_id, v.variant, v.id)),
+            "variants": sorted(variants, key=lambda v: (v.general_id, self.name_of("product", v.product_id), v.mode or "", v.id)),
             "skill_versions": sorted(versions, key=lambda v: (v.skill_id, mode_sort_key(v.mode), v.id)),
             "general_set_chips": [{"name": str(name)} for name in (entity.general_sets or [])],
             "card_set_chips": [{"name": str(name)} for name in (entity.card_sets or [])],

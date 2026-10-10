@@ -1,10 +1,5 @@
 id: skill_ju_jian_guozhan_qlhd_v1
 skill_id: skill_ju_jian
 mode: guozhan
-text: 副将技，锁定技，你计算体力上限时减少1个单独的阴阳鱼。当势力与你相同的角色进入濒死状态时，你令其将体力回复至1点，然后你变更一次副将。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 副将技，锁定技，你计算体力上限时减少1个单独的阴阳鱼。当势力与你相同的角色进入濒死状态时，你令其将体力回复至1点，然后你变更一次副将。

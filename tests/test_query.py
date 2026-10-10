@@ -40,8 +40,8 @@ def _version(report: dict, version_id: str) -> dict:
     return next(v for v in report["versions"] if v["id"] == version_id)
 
 
-def _skill_entry(report: dict, variant_label: str, position: int = 0) -> dict:
-    variant = next(v for v in report["variants"] if v["variant"] == variant_label)
+def _skill_entry(report: dict, variant_title: str, position: int = 0) -> dict:
+    variant = next(v for v in report["variants"] if v["title"] == variant_title)
     return variant["skills"][position]
 
 
@@ -49,13 +49,13 @@ def _dataset_with_versions(
     tmp_path: Path, variant_mode: str, versions: list[tuple[str, str]]
 ) -> Path:
     """搭一个最小数据集：一个武将版本引用一个技能，技能版本由 ``(id, mode)`` 指定。"""
-    from conftest import SOURCE_YAML, write_dataset
+    from conftest import write_dataset
 
     files = {
         "products/p.yaml": "id: product_p\nname: 演示产品\n",
         "generals/g.yaml": "id: general_g\nname: 演示武将\n",
         "general_variants/v.yaml": (
-            "id: variant_v\ngeneral_id: general_g\nvariant: 标准版\n"
+            "id: variant_v\ngeneral_id: general_g\ntitle: 演示称号\n"
             f"mode: {variant_mode}\nfaction: 群\nhp: 3\n"
             "skills:\n  - skill_id: skill_s\n"
         ),
@@ -64,7 +64,7 @@ def _dataset_with_versions(
     for version_id, mode in versions:
         files[f"skill_versions/{version_id}.yaml"] = (
             f"id: {version_id}\nskill_id: skill_s\nmode: {mode}\n"
-            f"text: {version_id} 的文本\n{SOURCE_YAML}"
+            f"text: {version_id} 的文本\n"
         )
     return write_dataset(tmp_path / "data", files)
 
@@ -92,22 +92,20 @@ def test_skill_report_keeps_every_mode_and_version(synth_conn) -> None:
     assert all(v["text"] for v in report["versions"])
 
 
-def test_version_chain_is_recorded(synth_conn) -> None:
+def test_removed_version_chain_and_source_fields_are_absent(synth_conn) -> None:
     report = skill_report(synth_conn, "skill_demo")
     assert report is not None
     v2 = _version(report, "skill_demo_identity_v2")
-    assert v2["previous_version_id"] == "skill_demo_identity_v1"
-    assert v2["previous_version"]["id"] == "skill_demo_identity_v1"
-    assert "review_note" not in v2          # 复核备注已整体删除
-    assert ["skill_demo_identity_v2", "skill_demo_identity_v1"] in report["history_chains"]
-    assert "change_note" not in v2
+    for removed in ("previous_version_id", "previous_version", "version_label", "source", "source_key", "history_chains"):
+        assert removed not in v2
+    assert "history_chains" not in report
 
 
 def test_explicit_version_binding_wins_over_mode(synth_conn) -> None:
     report = general_report(synth_conn, "general_demo_alpha")
     assert report is not None
     # 标准版显式绑定 v1：即使身份局还有二代版本，也用绑定的这条
-    standard = _skill_entry(report, "标准版")
+    standard = _skill_entry(report, "演示标准称号")
     assert standard["version_id"] == "skill_demo_identity_v1"
     assert standard["pinned"] is True
     assert standard["version"]["id"] == "skill_demo_identity_v1"
@@ -118,7 +116,7 @@ def test_empty_version_id_falls_back_to_unique_mode_version(synth_conn) -> None:
     report = general_report(synth_conn, "general_demo_alpha")
     assert report is not None
     # 国战版没写 version_id：该技能在 guozhan 下只有一条版本 -> 回退
-    guozhan = _skill_entry(report, "国战版")
+    guozhan = _skill_entry(report, "演示称号甲")
     assert guozhan["version_id"] is None
     assert guozhan["pinned"] is False
     assert guozhan["version"]["id"] == "skill_demo_guozhan_v1"
@@ -129,7 +127,7 @@ def test_ambiguous_mode_fallback_gives_no_text(synth_conn) -> None:
     report = general_report(synth_conn, "general_demo_beta")
     assert report is not None
     # 身份局有 v1 / v2 两条版本，回退匹配不唯一 -> 没有文本
-    entry = _skill_entry(report, "标准版")
+    entry = _skill_entry(report, "演示乙称号")
     assert entry["version_id"] is None
     assert entry["pinned"] is False
     assert entry["version"] is None
@@ -193,10 +191,11 @@ def test_ambiguous_common_versions_give_no_text(tmp_path: Path) -> None:
 def test_general_report_lists_variants_and_product(synth_conn) -> None:
     report = general_report(synth_conn, "general_demo_alpha")
     assert report is not None
-    variants = {v["variant"]: v for v in report["variants"]}
-    assert set(variants) == {"国战版", "标准版"}
-    assert variants["国战版"]["product_id"] == "product_demo_a"
-    assert report["product"]["id"] == "product_demo_a"
+    variants = {v["title"]: v for v in report["variants"]}
+    assert set(variants) == {"演示称号甲", "演示标准称号"}
+    assert variants["演示称号甲"]["product_id"] == "product_demo_a"
+    assert variants["演示称号甲"]["product_name"] == "演示产品A"
+    assert report["product"] is None  # 通用产品展示由各 variant 的 product_name 提供
 
 
 # ---------------------------------------------------------------- 解析 / 检索
@@ -307,15 +306,7 @@ def test_card_report_is_single_layer(synth_conn) -> None:
     """card_report 不再有 printings：卡是单层的，效果文本与技能引用直接挂在卡上。"""
     report = card_report(synth_conn, "演示锦囊")
     assert report is not None
-    assert set(report) == {
-        "kind",
-        "card",
-        "effect",
-        "generals",
-        "skills",
-        "cards",
-        "keywords",
-    }
+    assert set(report) == {"kind", "card", "effect", "attack_range", "deck_info", "note", "rules", "generals", "skills", "cards", "keywords"}
     assert "printings" not in report
 
     card = report["card"]
@@ -329,21 +320,14 @@ def test_card_report_is_single_layer(synth_conn) -> None:
     for removed in ("card_id", "suit", "rank", "card_type", "product_id"):
         assert removed not in card
 
-    assert report["effect"]["text"] == "演示效果：与演示技能相关。"
+    assert report["effect"] == "演示效果：与演示技能相关。"
+    assert report["rules"]["use_methods"][0]["timing"] == "出牌阶段"
 
 
-def test_card_report_resolves_effect_skill_version(synth_conn) -> None:
+def test_card_report_detects_skill_mention_from_effect_text(synth_conn) -> None:
     report = card_report(synth_conn, "演示锦囊")
     assert report is not None
-    entries = report["effect"]["skills"]
-    assert len(entries) == 1
-    entry = entries[0]
-    assert set(entry) == {"skill_id", "version_id", "version", "pinned", "skill"}
-    assert entry["skill_id"] == "skill_demo"
-    assert entry["version_id"] == "skill_demo_guozhan_v1"
-    assert entry["pinned"] is True
-    assert entry["version"]["id"] == "skill_demo_guozhan_v1"
-    assert entry["skill"]["name"] == "演示技能"
+    assert [e["id"] for e in report["skills"]] == ["skill_demo"]
 
 
 def test_card_report_detects_mentions_but_not_itself(synth_conn) -> None:
@@ -359,7 +343,7 @@ def test_card_report_without_effect(synth_conn) -> None:
     """effect.text / effect.skills 可以为空：报告仍返回完整的分组键。"""
     report = card_report(synth_conn, "演示卡牌")
     assert report is not None
-    assert report["effect"] == {"text": "", "skills": []}
+    assert report["effect"] == ""
     assert report["skills"] == [] and report["cards"] == []
 
 
@@ -410,7 +394,7 @@ def test_stats_reports_meta(synth_conn) -> None:
     payload = stats(synth_conn)
     assert payload["counts"]["skill_version"] == 4
     assert payload["counts"]["card"] == 2
-    assert payload["meta"]["schema_version"] == "6"
+    assert payload["meta"]["schema_version"] == "7"
 
 
 def test_json_serializable(synth_conn) -> None:
@@ -437,10 +421,9 @@ def test_real_data_card_report_is_single_layer(conn) -> None:
     assert report is not None
     assert "printings" not in report
     assert report["card"]["card_set"] == "九变篇"
-    skills = report["effect"]["skills"]
-    assert [e["skill_id"] for e in skills] == ["skill_zhi_heng"]
-    assert skills[0]["pinned"] is True
-    assert skills[0]["skill"]["name"] == "制衡"
+    assert isinstance(report["effect"], str)
+    assert report["attack_range"] == ""
+    assert isinstance(report["deck_info"], str)
 
 
 def test_real_data_product_report_has_no_printings(conn) -> None:

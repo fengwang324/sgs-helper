@@ -2,14 +2,13 @@
 
 精简后的模型只保留实际会展示 / 查询 / 核验的字段：
 
-- 实体卡类（Product / GeneralVariant / Card）**没有** ``source``；
-- ``Source``（只给 SkillVersion 用）只剩 ``type`` + ``reference``；
-  FAQ 的 ``source`` 是一段多行文本，关键词不带来源字段；
+- ``SkillVersion`` 只保留 id / skill_id / mode / product_id / text；
+- FAQ 的 ``source`` 保留原始多行文本，来源实体已删除；
 - 通用 ``notes`` 与 ``review_note`` 都已整体删除；
 - 技能版本不再按日期推导，武将版本用 ``skills[].version_id`` 显式绑定；
 - ``Card`` 是**单层**的：``category_1/2/3`` 决定它是什么，``card_set`` 决定它来自哪个
   拓展包；同一张卡不再因为花色 / 点数不同拆成多条 ``CardPrinting``；
-- 技能引用统一为 ``SkillRef``（武将版本与卡牌效果共用）。
+- 技能引用 ``SkillRef`` 只用于武将版本，卡牌效果保持字符串。
 """
 
 from __future__ import annotations
@@ -20,7 +19,6 @@ from pydantic import ValidationError
 from sgs_helper.constants import CARD_CATEGORY_TREE
 from sgs_helper.schema import (
     Card,
-    CardEffect,
     Faq,
     General,
     GeneralVariant,
@@ -29,10 +27,7 @@ from sgs_helper.schema import (
     Skill,
     SkillRef,
     SkillVersion,
-    Source,
 )
-
-SOURCE = {"type": "community_db", "reference": ""}
 
 #: 一张合法基本牌的最小字段集（基本牌的 category_3 是牌族，具体哪张写在 name）
 CARD_BASE = {
@@ -54,10 +49,13 @@ REMOVED_CARD_FIELDS = {
     "quantity": 2,
     "printed_text": "卡面原文",
     "normalized_text": "规范化正文",
+    "effect_text": "旧效果列",
+    "effect_skills": [],
     "illustrator": "画师",
     "bottom_right_mark": "君",
     "card_number": "001",
     "related_keywords": ["keyword_x"],
+    "distance_modifier": "+1",
 }
 
 
@@ -90,10 +88,9 @@ def test_enum_values_stay_strings() -> None:
     assert product.mode == "guozhan"
     assert product.general_sets == [] and product.card_sets == []
 
-    version = SkillVersion(
-        id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本", source=SOURCE
-    )
+    version = SkillVersion(id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本")
     assert version.mode == "guozhan"
+    assert set(SkillVersion.model_fields) == {"id", "skill_id", "mode", "product_id", "text"}
 
 
 def test_strings_are_stripped() -> None:
@@ -105,42 +102,18 @@ def test_strings_are_stripped() -> None:
 # ---------------------------------------------------------------- 来源
 
 
-def test_source_is_type_plus_reference_only() -> None:
-    """Source 只剩 type + reference：旧的 title / notes 结构必须拒绝。"""
-    assert Source(type="wiki").reference == ""
-    assert Source(type="wiki", reference="https://example.com").reference == "https://example.com"
-    with pytest.raises(ValidationError):
-        Source(type="wiki", title="测试来源")
-    with pytest.raises(ValidationError):
-        Source(type="wiki", notes="旧字段")
-
-
-def test_source_requires_known_type() -> None:
-    with pytest.raises(ValidationError):
-        Source(type="random_blog")
-    assert Source(type="wiki").type == "wiki"
-
-
-def test_entity_card_kinds_have_no_source() -> None:
-    """Product / GeneralVariant / Card 的来源由 product_id 或数据目录定位，不再重复保存。"""
-    with pytest.raises(ValidationError):
-        Product(id="product_x", name="X", source=SOURCE)
-    with pytest.raises(ValidationError):
-        GeneralVariant(id="variant_x", general_id="general_x", source=SOURCE)
-    with pytest.raises(ValidationError):
-        _card(source=SOURCE)
-
-
-def test_source_is_required_where_rules_demand_it() -> None:
-    with pytest.raises(ValidationError):
-        SkillVersion(id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本")
-    # FAQ 的 source 是多行文本，仍然必填
+def test_faq_source_is_text_and_skill_source_is_removed() -> None:
+    # FAQ source 仍保留原始文本。
     with pytest.raises(ValidationError):
         Faq(id="faq_x", question="问题", answer="回答")
+    faq = Faq(id="faq_x", question="问题", answer="回答", source="来源原文")
+    assert faq.source == "来源原文"
+    with pytest.raises(ValidationError):
+        SkillVersion(id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="文本", source={"type": "wiki"})
     # 关键词只有 id / name / definition / variant 四个字段，没有来源字段
     assert Keyword(id="keyword_x", name="关键词", definition="定义").variant == ""
     with pytest.raises(ValidationError):
-        Keyword(id="keyword_x", name="关键词", definition="定义", source=SOURCE)
+        Keyword(id="keyword_x", name="关键词", definition="定义", source="文本")
 
 
 # ---------------------------------------------------------------- 卡牌（单层）
@@ -157,12 +130,18 @@ def test_card_is_single_layer() -> None:
         "image",
         "card_set",
         "effect",
+        "attack_range",
+        "deck_info",
+        "note",
         "rules",
     }
     card = _card()
     assert card.image == ""
     assert card.card_set is None
-    assert card.effect == CardEffect()
+    assert card.effect == ""
+    assert card.attack_range == ""
+    assert card.deck_info == ""
+    assert card.note == ""
 
 
 def test_basic_card_category_three_is_the_family() -> None:
@@ -195,39 +174,27 @@ def test_card_categories_are_free_text_and_may_be_blank() -> None:
     assert only_level_1.category_2 == "" and only_level_1.category_3 == ""
 
 
-def test_card_effect_allows_empty_text_and_skills() -> None:
-    """effect.text 与 effect.skills 都允许为空，也可以同时为空。"""
-    card = _card(effect={"text": "", "skills": []})
-    assert isinstance(card.effect, CardEffect)
-    assert card.effect.text == "" and card.effect.skills == []
+def test_card_effect_and_attack_range_are_text() -> None:
+    card = _card(effect="锁定技，造成 X 点伤害。", attack_range="X+1")
+    assert card.effect == "锁定技，造成 X 点伤害。"
+    assert card.attack_range == "X+1"
+    with pytest.raises(ValidationError):
+        _card(effect={"text": "旧嵌套结构", "skills": []})
 
 
-def test_card_effect_skills_use_skill_ref() -> None:
-    """卡牌效果里的技能引用与武将版本共用 SkillRef（{skill_id, version_id}）。"""
-    card = _card(
-        category_2="装备牌",
-        category_3="宝物",
-        name="定澜夜明珠",
-        card_set="九变篇",
-        image="card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg",
-        effect={
-            "text": "锁定技，你视为拥有“制衡”。",
-            "skills": [
-                {
-                    "skill_id": "skill_zhi_heng",
-                    "version_id": "skill_zhi_heng_guozhan_qlhd_v1",
-                }
-            ],
-        },
-    )
-    ref = card.effect.skills[0]
-    assert isinstance(ref, SkillRef)
-    assert ref.skill_id == "skill_zhi_heng"
-    assert ref.version_id == "skill_zhi_heng_guozhan_qlhd_v1"
+def test_card_rules_are_use_methods_without_note() -> None:
+    card = _card(rules={"use_methods": [{"label": "使用", "timing": "出牌阶段", "target": "一名角色", "effect": "造成伤害"}]})
+    assert card.rules.use_methods[0].label == "使用"
+    with pytest.raises(ValidationError):
+        _card(rules={"use_methods": [{"note": "旧字段"}]})
+    with pytest.raises(ValidationError):
+        _card(rules={"distance_modifier": "+1"})
 
-    # 只写 skill_id 也合法：version_id 为空表示查询时按 mode 回退
-    loose = _card(effect={"skills": [{"skill_id": "skill_zhi_heng"}]})
-    assert loose.effect.skills[0].version_id is None
+
+def test_indicator_rejects_game_card_fields() -> None:
+    for field, value in (("rules", {"use_methods": []}), ("card_set", "牌堆"), ("deck_info", "1张"), ("attack_range", "5")):
+        with pytest.raises(ValidationError):
+            _card(category_1="指示物", **{field: value})
 
 
 @pytest.mark.parametrize(("field", "value"), sorted(REMOVED_CARD_FIELDS.items()))
@@ -256,7 +223,6 @@ def test_effective_range_is_gone() -> None:
             text="文本",
             effective_from="2025-01-01",
             effective_to="2024-01-01",
-            source=SOURCE,
         )
     assert "effective_from" in str(excinfo.value)
 
@@ -264,7 +230,7 @@ def test_effective_range_is_gone() -> None:
 def test_empty_rule_text_is_rejected() -> None:
     with pytest.raises(ValidationError):
         SkillVersion(
-            id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="   ", source=SOURCE
+            id="skill_x_v1", skill_id="skill_x", mode="guozhan", text="   "
         )
 
 
@@ -294,7 +260,7 @@ def test_general_stays_stable_and_variant_carries_the_rest() -> None:
     standard = GeneralVariant(
         id="variant_zhu_ge_liang_biao_zhun_ban",
         general_id=general.id,
-        variant="标准版",
+        general_number="G.SH 001",
         mode="identity",
         faction="蜀",
         hp=3,
@@ -303,13 +269,16 @@ def test_general_stays_stable_and_variant_carries_the_rest() -> None:
     guozhan = GeneralVariant(
         id="variant_zhu_ge_liang_guo_zhan_ban",
         general_id=general.id,
-        variant="国战版",
+        general_number="G.SH 002",
         mode="guozhan",
         faction="蜀",
         hp=1.5,
     )
     assert standard.general_id == guozhan.general_id == general.id
-    assert standard.variant != guozhan.variant
+    assert standard.general_number != guozhan.general_number
+    assert "variant" not in GeneralVariant.model_fields
+    with pytest.raises(ValidationError):
+        GeneralVariant(id="variant_old", general_id=general.id, variant="标准版")
 
 
 def test_general_sets_are_plain_strings() -> None:

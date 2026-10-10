@@ -1,6 +1,5 @@
 id: variant_g_wu_qun_070
 general_id: general_g_wu_qun_070
-variant: 群狼环鼎
 title: 诤友投明
 general_number: G.WU&QUN 070
 illustrator: Domi
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe:
-  - 甘宁
+- 甘宁
 skills:
-  - skill_id: skill_lian_pian
-    version_id: skill_lian_pian_guozhan_qlhd_v1
+- skill_id: skill_lian_pian
+  version_id: skill_lian_pian_guozhan_qlhd_v1

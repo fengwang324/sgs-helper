@@ -4,17 +4,12 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 联军盛宴
 image: card_lian_jun_sheng_yan_qlhd_heart_1.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，对你和你选择的一个其他势力的所有角色使用，你选择一项：1. 回复X点体力；2. 摸X张牌。然后其他每名目标角色各摸一张牌且重置其武将牌。（X为该势力存活角色数）
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
+    - timing: |-
+        出牌阶段。
+      target: |-
+        有势力的你和除你的势力外的一个势力的所有角色。
       effect: |-
         出牌阶段，对你和你选择的一个其他势力的所有角色使用，你选择一项：1. 回复X点体力；2. 摸X张牌。然后其他每名目标角色各摸一张牌且重置其武将牌。（X为该势力存活角色数）
-      note: ''
-  note: ''
+deck_info: ""

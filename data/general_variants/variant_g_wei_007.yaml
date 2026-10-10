@@ -1,6 +1,5 @@
 id: variant_g_wei_007
 general_id: general_g_wei_007
-variant: 群狼环鼎
 title: 薄幸的美人
 general_number: G.WEI 007
 illustrator: DH
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_qing_guo
-    version_id: skill_qing_guo_guozhan_qlhd_v1
-  - skill_id: skill_luo_shen
-    version_id: skill_luo_shen_guozhan_qlhd_v1
+- skill_id: skill_qing_guo
+  version_id: skill_qing_guo_guozhan_qlhd_v1
+- skill_id: skill_luo_shen
+  version_id: skill_luo_shen_guozhan_qlhd_v1

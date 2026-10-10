@@ -1,10 +1,5 @@
 id: skill_fen_wei_guozhan_qlhd_v1
 skill_id: skill_fen_wei
 mode: guozhan
-text: 限定技，当一张锦囊牌指定目标后，若此牌目标数大于1，你可以令此牌对其中任意名目标角色无效。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，当一张锦囊牌指定目标后，若此牌目标数大于1，你可以令此牌对其中任意名目标角色无效。

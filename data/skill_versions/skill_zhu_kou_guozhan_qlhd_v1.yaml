@@ -1,10 +1,5 @@
 id: skill_zhu_kou_guozhan_qlhd_v1
 skill_id: skill_zhu_kou
 mode: guozhan
-text: 当你于每名角色的出牌阶段第一次造成伤害后，你可以摸X张牌（X为本回合你使用过的牌数且至多为5）
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你于每名角色的出牌阶段第一次造成伤害后，你可以摸X张牌（X为本回合你使用过的牌数且至多为5）。

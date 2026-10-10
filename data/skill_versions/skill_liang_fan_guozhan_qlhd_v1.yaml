@@ -1,10 +1,5 @@
 id: skill_liang_fan_guozhan_qlhd_v1
 skill_id: skill_liang_fan
 mode: guozhan
-text: 准备阶段，若你的武将牌上有“函”，则你获得所有的“函”，然后失去1点体力。当你因使用此回合得到的“函”而造成伤害后，你可以获得受到此伤害角色的一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，若你的武将牌上有“函”，则你获得所有的“函”，然后失去1点体力。当你因使用此回合得到的“函”而造成伤害后，你可以获得受到此伤害角色的一张牌。

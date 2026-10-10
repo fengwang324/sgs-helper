@@ -1,10 +1,5 @@
 id: skill_feng_ying_guozhan_qlhd_v1
 skill_id: skill_feng_ying
 mode: guozhan
-text: 限定技，你可以将所有手牌当【挟天子以令诸侯】使用且你以此法使用牌选择目标无视大势力限制，若如此做，你令所有势力与你相同的角色各将手牌摸至X张（X为其体力上限）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，你可以将所有手牌当【挟天子以令诸侯】使用且你以此法使用牌选择目标无视大势力限制，若如此做，你令所有势力与你相同的角色各将手牌摸至X张（X为其体力上限）。

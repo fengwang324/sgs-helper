@@ -38,9 +38,6 @@ BLOCK_TEXT_FIELDS: frozenset[str] = frozenset(
     }
 )
 
-#: source 内嵌结构的固定键序（Source 只保留 type + reference）
-SOURCE_KEY_ORDER: tuple[str, ...] = ("type", "reference")
-
 #: 一个文件最多放多少条实体（防止误把大列表塞进单文件；超过给出警告由调用方处理）
 YAML_SUFFIX = ".yaml"
 
@@ -68,9 +65,6 @@ def _represent_str(dumper: yaml.Dumper, data: str):
     forced = isinstance(data, BlockStr)
     text = str(data)
     if forced or "\n" in text:
-        # 很短的单行文本不必强上块状标量，保持一行可读
-        if forced and "\n" not in text and len(text) <= 30:
-            return dumper.represent_scalar("tag:yaml.org,2002:str", text)
         return dumper.represent_scalar("tag:yaml.org,2002:str", text, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", text)
 
@@ -203,54 +197,47 @@ def entity_to_yaml_dict(kind: str, entity: Any) -> dict:
         ordered.setdefault(name, None)
 
     if kind == "card":
-        rules = ordered.get("rules")
-        if rules is None:
-            ordered.pop("rules", None)
+        # Card 的自由文本字段在外层；空的通用字段省略，但游戏牌始终写出
+        # deck_info（空串明确表示牌堆资料待录入）。effect 是文本标量。
+        ordered = {
+            key: value
+            for key, value in ordered.items()
+            if value not in (None, "", [], {})
+        }
+        if data.get("category_1") == "游戏牌":
+            ordered["deck_info"] = BlockStr(data.get("deck_info") or "")
+            rules = data.get("rules") or {}
+            methods = rules.get("use_methods", []) if isinstance(rules, dict) else []
+            kept_methods = []
+            for method in methods:
+                compact = {
+                    key: BlockStr(value) if isinstance(value, str) and value else value
+                    for key, value in method.items()
+                    if value not in (None, "", [], {})
+                }
+                if compact:
+                    kept_methods.append(compact)
+            if kept_methods:
+                ordered["rules"] = {"use_methods": kept_methods}
+            else:
+                ordered.pop("rules", None)
         else:
-            # 空的非适用字段不落盘；已有内容无论分类如何都保留。
-            applicable = {"note"}
-            if data.get("category_2") in {"基本牌", "锦囊牌"}:
-                applicable.add("use_methods")
-            if data.get("category_2") == "装备牌":
-                if data.get("category_3") == "武器":
-                    applicable.add("attack_range")
-                if data.get("category_3") == "坐骑":
-                    applicable.add("distance_modifier")
-            ordered["rules"] = {
-                key: value for key, value in rules.items() if key in applicable or value
-            }
-            for key, value in ordered["rules"].items():
-                if isinstance(value, str) and value:
-                    ordered["rules"][key] = BlockStr(value)
-            for method in ordered["rules"].get("use_methods", []):
-                for key, value in method.items():
-                    if isinstance(value, str) and value:
-                        method[key] = BlockStr(value)
+            ordered.pop("deck_info", None)
+            ordered.pop("rules", None)
+
+        effect = ordered.get("effect")
+        if isinstance(effect, str) and effect:
+            ordered["effect"] = BlockStr(effect)
 
     for name in BLOCK_TEXT_FIELDS:
         value = ordered.get(name)
         if isinstance(value, str) and value.strip():
             ordered[name] = BlockStr(value)
 
-    # Card.effect 是嵌套映射：text 按规则文本用块状标量，skills 固定 skill_id/version_id 键序
-    effect = ordered.get("effect")
-    if isinstance(effect, dict):
-        effect = dict(effect)
-        text = effect.get("text")
-        if isinstance(text, str) and text.strip():
-            effect["text"] = BlockStr(text)
-        skills = effect.get("skills")
-        if isinstance(skills, list):
-            effect["skills"] = [
-                {"skill_id": ref.get("skill_id"), "version_id": ref.get("version_id")}
-                for ref in skills
-                if isinstance(ref, dict)
-            ]
-        ordered["effect"] = effect
+    # 普通武将保留所有技能引用的顺序与版本绑定；空列表无需写回。
+    if kind == "general_variant" and not ordered.get("skills"):
+        ordered.pop("skills", None)
 
-    source = ordered.get("source")
-    if isinstance(source, dict):
-        ordered["source"] = {key: source.get(key, "") for key in SOURCE_KEY_ORDER}
     return ordered
 
 

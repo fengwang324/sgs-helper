@@ -1,10 +1,5 @@
 id: skill_wu_xin_guozhan_qlhd_v1
 skill_id: skill_wu_xin
 mode: guozhan
-text: 摸牌阶段开始时，你可以观看牌堆顶的X张牌，然后将这些牌以任意顺序置于牌堆顶（X为存活的群势力角色数）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 摸牌阶段开始时，你可以观看牌堆顶的X张牌，然后将这些牌以任意顺序置于牌堆顶（X为存活的群势力角色数）。

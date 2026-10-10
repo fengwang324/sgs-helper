@@ -1,10 +1,5 @@
 id: skill_liao_ye_guozhan_qlhd_v1
 skill_id: skill_liao_ye
 mode: guozhan
-text: 出牌阶段限一次，你可以令一名其他角色指定任意名角色，然后你选择对所有其指定或所有其未指定的其他角色各造成1点伤害。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以令一名其他角色指定任意名角色，然后你选择对所有其指定或所有其未指定的其他角色各造成1点伤害。

@@ -1,10 +1,5 @@
 id: skill_guo_rui_guozhan_qlhd_v1
 skill_id: skill_guo_rui
 mode: guozhan
-text: 张【决斗】结算结束后，你可以选择一项：1.对一名其他角色依次使用弃牌堆中于此【决斗】结算中被打出的【杀】：2.变更副将。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 一张【决斗】结算结束后，你可以选择一项：1.对一名其他角色依次使用弃牌堆中于此【决斗】结算中被打出的【杀】；2.变更副将。

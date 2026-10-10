@@ -1,10 +1,5 @@
 id: skill_jian_tong_guozhan_qlhd_v1
 skill_id: skill_jian_tong
 mode: guozhan
-text: 当你受到伤害后，你可以观看一名角色的手牌，然后你可以用装备区内的一张牌交换其中至多两张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你受到伤害后，你可以观看一名角色的手牌，然后你可以用装备区内的一张牌交换其中至多两张牌。

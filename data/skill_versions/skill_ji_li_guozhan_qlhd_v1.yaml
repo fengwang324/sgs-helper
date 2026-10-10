@@ -1,10 +1,5 @@
 id: skill_ji_li_guozhan_qlhd_v1
 skill_id: skill_ji_li
 mode: guozhan
-text: 锁定技，当你成为红色基本牌或红色普通锦囊牌的唯一目标后，你令此牌结算执行两次。当你于任意一个阶段内受到第二次伤害时，你防止此伤害，然后移除此武将牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，当你成为红色基本牌或红色普通锦囊牌的唯一目标后，你令此牌结算执行两次。当你于任意一个阶段内受到第二次伤害时，你防止此伤害，然后移除此武将牌。

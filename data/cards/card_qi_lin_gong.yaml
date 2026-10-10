@@ -4,11 +4,7 @@ category_2: 装备牌
 category_3: 武器
 name: 麒麟弓
 image: card_qi_lin_gong_qlhd_heart_5.jpg
-card_set: null
-effect:
-  text: |-
-    当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
-  skills: []
-rules:
-  attack_range: ''
-  note: ''
+effect: |-
+  当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。
+attack_range: '5'
+deck_info: ""

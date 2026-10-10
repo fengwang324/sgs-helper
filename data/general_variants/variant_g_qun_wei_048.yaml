@@ -1,6 +1,5 @@
 id: variant_g_qun_wei_048
 general_id: general_g_qun_wei_048
-variant: 群狼环鼎
 title: 政宽敞惠
 general_number: G.QUN&WEI 048
 illustrator: 磐蒲
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_bu_shi
-    version_id: skill_bu_shi_guozhan_qlhd_v1
-  - skill_id: skill_mi_dao
-    version_id: skill_mi_dao_guozhan_qlhd_v1
+- skill_id: skill_bu_shi
+  version_id: skill_bu_shi_guozhan_qlhd_v1
+- skill_id: skill_mi_dao
+  version_id: skill_mi_dao_guozhan_qlhd_v1

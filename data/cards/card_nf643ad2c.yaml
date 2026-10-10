@@ -1,0 +1,7 @@
+id: card_nf643ad2c
+category_1: 指示物
+category_2: 军令
+name: 军令其四
+image: r00c03_1.png
+effect: |-
+  本回合不能使用或打出手牌且所有非锁定技失效。

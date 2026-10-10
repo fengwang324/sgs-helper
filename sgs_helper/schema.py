@@ -7,10 +7,9 @@
 - 武将牌：``Product.general_sets`` + ``GeneralVariant.general_set`` 两处维护系列；
 - 游戏牌 / 指示物：**一层** :class:`Card`（分类 + 卡名 + 卡图 + 拓展包 + 效果），
   同一规则卡不因为花色点数不同拆成多条；
-- 规则类（SkillVersion / FAQ / Keyword）只保留极简来源：SkillVersion 用结构化的
-  ``type`` + ``reference``，FAQ 用一段**多行文本**（逐条列出来源属性），
-  关键词不带来源字段；
-- 游戏牌的 ``rules.note`` 是规则补充说明；没有通用 notes 或 review_note。
+- 技能版本通过产品定位，不保存来源、重复版本标签或版本演进链；FAQ 保留来源文本。
+- 卡牌按牌型使用专属模板：效果是正文，武器单列攻击范围，游戏牌单列牌堆信息。
+- 补充裁定归 FAQ，必要的资料备注只在卡牌最外层保存。
 
 约定：
 
@@ -23,14 +22,13 @@ from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 from typing import Annotated
 
 from .constants import (
     ID_PATTERN,
     Gender,
     Mode,
-    SourceType,
 )
 
 #: 实体 id：小写字母开头，只含小写字母/数字/下划线
@@ -52,17 +50,6 @@ class StrictModel(BaseModel):
         str_strip_whitespace=True,
         use_enum_values=True,
     )
-
-
-class Source(StrictModel):
-    """规则资料来源：只保留 ``type`` + ``reference``。
-
-    展示用的来源名（例如「三国杀官方规则集 3.0」）在渲染阶段由 type / reference 推导，
-    不再单独存储。
-    """
-
-    type: SourceType
-    reference: str = ""
 
 
 # ---------------------------------------------------------------- 实体产品
@@ -93,7 +80,7 @@ class Product(StrictModel):
 
 
 class SkillRef(StrictModel):
-    """对某个技能（以及可选的具体版本）的引用。武将版本与卡牌效果共用这一种形状。
+    """武将版本对某个技能（以及可选的具体版本）的引用。
 
     - ``skill_id``：必填，指向 SkillDefinition；
     - ``version_id``：可以为空。为空表示“按该技能的 mode 匹配唯一一条版本”。
@@ -107,11 +94,10 @@ class SkillRef(StrictModel):
 
 
 class General(StrictModel):
-    """**武将个体**。只保存稳定信息：内部 id 与官方武将名。
+    """**独立武将记录**。本体保存内部 id 与武将名。
 
-    ``诸葛亮`` / ``界诸葛亮`` / ``神诸葛亮`` 是**不同**的 General（官方武将名不同）；
-    而“标准版诸葛亮”与“国战版诸葛亮”官方名都还是``诸葛亮``，
-    它们是同一个 General 的两个 :class:`GeneralVariant`。
+    名称不是身份键：同名但卡面编号或称号不同的武将，保留独立 General 与各自
+    :class:`GeneralVariant`，不能仅按名字合并。编号、称号与技能仍在版本中维护。
     """
 
     id: Id
@@ -129,8 +115,6 @@ class GeneralVariant(StrictModel):
 
     id: Id
     general_id: Id
-    #: 版本标签（同一武将的多个版本靠它区分，例如 标准版 / 国战版）
-    variant: str = "标准版"
     title: str = ""
     general_number: str | None = None
     illustrator: str = ""
@@ -178,7 +162,7 @@ class Skill(StrictModel):
     """SkillDefinition：技能**本体**（例如“集智”这个概念）。
 
     技能名不是主键；同名技能的不同模式 / 产品 / 时期的文本全部放在 SkillVersion。
-    来源与文本都归 SkillVersion，这里不重复保存。
+    文本归 SkillVersion，这里不重复保存。
     """
 
     id: Id
@@ -188,33 +172,18 @@ class Skill(StrictModel):
 class SkillVersion(StrictModel):
     """SkillVersion：某模式 / 某产品下技能的具体规则文本。
 
-    更新技能的正确做法是**新增一条** SkillVersion 并用 ``previous_version_id`` 串链，
-    绝不修改旧记录。哪个武将版本 / 哪张卡用哪一版文本，由 ``SkillRef.version_id`` 决定。
+    武将使用哪一版文本，由 ``SkillRef.version_id`` 决定。
+    产品名称通过 ``product_id`` 取得，不重复保存标签、来源或演进链。
     """
 
     id: Id
     skill_id: Id
     mode: Mode
     text: RuleText
-    version_label: str = ""
     product_id: Id | None = None
-    previous_version_id: Id | None = None
-    source: Source
 
 
 # ---------------------------------------------------------------- 卡牌
-
-
-class CardEffect(StrictModel):
-    """卡牌的效果 / 技能。
-
-    - ``text``：卡面效果原文，逐字照抄，允许为空（例如纯技能指示物只有技能引用）；
-    - ``skills``：这张卡关联到的技能（0～N 个）。技能文本继续由 Skill / SkillVersion
-      维护，**不要把技能说明抄进 ``text``**。
-    """
-
-    text: str = ""
-    skills: list[SkillRef] = Field(default_factory=list)
 
 
 class CardUseMethod(StrictModel):
@@ -224,21 +193,17 @@ class CardUseMethod(StrictModel):
     timing: str = ""
     target: str = ""
     effect: str = ""
-    note: str = ""
 
 
 class GameCardRules(StrictModel):
     """游戏牌专用规则。通用装备规则由 Keyword 维护，不在每张卡重复。
 
-    基本牌 / 锦囊牌使用 use_methods；装备牌复用 Card.effect 的能力原文，
-    武器增加 attack_range，坐骑增加 distance_modifier；note 为规则补充说明。
+    基本牌 / 锦囊牌使用 use_methods；装备能力使用 Card.effect，
+    武器攻击范围、牌堆资料与必要备注在卡牌最外层保存。
     所有标量均为文本。分类仍自由填写，这些字段是可选内容而非分类白名单。
     """
 
     use_methods: list[CardUseMethod] = Field(default_factory=list)
-    attack_range: str = ""
-    distance_modifier: str = ""
-    note: str = ""
 
 
 class Card(StrictModel):
@@ -251,7 +216,7 @@ class Card(StrictModel):
     取值不受任何预设白名单约束，新增分类不需要改代码。
 
     同一规则卡因为花色 / 点数不同产生的多份实体印刷**不在这一层建模**：
-    当前阶段只维护卡面资料，完整牌堆构成留给以后单独加的 ``deck_entries``。
+    牌堆数量、花色与点数用 ``deck_info`` 文本维护，不拆成多条卡牌。
     """
 
     id: Id
@@ -263,8 +228,14 @@ class Card(StrictModel):
     image: str = ""
     #: 所属拓展包；允许为空（跨多个拓展包、或暂时无法确认来源时留空）
     card_set: str | None = None
-    effect: CardEffect = Field(default_factory=CardEffect)
-    #: 游戏牌专用结构；指示物维持自由效果与技能引用，省略此字段。
+    effect: str = ""
+    #: 武器的攻击范围，允许 X、条件等原文文本。
+    attack_range: str = ""
+    #: 游戏牌的牌堆数量、花色及点数；空字符串表示待录入，指示物不使用。
+    deck_info: str | None = None
+    #: 可选的资料备注；补充裁定归 FAQ。
+    note: str = ""
+    #: 基本牌 / 锦囊牌的使用方法；装备及指示物不填写。
     rules: GameCardRules | None = None
 
     @field_validator("rules")
@@ -273,6 +244,24 @@ class Card(StrictModel):
         if value is not None and info.data.get("category_1") != "游戏牌":
             raise ValueError("rules 是游戏牌专用字段；指示物及其他自由分类使用 effect")
         return value
+
+    @model_validator(mode="after")
+    def _specialized_fields(self):
+        if self.category_1 == "游戏牌":
+            if self.deck_info is None:
+                self.deck_info = ""
+        else:
+            if self.deck_info is not None:
+                raise ValueError("deck_info 是游戏牌专用字段；指示物不填写牌堆信息")
+            if self.card_set:
+                raise ValueError("card_set 是游戏牌专用字段；指示物不填写拓展包")
+            if self.attack_range:
+                raise ValueError("attack_range 是游戏牌专用字段；指示物不填写攻击范围")
+        if self.category_2 == "装备牌" and self.rules is not None:
+            raise ValueError("装备牌使用 effect 和外层 attack_range，不填写 rules")
+        if self.attack_range and self.category_2 == "装备牌" and self.category_3 != "武器":
+            raise ValueError("attack_range 只用于武器；坐骑距离写在 effect 中")
+        return self
 
 
 # ---------------------------------------------------------------- FAQ / 关键词

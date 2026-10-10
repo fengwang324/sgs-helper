@@ -3,7 +3,7 @@
 单层化之后建库与旧模型的差别：
 
 - 没有 ``card_printings`` 表（也没有它的索引），卡牌只有 ``cards`` 一张表；
-- ``cards`` 的效果文本 / 技能引用落成 ``effect_text`` / ``effect_skills``(JSON)；
+- ``cards`` 保留 effect / attack_range / deck_info / note 和 rules JSON；
 - ``Card`` 不再有 ``product_id`` / ``mode`` / 花色点数，这些字段不会出现在任何列里；
 - 检索正文（原 ``normalized_text``）在构建期生成，并把识别到的实体名拼进
   ``search_index.body``。
@@ -33,13 +33,12 @@ EXPECTED_TABLES = {
     "cards",
     "faqs",
     "keywords",
-    "sources",
     "search_index",
     "meta",
 }
 
 #: 模型精简后已删除的表
-REMOVED_TABLES = {"general_sets", "card_printings", "timings"}
+REMOVED_TABLES = {"general_sets", "card_printings", "timings", "sources"}
 
 #: 卡牌单层化后删掉的列
 REMOVED_CARD_COLUMNS = (
@@ -57,6 +56,9 @@ REMOVED_CARD_COLUMNS = (
     "bottom_right_mark",
     "card_number",
     "related_keywords",
+    "effect_text",
+    "effect_skills",
+    "distance_modifier",
 )
 
 
@@ -120,28 +122,30 @@ def test_cards_table_matches_single_layer_model(synth_db: Path) -> None:
         "name",
         "image",
         "card_set",
-        "effect_text",
-        "effect_skills",
+        "effect",
+        "attack_range",
+        "deck_info",
+        "note",
         "rules",
         "yaml_file",
         "yaml_line",
     ]
 
 
-def test_card_effect_skills_are_stored_as_json(synth_db: Path) -> None:
+def test_card_effect_is_text_and_rules_use_methods_are_json(synth_db: Path) -> None:
     conn = sqlite3.connect(synth_db)
     try:
         raw = conn.execute(
-            "SELECT effect_text, effect_skills FROM cards WHERE id = 'card_demo_trick'"
+            "SELECT effect, attack_range, deck_info, note, rules FROM cards WHERE id = 'card_demo_trick'"
         ).fetchone()
     finally:
         conn.close()
-    text, skills = raw
+    text, attack_range, deck_info, note, rules = raw
     assert text == "演示效果：与演示技能相关。"
-    assert isinstance(skills, str)  # 落库的是 JSON 文本
-    assert json.loads(skills) == [
-        {"skill_id": "skill_demo", "version_id": "skill_demo_guozhan_v1"}
-    ]
+    assert (attack_range, deck_info, note) == ("", "演示牌堆中一张", "")
+    assert json.loads(rules) == {"use_methods": [
+        {"timing": "出牌阶段", "target": "一名其他角色", "effect": "造成一点伤害"}
+    ]}
 
 
 def test_build_creates_db_file(synth: Path, tmp_path: Path) -> None:
@@ -182,21 +186,27 @@ def test_rebuild_is_idempotent(synth: Path, tmp_path: Path) -> None:
     assert rows_second[sorted(EXPECTED_TABLES).index("skill_versions")] == 4
 
 
+def test_rebuild_removes_legacy_schema_residue(synth: Path, tmp_path: Path) -> None:
+    db_path = tmp_path / "legacy.db"
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript(
+            "CREATE TABLE sources(source_key TEXT);"
+            "CREATE TABLE cards(id TEXT, effect_text TEXT, effect_skills TEXT, distance_modifier TEXT);"
+            "CREATE TABLE skill_versions(id TEXT, version_label TEXT, previous_version_id TEXT, source_key TEXT);"
+        )
+    finally:
+        conn.close()
+
+    build_database(synth, db_path)
+    assert "sources" not in _tables(db_path)
+    assert not {"effect_text", "effect_skills", "distance_modifier"} & set(_columns(db_path, "cards"))
+    assert not {"version_label", "previous_version_id", "source_key"} & set(_columns(db_path, "skill_versions"))
+
+
 def test_build_refuses_invalid_data(synth: Path, tmp_path: Path) -> None:
     replace_in(
         synth / "general_variants" / "demo_alpha_guozhan.yaml",
-        "skill_id: skill_demo",
-        "skill_id: skill_missing",
-    )
-    with pytest.raises(DataValidationError) as excinfo:
-        build_database(synth, tmp_path / "sgs.db")
-    assert "skill_missing" in excinfo.value.result.format_report()
-
-
-def test_build_refuses_broken_card_effect(synth: Path, tmp_path: Path) -> None:
-    """卡牌效果里的技能引用也是硬引用：不存在就拒绝建库。"""
-    replace_in(
-        synth / "cards" / "demo_trick.yaml",
         "skill_id: skill_demo",
         "skill_id: skill_missing",
     )
@@ -221,18 +231,15 @@ def test_build_can_force_invalid_data(synth: Path, tmp_path: Path) -> None:
         conn.close()
 
 
-def test_sources_are_deduplicated(synth: Path, tmp_path: Path) -> None:
+def test_structured_sources_are_removed(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     result = build_database(synth, db_path)
-    assert result.source_count == 1  # 全部指向同一份 source（type + reference）
+    assert result.source_count == 0
     conn = sqlite3.connect(db_path)
     try:
-        assert conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 1
-        linked = conn.execute(
-            "SELECT COUNT(*) FROM skill_versions WHERE source_key IS NOT NULL"
-        ).fetchone()[0]
-        assert linked == 4
-        # 实体卡类没有 source_key 列
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        assert "sources" not in tables
+        assert "source_key" not in _columns(db_path, "skill_versions")
         assert "source_key" not in _columns(db_path, "cards")
         assert "source_key" not in _columns(db_path, "products")
     finally:
@@ -243,7 +250,7 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "6"
+    assert meta["schema_version"] == "7"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
     assert meta["count.card"] == "2"

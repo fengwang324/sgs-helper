@@ -1,20 +1,19 @@
 id: variant_g_am_002
 general_id: general_g_am_002
-variant: 群狼环鼎
 title: 桀骜的野心家
 general_number: G.AM 002
 illustrator: 磐蒲
 image: g_am_002.jpg
 mode: guozhan
 faction: 野心家
-hp: 1.5
+hp: 2
 gender: male
 product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe:
-  - 姜维
+- 姜维
 skills:
-  - skill_id: skill_quan_ji
-    version_id: skill_quan_ji_guozhan_qlhd_v1
-  - skill_id: skill_pai_yi
-    version_id: skill_pai_yi_guozhan_qlhd_v1
+- skill_id: skill_quan_ji
+  version_id: skill_quan_ji_guozhan_qlhd_v1
+- skill_id: skill_pai_yi
+  version_id: skill_pai_yi_guozhan_qlhd_v1

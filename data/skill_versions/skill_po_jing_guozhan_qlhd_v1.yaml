@@ -1,10 +1,5 @@
 id: skill_po_jing_guozhan_qlhd_v1
 skill_id: skill_po_jing
 mode: guozhan
-text: 出牌阶段限一次，你可以令一名其他角色选择一项：1.令你获得其区域内的一张牌：2.所有与你势力相同的角色可以明置任意张武将牌并对其造成等量伤害。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以令一名其他角色选择一项：1.令你获得其区域内的一张牌；2.所有与你势力相同的角色可以明置任意张武将牌并对其造成等量伤害。

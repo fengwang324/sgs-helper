@@ -1,16 +1,16 @@
 id: variant_g_jin_005
 general_id: general_g_jin_005
-variant: 群狼环鼎
-title: 温恭的猴猴司马油
+title: 温恭的狻猊
 general_number: G.JIN 005
 illustrator: 凝聚永恒
 image: g_jin_005.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
-gender: unknown
+hp: 2
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 紫气东来
+zhulianbihe: []
 skills:
-  - skill_id: skill_po_jing
-    version_id: skill_po_jing_guozhan_qlhd_v1
+- skill_id: skill_po_jing
+  version_id: skill_po_jing_guozhan_qlhd_v1

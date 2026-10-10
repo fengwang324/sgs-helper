@@ -1,10 +1,5 @@
 id: skill_shou_cheng_guozhan_qlhd_v1
 skill_id: skill_shou_cheng
 mode: guozhan
-text: 当一名势力与你相同的角色于其回合外失去手牌后，若其没有手牌，你可以令其摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当一名势力与你相同的角色于其回合外失去手牌后，若其没有手牌，你可以令其摸一张牌。

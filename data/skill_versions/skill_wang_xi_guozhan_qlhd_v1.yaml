@@ -1,10 +1,5 @@
 id: skill_wang_xi_guozhan_qlhd_v1
 skill_id: skill_wang_xi
 mode: guozhan
-text: 当你对其他角色造成1点伤害后或当你受到其他角色造成的1点伤害后，若其存活，则你可以令你与其各摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你对其他角色造成1点伤害后或当你受到其他角色造成的1点伤害后，若其存活，则你可以令你与其各摸一张牌。

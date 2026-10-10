@@ -1,6 +1,5 @@
 id: variant_g_wu_020
 general_id: general_g_wu_020
-variant: 群狼环鼎
 title: 红东的铁壁
 general_number: G.WU 020
 illustrator: 天信
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·阵
 zhulianbihe:
-  - 丁奉
+- 丁奉
 skills:
-  - skill_id: skill_yi_cheng
-    version_id: skill_yi_cheng_guozhan_qlhd_v1
+- skill_id: skill_yi_cheng
+  version_id: skill_yi_cheng_guozhan_qlhd_v1

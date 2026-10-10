@@ -1,6 +1,5 @@
 id: variant_g_wei_018
 general_id: general_g_wei_018
-variant: 群狼环鼎
 title: 魏之福将
 general_number: G.WEI 018
 illustrator: Yellowkiss
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·阵
 zhulianbihe:
-  - 曹仁
+- 曹仁
 skills:
-  - skill_id: skill_hu_yuan
-    version_id: skill_hu_yuan_guozhan_qlhd_v1
-  - skill_id: skill_he_yi
-    version_id: skill_he_yi_guozhan_qlhd_v1
+- skill_id: skill_hu_yuan
+  version_id: skill_hu_yuan_guozhan_qlhd_v1
+- skill_id: skill_he_yi
+  version_id: skill_he_yi_guozhan_qlhd_v1

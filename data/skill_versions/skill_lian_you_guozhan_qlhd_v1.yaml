@@ -1,10 +1,5 @@
 id: skill_lian_you_guozhan_qlhd_v1
 skill_id: skill_lian_you
 mode: guozhan
-text: 你死亡时，可以选择一名其他角色，该角色获得“兴火”（锁定技，你造成的火焰伤害+1）
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你死亡时，可以选择一名其他角色，该角色获得“兴火”（锁定技，你造成的火焰伤害+1）。

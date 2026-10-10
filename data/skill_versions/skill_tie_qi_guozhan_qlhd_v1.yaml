@@ -1,10 +1,5 @@
 id: skill_tie_qi_guozhan_qlhd_v1
 skill_id: skill_tie_qi
 mode: guozhan
-text: 当你的【杀】指定目标后，你可以进行判定，然后令目标角色此回合一张明置武将牌的非锁定技失效，除非其弃置一张与结果花色相同的牌，否则不能使用【闪】响应此【杀】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你的【杀】指定目标后，你可以进行判定，然后令目标角色此回合一张明置武将牌的非锁定技失效，除非其弃置一张与结果花色相同的牌，否则不能使用【闪】响应此【杀】。

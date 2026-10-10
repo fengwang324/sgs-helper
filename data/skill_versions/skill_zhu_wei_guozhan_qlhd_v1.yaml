@@ -1,10 +1,5 @@
 id: skill_zhu_wei_guozhan_qlhd_v1
 skill_id: skill_zhu_wei
 mode: guozhan
-text: 出牌阶段限一次，你可以弃置两张牌并选择一名角色，若该角色死亡可以令场上形成新的围攻，你对其造成2点伤害，否则你摸张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以弃置两张牌并选择一名角色，若该角色死亡可以令场上形成新的围攻，你对其造成2点伤害，否则你摸张牌。

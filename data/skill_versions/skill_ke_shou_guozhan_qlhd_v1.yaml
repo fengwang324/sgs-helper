@@ -1,10 +1,5 @@
 id: skill_ke_shou_guozhan_qlhd_v1
 skill_id: skill_ke_shou
 mode: guozhan
-text: 当你一次失去两张牌后，你可以令一名与你势力相同的角色下回合受到的伤害-1。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你一次失去两张牌后，你可以令一名与你势力相同的角色下回合受到的伤害-1。

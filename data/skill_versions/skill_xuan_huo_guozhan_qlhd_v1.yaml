@@ -1,10 +1,5 @@
 id: skill_xuan_huo_guozhan_qlhd_v1
 skill_id: skill_xuan_huo
 mode: guozhan
-text: 每名势力与你相同的其他角色的出牌阶段限次，该角色可以交给你一张手牌再弃置一张牌然后其选择并获得下列任意一项当前场上没有的技能直到此回合结束：“武圣”、”咆哮、“龙胆”、“铁骑”、“烈弓”、“狂骨”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每名势力与你相同的其他角色的出牌阶段限一次，该角色可以交给你一张手牌再弃置一张牌，然后其选择并获得下列任意一项当前场上没有的技能直到此回合结束：“武圣”、“咆哮”、“龙胆”、“铁骑”、“烈弓”、“狂骨”。

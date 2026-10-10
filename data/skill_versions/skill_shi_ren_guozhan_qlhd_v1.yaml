@@ -1,10 +1,5 @@
 id: skill_shi_ren_guozhan_qlhd_v1
 skill_id: skill_shi_ren
 mode: guozhan
-text: 每回合限一次，当未确定势力的其他角色受到伤害后，你可以交给其两张牌并摸两张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每回合限一次，当未确定势力的其他角色受到伤害后，你可以交给其两张牌并摸两张牌。

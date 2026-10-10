@@ -1,10 +1,5 @@
 id: skill_gong_qing_guozhan_qlhd_v1
 skill_id: skill_gong_qing
 mode: guozhan
-text: 锁定技，当你受到伤害时，若伤害来源攻击范围：大于3，则你令此伤害+1；小于3，则你令此伤害减至1点。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，当你受到伤害时，若伤害来源攻击范围：大于3，则你令此伤害+1；小于3，则你令此伤害减至1点。

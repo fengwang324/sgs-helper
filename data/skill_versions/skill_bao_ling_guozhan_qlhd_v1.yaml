@@ -1,10 +1,5 @@
 id: skill_bao_ling_guozhan_qlhd_v1
 skill_id: skill_bao_ling
 mode: guozhan
-text: 主将技，锁定技，出牌阶段结束时，若你有副将，则移除你的副将，然后加3点体力上限，回复3点体力，失去“暴凌”，获得“崩坏”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，锁定技，出牌阶段结束时，若你有副将，则移除你的副将，然后加3点体力上限，回复3点体力，失去“暴凌”，获得“崩坏”。

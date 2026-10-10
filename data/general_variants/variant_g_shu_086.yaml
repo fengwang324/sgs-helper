@@ -1,6 +1,5 @@
 id: variant_g_shu_086
 general_id: general_g_shu_086
-variant: 群狼环鼎
 title: 清河一鲲
 general_number: G.SHU 086
 illustrator: Mr_Sleeping
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_tong_du
-    version_id: skill_tong_du_guozhan_qlhd_v1
-  - skill_id: skill_qing_yin
-    version_id: skill_qing_yin_guozhan_qlhd_v1
+- skill_id: skill_tong_du
+  version_id: skill_tong_du_guozhan_qlhd_v1
+- skill_id: skill_qing_yin
+  version_id: skill_qing_yin_guozhan_qlhd_v1

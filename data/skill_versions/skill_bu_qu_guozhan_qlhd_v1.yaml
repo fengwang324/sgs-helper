@@ -1,10 +1,5 @@
 id: skill_bu_qu_guozhan_qlhd_v1
 skill_id: skill_bu_qu
 mode: guozhan
-text: 务堂品房务济成品房机房制育机伦创品济堂务运品闲数：均不同，你将体力回复至1点：存在相同，你移去此牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 务堂品房务济成品房机房制育机伦创品济堂务运品闲数：均不同，你将体力回复至1点：存在相同，你移去此牌。

@@ -27,6 +27,20 @@ def test_real_data_dir_loads(data_dir: Path) -> None:
     assert "timing" not in kinds
 
 
+def test_synthetic_new_fields_load_and_faq_source_stays_text(synth: Path) -> None:
+    entities, issues = load_data_dir(synth)
+    assert issues == []
+    card = next(e.data for e in entities if e.kind == "card" and e.data["id"] == "card_demo_trick")
+    assert card["effect"] == "演示效果：与演示技能相关。"
+    assert card["rules"]["use_methods"][0]["effect"] == "造成一点伤害"
+    assert card["deck_info"] == "演示牌堆中一张"
+
+    faq = next(e.data for e in entities if e.kind == "faq")
+    assert faq["source"] == "演示来源文本（保留原始FAQ来源文本形状）"
+    version = next(e.data for e in entities if e.kind == "skill_version")
+    assert not {"source", "version_label", "previous_version_id"} & set(version)
+
+
 def test_iter_yaml_files_skips_templates(tmp_path: Path) -> None:
     data = tmp_path / "data"
     (data / "products").mkdir(parents=True)

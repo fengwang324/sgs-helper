@@ -1,6 +1,5 @@
 id: variant_g_am_004
 general_id: general_g_am_004
-variant: 群狼环鼎
 title: 狡黠的投机者
 general_number: G.AM 004
 illustrator: 猎枭
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_huai_yi
-    version_id: skill_huai_yi_guozhan_qlhd_v1
-  - skill_id: skill_zi_sui
-    version_id: skill_zi_sui_guozhan_qlhd_v1
+- skill_id: skill_huai_yi
+  version_id: skill_huai_yi_guozhan_qlhd_v1
+- skill_id: skill_zi_sui
+  version_id: skill_zi_sui_guozhan_qlhd_v1

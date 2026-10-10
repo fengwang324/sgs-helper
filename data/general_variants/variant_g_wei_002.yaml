@@ -1,6 +1,5 @@
 id: variant_g_wei_002
 general_id: general_g_wei_002
-variant: 群狼环鼎
 title: 狼顾之鬼
 general_number: G.WEI 002
 illustrator: KayaK
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_fan_kui
-    version_id: skill_fan_kui_guozhan_qlhd_v1
-  - skill_id: skill_gui_cai
-    version_id: skill_gui_cai_guozhan_qlhd_v1
+- skill_id: skill_fan_kui
+  version_id: skill_fan_kui_guozhan_qlhd_v1
+- skill_id: skill_gui_cai
+  version_id: skill_gui_cai_guozhan_qlhd_v1

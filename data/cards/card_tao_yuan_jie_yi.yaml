@@ -4,15 +4,13 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 桃园结义
 image: card_tao_yuan_jie_yi_qlhd_heart_1.jpg
-card_set: null
-effect:
-  text: 出牌阶段，对所有角色使用。每名目标角色回复1点体力。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 所有角色
-      effect: 每名目标角色回复1点体力。
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        所有角色
+      effect: |-
+        每名目标角色回复1点体力。
+        【桃园结义】对对应的角色未受伤的目标无效。
+deck_info: ""

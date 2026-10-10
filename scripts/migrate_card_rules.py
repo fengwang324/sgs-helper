@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""为已有游戏牌补结构化规则，原文、ID、技能引用与指示物文件保持原样。
+"""为已有游戏牌补使用方法或武器攻击范围，原文、ID 与指示物保持原样。
 
 默认只输出迁移计划；--write 才写盘。只拆明确的“出牌阶段，对…使用。”句式，
 其余原文保留在使用方法.effect 中；未出现的规则留空，不从外部版本推导。
@@ -23,24 +23,28 @@ def migrate_card(node: dict) -> dict:
     if node.get("category_1") != "游戏牌" or node.get("rules") is not None:
         return node
     card = Card.model_validate(node)
-    text = card.effect.text
-    rules = GameCardRules()
+    text = card.effect
     if card.category_2 in {"基本牌", "锦囊牌"}:
         method = CardUseMethod(effect=text)
         match = re.fullmatch(r"(出牌阶段(?:限一次)?)[，。]对(.+?)使用[。；](.+)", text, flags=re.S)
         if match:
             method.timing, method.target, method.effect = match.groups()
-        rules.use_methods = [method]
+        card.rules = GameCardRules(use_methods=[method])
     elif card.category_2 == "装备牌":
         if card.category_3 == "武器":
+            if card.attack_range:
+                return node
             match = re.search(r"(?:^|\n)攻击范围[：: ]+([^\s◆]+)", text)
             if match:
-                rules.attack_range = match.group(1)
-        elif card.category_3 == "坐骑" and text in {"-1", "+1"}:
-            rules.distance_modifier = text
-    card.rules = rules
+                card.attack_range = match.group(1)
+            else:
+                return node
+        else:
+            return node
+    else:
+        return node
     migrated = entity_to_yaml_dict("card", card)
-    # 默认 version_id 的补齐也不应改动原有引用写法。
+    # 不覆盖原文；结构化拆分只新增明确存在的内容。
     if "effect" in node:
         migrated["effect"] = node["effect"]
     else:

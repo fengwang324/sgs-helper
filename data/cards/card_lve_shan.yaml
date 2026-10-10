@@ -3,16 +3,13 @@ category_1: 游戏牌
 category_2: 基本牌
 category_3: 闪
 name: 掠闪
-image: ''
-card_set: null
-effect:
-  text: ''
-  skills: []
+card_set: 九变篇
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
-      effect: ''
-      note: ''
-  note: ''
+    - timing: |-
+        当【杀】对对应的角色为你的目标生效前。
+      target: |-
+        此【杀】。
+      effect: |-
+        抵消【杀】对你的效果，然后你可以获得此【杀】使用者装备区里的一张奇珍牌。
+deck_info: ""

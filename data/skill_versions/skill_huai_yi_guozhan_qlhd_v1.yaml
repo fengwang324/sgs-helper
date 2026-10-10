@@ -1,10 +1,5 @@
 id: skill_huai_yi_guozhan_qlhd_v1
 skill_id: skill_huai_yi
 mode: guozhan
-text: 出牌阶段限一次，你可以展示所有手牌若其中存在颜色不同的牌，则你弃置其中任意一种颜色的所有牌，然后获得至多X名角色的各一张牌（X为你此次弃置的牌数）将此次获得的装备牌置于武将牌上，称为“异”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以展示所有手牌若其中存在颜色不同的牌，则你弃置其中任意一种颜色的所有牌，然后获得至多X名角色的各一张牌（X为你此次弃置的牌数）将此次获得的装备牌置于武将牌上，称为“异”。

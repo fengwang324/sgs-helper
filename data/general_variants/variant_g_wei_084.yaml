@@ -1,7 +1,6 @@
 id: variant_g_wei_084
 general_id: general_g_wei_084
-variant: 群狼环鼎
-title: 淵清玉潔
+title: 渊清玉洁
 general_number: G.WEI 084
 illustrator: 秋呆呆
 image: g_wei_084.jpg
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 纵横捭阖
 zhulianbihe: []
 skills:
-  - skill_id: skill_wang_gui
-    version_id: skill_wang_gui_guozhan_qlhd_v1
-  - skill_id: skill_xi_bing
-    version_id: skill_xi_bing_guozhan_qlhd_v1
+- skill_id: skill_wang_gui
+  version_id: skill_wang_gui_guozhan_qlhd_v1
+- skill_id: skill_xi_bing
+  version_id: skill_xi_bing_guozhan_qlhd_v1

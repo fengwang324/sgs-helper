@@ -43,14 +43,15 @@ FAQ 与规则关键词来自《群狼环鼎规则资料包 v1.0》的人工核�
 
 | 目录 | 现状 | 来源 |
 | --- | --- | --- |
-| `data/skills/`（311）、`data/skill_versions/`（297） | 真实技能文本 | 群狼环鼎卡面 OCR（296 条）+ 规则集武将页（1 条） |
-| `data/faq/`（85） | 真实裁定，`source` 是多行文本 | 《群狼环鼎规则资料包 v1.0》核对稿（手册照片 + 实卡照片 + 通用规则网页 + B 站 UP 主） |
+| `data/skills/`（291）、`data/skill_versions/`（291） | 技能本体与文本；SkillVersion 字段为 `id / skill_id / mode / product_id / text` | 群狼环鼎卡面 OCR + 人工核对录入；SkillVersion 不存来源元数据 |
+| `data/faq/`（87） | 真实裁定，`source` 是多行文本 | 《群狼环鼎规则资料包 v1.0》核对稿（手册照片 + 实卡照片 + 通用规则网页 + B 站 UP 主） |
 | `data/keywords/`（117） | 真实定义（只有 id / name / definition / variant） | 同上（关键词核对版，依据是手册页码，不录来源字段） |
-| `data/generals/`（155）、`data/general_variants/`（163） | 真实数据，全是国战版本 | 群狼环鼎卡面 OCR + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) |
-| `data/products/`（1）、`data/cards/`（81） | 真实数据（产品 `qlhd`） | 群狼环鼎实体卡，卡牌为一层 `Card` |
+| `data/generals/`（163）、`data/general_variants/`（163） | 真实数据，全是国战版本；同名但编号或称号不同的武将独立保留 | 群狼环鼎卡面 OCR + [三国杀WIKI（bilibili）](https://wiki.biligame.com/sgs/) |
+| `data/products/`（1）、`data/cards/`（114） | 产品 `qlhd`，81 张游戏牌与 33 张指示物 / 配件牌 | 群狼环鼎实体卡，卡牌为一层 `Card` |
 
-实测（`validate_data.py`）：**实体 1247 条 / 0 错误 / 14 警告**
-（14 条全是「技能本体没有任何 SkillVersion」）。
+当前 `data/` 共 **1,227 条 YAML 实体**（schema 7；FAQ 87 条）；严格校验、SQLite 重建与测试结果由本轮验证记录填写。
+163 条武将个体及 163 条玩法记录均保留；卡面编号不同或称号不同的武将分别记录，不按同名合并。
+旧 OCR 技能清理与其他历史数据处理见对应更新日志。
 
 重新导入 / 增量导入（站点更新时）：
 
@@ -61,9 +62,8 @@ python scripts/import_rules_book.py --stage all         # 写 data/（会覆盖�
 python scripts/validate_data.py && python scripts/build_db.py && python -m pytest -q
 ```
 
-导入的规则侧统一带 `source.type: official_rule`（网页版是社区整理、未按实体卡核验）。
-**核验一条就核对一条**：对着实体卡逐字比对，需要记差异就写进对应实体的正文
-（卡牌这类正文要逐字照抄卡面的，记在 Git 提交信息里）。
+导入规则文本时要区分来源状态并按实际依据核对；`SkillVersion` 不保存 source 字段，不能声称某条文本已有结构化来源记录。
+**核验一条就核对一条**：对着实体卡逐字比对，需要记差异就写进相应 FAQ 答案或规则正文。
 
 ## 1.1 武将是两层：General + GeneralVariant
 
@@ -71,9 +71,8 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 
 - `General`（`data/generals/`）：只有 `id` / `name`。
   官方武将名不同就是不同的武将个体（诸葛亮 / 界诸葛亮 / 神诸葛亮）。
-- `GeneralVariant`（`data/general_variants/`）：`variant`（标准版 / 国战版 / 界限突破 …）
-  + 模式、势力、体力、性别、称号、编号、武将牌系列、产品、技能。
-  官方名相同、玩法不同 → 同一个 General 的多个 Variant。
+- `GeneralVariant`（`data/general_variants/`）：保存模式、势力、体力、性别、称号、编号、武将牌系列、产品和技能；没有 `variant` 标签。
+  编号不同或称号不同的武将保留为不同 General，即使名字相同也不合并；确认是同一身份在不同模式下的记录时，才共用 General。
   来源不在这里存：由 `product_id` 定位到具体产品。
 - 体力口径：身份局标准版记正常体力（3/4/5）；国战按阴阳鱼记 1.5 / 2 / 2.5
   （**不要**把半阴阳鱼记成 3/4/5）。
@@ -89,17 +88,14 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 1. **先建产品**（`data/products/` 或管理页 `/new/product`）：产品的 `card_sets`
    是游戏牌拓展包的候选全集（九变篇 / 势备篇 / 不臣篇 / 君主游戏牌 / 阵 / 君临天下·权…）。
    注意「指示物」是卡牌分类，不是拓展包。
-2. **再建卡牌**（一层 `Card`，管理页专用录入页 `/new/card`）：按
-   卡名 → 一级/二级/三级分类联动 → 拓展包 → 卡图 → 效果文本 → 关联技能 0～N
-   的顺序录。分类自由填写（只有一级必填，二 / 三级可留空）；习惯上基本牌的三级分类写牌族
-   （杀 / 闪 / 桃 / 酒），具体是哪一张写在卡名里，但校验器不强制这一点。
+2. **再建卡牌**（一层 `Card`）：按卡牌类别选模板：`card_basic.yaml`、`card_non_delayed_trick.yaml`、`card_delayed_trick.yaml`、`card_weapon.yaml`、`card_armor.yaml`、`card_treasure.yaml`、`card_mount.yaml`；指示物用 `marker.yaml`。
+   游戏牌记录文本 `deck_info`（未知时留空）、纯文本 `effect`（无效果时省略）、可选外层 `note`；基本牌 / 锦囊牌的使用方式写在 `rules.use_methods`，武器攻击范围写外层 `attack_range`。分类自由填写（只有一级必填，二 / 三级可留空）。Card 不保存技能关联。
 3. **归属检查**：跑 `validate_data.py`，卡牌 `card_set` 没有被任何产品声明、卡图文件不存在
    会告警；把「指示物」写进 `card_set` 会得到专门提示。分类取值本身不产生任何告警。
 
-登记时的两条纪律：
+登记纪律：
 
-- 卡面效果文字逐字抄进 `effect.text`，**不要改写原文**（检索正文由构建时生成，不用手填）；
-  `effect.text` 与 `effect.skills` 都允许为空，纯技能卡可以留空；
+- 卡面效果逐字抄进文本 `effect`，**不要改写原文**；无独立效果时省略。Card 不含 `effect.skills`；技能关系只在 GeneralVariant 维护；
 - 只有亲眼核过实体卡才敢下结论；拿不准的就别写死，需要人工对着卡图复核的异常
   记在 Git 提交信息里。
 
@@ -110,23 +106,22 @@ python scripts/validate_data.py && python scripts/build_db.py && python -m pytes
 （FAQ 写进 `answer`，技能写进 SkillVersion 的 `text`，关键词写进 `definition`；
 卡牌这种正文必须逐字照抄卡面的，差异记在 Git 提交信息里），以后按实体卡与最新官方规则核验。
 
-（SkillVersion 的 `source` 只有 `type` + `reference`，展示名由 `reference` 推导；
-FAQ 的 `source` 是多行文本，原样展示。）
+（SkillVersion 不保存 `source`；FAQ 的 `source` 是多行文本，原样展示。）
 
 ## 3. 常见报错与处理
 
 | 报错 | 原因 | 处理 |
 | --- | --- | --- |
-| `未知字段（YAML 里多了这个字段？）` | 字段名写错或拼错（例如写了 `version:`），或用了已删除的旧字段（卡牌的 `card_type` / `subtype` 等） | 改成模型里存在的字段；来源信息放 `source`（只有 `type` / `reference`）；卡牌改用 `category_1/2/3` + `card_set` |
-| `id 重复：xxx 已在 data/... 中定义` | 两个文件用了同一个 id | 改 id（同名不同版本要用不同 id） |
+| `未知字段（YAML 里多了这个字段？）` | 字段名写错，或用了已删除字段（如 SkillVersion 的 `source` / `version_label` / `previous_version_id`、GeneralVariant 的 `variant`、Card 的 `effect.skills` 或规则备注字段） | 依 schema 7 模型修正；FAQ 来源仍写在多行文本 `source`；游戏牌用 `category_1/2/3`、`deck_info` 与外层卡牌字段 |
+| `id 重复：xxx 已在 data/... 中定义` | 两个文件用了同一个 id | 改 id；武将卡面编号或称号不同应保留为独立个体，不按同名合并 |
 | `引用的 技能(xxx) 不存在` | id 写错或目标文件还没建 | 建好目标文件，或修正引用 |
 | `引用的 实体产品(card_demo) 不存在：…但同名的 卡牌(card_demo) 存在` | 引用到了另一种类型的 id | 字段写错了，改成对应类型的 id |
 | `空引用：该字段不能是空字符串` | 写了 `product_id: ""` | 填有效 id，或改为 `null` |
 | `自引用` | 列表里包含了自己的 id | 删掉 |
-| `版本链成环` | `previous_version_id` 互相指向 | 改成单向链条 |
 | `绑定的技能版本 … 与这里的技能 … 不一致` | `skills[].version_id` 指到了别的技能的版本 | 改成同一个 `skill_id` 下的版本，或清空让它按 `mode` 回退 |
-| `拓展包 "…" 不在任何产品声明的 card_sets（…）里` | 卡牌 `card_set` 没有被任何产品声明 | 改成产品 `card_sets` 里的值，或给对应产品补上这个拓展包 |
-| `"指示物" 不是游戏牌拓展包，而是卡牌分类` | 把「指示物」写进了卡牌 `card_set` | 写到 `category_1`，`card_set` 留空或填真正的拓展包名 |
+| `装备牌填写 rules` | 装备牌的能力与攻击范围使用外层字段 | 删除 `rules`；武器攻击范围写 `attack_range`，坐骑距离写在 `effect` 中 |
+| `拓展包 "…" 不在任何产品声明的 card_sets（…）里` | 游戏牌 `card_set` 没有被任何产品声明 | 改成产品 `card_sets` 里的值，或给对应产品补上这个拓展包 |
+| `"指示物" 不是游戏牌拓展包，而是卡牌分类` | 把「指示物」写进了卡牌 `card_set` | 指示物不填 `card_set`；把类型写在 `category_1` |
 | `卡图 "…" 不存在：data/card_images/ 下没有这个文件` | `image` 文件名写错，或文件没放进来 | 放进 `data/card_images/`，或改成正确文件名（待补卡图就留空） |
 | `该武将版本的技能没有可用文本` | `version_id` 为空，且该技能在该模式下没有任何 SkillVersion | 补一条 SkillVersion，或显式绑定 `version_id` |
 | `武将牌系列 "…" 不在所属产品 … 的 general_sets 里` | `general_set` 与本产品的候选系列对不上 | 改成 `Product.general_sets` 里的值，或给产品补上这个系列 |
@@ -137,12 +132,12 @@ FAQ 的 `source` 是多行文本，原样展示。）
 ## 4. 新增/修改时的自检清单
 
 - [ ] 新记录有唯一的 `id`，并且符合前缀约定；
-- [ ] `SkillVersion` 填了结构化 `source`、`FAQ` 填了文本 `source`（关键词没有来源字段）；
-- [ ] 武将版本的 `product_id` 指向正确的产品；卡牌的 `card_set` 是某个产品声明过的拓展包（或留空）；
-- [ ] 卡牌的基本牌三级分类只写牌族，`image` 指向的文件真的在 `data/card_images/` 下；
+- [ ] `SkillVersion` 仅填 `id / skill_id / mode / product_id / text`；FAQ 有来源时填文本 `source`；
+- [ ] 武将玩法记录的 `product_id` 指向正确的产品；游戏牌的 `card_set` 是某个产品声明过的拓展包（或留空）；指示物不填 `card_set`；
+- [ ] 游戏牌具有 `deck_info` 文本字段（未知内容留空），基本牌三级分类只写牌族，`image` 指向的文件确实在 `data/card_images/` 下；卡牌效果是纯文本；武器 `attack_range` 与可选 `note` 在 Card 外层，装备牌不写 `rules`；
 - [ ] 技能文本一字不改地来自实体卡/官方资料；
 - [ ] 引用的 id 全部存在（校验器会替你查）；
-- [ ] 修改技能时是**新增版本**而不是改旧文件；
+- [ ] 修改技能文本时新增 SkillVersion，按需更新 GeneralVariant 的 `skills[].version_id`；模型不存版本标签或前序链；
 - [ ] 跑过 `validate → build_db → pytest`；
 - [ ] `git add` 里没有 `build/sgs.db`。
 

@@ -4,16 +4,12 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 水淹七军
 image: card_shui_yan_qi_jun_qlhd_heart_13.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，对一名装备区里有牌的其他角色使用。目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 一名装备区里有牌的其他角色
-      effect: 目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        一名装备区里有牌的其他角色
+      effect: |-
+        目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。
+deck_info: ""

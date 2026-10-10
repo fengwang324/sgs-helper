@@ -28,7 +28,6 @@ from ..constants import (
     MODE_LABELS,
     Gender,
     Mode,
-    SourceType,
 )
 from ..schema import MODEL_BY_KIND
 from .forms import FieldError
@@ -42,12 +41,6 @@ from .store import (
 
 #: 勾玉（体力）下拉的取值
 HP_CHOICES: tuple[str, ...] = ("1", "1.5", "2", "2.5", "3", "4", "5")
-
-#: 新技能版本的默认来源（从实体卡录入，通常就是这个）；Source 只有 type + reference
-DEFAULT_SOURCE: dict[str, str] = {
-    "type": "physical_card",
-    "reference": "",
-}
 
 PRODUCT_DEFAULTS: dict[str, Any] = {
     "id": "",
@@ -69,7 +62,6 @@ GENERAL_DEFAULTS: dict[str, Any] = {
 VARIANT_DEFAULTS: dict[str, Any] = {
     "id": "",
     "general_id": "",
-    "variant": "标准版",
     "title": "",
     "general_number": None,
     "illustrator": "",
@@ -89,8 +81,7 @@ VARIANT_LABELS: tuple[str, ...] = (
     "标准版", "国战版", "界限突破", "OL", "手卡（手杀）", "其他",
 )
 
-#: 卡牌（Card）：单层——分类 + 卡名 + 卡图 + 拓展包 + 效果。
-#: ``effect`` 是嵌套映射（text + skills），卡牌**没有** source 字段；分类字段必填。
+#: 卡牌（Card）：单层——分类 + 卡名 + 卡图 + 效果文本。
 CARD_DEFAULTS: dict[str, Any] = {
     "id": "",
     "category_1": "",
@@ -99,7 +90,10 @@ CARD_DEFAULTS: dict[str, Any] = {
     "name": "",
     "image": "",
     "card_set": None,
-    "effect": {"text": "", "skills": []},
+    "effect": "",
+    "attack_range": "",
+    "deck_info": None,
+    "note": "",
     "rules": None,
 }
 
@@ -294,14 +288,11 @@ class SkillRow:
     #: 新建技能时的名称 / 内部 id
     new_name: str = ""
     new_id: str = ""
-    #: 新建技能时同时创建的版本：描述 / 版本名 / 内部 id
+    #: 新建技能时同时创建的版本：描述 / 内部 id
     new_text: str = ""
-    new_version_label: str = ""
     new_version_id: str = ""
-    #: 给“已有技能”新增版本：描述 / 版本名 / 前一版本
+    #: 给“已有技能”新增版本：描述
     add_version_text: str = ""
-    add_version_label: str = ""
-    add_version_from: str = ""
     #: 就地修改某条已存在 SkillVersion 的文本
     edit_version_id: str = ""
     edit_text: str = ""
@@ -314,11 +305,8 @@ class SkillRow:
             "new_name": self.new_name,
             "new_id": self.new_id,
             "new_text": self.new_text,
-            "new_version_label": self.new_version_label,
             "new_version_id": self.new_version_id,
             "add_version_text": self.add_version_text,
-            "add_version_label": self.add_version_label,
-            "add_version_from": self.add_version_from,
             "edit_version_id": self.edit_version_id,
             "edit_text": self.edit_text,
         }
@@ -345,11 +333,8 @@ def parse_skill_rows(form: Mapping[str, Any]) -> list[SkillRow]:
                 new_name=_text(form, f"{prefix}new_name"),
                 new_id=_text(form, f"{prefix}new_id"),
                 new_text=_text(form, f"{prefix}new_text"),
-                new_version_label=_text(form, f"{prefix}new_version_label"),
                 new_version_id=_text(form, f"{prefix}new_version_id"),
                 add_version_text=_text(form, f"{prefix}add_version_text"),
-                add_version_label=_text(form, f"{prefix}add_version_label"),
-                add_version_from=_text(form, f"{prefix}add_version_from"),
                 edit_version_id=_text(form, f"{prefix}edit_version_id"),
                 edit_text=_text(form, f"{prefix}edit_text"),
             )
@@ -377,7 +362,6 @@ def rows_from_variant(store, variant: Any | None) -> list[dict]:
             ).as_dict()
             | {
                 "skill_name": skill.name if skill else ref.skill_id,
-                "version_label": (version.version_label or version.id) if version else "",
                 "version_display": store.version_display_label(version) if version else "",
                 "edit_version_id": ref.version_id or "",
                 "version_text": version.text if version else "",
@@ -399,9 +383,7 @@ def _new_version_change(
     mode: str | None,
     product_id: str | None,
     text: str,
-    label: str,
     version_id_hint: str,
-    previous_version_id: str | None,
     generated: set[str],
     info: list[str],
 ) -> tuple[str | None, Change | None]:
@@ -425,10 +407,7 @@ def _new_version_change(
         "skill_id": skill_id,
         "mode": mode or "common",
         "text": body,
-        "version_label": label,
         "product_id": product_id,
-        "previous_version_id": previous_version_id or None,
-        "source": dict(DEFAULT_SOURCE),
     }
     generated.add(version_id)
     return version_id, Change(kind="skill_version", candidate=candidate)
@@ -471,6 +450,9 @@ def parse_general_form(
     result = EditorResult(values=echo_values(form))
     errors = result.errors
     info = result.info
+    for key in form:
+        if re.fullmatch(r"skill_\d+_(new_version_label|add_version_label|add_version_from)", str(key)):
+            errors.append(FieldError(str(key), "技能版本标签与演进链字段已移除，请删除旧字段后重试"))
 
     # ---------------------------------------------------------------- General
     general_data = _base(existing, GENERAL_DEFAULTS)
@@ -523,10 +505,7 @@ def parse_general_form(
     variant_data["general_id"] = str(general_data.get("id") or "")
 
     if "variant" in form:
-        raw_variant = _text(form, "variant") or ""
-        if raw_variant.startswith("variant_") and variant is not None:
-            raw_variant = ""          # 防御：误填了内部 ID，保留原标签
-        variant_data["variant"] = raw_variant or (variant.variant if variant else "") or "标准版"
+        errors.append(FieldError("variant", "版本标签已移除，请通过产品和模式区分武将版本"))
     if "title" in form:
         variant_data["title"] = _text(form, "title")
     if "faction" in form:
@@ -646,9 +625,7 @@ def parse_general_form(
                     mode=mode,
                     product_id=product_id,
                     text=row.add_version_text,
-                    label=row.add_version_label,
                     version_id_hint="",
-                    previous_version_id=row.add_version_from or version_id,
                     generated=generated_ids,
                     info=info,
                 )
@@ -676,7 +653,7 @@ def parse_general_form(
                     )
             refs.append({"skill_id": skill_id, "version_id": version_id})
             rendered["skill_name"] = store.name_of("skill", skill_id)
-            rendered["version_label"] = store.name_of("skill_version", version_id) if version_id else ""
+            rendered["version_display"] = store.version_display_label(store.entity("skill_version", version_id)) if version_id else ""
             continue
 
         # ---- 新建技能（可选同时新建版本）
@@ -714,20 +691,15 @@ def parse_general_form(
                 mode=mode,
                 product_id=product_id,
                 text=row.new_text,
-                label=row.new_version_label,
                 version_id_hint=row.new_version_id,
-                previous_version_id=None,
                 generated=generated_ids,
                 info=info,
             )
             if change is not None:
                 result.changes.append(change)
                 info.append(f"将新建技能版本 {version_id}（模式 {MODE_LABELS.get(mode or 'common', mode or '')}）")
-        elif row.new_version_label:
-            info.append("只填了技能名称、没填技能描述：只会创建 SkillDefinition，不创建 SkillVersion。")
         refs.append({"skill_id": skill_id, "version_id": version_id})
         rendered["skill_name"] = row.new_name
-        rendered["version_label"] = row.new_version_label
 
     if mode is None and any(ref["version_id"] for ref in refs):
         info.append(
@@ -776,6 +748,7 @@ def general_values(
                 continue
             values[key] = value
         values["variant_id"] = variant.id
+        values["product_name"] = store.name_of("product", variant.product_id)
     if params:
         for key, value in params.items():
             if value not in (None, ""):
@@ -822,13 +795,28 @@ def parse_card_form(
 
     - 卡名与**一级分类**必填；二 / 三级分类允许留空（只填一级、只填一 / 二级都合法），
       三个级别都可以自由输入新值（候选只是提示，不是白名单）；
-    - ``card_set`` / ``image`` / ``effect.text`` 都允许为空，``effect`` 里两者同时为空也合法；
-    - ``effect.skills`` 是 0～N 条 ``SkillRef``（``{skill_id, version_id}``）：
-      卡牌**只关联已有技能**，技能文本继续由 Skill / SkillVersion 维护。
+    - ``effect``、``attack_range``、``deck_info`` 与 ``note`` 都是卡牌外层文本；
+    - 卡牌不关联技能；游戏牌始终保留 ``deck_info``，空串表示待录入。
     """
     result = EditorResult(values=card_values(store, existing) | echo_values(form))
     errors = result.errors
     data = _base(existing, CARD_DEFAULTS)
+    original_card_set = data.get("card_set")
+    original_deck_info = data.get("deck_info")
+    original_attack_range = data.get("attack_range")
+    original_rules = data.get("rules") or {}
+    original_methods = list(original_rules.get("use_methods", [])) if isinstance(original_rules, dict) else []
+
+    if "skill_count" in form or any(re.fullmatch(r"skill_\d+_.+", str(key)) for key in form):
+        errors.append(FieldError("skill_count", "卡牌不关联技能；请移除旧的技能引用字段后重试"))
+    if "rules_distance_modifier" in form or "distance_modifier" in form:
+        errors.append(FieldError("distance_modifier", "距离修正字段已移除；请将对应说明写入 effect"))
+    if "rules_attack_range" in form:
+        errors.append(FieldError("attack_range", "攻击范围已移至卡牌外层字段，请使用 attack_range 提交"))
+    if "rules_note" in form:
+        errors.append(FieldError("note", "卡牌备注已移至外层字段，请使用 note 提交"))
+    if any(re.fullmatch(r"use_\d+_note", str(key)) for key in form):
+        errors.append(FieldError("use_method", "CardUseMethod 已移除 note 字段，请把补充内容移至卡牌外层 note"))
 
     if "name" in form:
         data["name"] = _text(form, "name")
@@ -860,12 +848,29 @@ def parse_card_form(
         data["image"] = _text(form, "image")
     if "card_set" in form:
         data["card_set"] = _optional_text(form, "card_set")
+    for name in ("effect", "attack_range", "deck_info", "note"):
+        form_name = "effect_text" if name == "effect" else name
+        if form_name in form:
+            data[name] = _text(form, form_name)
 
-    # 游戏牌规则：字段没出现时保留原值，避免旧客户端 / 部分编辑丢失新内容。
-    rules = dict(data.get("rules") or {})
-    for name in ("attack_range", "distance_modifier", "note"):
-        if f"rules_{name}" in form:
-            rules[name] = _text(form, f"rules_{name}")
+    # 游戏牌有牌堆字段，即使暂时为空也要显式保存。指示物不得携带游戏牌字段。
+    if data.get("category_1") == "游戏牌":
+        if data.get("deck_info") is None:
+            data["deck_info"] = ""
+    else:
+        has_game_data = bool(
+            data.get("card_set") or data.get("deck_info") or data.get("attack_range")
+            or original_card_set or original_deck_info or original_attack_range
+        )
+        if has_game_data and _text(form, "confirm_inactive_rules") != "1":
+            errors.append(FieldError("category_1", "指示物不能保存拓展包、攻击范围或牌堆信息；确认舍弃后再保存"))
+        if _text(form, "confirm_inactive_rules") == "1":
+            data["card_set"] = None
+            data["attack_range"] = ""
+        data["deck_info"] = None
+
+    # rules 只包含 use_methods，装备牌不使用 rules。
+    methods = original_methods
     if "use_count" in form:
         count = _text(form, "use_count")
         if not count.isdecimal() or not 0 <= int(count) <= 50:
@@ -875,79 +880,34 @@ def parse_card_form(
             for index in range(int(count)):
                 method = {
                     name: _text(form, f"use_{index}_{name}")
-                    for name in ("label", "timing", "target", "effect", "note")
+                    for name in ("label", "timing", "target", "effect")
                 }
                 if any(method.values()):
                     methods.append(method)
-            rules["use_methods"] = methods
-    if data.get("category_1") == "游戏牌":
-        data["rules"] = rules
-    elif any(rules.values()):
-        errors.append(FieldError("category_1", "改为指示物或其他分类前，请清空游戏牌专用规则；效果原文会保留"))
+    discards_rules = (
+        data.get("category_1") != "游戏牌"
+        or data.get("category_2") == "装备牌"
+    )
+    drops_weapon_range = (
+        data.get("category_1") == "游戏牌"
+        and data.get("category_2") == "装备牌"
+        and data.get("category_3") != "武器"
+        and bool(original_attack_range)
+    )
+    if drops_weapon_range:
+        if _text(form, "confirm_inactive_rules") != "1":
+            errors.append(FieldError("attack_range", "当前装备类型不使用攻击范围；确认舍弃后再保存"))
+        else:
+            data["attack_range"] = ""
+    if discards_rules and (original_methods or methods):
+        if _text(form, "confirm_inactive_rules") != "1":
+            errors.append(FieldError("use_count", "当前卡牌类型不使用 rules；确认舍弃使用方法后再保存"))
+        else:
+            data["rules"] = None
+    elif data.get("category_1") == "游戏牌":
+        data["rules"] = {"use_methods": methods} if methods else None
     else:
         data["rules"] = None
-
-    # ---------------------------------------------------------------- 效果（嵌套映射）
-    effect = dict(data.get("effect") or {})
-    if "effect_text" in form:
-        effect["text"] = _text(form, "effect_text")
-    else:
-        effect.setdefault("text", "")
-
-    existing_skills = store.bundle.ids("skill")
-    refs: list[dict] = list(effect.get("skills") or []) if "skill_count" not in form else []
-    result.rows = []
-    for row in parse_skill_rows(form):
-        prefix = _row_prefix(row.index)
-        rendered = row.as_dict()
-        result.rows.append(rendered)
-
-        if not row.skill_id:
-            if row.new_name:
-                errors.append(
-                    FieldError(
-                        f"{prefix}skill_id",
-                        f"技能「{row.new_name}」还没有从下拉里选中：卡牌只关联已有技能",
-                    )
-                )
-            continue
-        # 失败页要原样回显这一行：技能名 + 可选版本一起带上，
-        # 否则重新渲染时 <select> 里没有当前版本，用户一提交就把版本绑定丢了。
-        rendered["skill_name"] = store.name_of("skill", row.skill_id)
-        rendered["version_options"] = store.skill_version_options(row.skill_id)
-        if row.skill_id not in existing_skills:
-            errors.append(FieldError(f"{prefix}skill_id", f"技能不存在：{row.skill_id}"))
-            # 仍然把这条引用放进候选：这样失败页也能由校验器给出“文件 / 字段 / 原因”
-            refs.append({"skill_id": row.skill_id, "version_id": row.version_id or None})
-            continue
-
-        version_id = row.version_id or None
-        if version_id:
-            version = store.entity("skill_version", version_id)
-            if version is None:
-                errors.append(FieldError(f"{prefix}version_id", f"版本不存在：{version_id}"))
-                refs.append({"skill_id": row.skill_id, "version_id": version_id})
-                continue
-            if version.skill_id != row.skill_id:
-                errors.append(
-                    FieldError(
-                        f"{prefix}version_id",
-                        f"版本 {version_id} 属于技能 {version.skill_id}，和选中的技能不一致",
-                    )
-                )
-                refs.append({"skill_id": row.skill_id, "version_id": version_id})
-                continue
-
-        refs.append({"skill_id": row.skill_id, "version_id": version_id})
-        rendered["version_label"] = (
-            store.version_display_label(store.entity("skill_version", version_id))
-            if version_id
-            else ""
-        )
-        rendered["version_display"] = rendered["version_label"]
-
-    effect["skills"] = refs
-    data["effect"] = effect
 
     result.changes = [
         Change(kind="card", candidate=data, old_id=existing.id if existing else None)
@@ -970,20 +930,21 @@ def card_values(
         "name": "",
         "image": "",
         "card_set": "",
+        "effect": "",
         "effect_text": "",
-        "rules_attack_range": "",
-        "rules_distance_modifier": "",
-        "rules_note": "",
+        "attack_range": "",
+        "deck_info": "",
+        "note": "",
         "use_count": "0",
     }
     if card is not None:
         values.update(values_from_entity("card", card))
-        effect = getattr(card, "effect", None)
-        values["effect_text"] = str(getattr(effect, "text", "") or "")
+        values["effect_text"] = str(card.effect or "")
         values["card_set"] = card.card_set or ""
+        values["attack_range"] = card.attack_range or ""
+        values["deck_info"] = card.deck_info or ""
+        values["note"] = card.note or ""
         if card.rules:
-            for name in ("attack_range", "distance_modifier", "note"):
-                values[f"rules_{name}"] = getattr(card.rules, name)
             values["use_count"] = str(len(card.rules.use_methods))
             for index, method in enumerate(card.rules.use_methods):
                 for name, value in method.model_dump().items():
@@ -996,28 +957,8 @@ def card_values(
 
 
 def card_skill_rows(store, card: Any | None) -> list[dict]:
-    """编辑页初始技能行：把 ``effect.skills`` 渲染成一行行表单。"""
-    if card is None:
-        return []
-    rows: list[dict] = []
-    for index, ref in enumerate(card.effect.skills):
-        skill = store.entity("skill", ref.skill_id)
-        version = store.entity("skill_version", ref.version_id) if ref.version_id else None
-        rows.append(
-            SkillRow(
-                index=index,
-                skill_id=ref.skill_id,
-                version_id=ref.version_id or "",
-            ).as_dict()
-            | {
-                "skill_name": skill.name if skill else ref.skill_id,
-                "version_label": (version.version_label or version.id) if version else "",
-                "version_display": store.version_display_label(version) if version else "",
-                "version_text": version.text if version else "",
-                "version_options": store.skill_version_options(ref.skill_id),
-            }
-        )
-    return rows
+    """卡牌不关联技能，保留空兼容入口供 app 路由复用。"""
+    return []
 
 
 # ---------------------------------------------------------------- 共用小工具
@@ -1035,10 +976,6 @@ def gender_choices() -> list[tuple[str, str]]:
     return [(key, GENDER_LABELS.get(key, key)) for key in Gender.__members__]
 
 
-def source_type_choices() -> list[tuple[str, str]]:
-    from ..constants import SOURCE_LABELS
-
-    return [(key, SOURCE_LABELS.get(key, key)) for key in SourceType.__members__]
 
 
 def model_field_errors(kind: str, payload: dict, prefix: str = "") -> list[FieldError]:

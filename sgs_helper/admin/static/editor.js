@@ -1045,11 +1045,11 @@
     var notice = document.getElementById("inactive-rules-notice");
     var consent = document.getElementById("confirm-inactive-rules");
     var effectPanel = document.getElementById("card-effect-panel");
-    // 旧数据里已经写了 effect.text 的卡：这块必须保持展开，否则「有内容却看不到、改不了、删不掉」
+    // 已有卡面原文必须保持展开，否则「有内容却看不到、改不了、删不掉」。
     var effectHasContent = effectPanel && effectPanel.dataset.hasContent === "1";
     var previousProfile = null;
     var previousInactive = "";
-    var kinds = { weapon: "攻击范围", mount: "距离修正", use: "使用说明", note: "整张牌的补充说明" };
+    var kinds = { weapon: "攻击范围", deck: "牌堆信息", use: "使用说明", note: "备注", card_set: "所属拓展包" };
     function rows() { return Array.from(box.querySelectorAll(".use-row")); }
     function reindex() {
       var all = rows();
@@ -1092,14 +1092,16 @@
       return "generic";
     }
     function active(kind, current) {
-      return current !== "free" && (current === "generic" || kind === "note" || kind === current);
+      return current !== "free" && (current === "generic" || kind === "note" || kind === "deck" || kind === current);
     }
     function update() {
       var current = profile();
       if (current === "use" && !rows().length) add();
       reindex();
-      section.hidden = current === "free" || current === "equipment";
-      document.getElementById("card-note-panel").hidden = current === "free";
+      section.hidden = current === "free";
+      var cardSetField = form.querySelector("[data-card-set-field]");
+      cardSetField.hidden = current === "free";
+      document.getElementById("card-note-panel").hidden = false;
       document.getElementById("generic-rule-summary").hidden = current !== "generic";
       if (current !== previousProfile) {
         document.getElementById("game-rule-fields").open = current !== "generic" || filled(section);
@@ -1110,8 +1112,8 @@
         node.hidden = !active(kind, current);
         if (node.hidden && filled(node)) inactive.push(kinds[kind]);
       });
-      var note = form.querySelector('[name="rules_note"]');
-      if (current === "free" && note.value.trim()) inactive.push(kinds.note);
+      var cardSet = form.querySelector('[name="card_set"]');
+      if (current === "free" && cardSet && cardSet.value.trim()) inactive.push(kinds.card_set);
       var summary = inactive.join("、");
       if (current !== previousProfile || summary !== previousInactive) consent.checked = false;
       consent.required = Boolean(summary);
@@ -1124,7 +1126,7 @@
       document.getElementById("card-effect-label").textContent = current === "use" ? "原始卡面文字（可空）" : "效果（可空）";
       document.getElementById("card-effect-help").textContent = current === "use" ?
         "完整卡面原文可以留在这里；上方分别填写使用时机、目标和效果。" :
-        "可以填写自由效果说明；已有技能说明可以通过下方关联技能引用。";
+        "填写卡面上的效果原文。";
       previousProfile = current;
       previousInactive = summary;
     }
@@ -1149,15 +1151,17 @@
     // DOM 中的隐藏内容供切回类型和草稿恢复；只把当前类型的字段提交给服务端。
     form.addEventListener("formdata", function (event) {
       var current = profile();
-      if (!active("weapon", current)) event.formData.set("rules_attack_range", "");
-      if (!active("mount", current)) event.formData.set("rules_distance_modifier", "");
+      if (!active("weapon", current)) event.formData.set("attack_range", "");
+      if (current === "free") {
+        event.formData.set("deck_info", "");
+        event.formData.set("card_set", "");
+      }
       if (!active("use", current)) {
         event.formData.set("use_count", "0");
         Array.from(event.formData.keys()).forEach(function (key) {
           if (/^use_\d+_/.test(key)) event.formData.delete(key);
         });
       }
-      if (current === "free") event.formData.set("rules_note", "");
     });
     update();
     return { rebuild: function (total) {

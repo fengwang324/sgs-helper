@@ -1,10 +1,5 @@
 id: skill_xuan_lve_guozhan_qlhd_v1
 skill_id: skill_xuan_lve
 mode: guozhan
-text: 当你失去装备区里的牌或于弃牌阶段弃置过至少两张牌后，你可以弃置一名其他角色的-张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你失去装备区里的牌或于弃牌阶段弃置过至少两张牌后，你可以弃置一名其他角色的-张牌。

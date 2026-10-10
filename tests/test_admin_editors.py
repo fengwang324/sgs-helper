@@ -14,12 +14,12 @@
 10. 新建武将时可以同时创建 Skill
 11. 可以同时创建 Skill + SkillVersion
 12. 已有 Skill 可以新增 SkillVersion
-13. 新版本正确设置 previous_version_id
+    13. 新版本按精简字段保存，不生成历史链字段
 14. 多实体保存只 rebuild 一次
 15. 批量里任何一条校验失败，一个 YAML 都不落盘
 16. rebuild 失败时全部回滚
 17. `_base_sha` 并发保护继续有效
-18. 删除 Skill / SkillVersion 时新的 SkillRef（武将版本 + 卡牌 effect.skills）引用保护正确工作
+18. 删除 Skill / SkillVersion 时武将版本引用保护正确工作
 
 全部在 tmp_path 的副本上跑，绝不修改仓库里的 data/。
 """
@@ -111,7 +111,6 @@ def general_payload(app, **overrides) -> dict:
         "gender": "unknown",
         "product_id": "",
         "general_set": "",
-        "variant": "标准版",
         "_variant_id": "",
         "_variant_sha": "",
         "variant_id": "",
@@ -154,9 +153,6 @@ def general_edit(app, general_id: str, **overrides) -> dict:
     payload["_variant_sha"] = (
         store.entity_sha("general_variant", variant_id) if variant_id else ""
     )
-    if not payload.get("variant"):
-        entity = store.entity("general_variant", variant_id) if variant_id else None
-        payload["variant"] = entity.variant if entity else "标准版"
     return payload
 
 
@@ -204,13 +200,12 @@ def test_only_name_is_required(client: TestClient, workdir: Path) -> None:
     assert general["name"] == "测试武将"
     variant = load_yaml(variant_file(workdir, general_id))
     assert variant["general_id"] == general_id
-    assert variant["variant"] == "标准版"
     assert variant["mode"] is None
     assert variant["hp"] is None
     assert variant["general_number"] is None
     assert variant["general_set"] is None
     assert variant["product_id"] is None
-    assert variant["skills"] == []
+    assert "skills" not in variant
     assert "source" not in variant      # 实体卡类没有 source
 
 
@@ -364,7 +359,6 @@ def test_general_edit_keeps_hidden_fields(client: TestClient, app, workdir: Path
         app,
         GENERAL_ID,
         name=general_before["name"],
-        variant=variant_before["variant"],
         faction=variant_before["faction"],
         hp="2.5",
         gender="male",
@@ -426,7 +420,6 @@ def test_general_can_pin_skill_version(client: TestClient, workdir: Path) -> Non
             client.app,
             HUANG_YUE_GENERAL_ID,
             name="黄月英",
-            variant="群狼环鼎",
             mode="guozhan",
             hp="1.5",
             gender="female",
@@ -466,7 +459,6 @@ def test_version_must_belong_to_same_skill(client: TestClient, workdir: Path) ->
             client.app,
             HUANG_YUE_GENERAL_ID,
             name="黄月英",
-            variant="群狼环鼎",
             mode="guozhan",
             skill_count="1",
             skill_0_skill_id="skill_qi_cai",
@@ -500,7 +492,6 @@ def test_validator_reports_foreign_version_reference() -> None:
             data={
                 "id": VARIANT_ID,
                 "general_id": GENERAL_ID,
-                "variant": "群狼环鼎",
                 "skills": [
                     {"skill_id": "skill_guan_xing", "version_id": KONG_CHENG_V1}
                 ],
@@ -550,7 +541,6 @@ def test_create_general_with_skill_and_version(client: TestClient, workdir: Path
             skill_count="1",
             skill_0_new_name="铁骑",
             skill_0_new_text="【测试】当你使用杀指定目标后，你可以进行判定。",
-            skill_0_new_version_label="初版",
         ),
     )
     assert response.status_code == 303, response.text
@@ -563,16 +553,15 @@ def test_create_general_with_skill_and_version(client: TestClient, workdir: Path
     assert version["skill_id"] == skill_id
     assert version["mode"] == "guozhan"
     assert version["product_id"] == PRODUCT_ID
-    assert version["version_label"] == "初版"
     assert "判定" in version["text"]
     assert skill_id in version_id
-    assert set(version["source"]) == {"type", "reference"}   # source 只剩 type + reference
+    assert not ({"source", "version_label", "previous_version_id"} & set(version))
 
 
-def test_add_version_to_existing_skill_sets_previous(
+def test_add_version_to_existing_skill_uses_current_contract(
     client: TestClient, workdir: Path, store
 ) -> None:
-    """12 + 13) 已有技能新增版本，并正确串上 previous_version_id。"""
+    """12 + 13) 已有技能新增版本，且不再写入旧版本链字段。"""
     old_path = workdir / "data" / "skill_versions" / f"{KONG_CHENG_V1}.yaml"
     old_before = old_path.read_text(encoding="utf-8")
 
@@ -583,7 +572,6 @@ def test_add_version_to_existing_skill_sets_previous(
             client.app,
             GENERAL_ID,
             name="诸葛亮",
-            variant="群狼环鼎",
             mode="guozhan",
             product_id=PRODUCT_ID,
             general_set="国战标准",
@@ -591,8 +579,6 @@ def test_add_version_to_existing_skill_sets_previous(
             skill_0_skill_id="skill_kong_cheng",
             skill_0_version_id=KONG_CHENG_V1,
             skill_0_add_version_text="【测试】2026 调整后的空城文本。",
-            skill_0_add_version_label="2026 调整",
-            skill_0_add_version_from=KONG_CHENG_V1,
         ),
     )
     assert response.status_code == 303, response.text
@@ -603,9 +589,9 @@ def test_add_version_to_existing_skill_sets_previous(
     version_id = data["skills"][0]["version_id"]
     assert version_id != KONG_CHENG_V1
     new_version = load_yaml(workdir / "data" / "skill_versions" / f"{version_id}.yaml")
-    assert new_version["previous_version_id"] == KONG_CHENG_V1
-    assert new_version["version_label"] == "2026 调整"
     assert new_version["skill_id"] == "skill_kong_cheng"
+    assert new_version["text"] == "【测试】2026 调整后的空城文本。"
+    assert not ({"source", "version_label", "previous_version_id"} & set(new_version))
 
 
 def test_identical_version_is_reused(client: TestClient, workdir: Path) -> None:
@@ -740,7 +726,6 @@ def test_base_sha_conflict_still_protects_general(
         app,
         GENERAL_ID,
         name="诸葛亮",
-        variant="群狼环鼎",
         mode="guozhan",
         title="不该写入的称号",
     )
@@ -803,7 +788,6 @@ def test_delete_unpinned_skill_version_allowed(client: TestClient, store) -> Non
         "skill_id": "skill_ji_zhi",
         "mode": "guozhan",
         "text": "【测试】临时版本",
-        "source": {"type": "discussion", "reference": ""},
     }
     created = store.save("skill_version", candidate)
     assert created.ok, created.error
@@ -812,44 +796,13 @@ def test_delete_unpinned_skill_version_allowed(client: TestClient, store) -> Non
     assert store.entity("skill_version", "skill_ji_zhi_guozhan_v9") is None
 
 
-def test_delete_skill_and_version_blocked_by_card_effect_ref(store) -> None:
-    """18) 卡牌的 ``effect.skills`` 也是引用：定澜夜明珠引用 skill_zhi_heng 的那一版。
-
-    卡牌与武将共用同一个 ``SkillRef`` 形状，所以 REFERENCE_FIELDS 里的
-    ``card.effect.skills[].skill_id`` / ``...version_id`` 必须同时驱动删除保护。
-    """
+def test_card_does_not_create_skill_references(store) -> None:
+    """卡牌的 effect 是文本，不再包含技能引用。"""
     card_id = "card_ding_lan_ye_ming_zhu"
-    skill_id = "skill_zhi_heng"
-    version_id = "skill_zhi_heng_guozhan_qlhd_v1"
     card = store.entity("card", card_id)
     assert card is not None
-    assert [(ref.skill_id, ref.version_id) for ref in card.effect.skills] == [
-        (skill_id, version_id)
-    ]
-
-    references = store.reverse_refs("skill", skill_id)
-    assert any(
-        ref["kind"] == "card"
-        and ref["id"] == card_id
-        and ref["field"] == "effect.skills[0].skill_id"
-        for ref in references
-    )
-    outcome = store.delete("skill", skill_id)
-    assert outcome.ok is False
-    assert outcome.blocked is True
-    assert any(ref["kind"] == "card" for ref in outcome.references)
-
-    version_refs = store.reverse_refs("skill_version", version_id)
-    assert any(
-        ref["kind"] == "card"
-        and ref["id"] == card_id
-        and ref["field"] == "effect.skills[0].version_id"
-        for ref in version_refs
-    )
-    outcome = store.delete("skill_version", version_id)
-    assert outcome.ok is False
-    assert outcome.blocked is True
-    assert any(ref["kind"] == "card" for ref in outcome.references)
+    assert isinstance(card.effect, str)
+    assert not hasattr(card, "skills")
 
 
 # ---------------------------------------------------------------- 录入辅助 API
@@ -868,7 +821,7 @@ def test_product_api_exposes_general_sets(client: TestClient) -> None:
     assert data["general_sets"] == [
         "紫凤衔佩", "金印紫绶", "紫气东来", "君临天下·阵", "君临天下·势",
         "君临天下·变", "君临天下·权", "国战限定", "国战标准", "不臣篇·上",
-        "不臣篇·下", "纵横捭阖", "不臣篇",
+        "不臣篇·下", "纵横捭阖", "不臣篇", "群狼环鼎限定",
     ]
     assert "国战标准" in data["general_sets"]
     assert client.get("/api/products/no_such_product").status_code == 404

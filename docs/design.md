@@ -24,12 +24,13 @@ sgs_helper/cli.py → 人可读文本 / JSON     （以后：FastAPI → 微信�
 关键点：**校验与构建是分开的两次执行**（`validate_data.py` / `build_db.py`），
 `build_db.py` 内部也会先校验一遍，校验不过就退出（返回码 2），避免生成半成品数据库。
 
+当前数据规模：YAML 共 1,227 条实体，其中 FAQ 87 条；schema 7 的实测构建与验证结果见本轮更新记录。
+
 数据来源策略：规则侧数据分两批 —— 技能版本来自
 [《三国杀官方规则集 3.0》的网页版](https://gltjk.com/sanguosha/rules/)，
 FAQ 与规则关键词来自《群狼环鼎规则资料包 v1.0》的人工核对稿（规则手册 19 页照片 + 实卡照片 + 通用规则网页 + B 站 UP 主文章）；实体卡数据来自
-群狼环鼎卡面照片；用 `source.type`（`official_rule` / `physical_card` …）记录“内容是什么”，
-不因为文档名称里带“官方”就默认可信。
-实体卡类实体（Product / GeneralVariant / Card）不存 `source`，来源由 `product_id` / `card_set` 定位。
+群狼环鼎卡面照片。FAQ 用 `source` 多行文本记录来源属性；Keyword、SkillVersion 与实体卡不存来源字段。
+实体卡类实体（Product / GeneralVariant / Card）不存 `source`，关联产品由 `product_id` / `card_set` 表达；SkillVersion 也不存来源元数据，FAQ 自己保留多行文本 `source`。
 
 解析性能：数据长到近千个 YAML 之后，`loader` 做了两件事 ——
 有 libyaml 就用 C 解析器（快 5～7 倍），以及单条映射不再为了拿行号多解析一遍；
@@ -79,10 +80,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 3. **内部 id 与卡面编号分开存，但 id 由编号派生**：
    `id` 做内部主键（YAML 文件名 / URL / 外键），卡面编号放
    `GeneralVariant.general_number`（自由字符串，**与卡面完全一致**：大小写、点、空格、`&` 都保留）。
-   `id` 是编号的规范化形式（`general_` + 编号小写、非字母数字换下划线），
-   所以编号一改，`General.id` / `GeneralVariant.id` / 卡图文件名 / 引用它的 `general_id`
-   会一起跟着改——批量 OCR 录入后按卡图核验修正编号是常规操作，不能要求手工同步四份。
-   编号本身不做字符替换，保证前端展示与卡面一致。
+   `id` 是编号的规范化形式（`general_` + 编号小写、非字母数字换下划线）。编号不同的武将必须保留为不同 General；称号不同的记录也不因名字相同而合并。只有确认是同一武将身份在不同模式下的数据，才共享 General 并分别记录 GeneralVariant。编号本身不做字符替换，保证展示与卡面一致。
 
 另外，武将的 `hp`（勾玉）与 `mode` 允许为空：**只有名字必填**。
 这是刻意的取舍 —— 资料库要允许“先录手头有的信息，以后再补全”，
@@ -92,7 +90,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 武将个体与玩法版本分成两层：`General`（id / name）与
 `GeneralVariant`（模式 / 势力 / 体力 / 性别 / 称号 / 编号 / 产品 / 武将牌系列 / 技能）。
-官方名不同 → 不同 General；官方名相同、玩法不同 → 同一 General 的不同 Variant。
+卡面编号或称号不同 → 分别保留为不同 General，即使名字相同也不合并；只有确认是同一身份的跨模式记录，才共用 General 并关联不同的 GeneralVariant。
 武将录入页一次提交可能产生 `1 个 General + 1 个 GeneralVariant + N 个 Skill + N 个 SkillVersion`。
 如果按条调用保存，就会多次重建数据库、中途失败还会留下半套数据。
 所以写入口收敛到 `AdminStore.save_batch()`：合并内存候选 → 一次完整校验 →
@@ -112,9 +110,8 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 因此：
 
 - 武将版本用 `skills[].skill_id` 引用技能本体；
-- 更新技能**只能新增** SkillVersion，并用 `previous_version_id` 串链；
-- 用哪一版文本由 `GeneralVariant.skills[].version_id` **显式绑定**，不按日期推导，
-  也不写 `current: true`。
+- SkillVersion 只保存 `id`、`skill_id`、`mode`、`product_id`、`text`。更新时新增记录并保留旧文本，但不保存 `version_label`、`previous_version_id` 或结构化来源；
+- 用哪一版文本由 `GeneralVariant.skills[].version_id` **显式绑定**；留空时按模式匹配唯一版本，不按日期推导。
 
 ### 取哪一版技能文本
 
@@ -142,14 +139,13 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 - 三级分类（`category_1/2/3`）回答“这张卡是什么”（基本牌 / 锦囊牌 / 装备牌…）；
 - `name` 回答“具体是哪一张”（本项目的习惯是基本牌的 `category_3` 写牌族 杀 / 闪 / 桃 / 酒，
   具体牌名写在这里；分类本身自由填写、二 / 三级可留空，校验器不强制）；
-- `card_set` 回答“它来自哪个拓展包”（与分类完全独立的一个维度，允许为空）；
-- `effect: {text, skills}` 回答“卡面写了什么、关联了哪些技能”。
-- 游戏牌专用 `rules` 保存多种使用方法、文本攻击范围 / 距离修正与 note；
-  指示物不使用 rules，分类和效果继续自由填写。见 [游戏牌规则](card-rules.md)。
+- `card_set` 回答“它来自哪个拓展包”（与分类独立，游戏牌可留空；指示物不填写）；
+- `effect` 是卡面效果纯文本，无独立效果时省略；Card 不包含技能引用；
+- 基本牌 / 锦囊牌用 `rules.use_methods` 保存使用方法，`label` 可选；武器攻击范围用外层 `attack_range`，坐骑距离写在效果文本中；
+- 游戏牌牌堆组成用外层 `deck_info` 文本记录，未知时留空；可选资料备注放 Card 外层 `note`，仅保留非空内容。指示物不填 `card_set`、`deck_info`、`attack_range` 或 `rules`。见 [游戏牌规则](card-rules.md)。
 
 原来的 `CardPrinting` 层（某产品实际印刷的一张实体卡：花色 / 点数 / 角标 / 卡面文本）**已整体删除**：
-个人资料库当前只需要卡面资料，同一规则卡的花色 / 点数印刷属于“完整牌堆构成”，
-留给以后单独加的 `deck_entries`，不再为了花色点数把同一张卡拆成多条。
+同一规则卡的花色 / 点数不拆成多条 Card；完整牌堆构成以自由文本 `deck_info` 维护，不使用独立 deck-entry 实体。
 
 `card_set` 不再是产品外键：卡与产品**没有外键**，唯一关系是
 `Card.card_set ∈ Product.card_sets`（同名拓展包可被多个产品共用，产品页会重复计数）。
@@ -159,9 +155,9 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 | 层 | 记录内容 | 用途 |
 | --- | --- | --- |
-| YAML | SkillVersion 内嵌 `source`（只有 type + reference）；FAQ 的 `source` 是多行文本 | 人工判断依据 |
+| YAML | 仅 FAQ 保留多行文本 `source`；SkillVersion、关键词与实体卡记录不存来源字段 | FAQ 保留人工判断依据；其他来源状态由维护流程核对 |
 | 装载 | 每个实体记录来源文件、起始行、文件 sha256 | 报错精确定位；判断是否改动过 |
-| 数据库 | 每行带 `yaml_file` / `yaml_line`；只有 `skill_versions` 另带 `source_key`（FAQ 的 source 已是文本列、关键词无来源），`sources` 表去重 | 任何一条查询结果都能回溯到文件与行 |
+| 数据库 | 每行带 `yaml_file` / `yaml_line`；FAQ 来源在 `faqs.source` 文本列 | 查询结果可回溯到文件与行 |
 | 构建 | `meta` 表记录 schema 版本、构建时间、YAML 清单指纹、Git commit/branch/dirty | 判断数据库是否过期、对应哪次提交 |
 
 刻意**没做**的：内容级哈希、逐字段血缘、来源多对多关联表。数据量小，上面这些已经够查。
@@ -170,7 +166,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 - 一种实体一张表；多值字段（`general_sets`、`card_sets`、`zhulianbihe`）以 JSON 文本存储，
   另外把「武将版本 ↔ 技能」额外落一张 `variant_skills` 关联表，方便以后做反向查询。
-- 建了必要的索引：`skill_versions(skill_id, mode)`、`skill_versions(previous_version_id)`、
+- 建了必要的索引：`skill_versions(skill_id, mode)`、
   `cards(category_1, category_2)`、`cards(card_set)`、
   `general_variants(general_id)` / `general_variants(mode)` / `general_variants(product_id)` 等。
 - 统一的 `search_index(kind, entity_id, name, body)` 承担检索：
@@ -188,11 +184,10 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 **错误（必须修）**
 
 1. YAML 语法、顶层结构、条目必须是映射；
-2. 必填字段缺失、未知字段、枚举取值非法、id 格式非法、`source` 缺 `type`；
+2. 必填字段缺失、未知字段、枚举取值非法、id 格式非法；
 3. 同类型内 **id 重复**（报出两处文件与行号）；
 4. 所有引用不存在（并提示“该 id 属于另一种类型，是否字段写错”）；
-5. 空引用、自引用、`previous_version_id` 属于别的技能、版本链成环、
-   `skills[].version_id` 属于别的技能。
+5. 空引用、自引用、`skills[].version_id` 属于别的技能。
 
 **警告（不影响建库，但应当关注）**
 
@@ -204,7 +199,7 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 4. 武将引用的技能在该模式下没有任何 SkillVersion，且 `version_id` 为空（查询时拿不到文本）；
 5. 技能本体没有任何 SkillVersion；
 6. 体力不是 0.5 的整数倍；
-7. 武将没有任何版本；同一武将出现重复的（`variant` + `mode`）；
+7. 武将没有任何玩法记录；同一产品 / 模式 / 编号 / 称号组合出现重复武将记录；
 8. 列表内重复引用（同一个武将版本重复引用同一个技能、同一张卡重复引用同一个技能）。
 
 ## 7. 明确不做（当前阶段）
@@ -219,8 +214,8 @@ build/sgs.db（网页不会直接改它；任何一处 UPDATE/INSERT 都不存�
 
 | 边界 | 现状 | 将来的做法 |
 | --- | --- | --- |
-| 同名武将跨产品/玩法 | 同一个 `general.id`，每个玩法各写一条 `GeneralVariant`（各自带 `mode` / `product_id` / `skills`） | 不需要「武将印刷」层 |
-| 一个实体多来源 | SkillVersion 带单条 `source`（type + reference），FAQ 的来源是多行文本，关键词不记来源；实体卡类实体由 `product_id` / `card_set` 定位、不记 source | 抽 `entity_sources` 关联表 |
+| 同名武将跨产品 / 玩法 | 名字相同不足以判定身份相同；编号不同或称号不同的武将分别保留。确认同一身份跨模式时，再以多个 GeneralVariant 表示 | 不需要「武将印刷」层 |
+| 一个实体多来源 | 只有 FAQ 以多行文本保存来源；SkillVersion、关键词与卡牌不存来源字段 | 有真实需求时再扩展来源关联表 |
 | 产品级规则特例 | 以显式 `version_id` 优先，未做产品级优先级 | 给 SkillVersion 加 `scope` / `rule_priority` |
 | 技能效果检索 | 全文检索规则文本 | 需要时再加结构化字段（不与文本混用） |
 | 表结构变更 | `SCHEMA_VERSION` + 每次全量重建 | 数据量变大后再考虑迁移脚本 |

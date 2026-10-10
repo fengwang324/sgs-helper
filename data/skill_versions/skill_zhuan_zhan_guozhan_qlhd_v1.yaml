@@ -1,10 +1,5 @@
 id: skill_zhuan_zhan_guozhan_qlhd_v1
 skill_id: skill_zhuan_zhan
 mode: guozhan
-text: 锁定技，若场上有未确定势力角色，你使用【杀】无距离限制且不能指定确定势力角色为目标。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，若场上有未确定势力角色，你使用【杀】无距离限制且不能指定确定势力角色为目标。

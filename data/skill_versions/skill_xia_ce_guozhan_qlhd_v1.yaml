@@ -1,10 +1,5 @@
 id: skill_xia_ce_guozhan_qlhd_v1
 skill_id: skill_xia_ce
 mode: guozhan
-text: 若当前回合角色有【杀】的剩余使用次数，你可以将一张牌当【无懈可击】使用，并令剩余次数-1，然后你可以变更副将牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 若当前回合角色有【杀】的剩余使用次数，你可以将一张牌当【无懈可击】使用，并令剩余次数-1，然后你可以变更副将牌。

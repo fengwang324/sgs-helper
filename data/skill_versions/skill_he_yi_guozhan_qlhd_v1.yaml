@@ -1,10 +1,5 @@
 id: skill_he_yi_guozhan_qlhd_v1
 skill_id: skill_he_yi
 mode: guozhan
-text: 阵法技，与你处于同一队列的角色均视为拥有“慷气”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 阵法技，与你处于同一队列的角色均视为拥有“慷气”。

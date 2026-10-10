@@ -1,10 +1,5 @@
 id: skill_shen_su_guozhan_qlhd_v1
 skill_id: skill_shen_su
 mode: guozhan
-text: 你可以作出如下选择：1.跳过判定阶段和摸牌阶段：2.跳过出牌阶段并弃置一张装备牌：3.跳过弃牌阶段并失去1点体力。你每执行一项，视为你使用一张无距离限制的【杀】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你可以作出如下选择：1.跳过判定阶段和摸牌阶段；2.跳过出牌阶段并弃置一张装备牌；3.跳过弃牌阶段并失去1点体力。你每执行一项，视为你使用一张无距离限制的【杀】。

@@ -1,18 +1,18 @@
 id: variant_g_jin_022
 general_id: general_g_jin_022
-variant: 群狼环鼎
 title: 执德清劭
 general_number: G.JIN 022
 illustrator: 匠人绘
 image: g_jin_022.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
+hp: 2
 gender: male
 product_id: qlhd
-general_set: 纵横捭阖
+general_set: 金印紫绶
+zhulianbihe: []
 skills:
-  - skill_id: skill_huai_yuan
-    version_id: skill_huai_yuan_guozhan_qlhd_v1
-  - skill_id: skill_fu_shou
-    version_id: skill_fu_shou_guozhan_qlhd_v1
+- skill_id: skill_huai_yuan
+  version_id: skill_huai_yuan_guozhan_qlhd_v1
+- skill_id: skill_fu_shou
+  version_id: skill_fu_shou_guozhan_qlhd_v1

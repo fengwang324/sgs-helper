@@ -1,6 +1,5 @@
 id: variant_g_shu_013
 general_id: general_g_shu_013
-variant: 群狼环鼎
 title: 无为的真命主
 general_number: G.SHU 013
 illustrator: LiuHeng
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_xiang_le
-    version_id: skill_xiang_le_guozhan_qlhd_v1
-  - skill_id: skill_fang_quan
-    version_id: skill_fang_quan_guozhan_qlhd_v1
+- skill_id: skill_xiang_le
+  version_id: skill_xiang_le_guozhan_qlhd_v1
+- skill_id: skill_fang_quan
+  version_id: skill_fang_quan_guozhan_qlhd_v1

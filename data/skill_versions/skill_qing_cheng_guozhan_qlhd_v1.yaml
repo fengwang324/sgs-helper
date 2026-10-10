@@ -1,10 +1,5 @@
 id: skill_qing_cheng_guozhan_qlhd_v1
 skill_id: skill_qing_cheng
 mode: guozhan
-text: 出牌阶段，你可以弃置一张黑色牌并选择一名武将牌均明置的其他角色，然后你暗置其张武将牌，若你弃置的牌是装备牌，则你1可以选择另一名其他角色重复此操作。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段，你可以弃置一张黑色牌并选择一名武将牌均明置的其他角色，然后你暗置其张武将牌，若你弃置的牌是装备牌，则你1可以选择另一名其他角色重复此操作。

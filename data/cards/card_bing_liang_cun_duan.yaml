@@ -4,17 +4,12 @@ category_2: 锦囊牌
 category_3: 延时锦囊
 name: 兵粮寸断
 image: card_bing_liang_cun_duan_qlhd_spade_10.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，你可将此牌置入一名其他角色的判定区。若【兵粮寸断】成为其判定牌且判定结果不为梅花，则跳过其下一个摸牌阶段。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        距离为1的一名其他角色
       effect: |-
-        出牌阶段，你可将此牌置入一名其他角色的判定区。若【兵粮寸断】成为其判定牌且判定结果不为梅花，则跳过其下一个摸牌阶段。
-      note: ''
-  note: ''
+        将【兵粮寸断】置于该角色的判定区里，若判定结果不为♣，跳过其摸牌阶段。
+deck_info: ""

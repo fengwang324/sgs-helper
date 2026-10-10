@@ -1,10 +1,5 @@
 id: skill_fang_zi_guozhan_qlhd_v1
 skill_id: skill_fang_zi
 mode: guozhan
-text: 结束阶段，你可以变更副将，然后获得原副将势力的所有角色各一张手牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 结束阶段，你可以变更副将，然后获得原副将势力的所有角色各一张手牌。

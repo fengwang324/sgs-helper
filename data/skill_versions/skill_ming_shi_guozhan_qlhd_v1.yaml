@@ -1,10 +1,5 @@
 id: skill_ming_shi_guozhan_qlhd_v1
 skill_id: skill_ming_shi
 mode: guozhan
-text: 锁定技，当你受到伤害时，若伤害来源有暗置的武将牌，此伤害-1。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，当你受到伤害时，若伤害来源有暗置的武将牌，此伤害-1。

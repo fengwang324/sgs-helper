@@ -1,6 +1,5 @@
 id: variant_g_jin_019
 general_id: general_g_jin_019
-variant: 群狼环鼎
 title: 文成武德
 general_number: G.JIN 019
 illustrator: 君桓文化
@@ -10,11 +9,11 @@ faction: 晋
 hp: 1.5
 gender: male
 product_id: qlhd
-general_set: null
-skills:
-  - skill_id: skill_san_chen
-    version_id: skill_san_chen_guozhan_qlhd_v1
-  - skill_id: skill_po_zhu
-    version_id: skill_po_zhu_guozhan_qlhd_v1
+general_set: 金印紫绶
 zhulianbihe:
-  - 羊祜
+- 羊祜
+skills:
+- skill_id: skill_san_chen
+  version_id: skill_san_chen_guozhan_qlhd_v1
+- skill_id: skill_po_zhu
+  version_id: skill_po_zhu_guozhan_qlhd_v1

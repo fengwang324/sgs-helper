@@ -1,10 +1,5 @@
 id: skill_tun_jiang_guozhan_qlhd_v1
 skill_id: skill_tun_jiang
 mode: guozhan
-text: 结束阶段，若你于此回合出牌阶段内使用过牌且使用的牌没有指定过其他角色为目标，则你可以摸X张牌（X为存活角色的势力数）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 结束阶段，若你于此回合出牌阶段内使用过牌且使用的牌没有指定过其他角色为目标，则你可以摸X张牌（X为存活角色的势力数）。

@@ -1,10 +1,5 @@
 id: skill_wei_meng_guozhan_qlhd_v1
 skill_id: skill_wei_meng
 mode: guozhan
-text: 出牌阶段限一次，你可以获得一名其他角色至多×张手牌，若如此做，你交给其等量的牌（X为你的体力值）结算完成后你可以令其获得纵横“危盟”直到其下回合结束。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以获得一名其他角色至多×张手牌，若如此做，你交给其等量的牌（X为你的体力值）结算完成后你可以令其获得纵横“危盟”直到其下回合结束。

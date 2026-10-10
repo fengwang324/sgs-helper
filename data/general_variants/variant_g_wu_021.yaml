@@ -1,6 +1,5 @@
 id: variant_g_wu_021
 general_id: general_g_wu_021
-variant: 群狼环鼎
 title: 豪情烈胆
 general_number: G.WU 021
 illustrator: F.源
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·变
 zhulianbihe:
-  - 甘宁
+- 甘宁
 skills:
-  - skill_id: skill_xuan_lve
-    version_id: skill_xuan_lve_guozhan_qlhd_v1
-  - skill_id: skill_yong_jin
-    version_id: skill_yong_jin_guozhan_qlhd_v1
+- skill_id: skill_xuan_lve
+  version_id: skill_xuan_lve_guozhan_qlhd_v1
+- skill_id: skill_yong_jin
+  version_id: skill_yong_jin_guozhan_qlhd_v1

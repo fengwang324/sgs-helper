@@ -1,10 +1,5 @@
 id: skill_tong_du_guozhan_qlhd_v1
 skill_id: skill_tong_du
 mode: guozhan
-text: 每名势力与你相同的角色的结束阶段，该角色可以摸X张牌（X为其此回合弃牌阶段弃置的牌数且至多为3)
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每名势力与你相同的角色的结束阶段，该角色可以摸X张牌（X为其此回合弃牌阶段弃置的牌数且至多为3）。

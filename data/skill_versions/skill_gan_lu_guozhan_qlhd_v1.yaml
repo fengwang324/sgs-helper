@@ -1,10 +1,5 @@
 id: skill_gan_lu_guozhan_qlhd_v1
 skill_id: skill_gan_lu
 mode: guozhan
-text: 出牌阶段限一次，你可以选择两名装备区里的牌数之差不大于你已损失的体力值的角色，然后令这两名角色交换装备区里所有的牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以选择两名装备区里的牌数之差不大于你已损失的体力值的角色，然后令这两名角色交换装备区里所有的牌。

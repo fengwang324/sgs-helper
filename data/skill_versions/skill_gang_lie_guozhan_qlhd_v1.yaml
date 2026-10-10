@@ -1,10 +1,5 @@
 id: skill_gang_lie_guozhan_qlhd_v1
 skill_id: skill_gang_lie
 mode: guozhan
-text: 当你受到伤害后，你可以进行判定，若结果为：红色，你对伤害来源造成1点伤害；黑色，你弃置伤害来源一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你受到伤害后，你可以进行判定，若结果为：红色，你对伤害来源造成1点伤害；黑色，你弃置伤害来源一张牌。

@@ -1,6 +1,5 @@
 id: variant_g_jin_032
 general_id: general_g_jin_032
-variant: 群狼环鼎
 title: 沂川跃鲤
 general_number: G.JIN 032
 illustrator: KY
@@ -8,9 +7,10 @@ image: g_jin_032.jpg
 mode: guozhan
 faction: 晋
 hp: 1.5
-gender: unknown
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 金印紫绶
+zhulianbihe: []
 skills:
-  - skill_id: skill_bing_xin
-    version_id: skill_bing_xin_guozhan_qlhd_v1
+- skill_id: skill_bing_xin
+  version_id: skill_bing_xin_guozhan_qlhd_v1

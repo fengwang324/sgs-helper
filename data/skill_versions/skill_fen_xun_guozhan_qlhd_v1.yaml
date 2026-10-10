@@ -1,10 +1,5 @@
 id: skill_fen_xun_guozhan_qlhd_v1
 skill_id: skill_fen_xun
 mode: guozhan
-text: 出牌阶段限一次，你可以弃置一张牌并选择一名其他角色，然后你计算与其的距离于此回合内视为1。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以弃置一张牌并选择一名其他角色，然后你计算与其的距离于此回合内视为1。

@@ -4,17 +4,12 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 借刀杀人
 image: card_jie_dao_sha_ren_qlhd_club_12.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，对装备区里有武器牌的一名其他角色使用。该角色需对其攻击范围内，由你指定的另一名角色使用一张【杀】，否则将装备区里的武器牌交给你。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 装备区里有武器牌的一名其他角色
+    - timing: |-
+        出牌阶段
+      target: |-
+        装备区里有武器牌的一名其他角色
       effect: |-
         该角色需对其攻击范围内，由你指定的另一名角色使用一张【杀】，否则将装备区里的武器牌交给你。
-      note: ''
-  note: ''
+deck_info: ""

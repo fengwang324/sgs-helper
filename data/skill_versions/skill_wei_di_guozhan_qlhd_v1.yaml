@@ -1,10 +1,5 @@
 id: skill_wei_di_guozhan_qlhd_v1
 skill_id: skill_wei_di
 mode: guozhan
-text: 出牌阶段限一次，你可以选择一名于此回合内得到过牌堆里的牌的其他角色，对其发起一个“军令”，若其不执行，则你获得其所有的手牌，然后交给其X张牌（X为你此次获得其手牌数）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以选择一名于此回合内得到过牌堆里的牌的其他角色，对其发起一个“军令”，若其不执行，则你获得其所有的手牌，然后交给其X张牌（X为你此次获得其手牌数）。

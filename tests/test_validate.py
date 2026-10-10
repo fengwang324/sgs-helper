@@ -4,14 +4,17 @@
 等字段全部删除：写了就是未知字段（error），而不是走原来的关系校验。
 
 卡牌单层化之后，``CardPrinting`` 时代的「同花色点数重复 / 漏填花色」警告随该层一起消失，
-现在只管 `card_set` 必须被某个产品声明、卡图必须存在、``effect.skills[].version_id``
-必须属于同一个技能。**分类取值不再受任何预设白名单约束**：二 / 三级分类可以自由填写、
+现在只管 `card_set` 必须被某个产品声明、卡图必须存在。卡牌效果是原始文本，不再关联 Skill。
+**分类取值不再受任何预设白名单约束**：二 / 三级分类可以自由填写、
 也可以留空，校验器不提示「不在登记的分类里」，也不要求“补进 constants”。
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+
+import pytest
+import yaml
 
 from conftest import error_text, replace_in, warning_text, write_dataset
 
@@ -127,37 +130,17 @@ def test_explicit_version_must_belong_to_same_skill(synth: Path) -> None:
     assert "skill_demo_other" in error_text(result)
 
 
-def test_self_reference_is_detected(synth: Path) -> None:
-    path = synth / "skill_versions" / "demo_identity_v1.yaml"
-    path.write_text(
-        path.read_text(encoding="utf-8") + "previous_version_id: skill_demo_identity_v1\n",
-        encoding="utf-8",
-    )
+@pytest.mark.parametrize("field,value", [
+    ("source", "legacy source"),
+    ("version_label", "旧标签"),
+    ("previous_version_id", "skill_demo_identity_v1"),
+])
+def test_removed_skill_version_fields_are_rejected(synth: Path, field: str, value: str) -> None:
+    path = synth / "skill_versions" / "demo_identity_v2.yaml"
+    path.write_text(path.read_text(encoding="utf-8") + f"{field}: {value}\n", encoding="utf-8")
     result = validate_data_dir(synth)
     assert not result.ok
-    assert "自引用" in error_text(result)
-
-
-def test_previous_version_must_belong_to_same_skill(synth: Path) -> None:
-    replace_in(
-        synth / "skill_versions" / "demo_identity_v2.yaml",
-        "previous_version_id: skill_demo_identity_v1",
-        "previous_version_id: skill_demo_other_v1",
-    )
-    result = validate_data_dir(synth)
-    assert not result.ok
-    assert "属于技能 skill_demo_other" in error_text(result)
-
-
-def test_previous_version_cycle_is_detected(synth: Path) -> None:
-    path = synth / "skill_versions" / "demo_identity_v1.yaml"
-    path.write_text(
-        path.read_text(encoding="utf-8") + "previous_version_id: skill_demo_identity_v2\n",
-        encoding="utf-8",
-    )
-    result = validate_data_dir(synth)
-    assert not result.ok
-    assert "版本链成环" in error_text(result)
+    assert field in error_text(result)
 
 
 def test_removed_fields_are_rejected_not_ignored(synth: Path) -> None:
@@ -176,39 +159,12 @@ def test_removed_fields_are_rejected_not_ignored(synth: Path) -> None:
 # ---------------------------------------------------------------- 卡牌错误 / 警告
 
 
-def test_missing_card_skill_reference_is_detected(synth: Path) -> None:
-    replace_in(
-        synth / "cards" / "demo_trick.yaml",
-        "skill_id: skill_demo",
-        "skill_id: skill_missing",
-    )
+def test_card_legacy_effect_skill_structure_is_rejected(synth: Path) -> None:
+    path = synth / "cards" / "demo_trick.yaml"
+    path.write_text(path.read_text(encoding="utf-8") + "effect_skills: []\n", encoding="utf-8")
     result = validate_data_dir(synth)
     assert not result.ok
-    text = error_text(result)
-    assert "skill_missing" in text
-    assert "effect.skills[0].skill_id" in text
-    assert "data/skills/" in text
-
-
-def test_empty_card_skill_reference_is_detected(synth: Path) -> None:
-    replace_in(synth / "cards" / "demo_trick.yaml", "skill_id: skill_demo", 'skill_id: ""')
-    result = validate_data_dir(synth)
-    assert not result.ok
-    assert "effect.skills[0].skill_id" in error_text(result)
-
-
-def test_card_effect_version_must_belong_to_same_skill(synth: Path) -> None:
-    """卡牌效果绑定的版本必须属于同一个技能（与武将版本同规则）。"""
-    replace_in(
-        synth / "cards" / "demo_trick.yaml",
-        "version_id: skill_demo_guozhan_v1",
-        "version_id: skill_demo_other_v1",
-    )
-    result = validate_data_dir(synth)
-    assert not result.ok
-    text = error_text(result)
-    assert "effect.skills[0].version_id" in text
-    assert "skill_demo_other" in text
+    assert "effect_skills" in error_text(result)
 
 
 def test_card_categories_are_free_and_may_be_blank(synth: Path) -> None:
@@ -229,6 +185,13 @@ def test_card_categories_are_free_and_may_be_blank(synth: Path) -> None:
     assert "指示物的二级分类" not in text
 
     # 指示物 + 全新的二级分类：一样不提示
+    replace_in(synth / "cards" / "demo_trick.yaml", "card_set: 演示牌堆", "card_set: null")
+    replace_in(synth / "cards" / "demo_trick.yaml", "deck_info: 演示牌堆中一张", "deck_info: null")
+    replace_in(
+        synth / "cards" / "demo_trick.yaml",
+        "rules:\n  use_methods:\n    - timing: 出牌阶段\n      target: 一名其他角色\n      effect: 造成一点伤害\n",
+        "rules: null\n",
+    )
     replace_in(
         synth / "cards" / "demo_trick.yaml",
         "category_1: 游戏牌",
@@ -261,12 +224,27 @@ def test_card_set_must_be_declared_by_a_product(synth: Path) -> None:
     assert "幻想的拓展包" in text
 
 
-def test_indicator_is_a_category_not_a_card_set(synth: Path) -> None:
-    """「指示物」是 category_1，不是游戏牌拓展包，校验器要给专门提示。"""
-    replace_in(synth / "cards" / "demo_trick.yaml", "card_set: 演示牌堆", "card_set: 指示物")
+@pytest.mark.parametrize("field,value", [
+    ("card_set", "演示牌堆"),
+    ("deck_info", "1张"),
+    ("attack_range", "5"),
+    ("rules", "{use_methods: []}"),
+])
+def test_indicator_rejects_game_card_fields(synth: Path, field: str, value: str) -> None:
+    card = {
+        "id": "card_indicator_bad", "category_1": "指示物", "category_2": "鏖战",
+        "category_3": "说明卡", "name": "指示物示例", "image": "", "effect": "",
+        "attack_range": "", "note": "",
+    }
+    if field == "rules":
+        card[field] = {"use_methods": []}
+    else:
+        card[field] = value
+    path = synth / "cards" / "indicator_bad.yaml"
+    path.write_text(yaml.safe_dump(card, allow_unicode=True, sort_keys=False), encoding="utf-8")
     result = validate_data_dir(synth)
-    assert result.ok, error_text(result)
-    assert "不是游戏牌拓展包" in warning_text(result)
+    assert not result.ok
+    assert field in error_text(result)
 
 
 def test_missing_card_image_is_warned(synth: Path) -> None:
@@ -349,12 +327,10 @@ def test_skill_without_version_in_general_mode_is_warned(synth: Path) -> None:
 
 def test_common_version_counts_as_available_text(synth: Path) -> None:
     """common 版本是回退候选：只要有一条，就不再报“没有可用文本”。"""
-    from conftest import SOURCE_YAML
-
     replace_in(synth / "general_variants" / "demo_beta_identity.yaml", "mode: identity", "mode: ol")
     (synth / "skill_versions" / "demo_common_v1.yaml").write_text(
         f"id: skill_demo_common_v1\nskill_id: skill_demo\nmode: common\n"
-        f"text: 通用版演示技能文本\n{SOURCE_YAML}",
+        f"text: 通用版演示技能文本\n",
         encoding="utf-8",
     )
     result = validate_data_dir(synth)

@@ -1,10 +1,5 @@
 id: skill_niao_xiang_guozhan_qlhd_v1
 skill_id: skill_niao_xiang
 mode: guozhan
-text: 阵法技，若你是一个围攻关系中的围攻角色，此围攻关系中的围攻角色对被围攻角色使用的【杀】需要两张【闪】才能抵消。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 阵法技，若你是一个围攻关系中的围攻角色，此围攻关系中的围攻角色对被围攻角色使用的【杀】需要两张【闪】才能抵消。

@@ -84,14 +84,11 @@
     保存流程固定为：<strong>写回 YAML → 数据校验 → 重建 SQLite</strong>。
     校验不通过时<strong>一个字都不会落盘</strong>，数据库也不会变化。
   </p>
-  {% if kind == 'skill_version' and mode == 'create' %}
-    <p class="ok-line">这是新增版本：旧版本（含 <code>previous_version_id</code> 指向的那条）保持原样，不会被覆盖。</p>
-  {% endif %}
   {% if kind == 'skill_version' and mode == 'edit' %}
     <p class="warn-line">
       注意：这里改的是<strong>已经存在的历史版本</strong>。如果只是技能平衡调整 / 更正后出的文本，
       正确做法是保留这一条，另外
-      <a href="/new/skill_version?skill_id={{ values.get('skill_id', '') }}&mode={{ values.get('mode', '') }}&previous_version_id={{ target_id }}">新增一个版本</a>
+      <a href="/new/skill_version?skill_id={{ values.get('skill_id', '') }}&mode={{ values.get('mode', '') }}&product_id={{ values.get('product_id', '') }}">新增一个版本</a>
       （旧版本对应实体卡上印的旧文本，改掉就查不到了）。
     </p>
   {% endif %}

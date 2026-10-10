@@ -4,10 +4,6 @@ category_2: 装备牌
 category_3: 坐骑
 name: 紫骍
 image: card_zi_xing_qlhd_diamond_13.jpg
-card_set: null
-effect:
-  text: “怀夏后之九代，想陈王之紫骍。”《梁书·张率传》
-  skills: []
-rules:
-  distance_modifier: '-1'
-  note: ''
+effect: |-
+  锁定技，你至其他角色的距离-1。
+deck_info: ""

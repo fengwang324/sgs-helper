@@ -1,0 +1,10 @@
+# 模板：坐骑。距离规则直接写在效果文本中。
+id: card_change_me
+category_1: 游戏牌
+category_2: 装备牌
+category_3: 坐骑
+name: 卡牌名
+image: ""
+card_set: null
+deck_info: ''
+effect: ''

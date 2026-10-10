@@ -1,10 +1,5 @@
 id: skill_ji_xi_guozhan_qlhd_v1
 skill_id: skill_ji_xi
 mode: guozhan
-text: 主将技，你计算体力上限时减少1个单独的阴阳鱼。出牌阶段，你可以将一张“田”当【顺手牵羊】使用。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，你计算体力上限时减少1个单独的阴阳鱼。出牌阶段，你可以将一张“田”当【顺手牵羊】使用。

@@ -1,6 +1,5 @@
 id: variant_g_wei_020
 general_id: general_g_wei_020
-variant: 群狼环鼎
 title: 曹魏的谋主
 general_number: G.WEI 020
 illustrator: 心中一凛
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·变
 zhulianbihe:
-  - 荀彧
+- 荀彧
 skills:
-  - skill_id: skill_qi_ce
-    version_id: skill_qi_ce_guozhan_qlhd_v1
-  - skill_id: skill_zhi_yu
-    version_id: skill_zhi_yu_guozhan_qlhd_v1
+- skill_id: skill_qi_ce
+  version_id: skill_qi_ce_guozhan_qlhd_v1
+- skill_id: skill_zhi_yu
+  version_id: skill_zhi_yu_guozhan_qlhd_v1

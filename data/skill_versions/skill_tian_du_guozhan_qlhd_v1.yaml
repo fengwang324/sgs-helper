@@ -1,10 +1,5 @@
 id: skill_tian_du_guozhan_qlhd_v1
 skill_id: skill_tian_du
 mode: guozhan
-text: 当你的判定牌生效后，你可以获得此牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你的判定牌生效后，你可以获得此牌。

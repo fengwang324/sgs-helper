@@ -1,10 +1,5 @@
 id: skill_kuang_cai_guozhan_qlhd_v1
 skill_id: skill_kuang_cai
 mode: guozhan
-text: 锁定技，你于回合内使用牌无距离和次数限制：弃牌阶段开始时，若你本回合使用过牌且未造成过伤害，本回合你的手牌上限-1；若你本回合未使用过牌，本回合你的手牌上限+1。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，你于回合内使用牌无距离和次数限制：弃牌阶段开始时，若你本回合使用过牌且未造成过伤害，本回合你的手牌上限-1；若你本回合未使用过牌，本回合你的手牌上限+1。

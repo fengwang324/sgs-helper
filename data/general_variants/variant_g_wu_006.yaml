@@ -1,6 +1,5 @@
 id: variant_g_wu_006
 general_id: general_g_wu_006
-variant: 群狼环鼎
 title: 矜持之花
 general_number: G.WU 006
 illustrator: KayaK
@@ -12,9 +11,9 @@ gender: female
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 小乔
+- 小乔
 skills:
-  - skill_id: skill_guo_se
-    version_id: skill_guo_se_guozhan_qlhd_v1
-  - skill_id: skill_liu_li
-    version_id: skill_liu_li_guozhan_qlhd_v1
+- skill_id: skill_guo_se
+  version_id: skill_guo_se_guozhan_qlhd_v1
+- skill_id: skill_liu_li
+  version_id: skill_liu_li_guozhan_qlhd_v1

@@ -1,10 +1,5 @@
 id: skill_zi_liang_guozhan_qlhd_v1
 skill_id: skill_zi_liang
 mode: guozhan
-text: 副将技，当一名势力与你相同的角色受到伤害后，若你有“田”，则你可以选择一张“田”交给其。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 副将技，当一名势力与你相同的角色受到伤害后，若你有“田”，则你可以选择一张“田”交给其。

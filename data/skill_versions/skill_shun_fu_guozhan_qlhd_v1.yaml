@@ -1,10 +1,5 @@
 id: skill_shun_fu_guozhan_qlhd_v1
 skill_id: skill_shun_fu
 mode: guozhan
-text: 限定技，出牌阶段，你可以令至多三名未确定势力的其他角色各摸两张牌且可以使用一张【杀】（无距离限制且不可被响应）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，出牌阶段，你可以令至多三名未确定势力的其他角色各摸两张牌且可以使用一张【杀】（无距离限制且不可被响应）。

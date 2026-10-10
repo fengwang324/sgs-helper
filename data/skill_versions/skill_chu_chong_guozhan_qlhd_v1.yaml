@@ -1,10 +1,5 @@
 id: skill_chu_chong_guozhan_qlhd_v1
 skill_id: skill_chu_chong
 mode: guozhan
-text: 你杀死与你势力相同的角色的奖惩改为令所有与你势力相同的角色回复所有体力、摸牌至五张且可以变更一次副将。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你杀死与你势力相同的角色的奖惩改为令所有与你势力相同的角色回复所有体力、摸牌至五张且可以变更一次副将。

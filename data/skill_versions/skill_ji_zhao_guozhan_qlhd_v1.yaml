@@ -1,10 +1,5 @@
 id: skill_ji_zhao_guozhan_qlhd_v1
 skill_id: skill_ji_zhao
 mode: guozhan
-text: 限定技，当你处于濒死状态时，你可以将手牌摸至X张，然后你将体力回复至2点，失去“授钱”，获得“仁德”（X为你的体力上限）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，当你处于濒死状态时，你可以将手牌摸至X张，然后你将体力回复至2点，失去“授钱”，获得“仁德”（X为你的体力上限）。

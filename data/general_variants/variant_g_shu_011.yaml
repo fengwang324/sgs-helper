@@ -1,6 +1,5 @@
 id: variant_g_shu_011
 general_id: general_g_shu_011
-variant: 群狼环鼎
 title: 卧龙
 general_number: G.SHU 011
 illustrator: 绘聚艺堂
@@ -12,12 +11,12 @@ gender: male
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 庞统
-  - 黄月英
+- 庞统
+- 黄月英
 skills:
-  - skill_id: skill_ba_zhen
-    version_id: skill_ba_zhen_guozhan_qlhd_v1
-  - skill_id: skill_huo_ji
-    version_id: skill_huo_ji_guozhan_qlhd_v1
-  - skill_id: skill_kan_po
-    version_id: skill_kan_po_guozhan_qlhd_v1
+- skill_id: skill_ba_zhen
+  version_id: skill_ba_zhen_guozhan_qlhd_v1
+- skill_id: skill_huo_ji
+  version_id: skill_huo_ji_guozhan_qlhd_v1
+- skill_id: skill_kan_po
+  version_id: skill_kan_po_guozhan_qlhd_v1

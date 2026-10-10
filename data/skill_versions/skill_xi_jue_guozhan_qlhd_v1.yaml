@@ -1,10 +1,5 @@
 id: skill_xi_jue_guozhan_qlhd_v1
 skill_id: skill_xi_jue
 mode: guozhan
-text: 你可以于对应时机弃置一张牌以发动“突袭或“骁果”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你可以于对应时机弃置一张牌以发动“突袭”或“骁果”。

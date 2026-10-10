@@ -1,10 +1,5 @@
 id: skill_po_zhu_guozhan_qlhd_v1
 skill_id: skill_po_zhu
 mode: guozhan
-text: 主将技，你计算体力上限时减少1个单独的阴阳鱼。准备阶段，你可以将一张牌当【杀】使用，结算后你展示唯一目标一张手牌，若两张牌花色不同，你可以重复此流程。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，你计算体力上限时减少1个单独的阴阳鱼。准备阶段，你可以将一张牌当【杀】使用，结算后你展示唯一目标一张手牌，若两张牌花色不同，你可以重复此流程。

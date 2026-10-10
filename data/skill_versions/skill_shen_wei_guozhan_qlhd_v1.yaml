@@ -1,10 +1,5 @@
 id: skill_shen_wei_guozhan_qlhd_v1
 skill_id: skill_shen_wei
 mode: guozhan
-text: 主将技，你计算体力上限时减少1个单独的阴阳鱼，摸牌阶段，若你的体力值为全场最多，你额外摸两张牌：你的手牌上限+2。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，你计算体力上限时减少1个单独的阴阳鱼，摸牌阶段，若你的体力值为全场最多，你额外摸两张牌：你的手牌上限+2。

@@ -1,10 +1,5 @@
 id: skill_dao_shu_guozhan_qlhd_v1
 skill_id: skill_dao_shu
 mode: guozhan
-text: 出牌阶段限一次，你可以声明一种花色并选择一名其他角色，然后获得其一张手牌并展示之，若此牌与你声明的花色相同，你对其造成1点伤害且此技能视为未发动过：若花色不同，你展示并交给该角色一张其他花色的手牌(若没有则展示全部手牌)
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以声明一种花色并选择一名其他角色，然后获得其一张手牌并展示之，若此牌与你声明的花色相同，你对其造成1点伤害且此技能视为未发动过：若花色不同，你展示并交给该角色一张其他花色的手牌（若没有则展示全部手牌）。

@@ -4,16 +4,12 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 以逸待劳
 image: card_yi_yi_dai_lao_qlhd_heart_11.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，对你和与你势力相同的角色使用。每名目标角色各摸两张牌，然后弃置两张牌。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 你和与你势力相同的角色
-      effect: 每名目标角色各摸两张牌，然后弃置两张牌。
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        你和与你势力相同的角色
+      effect: |-
+        每名目标角色各摸两张牌，然后弃置两张牌。
+deck_info: ""

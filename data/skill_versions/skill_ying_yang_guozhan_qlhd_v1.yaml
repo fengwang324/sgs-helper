@@ -1,10 +1,5 @@
 id: skill_ying_yang_guozhan_qlhd_v1
 skill_id: skill_ying_yang
 mode: guozhan
-text: 当你拼点的牌亮出后，你可以令此牌的点数于此次拼点结算中+3或-3（点数至大加至K，至小减至A)
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你拼点的牌亮出后，你可以令此牌的点数于此次拼点结算中+3或-3（点数至大加至K，至小减至A）。

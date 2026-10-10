@@ -1,10 +1,5 @@
 id: skill_zhi_dao_guozhan_qlhd_v1
 skill_id: skill_zhi_dao
 mode: guozhan
-text: 锁定技，出牌阶段开始时，你选择一名其他角色，直到回合结束，你计算与其的距离视为且你不能使用牌指定除你与其外的角色为目标然后当你于此出牌阶段内第一次对其造成伤害后，你获得其区域里的一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，出牌阶段开始时，你选择一名其他角色，直到回合结束，你计算与其的距离视为且你不能使用牌指定除你与其外的角色为目标然后当你于此出牌阶段内第一次对其造成伤害后，你获得其区域里的一张牌。

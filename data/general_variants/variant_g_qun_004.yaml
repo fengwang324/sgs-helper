@@ -1,6 +1,5 @@
 id: variant_g_qun_004
 general_id: general_g_qun_004
-variant: 群狼环鼎
 title: 高贵的名门
 general_number: G.QUN 004
 illustrator: 北辰菌
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 颜良&文丑
+- 颜良&文丑
 skills:
-  - skill_id: skill_luan_ji
-    version_id: skill_luan_ji_guozhan_qlhd_v1
+- skill_id: skill_luan_ji
+  version_id: skill_luan_ji_guozhan_qlhd_v1

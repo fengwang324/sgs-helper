@@ -1,10 +1,5 @@
 id: skill_feng_shi_guozhan_qlhd_v1
 skill_id: skill_feng_shi
 mode: guozhan
-text: 阵法技，若你既为围攻角色又形成队列，则你对该被围攻角色使用的【杀】对其伤害+X(X为你队列的角色数)。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 阵法技，若你既为围攻角色又形成队列，则你对该被围攻角色使用的【杀】对其伤害+X（X为你队列的角色数）。

@@ -1,10 +1,5 @@
 id: skill_ju_bao_guozhan_qlhd_v1
 skill_id: skill_ju_bao
 mode: guozhan
-text: 锁定技，其他角色不能获得你装备区里的宝物牌。结束阶段，若弃牌堆中或场上存在【定澜夜明珠】，则你摸一张牌，然后你获得装备区里有【定澜夜明珠】的角色一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，其他角色不能获得你装备区里的宝物牌。结束阶段，若弃牌堆中或场上存在【定澜夜明珠】，则你摸一张牌，然后你获得装备区里有【定澜夜明珠】的角色一张牌。

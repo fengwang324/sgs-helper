@@ -1,6 +1,5 @@
 id: variant_g_wei_017
 general_id: general_g_wei_017
-variant: 群狼环鼎
 title: 深明大义
 general_number: G.WEI 017
 illustrator: 张帅
@@ -11,10 +10,10 @@ hp: 1.5
 gender: male
 product_id: qlhd
 general_set: 君临天下·势
-skills:
-  - skill_id: skill_xun_xun
-    version_id: skill_xun_xun_guozhan_qlhd_v1
-  - skill_id: skill_wang_xi
-    version_id: skill_wang_xi_guozhan_qlhd_v1
 zhulianbihe:
-  - 乐进
+- 乐进
+skills:
+- skill_id: skill_xun_xun
+  version_id: skill_xun_xun_guozhan_qlhd_v1
+- skill_id: skill_wang_xi
+  version_id: skill_wang_xi_guozhan_qlhd_v1

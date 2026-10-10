@@ -1,6 +1,5 @@
 id: variant_g_wei_060
 general_id: general_g_wei_060
-variant: 群狼环鼎
 title: 五子之亚
 general_number: G.WEI 060
 illustrator: YanBai
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_jue_jue
-    version_id: skill_jue_jue_guozhan_qlhd_v1
-  - skill_id: skill_fang_yuan
-    version_id: skill_fang_yuan_guozhan_qlhd_v1
+- skill_id: skill_jue_jue
+  version_id: skill_jue_jue_guozhan_qlhd_v1
+- skill_id: skill_fang_yuan
+  version_id: skill_fang_yuan_guozhan_qlhd_v1

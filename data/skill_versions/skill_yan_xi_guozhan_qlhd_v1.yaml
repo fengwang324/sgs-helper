@@ -1,10 +1,5 @@
 id: skill_yan_xi_guozhan_qlhd_v1
 skill_id: skill_yan_xi
 mode: guozhan
-text: 准备阶段，你可以选择至多三名其他势力角色的各一张手牌，这些角色依次声明一个牌名，然后你展示并获得其中一张牌，若此牌牌名与其声明的不同，你再获得其余被选择的牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，你可以选择至多三名其他势力角色的各一张手牌，这些角色依次声明一个牌名，然后你展示并获得其中一张牌，若此牌牌名与其声明的不同，你再获得其余被选择的牌。

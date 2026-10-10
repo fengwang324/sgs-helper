@@ -1,10 +1,5 @@
 id: skill_ji_jiu_guozhan_qlhd_v1
 skill_id: skill_ji_jiu
 mode: guozhan
-text: 你的回合外，你可以将一张红色牌当【桃】使用。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你的回合外，你可以将一张红色牌当【桃】使用。

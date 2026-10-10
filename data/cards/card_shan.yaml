@@ -4,15 +4,12 @@ category_2: 基本牌
 category_3: 闪
 name: 闪
 image: card_shan_qlhd_heart_2.jpg
-card_set: null
-effect:
-  text: ''
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
-      effect: ''
-      note: ''
-  note: ''
+    - timing: |-
+        当【杀】对对应的角色为你的目标生效前。
+      target: |-
+        此【杀】。
+      effect: |-
+        抵消此【杀】。
+deck_info: ""

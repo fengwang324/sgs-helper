@@ -1,6 +1,5 @@
 id: variant_g_shu_023
 general_id: general_g_shu_023
-variant: 群狼环鼎
 title: 键闭剑门
 general_number: G.SHU 023
 illustrator: zoo
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·权
 zhulianbihe:
-  - 蒋琬&费祎
+- 蒋琬&费祎
 skills:
-  - skill_id: skill_jiang_lve
-    version_id: skill_jiang_lve_guozhan_qlhd_v1
+- skill_id: skill_jiang_lve
+  version_id: skill_jiang_lve_guozhan_qlhd_v1

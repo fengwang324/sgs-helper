@@ -1,10 +1,5 @@
 id: skill_shu_shen_guozhan_qlhd_v1
 skill_id: skill_shu_shen
 mode: guozhan
-text: 每回合各限一次，当你回复体力时，你可以令名其他角色摸两张牌：当你获得两张或更多牌时，你可以令一名其他角色回复1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每回合各限一次，当你回复体力时，你可以令名其他角色摸两张牌：当你获得两张或更多牌时，你可以令一名其他角色回复1点体力。

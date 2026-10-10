@@ -4,17 +4,12 @@ category_2: 锦囊牌
 category_3: 延时锦囊
 name: 乐不思蜀
 image: card_le_bu_si_shu_qlhd_heart_6.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，对一名其他角色使用。【乐不思蜀】需横置于该角色的判定区里，和装备区里的♣♥♠♦同视为其判定区的牌。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 一名其他角色
+    - timing: |-
+        出牌阶段
+      target: |-
+        一名其他角色
       effect: |-
-        【乐不思蜀】需横置于该角色的判定区里，和装备区里的♣♥♠♦同视为其判定区的牌。
-      note: ''
-  note: ''
+        【乐不思蜀】需横置于该角色的判定区里，若判定结果不为♥，跳过其出牌阶段。
+deck_info: ""

@@ -1,10 +1,5 @@
 id: skill_chu_jue_guozhan_qlhd_v1
 skill_id: skill_chu_jue
 mode: guozhan
-text: 锁定技，你对有角色死亡的势力的角色使用牌无次数限制且不可被这些角色响应。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，你对有角色死亡的势力的角色使用牌无次数限制且不可被这些角色响应。

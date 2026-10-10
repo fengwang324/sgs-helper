@@ -12,8 +12,6 @@ from .constants import (
     GENDER_LABELS,
     KIND_BY_NAME,
     MODE_LABELS,
-    SOURCE_LABELS,
-    SOURCE_TITLE_BY_REFERENCE,
 )
 
 #: 自动识别出来的相关实体：报告键 -> kind（顺序即展示顺序）
@@ -29,23 +27,8 @@ def mode_label(mode: str | None) -> str:
     return MODE_LABELS.get(mode or "", mode or "未填")
 
 
-def source_label(value: str | None) -> str:
-    return SOURCE_LABELS.get(value or "", value or "未填")
-
-
 def gender_label(value: str | None) -> str:
     return GENDER_LABELS.get(value or "", value or "")
-
-
-def fmt_source(source: dict | None) -> str:
-    """来源只有 type + reference：展示名按 reference 推导，认不出就退化成 type 标签。"""
-    if not source:
-        return "（未记录来源）"
-    reference = str(source.get("reference") or "").strip()
-    label = SOURCE_TITLE_BY_REFERENCE.get(reference) or source_label(source.get("type"))
-    if reference and reference != label:
-        return f"{label} / {reference}"
-    return label
 
 
 def fmt_location(entity: dict | None) -> str:
@@ -144,25 +127,15 @@ def render_skill(report: dict) -> str:
         for version_id in group["version_ids"]:
             version = by_id[version_id]
             head = f"  · {version['id']}    {mode_label(version['mode'])}"
-            if version.get("version_label"):
-                head += f"    [{version['version_label']}]"
             lines.append(head)
             lines += _block("技能文本", version.get("text"))
-            lines.append(f"      来源：{fmt_source(version.get('source'))}")
             if version.get("product_id"):
                 product = report.get("products", {}).get(version["product_id"]) or {}
                 lines.append(
                     f"      所属产品：{version['product_id']} / {product.get('name', '（未找到）')}"
                 )
-            if version.get("previous_version_id"):
-                lines.append(f"      前一版本：{version['previous_version_id']}")
             lines.append("")
 
-    chains = [c for c in report["history_chains"] if len(c) > 1]
-    if chains:
-        lines.append(_section("版本演进（previous_version_id）"))
-        for chain in chains:
-            lines.append("  " + "  →  ".join(chain))
     return "\n".join(lines)
 
 
@@ -191,7 +164,7 @@ def render_general(report: dict) -> str:
     for variant in report["variants"]:
         lines.append("")
         lines.append(
-            f"── 版本：{variant['variant']}（{variant['id']}）"
+            f"── 版本：{variant.get('product_name') or variant.get('product_id') or '未关联产品'}（{variant['id']}）"
             f"    模式：{mode_label(variant.get('mode'))}"
             "  " + "-" * 20
         )
@@ -235,10 +208,8 @@ def render_general(report: dict) -> str:
                 continue
             lines.append(
                 f"        当前显示版本（{how}）：{version['id']}"
-                + (f"  [{version['version_label']}]" if version.get("version_label") else "")
             )
             lines += _block("技能文本", version.get("text"), indent="          ")
-            lines.append(f"        来源：{fmt_source(version.get('source'))}")
     return "\n".join(lines)
 
 
@@ -247,68 +218,28 @@ def render_general(report: dict) -> str:
 
 def render_card(report: dict) -> str:
     card = report["card"]
-    effect = report.get("effect") or {}
-
     lines = ["=" * 72, f"卡牌：{card['name']}    （id：{card['id']}）"]
-    # 二 / 三级分类可以留空：只拼非空的级别，不输出空分隔符
-    categories = [
-        str(card.get(key)).strip()
-        for key in ("category_1", "category_2", "category_3")
-        if str(card.get(key) or "").strip()
-    ]
+    categories = [str(card.get(key)).strip()
+                  for key in ("category_1", "category_2", "category_3")
+                  if str(card.get(key) or "").strip()]
     lines.append(f"  分类：{' / '.join(categories) or '未填'}")
-    lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
+    if card.get("category_1") == "游戏牌":
+        lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
     lines.append(f"  卡图：{card.get('image') or '未填'}")
     lines.append(f"  源文件：{fmt_location(card)}")
-
-    rules = card.get("rules") or {}
-    for key, label in (("attack_range", "攻击范围"), ("distance_modifier", "距离修正")):
-        if rules.get(key):
-            lines += _block(label, rules[key], indent="  ")
-    for index, method in enumerate(rules.get("use_methods", []), 1):
+    if card.get("attack_range"):
+        lines += _block("攻击范围", card["attack_range"], indent="  ")
+    for index, method in enumerate((card.get("rules") or {}).get("use_methods", []), 1):
         lines.append(f"  {method.get('label') or f'使用方法 {index}'}：")
-        for key, label in (("timing", "出牌时机"), ("target", "使用目标"),
-                           ("effect", "作用效果"), ("note", "补充说明")):
+        for key, label in (("timing", "出牌时机"), ("target", "使用目标"), ("effect", "作用效果")):
             if method.get(key):
                 lines += _block(label, method[key], indent="    ")
-    if rules.get("note"):
-        lines += _block("补充说明", rules["note"], indent="  ")
-
-    effect_text = effect.get("text") or ""
-    effect_text = effect_text if effect_text.strip() else "（卡面无独立效果文本）"
-    lines += _block("效果文本", effect_text, indent="  ")
-
-    skills = effect.get("skills") or []
-    lines.append(f"  关联技能（{len(skills)} 个）：")
-    if not skills:
-        lines.append("    （无）")
-    for entry in skills:
-        skill = entry.get("skill") or {}
-        skill_name = str(skill.get("name") or "").strip()
-        lines.append(
-            f"    ● {skill_name}（{entry['skill_id']}）" if skill_name
-            else f"    ● {entry['skill_id']}    ⚠ 这个技能不存在"
-        )
-        version = entry.get("version")
-        if version is None:
-            if entry.get("pinned"):
-                lines.append(
-                    f"        绑定版本：{entry['version_id']}"
-                    "    ⚠ 绑定的版本不存在（可能被删掉了），这个技能没有文本"
-                )
-            else:
-                lines.append(
-                    "        绑定版本：（无）"
-                    "    ⚠ 没有显式绑定，且按模式匹配不到唯一版本：无技能文本"
-                )
-            continue
-        how = "显式绑定" if entry.get("pinned") else "按模式匹配"
-        lines.append(
-            f"        绑定版本（{how}）：{version['id']}"
-            + (f"  [{version['version_label']}]" if version.get("version_label") else "")
-        )
-        lines += _block("技能文本", version.get("text"), indent="        ")
-
+    if card.get("effect"):
+        lines += _block("效果文本", card["effect"], indent="  ")
+    if card.get("category_1") == "游戏牌":
+        lines += _block("牌堆信息", card.get("deck_info") or "待录入", indent="  ")
+    if card.get("note"):
+        lines += _block("备注", card["note"], indent="  ")
     related = _link_text(report)
     if related:
         lines.append("  相关：" + related)
@@ -359,7 +290,7 @@ def render_product(report: dict) -> str:
         lines.append(f"  游戏牌牌堆：{'、'.join(product['card_sets'])}")
     lines.append(f"  源文件：{fmt_location(product)}")
     lines.append("")
-    variant_names = [f"{v.get('general_name')}（{v['variant']}）" for v in report["variants"]]
+    variant_names = [f"{v.get('general_name')}（{v.get('general_number') or v['id']}）" for v in report["variants"]]
     lines.append(f"  该产品收录武将版本 {len(variant_names)} 条："
                  + ("、".join(variant_names) or "（无）"))
     cards = report.get("cards") or []

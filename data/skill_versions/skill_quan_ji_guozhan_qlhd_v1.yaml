@@ -1,10 +1,5 @@
 id: skill_quan_ji_guozhan_qlhd_v1
 skill_id: skill_quan_ji
 mode: guozhan
-text: 每名角色的回合各限一次，当你受到伤害后或当你造成伤害后，你可以摸一张牌，然后将一张牌置于你的武将牌上，称为“权”；你的手牌上限+X（X为“权”的数量）
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每名角色的回合各限一次，当你受到伤害后或当你造成伤害后，你可以摸一张牌，然后将一张牌置于你的武将牌上，称为“权”；你的手牌上限+X（X为“权”的数量）。

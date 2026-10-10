@@ -1,0 +1,7 @@
+id: card_naffcab60
+category_1: 指示物
+category_2: 军令
+name: 军令其三
+image: r00c02_1.png
+effect: |-
+  失去1点体力。

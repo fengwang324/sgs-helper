@@ -1,10 +1,5 @@
 id: skill_wen_ji_guozhan_qlhd_v1
 skill_id: skill_wen_ji
 mode: guozhan
-text: 出牌阶段开始时，你可以令一名其他角色交给你一张牌，然后若其势力与你相同或未确定势力，则你于此回合内使用此牌无距离和次数限制且不能被响应，否则你交给其张其它牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段开始时，你可以令一名其他角色交给你一张牌，然后若其势力与你相同或未确定势力，则你于此回合内使用此牌无距离和次数限制且不能被响应，否则你交给其张其它牌。

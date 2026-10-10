@@ -1,62 +1,10 @@
 {% extends "base.html" %}
 {% from "_macros.html" import issue_table, reference_list with context %}
 
-{# ------------------------------------------------------------------
-   一行「关联技能」。卡牌只关联**已有技能**，所以没有「新建技能」那一套；
-   服务端为已存在的关联渲染，`__i__` 版本给 JS 克隆用。
-   ------------------------------------------------------------------ #}
-{% macro skill_row(row, idx) %}
-  {% set index = idx if idx is defined else row.index %}
-  <div class="skill-row" data-index="{{ index }}">
-    <div class="skill-row-head">
-      <span class="skill-no">技能</span>
-      <div class="skill-row-tools">
-        <button type="button" class="icon-btn row-up" title="上移">↑</button>
-        <button type="button" class="icon-btn row-down" title="下移">↓</button>
-        <button type="button" class="link-btn row-remove">删除此技能</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="f-skill-{{ index }}-combo">技能</label>
-      <div class="combo" data-combo="skill">
-        <input id="f-skill-{{ index }}-combo" class="combo-input" autocomplete="off"
-               placeholder="搜索技能名称 / id"
-               value="{{ row.skill_name if row.skill_id else '' }}">
-        <input type="hidden" class="combo-value" name="skill_{{ index }}_skill_id" value="{{ row.skill_id }}">
-        <div class="combo-list" hidden></div>
-      </div>
-      <p class="help combo-help">
-        {% if row.skill_id %}
-          已关联 {{ row.skill_name }}{% if row.version_display %}，版本 {{ row.version_display }}{% endif %}
-        {% else %}
-          输入技能名后从下拉里选择已有技能（卡牌只关联已有技能；技能文本在技能版本里维护）。
-        {% endif %}
-      </p>
-      {% for message in error_map.get('skill_' ~ index ~ '_skill_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-
-    <div class="field version-field" {{ 'hidden' if not row.skill_id else '' }}>
-      <label for="f-skill-{{ index }}-version">技能版本</label>
-      <select id="f-skill-{{ index }}-version" name="skill_{{ index }}_version_id" class="version-select">
-        <option value="">（不指定：按该技能的 mode 匹配唯一一条版本）</option>
-        {% for option in row.version_options or [] %}
-          <option value="{{ option.id }}"
-                  {{ 'selected' if row.version_id == option.id else '' }}
-                  data-preview="{{ option.mode_label }} · {{ option.product_name or '未绑定产品' }}
-{{ option.text_excerpt }}">{% if option.display_label %}{{ option.display_label }} · {% endif %}{{ option.mode_label }}{% if option.product_name %} · {{ option.product_name }}{% endif %} · {{ option.text_excerpt }}</option>
-        {% endfor %}
-      </select>
-      <div class="version-preview"></div>
-      {% for message in error_map.get('skill_' ~ index ~ '_version_id', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
-    </div>
-  </div>
-{% endmacro %}
-
 {% macro use_row(index, values) %}
 <div class="use-row subblock" data-index="{{ index }}">
   <div class="skill-row-head"><strong class="use-no">使用说明</strong><button type="button" class="link-btn use-remove" hidden>删除此方式</button></div>
-  {% for name, label in [('label', '方式名称（可空）'), ('timing', '出牌时机'), ('target', '使用目标'), ('effect', '作用效果'), ('note', '补充说明（可空）')] %}
+  {% for name, label in [('label', '方式名称（可空）'), ('timing', '出牌时机'), ('target', '使用目标'), ('effect', '作用效果')] %}
   <div class="field" {{ 'data-use-label hidden' if name == 'label' else '' }}>
     <label for="f-use-{{ index }}-{{ name }}">{{ label }}</label>
     <textarea id="f-use-{{ index }}-{{ name }}" name="use_{{ index }}_{{ name }}" data-use-field="{{ name }}" rows="{{ 1 if name == 'label' else 2 }}">{{ values.get('use_' ~ index ~ '_' ~ name, '') }}</textarea>
@@ -78,6 +26,13 @@
 </div>
 
 {% if outcome_error %}<div class="banner error">{{ outcome_error }}</div>{% endif %}
+{% if error_map %}
+  <div class="banner error" role="alert">
+    {% for field, messages in error_map.items() %}
+      {% for message in messages %}<p>{{ field }}：{{ message }}</p>{% endfor %}
+    {% endfor %}
+  </div>
+{% endif %}
 {% if info %}
   <div class="banner warn">
     <ul class="tight">{% for line in info %}<li>{{ line }}</li>{% endfor %}</ul>
@@ -100,7 +55,7 @@
   <input type="hidden" name="_base_sha" value="{{ base_sha }}">
   <div id="inactive-rules-notice" class="banner warn" hidden>
     <p id="inactive-rules-summary"></p>
-    <label><input type="checkbox" id="confirm-inactive-rules"> 保存时舍弃上述规则，只保留当前类型的内容</label>
+    <label><input type="checkbox" id="confirm-inactive-rules" name="confirm_inactive_rules" value="1"> 保存时舍弃上述规则，只保留当前类型的内容</label>
     <p class="help">尚未保存时，切回原类型可继续编辑这些内容。</p>
   </div>
 
@@ -152,7 +107,7 @@
   </div>
 
   <div class="field-grid">
-    <div class="field">
+    <div class="field" data-card-set-field>
       <label for="f-card_set-combo">所属拓展包（可空）</label>
       <div class="combo" data-combo="card_set">
         <input id="f-card_set-combo" class="combo-input" autocomplete="off"
@@ -192,12 +147,12 @@
     <details id="game-rule-fields" open>
     <summary id="generic-rule-summary" hidden>其他规则资料（可选）</summary>
     <div class="field" data-rule-kind="weapon">
-      <label for="f-rules_attack_range">攻击范围</label>
-      <textarea id="f-rules_attack_range" name="rules_attack_range" rows="2">{{ values.get('rules_attack_range', '') }}</textarea>
+      <label for="f-attack_range">攻击范围</label>
+      <textarea id="f-attack_range" name="attack_range" rows="2">{{ values.get('attack_range', '') }}</textarea>
     </div>
-    <div class="field" data-rule-kind="mount">
-      <label for="f-rules_distance_modifier">距离修正</label>
-      <textarea id="f-rules_distance_modifier" name="rules_distance_modifier" rows="2" placeholder="写清计算方向；可以填写 X 或特殊条件">{{ values.get('rules_distance_modifier', '') }}</textarea>
+    <div class="field" data-rule-kind="deck">
+      <label for="f-deck_info">牌堆信息</label>
+      <textarea id="f-deck_info" name="deck_info" rows="2" placeholder="待录入时保留空白">{{ values.get('deck_info', '') }}</textarea>
     </div>
     <div data-rule-kind="use">
       <div id="card-use-rows">{% for index in range([values.get('use_count', '0') | int, 50] | min) %}{{ use_row(index, values) }}{% endfor %}</div>
@@ -209,7 +164,7 @@
     </details>
   </section>
 
-  {# data-has-content：这条卡本来就有 effect.text（旧数据）时给 JS 一个信号，
+  {# data-has-content：这条卡已有 effect 文本时给 JS 一个信号，
      让它不要按类型把这块折叠起来——否则「有内容却看不到、改不了、删不掉」。#}
   <details id="card-effect-panel" open data-has-content="{{ '1' if values.get('effect_text') else '0' }}">
     <summary id="card-effect-summary">效果</summary>
@@ -218,26 +173,16 @@
     <textarea id="f-effect_text" name="effect_text" rows="5"
               placeholder="卡面效果原文，逐字照抄；纯技能卡可以留空">{{ values.get('effect_text', '') }}</textarea>
     <p class="help">
-      <span id="card-effect-help">可以填写卡面说明；已有技能说明可以通过下方关联技能引用。</span>
+      <span id="card-effect-help">可以填写卡面说明。</span>
     </p>
     {% for message in error_map.get('effect_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
   </div>
   </details>
 
   <div class="field" id="card-note-panel">
-    <label for="f-rules_note">整张牌的补充说明（可空）</label>
-    <textarea id="f-rules_note" name="rules_note" rows="3">{{ values.get('rules_note', '') }}</textarea>
+    <label for="f-note">备注（可空）</label>
+    <textarea id="f-note" name="note" rows="3">{{ values.get('note', '') }}</textarea>
   </div>
-
-  <h2 class="section-title">关联技能</h2>
-  <div id="skill-rows" class="skill-rows">
-    {% for row in rows %}{{ skill_row(row) }}{% endfor %}
-  </div>
-  <input type="hidden" name="skill_count" id="skill-count" value="{{ rows | length }}">
-  <p>
-    <button type="button" class="btn" id="add-skill-row">+ 添加关联技能</button>
-    <span class="muted">0 行也合法；技能顺序就是卡面上的顺序，可以用 ↑ ↓ 调整；Ctrl/⌘ + Enter 也能加一行。</span>
-  </p>
 
   <div class="field-grid"></div>
 
@@ -259,12 +204,6 @@
 </form>
 
 <template id="use-row-template">{{ use_row('__i__', {}) }}</template>
-
-{# 新技能行模板：JS 克隆后把 __i__ 换成真实序号 #}
-<template id="skill-row-template">
-  {{ skill_row({"index": "__i__", "skill_id": "", "skill_name": "", "version_id": "",
-                "version_options": [], "version_display": "", "version_label": ""}, "__i__") }}
-</template>
 
 <script type="application/json" id="card-category-data">{{ {"tree": category_tree, "triples": category_triples} | tojson }}</script>
 

@@ -1,10 +1,5 @@
 id: skill_tian_fu_guozhan_qlhd_v1
 skill_id: skill_tian_fu
 mode: guozhan
-text: 主将技，阵法技，你于与你处于同一队列的角色的回合内视为拥有“看破“。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，阵法技，你于与你处于同一队列的角色的回合内视为拥有“看破”。

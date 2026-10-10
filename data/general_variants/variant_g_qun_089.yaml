@@ -1,6 +1,5 @@
 id: variant_g_qun_089
 general_id: general_g_qun_089
-variant: 群狼环鼎
 title: 无双虓姬
 general_number: G.QUN 089
 illustrator: 君桓文化
@@ -13,9 +12,9 @@ product_id: qlhd
 general_set: 国战限定
 zhulianbihe: []
 skills:
-  - skill_id: skill_guo_wu
-    version_id: skill_guo_wu_guozhan_qlhd_v1
-  - skill_id: skill_shen_wei
-    version_id: skill_shen_wei_guozhan_qlhd_v1
-  - skill_id: skill_zhuang_rong
-    version_id: skill_zhuang_rong_guozhan_qlhd_v1
+- skill_id: skill_guo_wu
+  version_id: skill_guo_wu_guozhan_qlhd_v1
+- skill_id: skill_shen_wei
+  version_id: skill_shen_wei_guozhan_qlhd_v1
+- skill_id: skill_zhuang_rong
+  version_id: skill_zhuang_rong_guozhan_qlhd_v1

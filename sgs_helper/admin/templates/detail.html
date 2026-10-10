@@ -54,29 +54,24 @@
     {% if detail.versions %}
       <table class="rows">
         <tr>
-          <th>版本</th><th>模式</th><th>产品</th><th>前一版本</th><th>后继</th><th></th>
+          <th>产品</th><th>模式</th><th></th>
         </tr>
         {% for v in detail.versions %}
           <tr>
             <td>
-              <a href="/view/skill_version/{{ v.id }}">{{ v.entity.version_label or v.id }}</a>
+              <a href="/view/skill_version/{{ v.id }}">{{ v.product_name or v.entity.mode or v.id }}</a>
               <code class="id">{{ v.id }}</code>
             </td>
             <td>{{ mode_badge(v.entity.mode) }}</td>
             <td>{{ v.product_name or '—' }}</td>
-            <td>{% if v.previous_id %}<a href="/view/skill_version/{{ v.previous_id }}"><code class="id">{{ v.previous_id }}</code></a>{% else %}<span class="muted">—</span>{% endif %}</td>
-            <td>
-              {% if v.successor_ids %}{% for nid in v.successor_ids %}<a href="/view/skill_version/{{ nid }}"><code class="id">{{ nid }}</code></a>{% endfor %}
-              {% else %}<span class="muted">—</span>{% endif %}
-            </td>
             <td class="nowrap">
-              <a href="/new/skill_version?skill_id={{ row.id }}&mode={{ v.entity.mode }}&previous_version_id={{ v.id }}">新增版本</a> ·
+              <a href="/new/skill_version?skill_id={{ row.id }}&mode={{ v.entity.mode }}&product_id={{ v.entity.product_id or '' }}">新增版本</a> ·
               <a href="/edit/skill_version/{{ v.id }}">编辑</a> ·
               <a href="/delete/skill_version/{{ v.id }}">删除</a>
             </td>
           </tr>
           <tr class="detail-row">
-            <td colspan="7">
+            <td colspan="3">
               {{ rich_text(v.segments) }}
             </td>
           </tr>
@@ -123,7 +118,7 @@
     {% for item in detail.variants %}
       <div class="subblock" id="variant-{{ item.id }}">
         <h3>
-          版本：{{ item.variant }}
+          {{ item.product_name or item.entity.mode | mode_label or item.id }}
           {{ mode_badge(item.entity.mode) }}
           <a class="btn small" href="{{ item.edit_url }}">编辑这个版本</a>
         </h3>
@@ -139,7 +134,7 @@
         </p>
         {% if item.entity.image %}
           <div class="card-preview">
-            <img src="/card-images/{{ item.entity.image }}" alt="{{ entity.name }} {{ item.variant }} 卡图">
+            <img src="/card-images/{{ item.entity.image }}" alt="{{ entity.name }} {{ item.product_name or item.id }} 卡图">
             <div class="muted">卡图：data/card_images/{{ item.entity.image }}</div>
           </div>
         {% endif %}
@@ -161,7 +156,6 @@
               <p class="sub">
                 {{ mode_badge(entry.current.mode) }}
                 <a href="/view/skill_version/{{ entry.current.id }}"><code class="id">{{ entry.current.id }}</code></a>
-                {% if entry.current.version_label %}［{{ entry.current.version_label }}］{% endif %}
                 <span class="badge {{ 'ok' if entry.pinned else 'muted' }}">{{ '显式绑定' if entry.pinned else '按模式回退' }}</span>
               </p>
               {{ rich_text(entry.segments, '（这一版没有文本）') }}
@@ -176,7 +170,6 @@
                     <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
                     {% if v.id == entry.version_id %}<span class="badge ok">武将绑定</span>{% endif %}
                     {{ mode_badge(v.mode) }}
-                    {% if v.version_label %}<span class="muted">{{ v.version_label }}</span>{% endif %}
                   </li>
                 {% endfor %}
               </ul>
@@ -255,7 +248,6 @@
             <p class="sub">
               {{ mode_badge(entry.current.mode) }}
               <a href="/view/skill_version/{{ entry.current.id }}"><code class="id">{{ entry.current.id }}</code></a>
-              {% if entry.current.version_label %}［{{ entry.current.version_label }}］{% endif %}
               <span class="badge {{ 'ok' if entry.pinned else 'muted' }}">{{ '显式绑定' if entry.pinned else '按模式回退' }}</span>
             </p>
             {{ rich_text(entry.segments, '（这一版没有文本）') }}
@@ -270,7 +262,6 @@
                   <a href="/view/skill_version/{{ v.id }}"><code class="id">{{ v.id }}</code></a>
                   {% if v.id == entry.version_id %}<span class="badge ok">卡牌绑定</span>{% endif %}
                   {{ mode_badge(v.mode) }}
-                  {% if v.version_label %}<span class="muted">{{ v.version_label }}</span>{% endif %}
                 </li>
               {% endfor %}
             </ul>
@@ -344,7 +335,6 @@
     <h2>版本位置</h2>
     <table class="kv">
       <tr><th>SkillDefinition</th><td>{{ entity_link('skill', entity.skill_id) }}</td></tr>
-      <tr><th>前一版本</th><td>{{ entity_link('skill_version', entity.previous_version_id) }}</td></tr>
       <tr><th>被哪些武将版本绑定</th><td>
         {% set users = detail.bound_variants or [] %}
         {% if users %}
@@ -355,16 +345,10 @@
           </ul>
         {% else %}<span class="muted">没有武将版本显式绑定这一版。</span>{% endif %}
       </td></tr>
-      <tr><th>后继版本</th><td>
-        {% set successor = references | selectattr('field', 'equalto', 'previous_version_id') | list %}
-        {% if successor %}
-          {% for ref in successor %}<a href="/view/skill_version/{{ ref.id }}"><code class="id">{{ ref.id }}</code></a>{% endfor %}
-        {% else %}<span class="muted">—（没有更新的版本引用它）</span>{% endif %}
-      </td></tr>
       <tr><th>本版本文本</th><td>{{ rich_text(detail.segments) }}</td></tr>
     </table>
     <p>
-      <a class="btn" href="/new/skill_version?skill_id={{ entity.skill_id }}&mode={{ entity.mode }}&previous_version_id={{ entity.id }}">基于本版本新增技能版本</a>
+      <a class="btn" href="/new/skill_version?skill_id={{ entity.skill_id }}&mode={{ entity.mode }}&product_id={{ entity.product_id or '' }}">新增相同模式的技能版本</a>
     </p>
     <p class="muted">
       文本里出现的技能名 / 关键词名 / 卡牌名会自动变成可点击链接。

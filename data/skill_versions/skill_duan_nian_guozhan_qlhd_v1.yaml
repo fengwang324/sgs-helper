@@ -1,10 +1,5 @@
 id: skill_duan_nian_guozhan_qlhd_v1
 skill_id: skill_duan_nian
 mode: guozhan
-text: 出牌阶段结束时，若你有手牌，你可以弃置所有手牌然后将手牌摸至体力上限。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段结束时，若你有手牌，你可以弃置所有手牌然后将手牌摸至体力上限。

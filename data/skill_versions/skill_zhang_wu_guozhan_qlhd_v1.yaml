@@ -1,10 +1,5 @@
 id: skill_zhang_wu_guozhan_qlhd_v1
 skill_id: skill_zhang_wu
 mode: guozhan
-text: 锁定技，当【飞龙夺凤】进入弃牌堆或进入其他角色的装备区后，你获得之。当你失去【飞龙夺凤】前，你展示此牌并将之置于牌堆底，然后你摸两张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，当【飞龙夺凤】进入弃牌堆或进入其他角色的装备区后，你获得之。当你失去【飞龙夺凤】前，你展示此牌并将之置于牌堆底，然后你摸两张牌。

@@ -4,10 +4,7 @@ category_2: 装备牌
 category_3: 坐骑
 name: 白麒麟
 image: card_bai_qi_lin_qlhd_spade_2.jpg
-card_set: null
-effect:
-  text: 你使用此牌时，对所有体力值大于你的角色依次造成1点雷电伤害。
-  skills: []
-rules:
-  distance_modifier: ''
-  note: ''
+effect: |-
+  ①锁定技，其他角色至你的距离+1。
+  ②锁定技，你使用此牌时，对所有体力值大于你的角色依次造成1点雷电伤害。
+deck_info: ""

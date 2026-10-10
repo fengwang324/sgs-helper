@@ -1,8 +1,7 @@
 """表单：**从 Pydantic 模型半自动生成**字段，并把提交值转回实体字典。
 
 不做复杂动态表单系统：字段类型由 ``model_json_schema()`` 推导，
-枚举渲染成下拉框、日期渲染成 date 输入、列表渲染成“一行一项”的 textarea、
-内嵌 ``Source`` 渲染成 ``type`` + ``reference`` 两个字段。
+枚举渲染成下拉框、日期渲染成 date 输入、列表渲染成“一行一项”的 textarea。
 
 解析阶段只做“格式级”转换与友好报错；语义校验（值域、交叉引用、一致性）一律交给
 ``validate_entities``，避免两套规则各说各话。
@@ -20,11 +19,9 @@ from ..constants import (
     GENDER_LABELS,
     ID_PATTERN,
     MODE_LABELS,
-    SOURCE_LABELS,
 )
 from ..schema import MODEL_BY_KIND
 from ..validate import REFERENCE_FIELDS
-from .yaml_writer import SOURCE_KEY_ORDER
 
 #: 字段 -> 中文标签（按新模型：只保留真实存在的字段）
 FIELD_LABELS: dict[str, str] = {
@@ -41,13 +38,10 @@ FIELD_LABELS: dict[str, str] = {
     "general_set": "武将牌系列",
     "title": "称号",
     "general_number": "编号",
-    "variant": "版本标签",
     "general_id": "所属武将",
     "skills": "技能",
     "skill_id": "所属技能",
     "text": "规则文本",
-    "version_label": "版本标签",
-    "previous_version_id": "前一版本",
     "category_1": "一级分类",
     "category_2": "二级分类",
     "category_3": "三级分类",
@@ -58,8 +52,6 @@ FIELD_LABELS: dict[str, str] = {
     "answer": "回答/裁定",
     "definition": "定义",
     "source": "资料来源",
-    "source.type": "来源类型",
-    "source.reference": "来源引用（URL / 页码）",
 }
 
 #: 字段 -> 说明（放在输入框下方）
@@ -73,15 +65,12 @@ FIELD_HELP: dict[str, str] = {
     "card_set": "所属拓展包（九变篇、君临天下·权…）；候选来自所有产品的 card_sets，允许留空。",
     "text": "技能规则原文。更新技能请新增一条 SkillVersion，不要改旧版本。",
     "source": "FAQ 的来源是一段文本：逐条写出来源的 type / title / reference / author / displayed_date（一行一项，也可以按核对资料原文照抄）。",
-    "source.reference": "如果是 URL，页面上可以直接点击打开。",
-    "previous_version_id": "指向被本版本取代的旧版本；旧版本保持原样。",
     "product_id": "填 null 或不填表示不绑定具体产品。",
     "general_set": "武将牌系列 / 武将牌组名称；候选来自所选产品的 general_sets，也可以直接输入新值。",
     "general_sets": "一行一项：这个产品里的武将牌系列（国战标准、势备篇…）。",
     "card_sets": "一行一项：这个产品里的游戏牌拓展包（九变篇、君主游戏牌…）；它同时是卡牌 card_set 的候选来源。",
     "title": "武将卡上的称号，例如“独眼的罗刹”。",
     "general_number": "实体卡上的编号，例如 WEI001 / shu-01；和内部 ID 是两回事。",
-    "variant": "这条记录属于哪个版本 / 产品：武将版本写 群狼环鼎 / 标准版；关键词与 FAQ 写 群狼环鼎。",
     "general_id": "指向武将个体（General）；一个武将可以有多个版本。",
     "hp": "勾玉数量，支持 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5；允许留空以后再补。",
     "skills": "武将的技能关系（含可选的具体版本绑定）；日常录入请用“武将录入页”。",
@@ -102,7 +91,6 @@ TEXTAREA_FIELDS: frozenset[str] = frozenset(
 ENUM_LABELS: dict[str, dict[str, str]] = {
     "mode": MODE_LABELS,
     "gender": GENDER_LABELS,
-    "source.type": SOURCE_LABELS,
 }
 
 #: 引用字段 -> 目标 kind（给表单加 datalist 候选项）
@@ -114,7 +102,6 @@ REFERENCE_TARGETS: dict[tuple[str, str], str] = {
 REFERENCE_TARGET_BY_FIELD: dict[str, str] = {
     "product_id": "product",
     "skill_id": "skill",
-    "previous_version_id": "skill_version",
 }
 
 #: 带 0.5 步进的数值字段
@@ -207,36 +194,6 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
         )
         spec.ref_kind = REFERENCE_TARGETS.get((kind, name)) or REFERENCE_TARGET_BY_FIELD.get(name)
 
-        if name == "source" and resolved.get("type") == "object":
-            # SkillVersion 的 source 是内嵌对象：本身不渲染输入框，由 source.* 子字段负责。
-            # FAQ 的 source 是普通多行文本，走下面的常规分支（textarea）。
-            spec.widget = "source"
-            spec.required = False
-            specs.append(spec)
-            for sub in SOURCE_KEY_ORDER:
-                key = f"source.{sub}"
-                specs.append(
-                    FieldSpec(
-                        name=key,
-                        label=FIELD_LABELS.get(key, sub),
-                        widget=(
-                            "select"
-                            if key == "source.type"
-                            else ("textarea" if key in TEXTAREA_FIELDS else "text")
-                        ),
-                        required=sub == "type",
-                        choices=(
-                            [(value, SOURCE_LABELS.get(value, value)) for value in SOURCE_LABELS]
-                            if key == "source.type"
-                            else []
-                        ),
-                        default="physical_card" if key == "source.type" else "",
-                        help=FIELD_HELP.get(key, ""),
-                        group="source",
-                    )
-                )
-            continue
-
         type_name = resolved.get("type")
         if "enum" in resolved or "enum" in prop:
             enum_values = resolved.get("enum") or prop.get("enum") or []
@@ -274,10 +231,6 @@ def form_specs(kind: str, *, include_id: bool = True) -> list[FieldSpec]:
     return specs
 
 
-def source_choices() -> list[tuple[str, str]]:
-    return [(value, SOURCE_LABELS.get(value, value)) for value in SOURCE_LABELS]
-
-
 def spec_map(kind: str, *, include_id: bool = True) -> dict[str, FieldSpec]:
     return {spec.name: spec for spec in form_specs(kind, include_id=include_id)}
 
@@ -305,29 +258,18 @@ def value_to_text(spec: FieldSpec, value: Any) -> str:
 def values_from_entity(kind: str, entity: Any) -> dict[str, str]:
     values: dict[str, str] = {}
     data = entity.model_dump(mode="json") if hasattr(entity, "model_dump") else dict(entity)
-    raw_source = data.get("source")
-    # 只有内嵌对象型 source（SkillVersion）才拆成 source.* 子字段；
-    # 文本型 source（FAQ）由下面常规分支原样回填。
-    source = raw_source if isinstance(raw_source, dict) else {}
     for spec in form_specs(kind):
-        if spec.name.startswith("source."):
-            values[spec.name] = str(source.get(spec.name.split(".", 1)[1], "") or "")
-        else:
-            values[spec.name] = value_to_text(spec, data.get(spec.name))
+        values[spec.name] = value_to_text(spec, data.get(spec.name))
     return values
 
 
 def values_from_defaults(kind: str) -> dict[str, str]:
     values: dict[str, str] = {}
     for spec in form_specs(kind):
-        if spec.name.startswith("source."):
-            default = "physical_card" if spec.name == "source.type" else ""
-            values[spec.name] = default
-        else:
-            default = spec.default
-            if spec.name == "id":
-                default = ""
-            values[spec.name] = value_to_text(spec, default)
+        default = spec.default
+        if spec.name == "id":
+            default = ""
+        values[spec.name] = value_to_text(spec, default)
     return values
 
 
@@ -359,7 +301,7 @@ def _convert_scalar(spec: FieldSpec, raw: str, errors: list[FieldError]) -> Any:
             return spec.default if spec.default is not None else None
         if spec.widget == "number" or spec.nullable:
             return None
-        # 普通的非 Optional 字符串字段（version_label / subtitle / definition …）：留空就是空串
+        # 普通的非 Optional 字符串字段（subtitle / definition …）：留空就是空串
         return ""
     if spec.widget == "number":
         try:
@@ -373,20 +315,19 @@ def _convert_scalar(spec: FieldSpec, raw: str, errors: list[FieldError]) -> Any:
 def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldError]]:
     """把表单值转成候选实体 dict（不做语义校验）。"""
     errors: list[FieldError] = []
+    if kind == "skill_version":
+        for field_name in ("source", "source.type", "source.reference", "version_label", "previous_version_id"):
+            if field_name in form:
+                errors.append(FieldError(field_name, "SkillVersion 已移除此字段，请删除旧字段后重试"))
+    elif kind == "general_variant" and "variant" in form:
+        errors.append(FieldError("variant", "GeneralVariant 已移除版本标签，请删除旧字段后重试"))
     candidate: dict[str, Any] = {}
-    source: dict[str, Any] = {}
-    model = MODEL_BY_KIND[kind]
     specs = form_specs(kind)
-    #: 内嵌对象型 source（SkillVersion）才有 source.* 子字段；FAQ 的 source 是普通文本
-    has_source_object = any(spec.name.startswith("source.") for spec in specs)
 
     for spec in specs:
         raw = str(form.get(spec.name, "") or "").strip()
-        if spec.name.startswith("source."):
-            source[spec.name.split(".", 1)[1]] = raw
-            continue
-        if spec.name == "skills" or spec.widget in {"source", "object"}:
-            continue  # 内嵌结构由专用录入页 / source.* 子字段处理
+        if spec.name == "skills" or spec.widget == "object":
+            continue  # 内嵌结构由专用录入页处理
         if spec.widget == "list":
             # 一行一项。**不做逗号切分**：系列名里完全可能带逗号。
             items = [line.strip() for line in raw.splitlines()]
@@ -399,18 +340,6 @@ def parse_form(kind: str, form: Mapping[str, Any]) -> tuple[dict, list[FieldErro
         errors.append(
             FieldError("id", "ID 只能使用小写字母、数字、下划线，且必须以小写字母开头")
         )
-
-    if has_source_object:
-        source_required = "source" in set(model.model_json_schema().get("required", []))
-        if any(source.values()) or source_required:
-            if not source.get("type"):
-                errors.append(FieldError("source.type", "来源类型必填（资料来源是长期维护的关键）"))
-            candidate["source"] = {
-                "type": source.get("type", ""),
-                "reference": source.get("reference", ""),
-            }
-        else:
-            candidate["source"] = None
 
     return candidate, errors
 

@@ -1,6 +1,5 @@
 id: variant_g_wei_003
 general_id: general_g_wei_003
-variant: 群狼环鼎
 title: 獨眼的羅剎
 general_number: G.WEI 003
 illustrator: KayaK
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 夏侯渊
+- 夏侯渊
 skills:
-  - skill_id: skill_gang_lie
-    version_id: skill_gang_lie_guozhan_qlhd_v1
+- skill_id: skill_gang_lie
+  version_id: skill_gang_lie_guozhan_qlhd_v1

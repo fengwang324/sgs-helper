@@ -1,10 +1,5 @@
 id: skill_feng_yang_guozhan_qlhd_v1
 skill_id: skill_feng_yang
 mode: guozhan
-text: 阵法技，势力与你不同的角色不能弃置或获得与你处于同一队列角色的装备区里的牌。不臣。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 阵法技，势力与你不同的角色不能弃置或获得与你处于同一队列角色的装备区里的牌。不臣。

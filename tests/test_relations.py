@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 
@@ -81,16 +80,7 @@ def test_old_version_is_kept_after_update(synth_db: Path) -> None:
     assert ids == {"skill_demo_identity_v1", "skill_demo_identity_v2"}
 
 
-def test_version_chain_is_recorded(synth_db: Path) -> None:
-    (previous,) = _rows(
-        synth_db,
-        "SELECT previous_version_id FROM skill_versions "
-        "WHERE id = 'skill_demo_identity_v2'",
-    )[0]
-    assert previous == "skill_demo_identity_v1"
-
-
-def test_skill_version_columns_drop_dates_and_lists(synth_db: Path) -> None:
+def test_skill_version_columns_keep_only_current_schema(synth_db: Path) -> None:
     columns = _columns(synth_db, "skill_versions")
     for removed in (
         "package",
@@ -101,9 +91,13 @@ def test_skill_version_columns_drop_dates_and_lists(synth_db: Path) -> None:
         "related_timing_ids",
         "notes",
         "review_note",       # 复核备注已整体删除
+        "source_key",
+        "source",
+        "version_label",
+        "previous_version_id",
     ):
         assert removed not in columns
-    assert "source_key" in columns
+    assert {"id", "skill_id", "mode", "product_id", "text", "yaml_file", "yaml_line"} == set(columns)
 
 
 # ---------------------------------------------------------------- 卡牌（单层）
@@ -130,18 +124,14 @@ def test_card_printing_layer_is_gone(synth_db: Path) -> None:
         "related_keywords",
     ):
         assert removed not in columns
-    assert {"category_1", "category_2", "category_3", "card_set", "effect_text"} <= set(columns)
+    assert {"category_1", "category_2", "category_3", "card_set", "effect", "attack_range", "deck_info", "note", "rules"} <= set(columns)
 
 
-def test_card_effect_skills_are_linked(synth_db: Path) -> None:
-    raw = _rows(synth_db, "SELECT effect_skills FROM cards WHERE id = 'card_demo_trick'")[0][0]
-    assert json.loads(raw) == [
-        {"skill_id": "skill_demo", "version_id": "skill_demo_guozhan_v1"}
-    ]
-    # 引用不到技能的卡牌行仍然保留原始 id（不在构建期过滤）
-    assert _rows(
-        synth_db, "SELECT effect_skills FROM cards WHERE id = 'card_demo'"
-    )[0][0] == "[]"
+def test_card_effect_is_plain_text_and_rules_are_searchable(synth_db: Path) -> None:
+    effect = _rows(synth_db, "SELECT effect FROM cards WHERE id = 'card_demo_trick'")[0][0]
+    assert effect == "演示效果：与演示技能相关。"
+    body = _rows(synth_db, "SELECT body FROM search_index WHERE kind='card' AND entity_id='card_demo_trick'")[0][0]
+    assert "演示效果" in body
 
 
 def test_card_report_has_no_printings(synth_conn) -> None:
@@ -149,7 +139,11 @@ def test_card_report_has_no_printings(synth_conn) -> None:
     assert report is not None
     assert "printings" not in report
     assert report["card"]["id"] == "card_demo"
-    assert report["effect"] == {"text": "", "skills": []}
+    assert report["effect"] == ""
+    assert report["card"]["attack_range"] == ""
+    assert report["card"]["deck_info"] == ""
+    assert report["card"]["note"] == ""
+    assert report["card"]["rules"] == {"use_methods": []}
 
 
 def test_same_card_set_shows_up_in_every_declaring_product(synth_conn) -> None:

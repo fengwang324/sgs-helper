@@ -1,6 +1,5 @@
 id: variant_g_wu_017
 general_id: general_g_wu_017
-variant: 群狼环鼎
 title: 祁溪之器
 general_number: G.WU 017
 illustrator: 天空之城
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·阵
 zhulianbihe:
-  - 周泰
+- 周泰
 skills:
-  - skill_id: skill_shang_yi
-    version_id: skill_shang_yi_guozhan_qlhd_v1
-  - skill_id: skill_niao_xiang
-    version_id: skill_niao_xiang_guozhan_qlhd_v1
+- skill_id: skill_shang_yi
+  version_id: skill_shang_yi_guozhan_qlhd_v1
+- skill_id: skill_niao_xiang
+  version_id: skill_niao_xiang_guozhan_qlhd_v1

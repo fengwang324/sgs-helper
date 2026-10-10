@@ -1,6 +1,5 @@
 id: variant_g_jin_041
 general_id: general_g_jin_041
-variant: 群狼环鼎
 title: 青纸为诏
 general_number: G.JIN 041
 illustrator: 荆芥
@@ -8,13 +7,13 @@ image: g_jin_041.jpg
 mode: guozhan
 faction: 晋
 hp: 1.5
-gender: unknown
+gender: male
 product_id: qlhd
-general_set: null
-skills:
-  - skill_id: skill_jue_jian
-    version_id: skill_jue_jian_guozhan_qlhd_v1
-  - skill_id: skill_yin_sha
-    version_id: skill_yin_sha_guozhan_qlhd_v1
+general_set: 金印紫绶
 zhulianbihe:
-  - 司马伦
+- 司马伦
+skills:
+- skill_id: skill_jue_jian
+  version_id: skill_jue_jian_guozhan_qlhd_v1
+- skill_id: skill_yin_sha
+  version_id: skill_yin_sha_guozhan_qlhd_v1

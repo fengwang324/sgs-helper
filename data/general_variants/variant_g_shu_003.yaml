@@ -1,6 +1,5 @@
 id: variant_g_shu_003
 general_id: general_g_shu_003
-variant: 群狼环鼎
 title: 万夫不当
 general_number: G.SHU 003
 illustrator: KayaK
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_pao_xiao
-    version_id: skill_pao_xiao_guozhan_qlhd_v1
+- skill_id: skill_pao_xiao
+  version_id: skill_pao_xiao_guozhan_qlhd_v1

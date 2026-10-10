@@ -1,10 +1,5 @@
 id: skill_yong_jin_guozhan_qlhd_v1
 skill_id: skill_yong_jin
 mode: guozhan
-text: 限定技，出牌阶段，你可以将场上至多三张装备牌移至不同角色的装备区内。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，出牌阶段，你可以将场上至多三张装备牌移至不同角色的装备区内。

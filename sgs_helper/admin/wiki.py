@@ -206,7 +206,7 @@ class WikiRoutes:
                 bits.append(f'拓展包 {row["card_set"]}')
             subtitle = " · ".join(bit for bit in bits if bit)
             excerpt = truncate(
-                str(getattr(getattr(entity, "effect", None), "text", "") or ""), 110
+                str(getattr(entity, "effect", "") or ""), 110
             )
 
         elif kind == "faq":
@@ -703,16 +703,11 @@ class WikiRoutes:
         rows = []
         for row in versions:
             version = row["entity"]
-            previous = live.entity("skill_version", version.previous_version_id)
             rows.append(
                 {
-                    "label": version.version_label or version.id,
+                    "label": row["product_name"] or MODE_LABELS.get(version.mode, version.mode),
                     "mode_label": MODE_LABELS.get(version.mode, version.mode),
                     "product": row["product_name"],
-                    "source": _source_label(version),
-                    "previous_label": (
-                        (previous.version_label or previous.id) if previous is not None else ""
-                    ),
                     "segments": row["segments"],
                 }
             )
@@ -723,7 +718,7 @@ class WikiRoutes:
                 general = live.entity("general", variant.general_id)
                 owners.append(
                     {
-                        "name": f'{getattr(general, "name", variant.general_id)}（{variant.variant}）',
+                        "name": live.display_name("general_variant", variant),
                         "url": entity_url("general", variant.general_id),
                         "subtitle": _variant_summary(
                             {
@@ -762,7 +757,6 @@ class WikiRoutes:
 
     def _card_detail(self, live: AdminStore, view: dict) -> dict:
         card = view["card"]
-        effect = card.effect
         is_marker = card.category_1 == "指示物"
 
         # 二 / 三级分类允许留空：空的那一级直接不显示，避免出现空分隔符或空标签
@@ -776,28 +770,20 @@ class WikiRoutes:
             {"k": "二级分类", "v": card.category_2 or "（未填）"},
             {"k": "三级分类", "v": card.category_3 or "（未填）"},
             {"k": "拓展包", "v": card.card_set or ""},
+            {"k": "攻击范围", "v": card.attack_range or ""},
+            {"k": "牌堆", "v": card.deck_info or ""},
+            {"k": "备注", "v": card.note or ""},
             {"k": "卡名", "v": card.name},
         ]
 
         prose_blocks = []
-        if effect.text:
+        if card.effect:
             prose_blocks.append(
                 {
                     "title": "卡面原文" if card.rules and card.rules.use_methods else "效果文本",
-                    "segments": live.annotate(effect.text),
+                    "segments": live.annotate(card.effect),
                     "meta": "",
-                    "note": "照抄卡面原文；技能规则正文由「技能」维护，不抄进这里。",
-                }
-            )
-
-        effect_skill_rows = []
-        for row in view["skills"]:
-            chosen = row["current"]
-            effect_skill_rows.append(
-                {
-                    "skill_id": row["skill_id"],
-                    "name": live.display_name("skill", row["skill"]),
-                    "text": truncate(chosen.text, 220) if chosen else "",
+                    "note": "卡牌效果原文。",
                 }
             )
 
@@ -823,7 +809,7 @@ class WikiRoutes:
             "version_rows": [],
             "owners": [],
             "refs": [],
-            "effect_skill_rows": effect_skill_rows,
+            "effect_skill_rows": [],
             "faqs": live.related_faqs("card", card.id, limit=FAQ_LIMIT),
             **self._common_detail(live, "card", card.id),
         }

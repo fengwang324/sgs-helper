@@ -5,16 +5,12 @@ category_3: 非延时锦囊
 name: 克复中原
 image: card_ke_fu_zhong_yuan_qlhd_diamond_1.jpg
 card_set: 不臣篇
-effect:
-  text: |-
-    出牌阶段，对任意一名角色使用。这些角色各选择一项：1. 视为使用一张【杀】；2. 摸一张牌。蜀：蜀势力角色选择1时此【杀】伤害+1，选择2时改为摸两张牌。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 任意一名角色
+    - timing: |-
+        出牌阶段
+      target: |-
+        任意一名角色
       effect: |-
         这些角色各选择一项：1. 视为使用一张【杀】；2. 摸一张牌。蜀：蜀势力角色选择1时此【杀】伤害+1，选择2时改为摸两张牌。
-      note: ''
-  note: ''
+deck_info: ""

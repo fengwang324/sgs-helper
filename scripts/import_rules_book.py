@@ -3,7 +3,7 @@
 
 数据来源：https://gltjk.com/sanguosha/rules/
 内容为凌天翼规则集 3.0，网页版由 gltjk.com 制作（社区整理，非游卡官方发布物），
-导入后统一写成 ``source.type=official_rule``（社区整理，非官方发布物）。
+原始网页为社区整理，导入工具不把它标记为官方发布物。
 
 导入什么：
 
@@ -349,10 +349,7 @@ def import_skills() -> dict:
                     "skill_id": skill_id,
                     "mode": mode,
                     "text": best["text"],
-                    "version_label": variant_label(best["variant"]),
                     "product_id": None,
-                    "previous_version_id": None,
-                    "source": SOURCE,
                 }
             )
             write_entity("skill_version", version)

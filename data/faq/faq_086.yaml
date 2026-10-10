@@ -1,0 +1,12 @@
+id: faq_086
+question: |-
+  使用【酒】（使用方法①）后，哪些【杀】会受到其效果影响？
+answer: |-
+  一名角色使用的【杀】是否会受到【酒】（使用方法①）的效果的影响是根据其声明使用的牌的牌名（【杀】）时是否为其使用【酒】（使用方法①）的那个回合内来判断的。
+variant: 群狼环鼎
+source: |-
+  - type: migrated_rule_note
+    title: 原酒规则备注迁移
+    reference: data/cards/card_jiu.yaml 的原 rules.use_methods[0].note
+    author: ''
+    displayed_date: null

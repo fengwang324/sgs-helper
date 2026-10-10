@@ -1,6 +1,5 @@
 id: variant_g_qun_011
 general_id: general_g_qun_011
-variant: 群狼环鼎
 title: 魂绕左右
 general_number: G.QUN 011
 illustrator: G.G.G
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 君临天下·阵
 zhulianbihe: []
 skills:
-  - skill_id: skill_qian_huan
-    version_id: skill_qian_huan_guozhan_qlhd_v1
+- skill_id: skill_qian_huan
+  version_id: skill_qian_huan_guozhan_qlhd_v1

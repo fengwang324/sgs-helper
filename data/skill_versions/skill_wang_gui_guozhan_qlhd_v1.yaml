@@ -1,10 +1,5 @@
 id: skill_wang_gui_guozhan_qlhd_v1
 skill_id: skill_wang_gui
 mode: guozhan
-text: 每回合限一次，当你造成或受到伤害后，若你仅明置此武将牌，你可以对一名与你势力不同的角色造成1点伤害；若你武将牌均明置，你可以令与你势力相同的所有角色各摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 每回合限一次，当你造成或受到伤害后，若你仅明置此武将牌，你可以对一名与你势力不同的角色造成1点伤害；若你武将牌均明置，你可以令与你势力相同的所有角色各摸一张牌。

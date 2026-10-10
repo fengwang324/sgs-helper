@@ -1,10 +1,5 @@
 id: skill_tiao_xin_guozhan_qlhd_v1
 skill_id: skill_tiao_xin
 mode: guozhan
-text: 出牌阶段限一次，你可以选择一名其攻击范围内有你的其他角色，然后除非其对你使用一张【杀】，否则你弃置其一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以选择一名其攻击范围内有你的其他角色，然后除非其对你使用一张【杀】，否则你弃置其一张牌。

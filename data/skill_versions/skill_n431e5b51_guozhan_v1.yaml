@@ -1,10 +1,5 @@
 id: skill_n431e5b51_guozhan_v1
 skill_id: skill_n431e5b51
 mode: guozhan
-text: 君主技，你拥有“五子良将纛”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 君主技，你拥有“五子良将纛”。

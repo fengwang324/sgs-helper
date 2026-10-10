@@ -1,18 +1,18 @@
 id: variant_g_jin_011
 general_id: general_g_jin_011
-variant: 群狼环鼎
 title: 螭吻裂冠
 general_number: G.JIN 011
 illustrator: 荆芥
 image: g_jin_011.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
-gender: unknown
+hp: 2
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 紫气东来
+zhulianbihe: []
 skills:
-  - skill_id: skill_zhu_lan
-    version_id: skill_zhu_lan_guozhan_qlhd_v1
-  - skill_id: skill_luan_chang
-    version_id: skill_luan_chang_guozhan_qlhd_v1
+- skill_id: skill_zhu_lan
+  version_id: skill_zhu_lan_guozhan_qlhd_v1
+- skill_id: skill_luan_chang
+  version_id: skill_luan_chang_guozhan_qlhd_v1

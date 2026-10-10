@@ -1,10 +1,5 @@
 id: skill_xiong_yi_guozhan_qlhd_v1
 skill_id: skill_xiong_yi
 mode: guozhan
-text: 限定技，出牌阶段，你可以令势力与你相同的所有角色各摸三张牌，然后若你所在势力的存活角色数最少，则你回复1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，出牌阶段，你可以令势力与你相同的所有角色各摸三张牌，然后若你所在势力的存活角色数最少，则你回复1点体力。

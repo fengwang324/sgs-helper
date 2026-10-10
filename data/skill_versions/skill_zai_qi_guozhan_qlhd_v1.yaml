@@ -1,10 +1,5 @@
 id: skill_zai_qi_guozhan_qlhd_v1
 skill_id: skill_zai_qi
 mode: guozhan
-text: 弃牌阶段结束时，你可以令至多X名势力与你相同的角色各选择一项（X为此回合内进入弃牌堆的♥牌数）：1.摸一张牌；2.令你回复1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 弃牌阶段结束时，你可以令至多X名势力与你相同的角色各选择一项（X为此回合内进入弃牌堆的♥牌数）：1.摸一张牌；2.令你回复1点体力。

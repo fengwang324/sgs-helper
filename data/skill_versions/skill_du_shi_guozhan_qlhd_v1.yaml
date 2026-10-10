@@ -1,10 +1,5 @@
 id: skill_du_shi_guozhan_qlhd_v1
 skill_id: skill_du_shi
 mode: guozhan
-text: 出牌阶段开始时，你可以视为使用一张【以逸待劳】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段开始时，你可以视为使用一张【以逸待劳】。

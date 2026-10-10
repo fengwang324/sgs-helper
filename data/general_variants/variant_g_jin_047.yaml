@@ -1,18 +1,18 @@
 id: variant_g_jin_047
 general_id: general_g_jin_047
-variant: 群狼环鼎
-title: ''
+title: 幻蜃祸心
 general_number: G.JIN 047
 illustrator: 王志越
 image: g_jin_047.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
-gender: unknown
+hp: 2
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 紫凤衔佩
+zhulianbihe: []
 skills:
-  - skill_id: skill_jian_yi
-    version_id: skill_jian_yi_guozhan_qlhd_v1
-  - skill_id: skill_gou_ni
-    version_id: skill_gou_ni_guozhan_qlhd_v1
+- skill_id: skill_nf9408de3
+  version_id: skill_nf9408de3_guozhan_v1
+- skill_id: skill_n11b92943
+  version_id: skill_n11b92943_guozhan_v1

@@ -1,6 +1,5 @@
 id: variant_g_qun_086
 general_id: general_g_qun_086
-variant: 群狼环鼎
 title: 遮山扼江
 general_number: G.QUN 086
 illustrator: YanBai
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_xi_she
-    version_id: skill_xi_she_guozhan_qlhd_v1
+- skill_id: skill_xi_she
+  version_id: skill_xi_she_guozhan_qlhd_v1

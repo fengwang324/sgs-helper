@@ -8,6 +8,6 @@
 #
 # 判断规则：
 #   官方武将名不同（诸葛亮 / 界诸葛亮 / 神诸葛亮）=> 不同的 General；
-#   官方名相同、玩法不同（标准版诸葛亮 / 国战诸葛亮）=> 同一个 General 的不同 Variant。
+#   同名但卡面编号或称号不同 => 保留独立 General 及各自 Variant，不按名字合并。
 id: general_change_me
 name: 武将名

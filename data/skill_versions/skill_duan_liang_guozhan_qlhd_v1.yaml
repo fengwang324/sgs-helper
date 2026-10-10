@@ -1,10 +1,5 @@
 id: skill_duan_liang_guozhan_qlhd_v1
 skill_id: skill_duan_liang
 mode: guozhan
-text: 出牌阶段，你可以将一张黑色基本牌或黑色装备牌当一张无距离限制的【兵粮寸断】使用；若你于此回合内对距离超过2的角色使用过【兵粮寸断】，则此回合不能再发动。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段，你可以将一张黑色基本牌或黑色装备牌当一张无距离限制的【兵粮寸断】使用；若你于此回合内对距离超过2的角色使用过【兵粮寸断】，则此回合不能再发动。

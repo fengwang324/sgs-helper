@@ -1,10 +1,5 @@
 id: skill_jian_zhi_guozhan_qlhd_v1
 skill_id: skill_jian_zhi
 mode: guozhan
-text: 当你造成致命伤害时，你可以弃置所有手牌(至少一张），然后本回合下次击杀奖励改为三倍。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你造成致命伤害时，你可以弃置所有手牌（至少一张），然后本回合下次击杀奖励改为三倍。

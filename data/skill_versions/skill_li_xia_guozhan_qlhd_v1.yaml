@@ -1,10 +1,5 @@
 id: skill_li_xia_guozhan_qlhd_v1
 skill_id: skill_li_xia
 mode: guozhan
-text: 锁定技，每名其他势力角色的准备阶段，若你不在其攻击范围内，则其选择一项：1.令你摸一张牌；2.弃置你装备区里的一张牌，然后其失去1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，每名其他势力角色的准备阶段，若你不在其攻击范围内，则其选择一项：1.令你摸一张牌；2.弃置你装备区里的一张牌，然后其失去1点体力。

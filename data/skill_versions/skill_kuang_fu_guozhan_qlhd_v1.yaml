@@ -1,10 +1,5 @@
 id: skill_kuang_fu_guozhan_qlhd_v1
 skill_id: skill_kuang_fu
 mode: guozhan
-text: 出牌阶段限一次，当你使用【杀】指定目标后，你可以获得目标角色装备区里的张牌，然后若此【杀】未造成伤害，则你弃置两张手牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，当你使用【杀】指定目标后，你可以获得目标角色装备区里的张牌，然后若此【杀】未造成伤害，则你弃置两张手牌。

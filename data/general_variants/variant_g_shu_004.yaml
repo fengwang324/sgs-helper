@@ -1,6 +1,5 @@
 id: variant_g_shu_004
 general_id: general_g_shu_004
-variant: 群狼环鼎
 title: 迟暮的丞相
 general_number: G.SHU 004
 illustrator: 木美人
@@ -12,11 +11,11 @@ gender: male
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 黄月英
-  - 姜维
-  - 蒋琬&费祎
+- 黄月英
+- 姜维
+- 蒋琬&费祎
 skills:
-  - skill_id: skill_guan_xing
-    version_id: skill_guan_xing_guozhan_qlhd_v1
-  - skill_id: skill_kong_cheng
-    version_id: skill_kong_cheng_guozhan_qlhd_v1
+- skill_id: skill_guan_xing
+  version_id: skill_guan_xing_guozhan_qlhd_v1
+- skill_id: skill_kong_cheng
+  version_id: skill_kong_cheng_guozhan_qlhd_v1

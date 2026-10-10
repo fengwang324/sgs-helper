@@ -1,10 +1,5 @@
 id: skill_hun_shang_guozhan_qlhd_v1
 skill_id: skill_hun_shang
 mode: guozhan
-text: 副将技，你计算体力上限时减少1个单独的阴阳鱼准备阶段，若你的体力值为1，则你于此回合内视为拥有“英姿”和“英魂”。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 副将技，你计算体力上限时减少1个单独的阴阳鱼准备阶段，若你的体力值为1，则你于此回合内视为拥有“英姿”和“英魂”。

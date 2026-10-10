@@ -1,10 +1,5 @@
 id: skill_fan_jian_guozhan_qlhd_v1
 skill_id: skill_fan_jian
 mode: guozhan
-text: 出牌阶段限一次，你可以展示一张手牌然后你将之交给一名其他角色，令其选择一项：1.展示其所有手牌，然后弃置其与之花色相同的所有牌；2.失去1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以展示一张手牌然后你将之交给一名其他角色，令其选择一项：1.展示其所有手牌，然后弃置其与之花色相同的所有牌；2.失去1点体力。

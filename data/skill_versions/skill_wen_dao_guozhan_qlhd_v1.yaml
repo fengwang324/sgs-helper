@@ -1,10 +1,5 @@
 id: skill_wen_dao_guozhan_qlhd_v1
 skill_id: skill_wen_dao
 mode: guozhan
-text: 出牌阶段限一次，你可以弃置一张牌名不是【太平要术】的红色牌，然后若弃牌堆中或场上存在【太平要术】，则你获得之。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以弃置一张牌名不是【太平要术】的红色牌，然后若弃牌堆中或场上存在【太平要术】，则你获得之。

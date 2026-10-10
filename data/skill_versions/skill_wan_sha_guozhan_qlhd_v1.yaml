@@ -1,10 +1,5 @@
 id: skill_wan_sha_guozhan_qlhd_v1
 skill_id: skill_wan_sha
 mode: guozhan
-text: 锁定技，你的回合内，只有你和处于濒死状态的角色能使用【桃】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，你的回合内，只有你和处于濒死状态的角色能使用【桃】。

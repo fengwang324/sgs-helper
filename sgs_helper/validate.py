@@ -36,8 +36,7 @@ from .schema import MODEL_BY_KIND
 #: 它到 ``Product.general_sets`` 的归属关系由 :func:`_check_general_set_consistency`
 #: 单独对账（不再是实体引用，``GeneralSet`` 实体已删除）。
 #:
-#: ``Card.effect.skills`` 与 ``GeneralVariant.skills`` 形状相同（都是 ``SkillRef``），
-#: 所以引用存在性 / 空引用 / 列表内重复检查同样声明一次即可。
+#: 技能引用只保存在 ``GeneralVariant.skills``，卡牌正文不再保存技能引用。
 REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("general_variant", "general_id", "general", False),
     ("general_variant", "product_id", "product", False),
@@ -45,9 +44,6 @@ REFERENCE_FIELDS: tuple[tuple[str, str, str, bool], ...] = (
     ("general_variant", "skills[].version_id", "skill_version", True),
     ("skill_version", "skill_id", "skill", False),
     ("skill_version", "product_id", "product", False),
-    ("skill_version", "previous_version_id", "skill_version", False),
-    ("card", "effect.skills[].skill_id", "skill", True),
-    ("card", "effect.skills[].version_id", "skill_version", True),
 )
 
 
@@ -187,7 +183,6 @@ def validate_entities(
     _check_references(bundle, result)
     _check_general_set_consistency(bundle, result)
     _check_kind_consistency(bundle, result)
-    _check_version_consistency(bundle, result)
     _check_card_consistency(bundle, result)
     _check_images(bundle, result)
 
@@ -482,7 +477,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                     )
                 )
 
-    # 武将个体：至少有一个版本；同一武将的版本标签不要重复
+    # 武将个体：至少有一个版本；同产品、模式、编号和称号的记录不要重复。
     variants_by_general: dict[str, list[str]] = {}
     for variant_id, variant in bundle.all("general_variant").items():
         variants_by_general.setdefault(variant.general_id, []).append(variant_id)
@@ -495,7 +490,7 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                     origin.path,
                     "id",
                     f'武将 "{general.name}" 还没有任何版本（GeneralVariant），'
-                    "录入时至少要有“标准版”这一条",
+                    "录入时至少要有一条对应实体卡的版本记录",
                     line=origin.line,
                     entity_id=general_id,
                 )
@@ -503,15 +498,15 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
         seen_labels: dict[tuple, str] = {}
         for variant_id in variants_by_general.get(general_id, []):
             variant = bundle.get("general_variant", variant_id)
-            key = (variant.variant, variant.mode)
+            key = (variant.product_id, variant.mode, variant.general_number, variant.title)
             if key in seen_labels:
                 variant_origin = bundle.origin_of("general_variant", variant_id)
                 result.warnings.append(
                     Issue(
                         "warning",
                         variant_origin.path,
-                        "variant",
-                        f"同一武将出现重复版本：{variant.variant} / {_mode_label(variant.mode)}"
+                        "general_id",
+                        f"同一武将出现重复版本：{variant.product_id or '未关联产品'} / {_mode_label(variant.mode)}"
                         f"（{seen_labels[key]} 与 {variant_id}）",
                         line=variant_origin.line,
                         entity_id=variant_id,
@@ -542,56 +537,6 @@ def _check_kind_consistency(bundle: DataBundle, result: ValidationResult) -> Non
             )
 
 
-def _check_version_consistency(bundle: DataBundle, result: ValidationResult) -> None:
-    """技能版本链：``previous_version_id`` 必须同技能、不能成环。
-
-    ``effective_from/effective_to`` 已删除，技能版本不再按日期推导“当前版本”，
-    因此这里不做任何生效区间的重叠 / 顺序校验，只保留结构性的版本链检查。
-    """
-    versions = bundle.all("skill_version")
-
-    # previous_version_id：必须同技能、不能成环
-    for entity_id, version in versions.items():
-        origin = bundle.origin_of("skill_version", entity_id)
-        previous_id = version.previous_version_id
-        if previous_id is None:
-            continue
-        previous = versions.get(previous_id)
-        if previous is None:
-            continue  # 不存在已由引用检查报错
-        if previous.skill_id != version.skill_id:
-            result.errors.append(
-                Issue(
-                    "error",
-                    origin.path,
-                    "previous_version_id",
-                    f'前一版本 {previous_id} 属于技能 {previous.skill_id}，'
-                    f"与当前版本技能 {version.skill_id} 不一致",
-                    line=origin.line,
-                    entity_id=entity_id,
-                )
-            )
-        # 环检测
-        walked = {entity_id}
-        cursor = previous_id
-        while cursor:
-            if cursor in walked:
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        "previous_version_id",
-                        f"版本链成环：{entity_id} -> … -> {cursor}",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
-                break
-            walked.add(cursor)
-            node = versions.get(cursor)
-            cursor = node.previous_version_id if node is not None else None
-
-
 # ---------------------------------------------------------------- 卡牌
 
 
@@ -600,20 +545,7 @@ INDICATOR_CATEGORY = "指示物"
 
 
 def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> None:
-    """卡牌一致性：``card_set`` 归属 + 技能版本绑定。
-
-    ``Card`` 是单层的：``category_1/2/3`` 表达“这张卡是什么”，``card_set`` 表达
-    “它来自哪个拓展包”，两者完全独立。
-
-    **分类不受任何预设白名单约束**：一 / 二 / 三级分类都可以自由填写，二 / 三级还允许留空，
-    校验器不对分类取值做任何提示（新增分类不需要改代码，也不要求“补进 constants”）。
-    这里只对账 pydantic 管不了的两件事：
-
-    - ``card_set`` 非空时必须出现在**任一产品**的 ``Product.card_sets`` 里
-      （拓展包名的候选全集由产品声明，卡牌不自己发明拓展包）；
-    - ``effect.skills[].version_id`` 非空时必须属于同一个 ``skill_id``
-      （存在性由 :data:`REFERENCE_FIELDS` 的引用检查负责，这里只查父子关系）。
-    """
+    """对账游戏牌的拓展包归属；分类仍允许自由填写。"""
     declared_card_sets: set[str] = set()
     for product in bundle.all("product").values():
         declared_card_sets.update(product.card_sets or [])
@@ -651,25 +583,6 @@ def _check_card_consistency(bundle: DataBundle, result: ValidationResult) -> Non
                     )
                 )
 
-        # 卡牌效果里的技能：显式绑定的版本必须属于同一个技能
-        for position, ref in enumerate(card.effect.skills):
-            if not ref.version_id:
-                continue
-            version = bundle.get("skill_version", ref.version_id)
-            if version is None:
-                continue  # 版本不存在已由引用检查报错
-            if version.skill_id != ref.skill_id:
-                result.errors.append(
-                    Issue(
-                        "error",
-                        origin.path,
-                        f"effect.skills[{position}].version_id",
-                        f"绑定的技能版本 {ref.version_id} 属于技能 {version.skill_id}，"
-                        f"与这里的技能 {ref.skill_id} 不一致",
-                        line=origin.line,
-                        entity_id=entity_id,
-                    )
-                )
 
 
 # ---------------------------------------------------------------- 卡图

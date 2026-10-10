@@ -1,10 +1,5 @@
 id: skill_yi_cheng_guozhan_qlhd_v1
 skill_id: skill_yi_cheng
 mode: guozhan
-text: 当你使用【杀】指定目标后，或与你势力相同的角色成为【杀】的目标后，你可以选择目标X张牌移出游戏直到本回合结束（X为其体力值，不足全选），若此【杀】未造成伤害，你摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你使用【杀】指定目标后，或与你势力相同的角色成为【杀】的目标后，你可以选择目标X张牌移出游戏直到本回合结束（X为其体力值，不足全选），若此【杀】未造成伤害，你摸一张牌。

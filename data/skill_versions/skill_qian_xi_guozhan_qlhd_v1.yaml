@@ -1,10 +1,5 @@
 id: skill_qian_xi_guozhan_qlhd_v1
 skill_id: skill_qian_xi
 mode: guozhan
-text: 准备阶段，你可以摸一张牌，然后弃置一张牌并选择一名距离为1的角色，令其于此回合内不能使用或打出与你此次弃置的牌颜色相同的手牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，你可以摸一张牌，然后弃置一张牌并选择一名距离为1的角色，令其于此回合内不能使用或打出与你此次弃置的牌颜色相同的手牌。

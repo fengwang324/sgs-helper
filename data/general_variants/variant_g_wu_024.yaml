@@ -1,6 +1,5 @@
 id: variant_g_wu_024
 general_id: general_g_wu_024
-variant: 群狼环鼎
 title: 慈怀瑾瑜
 general_number: G.WU 024
 illustrator: 李秀森
@@ -12,9 +11,9 @@ gender: female
 product_id: qlhd
 general_set: 君临天下·权
 zhulianbihe:
-  - 孙坚
+- 孙坚
 skills:
-  - skill_id: skill_bu_yi
-    version_id: skill_bu_yi_guozhan_qlhd_v1
-  - skill_id: skill_gan_lu
-    version_id: skill_gan_lu_guozhan_qlhd_v1
+- skill_id: skill_bu_yi
+  version_id: skill_bu_yi_guozhan_qlhd_v1
+- skill_id: skill_gan_lu
+  version_id: skill_gan_lu_guozhan_qlhd_v1

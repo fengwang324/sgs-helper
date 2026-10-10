@@ -35,7 +35,6 @@ from ..constants import (
     KIND_BY_NAME,
     KIND_ORDER,
     MODE_LABELS,
-    SOURCE_LABELS,
 )
 from ..validate import REFERENCE_FIELDS
 from . import editors, forms, ocr_test, wiki
@@ -92,7 +91,6 @@ def build_templates() -> Jinja2Templates:
     env.filters.update(
         {
             "mode_label": lambda v: MODE_LABELS.get(v, v or ""),
-            "source_label": lambda v: SOURCE_LABELS.get(v, v or ""),
             "gender_label": lambda v: GENDER_LABELS.get(v, v or ""),
             "short": truncate,
             "is_url": lambda v: isinstance(v, str) and v.startswith(("http://", "https://")),
@@ -103,7 +101,6 @@ def build_templates() -> Jinja2Templates:
             "KIND_ORDER": KIND_ORDER,
             "KIND_BY_NAME": KIND_BY_NAME,
             "MODE_LABELS": MODE_LABELS,
-            "SOURCE_LABELS": SOURCE_LABELS,
             "reference_fields": REFERENCE_FIELDS,
             "static_asset_url": static_asset_url,
         }
@@ -128,7 +125,9 @@ def _ocr_image_index(live: AdminStore) -> list[dict]:
             if kind == "general_variant":
                 general = live.bundle.get("general", getattr(entity, "general_id", ""))
                 name = getattr(general, "name", "") or entity.id
-                label = f"{prefix}：{name}（{getattr(entity, 'variant', '')}）"
+                product_name = live.name_of("product", getattr(entity, "product_id", None))
+                mode = MODE_LABELS.get(getattr(entity, "mode", "") or "", getattr(entity, "mode", "") or "")
+                label = f"{prefix}：{name}（{product_name or mode or entity.id}）"
             else:
                 label = (
                     f"{prefix}：{getattr(entity, 'name', '') or entity.id}"
@@ -465,10 +464,8 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 "info": [],
                 "base_sha": "",
                 "mode_choices": editors.mode_choices(),
-                "variant_choices": editors.variant_choices(),
                 "gender_choices": editors.gender_choices(),
                 "hp_choices": editors.HP_CHOICES,
-                "source_type_choices": editors.source_type_choices(),
                 "csrf": request.app.state.csrf,
             }
         )
@@ -663,6 +660,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         require_kind("general")
         live: AdminStore = request.app.state.store
         values = editors.general_values(live, None, None, params=_general_params(request))
+        values["product_name"] = live.name_of("product", values.get("product_id"))
 
         rows: list[dict] = []
         template_source = None
@@ -706,7 +704,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 mode="create",
                 target_id="",
                 variant_id="",
-                variant_label=values.get("variant") or "标准版",
+                variant_label=values.get("product_name") or values.get("mode") or "武将版本",
                 action="/new/general",
                 general=None,
                 template_source=template_source,
@@ -772,7 +770,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
             live, general, variant, params=_general_params(request)
         )
         if adding_variant:
-            values["variant"] = request.query_params.get("label", "") or "标准版"
+            values["product_name"] = live.name_of("product", values.get("product_id"))
             values["variant_id"] = ""
             values["title"] = ""
             values["general_number"] = ""
@@ -792,7 +790,7 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 mode="edit",
                 target_id=entity_id,
                 variant_id=(variant.id if variant else ""),
-                variant_label=(variant.variant if variant else values.get("variant", "标准版")),
+                variant_label=(values.get("product_name") or values.get("mode") or "武将版本"),
                 action=f"/edit/general/{entity_id}",
                 general=general,
                 variant=variant,
@@ -1058,16 +1056,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
         live: AdminStore = request.app.state.store
         values = forms.values_from_defaults(kind)
         params = {key: value for key, value in request.query_params.items() if key in values}
-        if kind == "skill_version" and params.get("previous_version_id"):
-            previous = live.entity("skill_version", params["previous_version_id"])
-            if previous is not None:
-                for field_name in ("skill_id", "mode", "product_id", "version_label"):
-                    value = getattr(previous, field_name, None)
-                    if value and not params.get(field_name):
-                        params[field_name] = value
-                if previous.source is not None:
-                    params.setdefault("source.type", previous.source.type)
-                    params.setdefault("source.reference", previous.source.reference)
         values = forms.prefill(values, params)
         return render(
             request,
@@ -1086,7 +1074,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 error_map={},
                 issue_list=[],
                 datalists=_datalists(live, kind),
-                source_choices=forms.source_choices(),
                 action=f"/new/{kind}",
                 base_sha="",
             ),
@@ -1151,7 +1138,6 @@ def create_app(data_dir: Path | None = None, db_path: Path | None = None) -> Fas
                 error_map={},
                 issue_list=[],
                 datalists=_datalists(live, kind),
-                source_choices=forms.source_choices(),
                 action=f"/edit/{kind}/{entity_id}",
                 references=live.reverse_refs(kind, entity_id),
                 entity=entity,
@@ -1418,7 +1404,6 @@ def _form_error(
             "issue_list": outcome.issues if outcome else [],
             "outcome_error": outcome.error if outcome else "",
             "datalists": _datalists(live, kind),
-            "source_choices": forms.source_choices(),
             "action": action,
             "csrf": request.app.state.csrf,
             "base_sha": base_sha,

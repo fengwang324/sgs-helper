@@ -4,10 +4,7 @@ category_2: 装备牌
 category_3: 武器
 name: 诸葛连弩
 image: card_zhu_ge_lian_nu_qlhd_diamond_1.jpg
-card_set: null
-effect:
-  text: 出牌阶段，你可以使用任意数量的【杀】。
-  skills: []
-rules:
-  attack_range: ''
-  note: ''
+effect: |-
+  出牌阶段，你可以使用任意数量的【杀】。
+attack_range: '1'
+deck_info: ""

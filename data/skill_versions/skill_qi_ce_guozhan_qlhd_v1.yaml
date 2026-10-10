@@ -1,10 +1,5 @@
 id: skill_qi_ce_guozhan_qlhd_v1
 skill_id: skill_qi_ce
 mode: guozhan
-text: 出牌阶段限一次，你可以将所有手牌当任意一张目标角色数不大于你手牌数的普通锦囊牌使用，然后你可以变更副将。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以将所有手牌当任意一张目标角色数不大于你手牌数的普通锦囊牌使用，然后你可以变更副将。

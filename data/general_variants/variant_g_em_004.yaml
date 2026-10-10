@@ -1,7 +1,6 @@
 id: variant_g_em_004
 general_id: general_g_em_004
-variant: 群狼环鼎
-title: 电模
+title: 凤舞九天
 general_number: G.EM 004
 illustrator: 波子
 image: g_em_004.jpg
@@ -13,9 +12,9 @@ product_id: qlhd
 general_set: 君临天下·权
 zhulianbihe: []
 skills:
-  - skill_id: skill_n431e5b51
-    version_id: skill_n431e5b51_guozhan_v1
-  - skill_id: skill_hui_bian
-    version_id: skill_hui_bian_guozhan_qlhd_v1
-  - skill_id: skill_zong_yu
-    version_id: skill_zong_yu_guozhan_qlhd_v1
+- skill_id: skill_n431e5b51
+  version_id: skill_n431e5b51_guozhan_v1
+- skill_id: skill_hui_bian
+  version_id: skill_hui_bian_guozhan_qlhd_v1
+- skill_id: skill_zong_yu
+  version_id: skill_zong_yu_guozhan_qlhd_v1

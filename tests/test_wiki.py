@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from html import unescape
 from pathlib import Path
 
 import pytest
@@ -87,7 +88,8 @@ def card_payload(app, **overrides) -> dict:
         "card_set": "",
         "image": "",
         "effect_text": "",
-        "skill_count": "0",
+        "deck_info": "",
+        "note": "",
     }
     payload.update({key: str(value) for key, value in overrides.items()})
     return payload
@@ -134,7 +136,7 @@ def test_wiki_home_lists_five_entries(client: TestClient) -> None:
 def test_wiki_lists_show_data(client: TestClient) -> None:
     """列表页有数据、有分页；用搜索定位不在第一页的记录。
 
-    列表每页 48 条（武将 155 条 = 4 页），所以断言要落在第一页真实存在的数据上，
+    列表每页 48 条（武将 163 条 = 4 页），所以断言要落在第一页真实存在的数据上，
     跨页的记录用搜索验证。
     """
     generals = client.get("/wiki/generals").text
@@ -160,15 +162,17 @@ def test_wiki_list_pagination(client: TestClient) -> None:
     assert first != second
 
 
-def test_markers_page_categories_come_from_data(client: TestClient) -> None:
+def test_markers_page_categories_come_from_data(client: TestClient, app) -> None:
     """指示物页按 ``category_1`` 筛选；二 / 三级分类导航完全由数据生成。"""
     body = client.get("/wiki/markers").text
     # 数据里那条指示物与它写的分类
     assert "鏖战效果面" in body
     assert "鏖战" in body and "鏖战说明卡" in body
     # 不再有任何「预置的」指示物子分类
-    for absent in ("技能指示物", "衍生技能牌", "通用标记"):
-        assert absent not in body
+    recorded = {c.category_2 for c in app.state.store.bundle.all("card").values()
+                if c.category_1 == "指示物"}
+    for category in ("技能指示物", "衍生技能牌", "通用标记"):
+        assert (category in body) == (category in recorded)
 
 
 def test_markers_does_not_leak_play_cards(client: TestClient) -> None:
@@ -231,12 +235,15 @@ def test_skill_detail_links_back_to_general(client: TestClient) -> None:
     assert "相关 FAQ" in body
 
 
-def test_card_detail_shows_categories_and_skills(client: TestClient) -> None:
+def test_card_detail_shows_categories_and_effect(client: TestClient, app) -> None:
     body = client.get("/wiki/card/card_ding_lan_ye_ming_zhu").text
     for field in ("一级分类", "二级分类", "三级分类", "拓展包"):
         assert field in body
-    # 带关联技能的卡要有「关联技能」区块
-    assert "关联技能" in body
+    card = app.state.store.entity("card", "card_ding_lan_ye_ming_zhu")
+    assert isinstance(card.effect, str)
+    assert "取消弃置牌数的限制" in unescape(re.sub(r"<[^>]*>", "", body))
+    assert "skills" not in card.model_dump()
+    assert "关联技能" not in body
 
 
 def test_faq_detail_links_related_entities(client: TestClient) -> None:
@@ -351,7 +358,11 @@ def test_blank_subcategories_save_and_display(client: TestClient, app, workdir: 
 
     text = cards_yaml_text(workdir)
     assert "只有一级的令" in text
-    assert "category_2: ''" in text and "category_3: ''" in text
+    entity = next(c for c in app.state.store.bundle.all("card").values()
+                  if c.name == "只有一级的令")
+    node = yaml.safe_load((workdir / "data" / "cards" / f"{entity.id}.yaml").read_text(encoding="utf-8"))
+    assert node.get("category_2", "") == node.get("category_3", "") == ""
+    assert "deck_info" not in node and "card_set" not in node
 
     assert "只有一级的令" in client.get("/wiki/markers").text
     detail = client.get("/wiki/card/" + _card_id_of(workdir, "只有一级的令")).text
@@ -438,7 +449,6 @@ def test_new_general_renames_uploaded_image_to_card_number(
         "_base_sha": "",
         "_action": "save",
         "name": "测试武将",
-        "variant": "群狼环鼎",
         "title": "测试称号",
         "general_number": "G.TEST 001",
         "mode": "guozhan",
@@ -482,7 +492,7 @@ def test_editing_never_steals_another_records_image(
         ).json()["file"]
         payload = {
             "_csrf": client.app.state.csrf, "_base_sha": "", "_action": "save",
-            "name": name, "variant": "群狼环鼎", "title": "测试称号",
+            "name": name, "title": "测试称号",
             "general_number": number, "mode": "guozhan", "faction": "魏",
             "hp": "4", "gender": "male", "product_id": "", "general_set": "",
             "skill_count": "0", "image": uploaded,
@@ -506,7 +516,7 @@ def test_editing_never_steals_another_records_image(
         "_csrf": client.app.state.csrf,
         "_base_sha": store.entity_sha("general", "general_g_tst_001"),
         "_action": "save", "skill_count": "0",
-        "name": g.name, "variant": v.variant, "title": v.title,
+        "name": g.name, "title": v.title,
         "general_number": "G.TST 001", "mode": v.mode, "faction": v.faction,
         "hp": str(v.hp), "gender": v.gender, "product_id": v.product_id or "",
         "general_set": v.general_set or "", "image": other,
@@ -591,7 +601,7 @@ def test_edit_mode_post_requires_csrf(client: TestClient) -> None:
 
 
 def test_marker_filters_are_scoped(client: TestClient, app) -> None:
-    """指示物页的拓展包候选只来自「category_1 == 指示物」的卡，不串游戏牌的。"""
+    """指示物不维护拓展包，也不展示游戏牌拓展包候选。"""
     client.post("/new/card", data=card_payload(
         app, name="scoped-令", category_1="指示物", category_2="军令", category_3="军令四",
     ))
@@ -607,8 +617,9 @@ def test_marker_filters_are_scoped(client: TestClient, app) -> None:
         if card.category_1 == "游戏牌" and card.card_set
     } - marker_sets
 
-    # 指示物自己用到的拓展包要出现；只在游戏牌上出现的拓展包不能出现
-    for name in marker_sets:
-        assert name in body
+    assert not marker_sets
+    for card in cards:
+        if card.category_1 == "指示物":
+            assert card.deck_info is None
     for name in play_only_sets:
         assert name not in body, f"{name} 只被游戏牌使用，不该出现在指示物页的筛选里"

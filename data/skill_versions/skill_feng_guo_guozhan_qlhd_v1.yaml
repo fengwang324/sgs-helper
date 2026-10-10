@@ -1,10 +1,5 @@
 id: skill_feng_guo_guozhan_qlhd_v1
 skill_id: skill_feng_guo
 mode: guozhan
-text: 准备阶段，你可以选择一名已确定势力角色直到你的下回合开始或你死亡：其不能回复体力；若其存活，防止除其外与其势力相同的角色受到的伤害。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，你可以选择一名已确定势力角色直到你的下回合开始或你死亡：其不能回复体力；若其存活，防止除其外与其势力相同的角色受到的伤害。

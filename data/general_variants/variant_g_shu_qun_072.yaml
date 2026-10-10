@@ -1,6 +1,5 @@
 id: variant_g_shu_qun_072
 general_id: general_g_shu_qun_072
-variant: 群狼环鼎
 title: 误身的狂士
 general_number: G.SHU&QUN 072
 illustrator: 匠人绘-零
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe: []
 skills:
-  - skill_id: skill_tong_ling
-    version_id: skill_tong_ling_guozhan_qlhd_v1
-  - skill_id: skill_jin_xian
-    version_id: skill_jin_xian_guozhan_qlhd_v1
+- skill_id: skill_tong_ling
+  version_id: skill_tong_ling_guozhan_qlhd_v1
+- skill_id: skill_jin_xian
+  version_id: skill_jin_xian_guozhan_qlhd_v1

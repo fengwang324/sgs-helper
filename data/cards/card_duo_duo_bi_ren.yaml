@@ -5,15 +5,12 @@ category_3: 非延时锦囊
 name: 咄咄逼人
 image: card_duo_duo_bi_ren_qlhd_spade_10.jpg
 card_set: 九变篇
-effect:
-  text: |-
-    出牌阶段，对一名确定势力的角色使用；目标可以变更副将，然后你对目标造成1点伤害。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 一名确定势力的角色
-      effect: 目标可以变更副将，然后你对目标造成1点伤害。
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        一名确定势力的角色
+      effect: |-
+        目标可以变更副将，然后你对目标造成1点伤害。
+deck_info: ""

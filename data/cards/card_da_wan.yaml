@@ -4,11 +4,6 @@ category_2: 装备牌
 category_3: 坐骑
 name: 大宛
 image: card_da_wan_qlhd_spade_13.jpg
-card_set: null
-effect:
-  text: |-
-    “大宛汗血古共知，青海龙种骨更奇；网丝旧画昔尝见，不意人间今见之。”《天马歌》
-  skills: []
-rules:
-  distance_modifier: ''
-  note: ''
+effect: |-
+  锁定技，你至其他角色的距离-1。
+deck_info: ""

@@ -1,10 +1,5 @@
 id: skill_zhu_lan_guozhan_qlhd_v1
 skill_id: skill_zhu_lan
 mode: guozhan
-text: 当其他角色受到伤害时，若伤害来源与其势力相同，你可以弃置一张牌并令此伤害+1。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当其他角色受到伤害时，若伤害来源与其势力相同，你可以弃置一张牌并令此伤害+1。

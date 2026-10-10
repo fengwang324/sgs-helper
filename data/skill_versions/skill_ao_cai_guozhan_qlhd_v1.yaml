@@ -1,10 +1,5 @@
 id: skill_ao_cai_guozhan_qlhd_v1
 skill_id: skill_ao_cai
 mode: guozhan
-text: 当你于回合外需要使用或打出基本牌时你可以观看牌堆顶的两张牌，若其中有此牌，你可以使用或打出之。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你于回合外需要使用或打出基本牌时你可以观看牌堆顶的两张牌，若其中有此牌，你可以使用或打出之。

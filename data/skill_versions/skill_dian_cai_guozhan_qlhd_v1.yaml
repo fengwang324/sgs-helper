@@ -1,10 +1,5 @@
 id: skill_dian_cai_guozhan_qlhd_v1
 skill_id: skill_dian_cai
 mode: guozhan
-text: 其他角色的出牌阶段结束时，若你于此阶段失去的牌数不小于你的体力值，则你可以将手牌摸至X张（X为你的体力上限），然后你可以变更副将。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 其他角色的出牌阶段结束时，若你于此阶段失去的牌数不小于你的体力值，则你可以将手牌摸至X张（X为你的体力上限），然后你可以变更副将。

@@ -1,6 +1,5 @@
 id: variant_g_jin_018
 general_id: general_g_jin_018
-variant: 群狼环鼎
 title: 垂心万物
 general_number: G.JIN 018
 illustrator: 六道目
@@ -10,11 +9,11 @@ faction: 晋
 hp: 1.5
 gender: female
 product_id: qlhd
-general_set: null
-skills:
-  - skill_id: skill_yan_xi
-    version_id: skill_yan_xi_guozhan_qlhd_v1
-  - skill_id: skill_shi_ren
-    version_id: skill_shi_ren_guozhan_qlhd_v1
+general_set: 紫气东来
 zhulianbihe:
-  - 司马昭
+- 司马昭
+skills:
+- skill_id: skill_yan_xi
+  version_id: skill_yan_xi_guozhan_qlhd_v1
+- skill_id: skill_shi_ren
+  version_id: skill_shi_ren_guozhan_qlhd_v1

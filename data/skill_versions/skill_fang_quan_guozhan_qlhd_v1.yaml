@@ -1,10 +1,5 @@
 id: skill_fang_quan_guozhan_qlhd_v1
 skill_id: skill_fang_quan
 mode: guozhan
-text: 你可以跳过出牌阶段，若如此做，此回合结束时，你可以弃置一张手牌并选择一名其他角色，然后令其于此回合结束后执行一个额外的回合。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你可以跳过出牌阶段，若如此做，此回合结束时，你可以弃置一张手牌并选择一名其他角色，然后令其于此回合结束后执行一个额外的回合。

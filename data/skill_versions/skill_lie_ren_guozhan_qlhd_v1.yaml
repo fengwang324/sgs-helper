@@ -1,10 +1,5 @@
 id: skill_lie_ren_guozhan_qlhd_v1
 skill_id: skill_lie_ren
 mode: guozhan
-text: 当你的【杀】对目标角色造成伤害后，你可以与其拼点，若你赢，你获得其一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你的【杀】对目标角色造成伤害后，你可以与其拼点，若你赢，你获得其一张牌。

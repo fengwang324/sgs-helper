@@ -1,10 +1,5 @@
 id: skill_cheng_liu_guozhan_qlhd_v1
 skill_id: skill_cheng_liu
 mode: guozhan
-text: 出牌阶段限一次，你可以对一名装备区内的牌数小于你的角色造成1点伤害，然后你可以与其交换装备区内的牌并重复此流程。江底，一片降幡出石头。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段限一次，你可以对一名装备区内的牌数小于你的角色造成1点伤害，然后你可以与其交换装备区内的牌并重复此流程。

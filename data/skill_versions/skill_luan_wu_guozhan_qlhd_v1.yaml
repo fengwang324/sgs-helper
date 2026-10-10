@@ -1,10 +1,5 @@
 id: skill_luan_wu_guozhan_qlhd_v1
 skill_id: skill_luan_wu
 mode: guozhan
-text: 限定技，出牌阶段，你可以令所有其他角色除非对各自距离最近的另一名角色使用一张【杀】，否则失去1点体力。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，出牌阶段，你可以令所有其他角色除非对各自距离最近的另一名角色使用一张【杀】，否则失去1点体力。

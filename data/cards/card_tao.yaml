@@ -4,15 +4,18 @@ category_2: 基本牌
 category_3: 桃
 name: 桃
 image: card_tao_qlhd_heart_4.jpg
-card_set: null
-effect:
-  text: ''
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
-      effect: ''
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段。
+      target: |-
+        已受伤的你。
+      effect: |-
+        目标对应的角色回复1点体力。
+    - timing: |-
+        当一名角色处于濒死状态时。
+      target: |-
+        该角色。
+      effect: |-
+        目标对应的角色回复1点体力。
+deck_info: ""

@@ -1,10 +1,5 @@
 id: skill_jian_chu_guozhan_qlhd_v1
 skill_id: skill_jian_chu
 mode: guozhan
-text: 当你使用【杀】指定目标后，你可以弃置目标角色一张牌，若此牌：是装备牌，其不能使用【闪】响应此【杀】；不是装备牌，其获得此【杀】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你使用【杀】指定目标后，你可以弃置目标角色一张牌，若此牌：是装备牌，其不能使用【闪】响应此【杀】；不是装备牌，其获得此【杀】。

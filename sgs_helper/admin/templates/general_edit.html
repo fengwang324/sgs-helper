@@ -69,17 +69,11 @@
     <div class="field add-version-field" {{ 'hidden' if not row.skill_id else '' }}>
       <button type="button" class="link-btn toggle-add-version">+ 为这个技能新增版本</button>
       <div class="add-version-box" hidden>
-        <label for="f-skill-{{ index }}-add-label">新版本名称（可空，例如 2026 调整 / 界限突破）</label>
-        <input id="f-skill-{{ index }}-add-label" name="skill_{{ index }}_add_version_label"
-               value="{{ row.add_version_label }}">
         <label for="f-skill-{{ index }}-add-text">新版本技能描述</label>
         <textarea id="f-skill-{{ index }}-add-text" name="skill_{{ index }}_add_version_text"
                   rows="4" placeholder="直接把卡面文字复制进来">{{ row.add_version_text }}</textarea>
-        <input type="hidden" name="skill_{{ index }}_add_version_from" value="{{ row.add_version_from }}">
         <p class="help">
-          保存时会作为**新的** SkillVersion 写入，旧版本原样保留。
-          <button type="button" class="mini-btn from-current">基于当前版本新增</button>
-          （复制当前版本的文本并把当前版本设为前一版本）
+          保存时会作为新的 SkillVersion 写入。
         </p>
         {% for message in error_map.get('skill_' ~ index ~ '_add_version_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
       </div>
@@ -91,11 +85,6 @@
                 placeholder="卡面技能原文；只填技能名称、不填描述也可以保存">{{ row.new_text }}</textarea>
       {% for message in error_map.get('skill_' ~ index ~ '_new_text', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
       <div class="field-grid">
-        <div>
-          <label for="f-skill-{{ index }}-new-label">技能版本（可空）</label>
-          <input id="f-skill-{{ index }}-new-label" name="skill_{{ index }}_new_version_label"
-                 value="{{ row.new_version_label }}" placeholder="初版 / 国战版 / 2026 调整">
-        </div>
         <div>
           <label for="f-skill-{{ index }}-new-id">内部 ID（可空）</label>
           <input id="f-skill-{{ index }}-new-id" name="skill_{{ index }}_new_id"
@@ -136,14 +125,14 @@
     <strong>版本</strong>（一个武将可以有多个版本，它们的模式/体力/势力/技能各写各的）：
     {% for item in all_variants %}
       <a class="btn small {{ 'active' if item.id == variant_id else '' }}"
-         href="/edit/general/{{ target_id }}?variant={{ item.id }}">{{ item.variant }}</a>
+         href="/edit/general/{{ target_id }}?variant={{ item.id }}">{{ item.product_name or item.mode | mode_label or item.id }}</a>
     {% endfor %}
     <a class="btn small {{ 'active' if adding_variant else '' }}"
        href="/edit/general/{{ target_id }}?variant=new">+ 新增版本</a>
   </div>
 {% endif %}
 {% if adding_variant %}
-  <div class="banner warn">正在给「{{ values.get('name') or target_id }}」新增一个版本：填好版本标签（例如 国战版）后保存即可。</div>
+  <div class="banner warn">正在给「{{ values.get('name') or target_id }}」新增一个武将版本。产品与模式用于识别这个版本。</div>
 {% endif %}
 
 {% if template_source %}
@@ -193,12 +182,8 @@
       {% for message in error_map.get('name', []) %}<p class="field-error">{{ message }}</p>{% endfor %}
     </div>
     <div class="field">
-      <label for="f-variant">版本标签</label>
-      <input id="f-variant" name="variant" value="{{ values.get('variant', '标准版') }}" list="variant-options">
-      <datalist id="variant-options">
-        {% for value, label in variant_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-      </datalist>
-      <p class="help">同一个武将的多个版本靠它区分：标准版 / 国战版 / 界限突破 / OL / 手卡（手杀）…</p>
+      <label>产品名称</label>
+      <p class="readonly-value">{{ values.get('product_name') or '由所选产品推导' }}</p>
     </div>
   </div>
 
@@ -359,8 +344,7 @@
 {# 新技能行模板：JS 克隆后把 __i__ 换成真实序号 #}
 <template id="skill-row-template">
   {{ skill_row({"index": "__i__", "skill_id": "", "version_id": "", "new_name": "", "new_id": "",
-                 "new_text": "", "new_version_label": "", "new_version_id": "",
-                 "add_version_text": "", "add_version_label": "", "add_version_from": ""}, "__i__") }}
+                 "new_text": "", "new_version_id": "", "add_version_text": ""}, "__i__") }}
 </template>
 
 {% if references %}

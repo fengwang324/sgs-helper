@@ -4,10 +4,7 @@ category_2: 装备牌
 category_3: 武器
 name: 丈八蛇矛
 image: card_zhang_ba_she_mao_qlhd_spade_12.jpg
-card_set: null
-effect:
-  text: 你可以将两张手牌当【杀】使用或打出。
-  skills: []
-rules:
-  attack_range: ''
-  note: ''
+effect: |-
+  你可以将两张手牌当【杀】使用或打出。
+attack_range: '3'
+deck_info: ""

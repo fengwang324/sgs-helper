@@ -1,6 +1,5 @@
 id: variant_g_shu_022
 general_id: general_g_shu_022
-variant: 群狼环鼎
 title: 帷幄经谋
 general_number: G.SHU 022
 illustrator: 蚂蚁君
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 君临天下·变
 zhulianbihe: []
 skills:
-  - skill_id: skill_san_yao
-    version_id: skill_san_yao_guozhan_qlhd_v1
-  - skill_id: skill_zhi_man
-    version_id: skill_zhi_man_guozhan_qlhd_v1
+- skill_id: skill_san_yao
+  version_id: skill_san_yao_guozhan_qlhd_v1
+- skill_id: skill_zhi_man
+  version_id: skill_zhi_man_guozhan_qlhd_v1

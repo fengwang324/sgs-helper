@@ -1,10 +1,5 @@
 id: skill_shuang_xiong_guozhan_qlhd_v1
 skill_id: skill_shuang_xiong
 mode: guozhan
-text: 出牌阶段开始时，你可以令一名角色弃置一张牌，然后你于此回合内可以将一张与弃置牌颜色不同的手牌当【决斗】使用。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段开始时，你可以令一名角色弃置一张牌，然后你于此回合内可以将一张与弃置牌颜色不同的手牌当【决斗】使用。

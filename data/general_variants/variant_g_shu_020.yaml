@@ -1,6 +1,5 @@
 id: variant_g_shu_020
 general_id: general_g_shu_020
-variant: 群狼环鼎
 title: 五溪蛮王
 general_number: G.SHU 020
 illustrator: LiuHeng
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 君临天下·变
 zhulianbihe: []
 skills:
-  - skill_id: skill_ji_li_2
-    version_id: skill_ji_li_2_guozhan_qlhd_v1
+- skill_id: skill_ji_li_2
+  version_id: skill_ji_li_2_guozhan_qlhd_v1

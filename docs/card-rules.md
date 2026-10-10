@@ -1,69 +1,39 @@
 # 游戏牌规则与指示物
 
-游戏牌与指示物继续共用 `Card`、`data/cards/` 和 ID 引用机制。两者在内容上分开：
-游戏牌增加可选的 `rules`；指示物（以及其他自由一级分类）只使用原有 `effect`，不接受 `rules`。
-分类仍是自由文本，游戏牌类别未确定或暂缺资料时可以不填写具体规则。
+游戏牌与指示物继续共用 `Card`、`data/cards/` 和 ID 引用机制。游戏牌使用 `deck_info` 记录已知的实物牌堆组成；没有录入的牌堆信息写空字符串，不根据常识补猜。指示物不填写 `card_set`、`rules` 或 `deck_info`。
 
 ## 字段
 
-所有规则标量都是文本，允许 `X`、条件句、换行和空字符串，不做数值或固定枚举校验。
-
 | 类型 | 专用字段 | 共用内容 |
 | --- | --- | --- |
-| 基本牌 / 锦囊牌 | `rules.use_methods`（0～N 种使用方法） | `effect.text` 原文、`effect.skills` 技能引用、`rules.note` |
-| 武器 | `rules.attack_range` 攻击范围 | `effect.text` 效果、`effect.skills` 技能引用、`rules.note` |
-| 防具 | 无 | 同上 |
-| 坐骑 | `rules.distance_modifier` 距离修正 | 同上 |
-| 宝物 | 无 | 同上 |
-| 指示物 | 不填写 `rules` | 自由 `effect.text` 与 `effect.skills` |
+| 游戏牌 | `deck_info` | `effect` 为卡面效果文本；可选 `card_set` |
+| 基本牌 / 锦囊牌 | `rules.use_methods`（0～N 种使用方法） | 可选 `label`、`timing`、`target`、`effect` |
+| 武器 | `attack_range` | `effect` 效果文本 |
+| 防具 / 宝物 / 坐骑 | 无 | `effect` 效果文本 |
+| 指示物 | 无 | 自由分类与 `effect` 文本 |
 
-`effect.text` 是卡面原文，`use_methods` 是按规则书组织的使用说明。两种来源分别维护；
-自动生成界面样式或拆分结构不应改写原文。装备能力已有独立技能记录时继续引用，
-不重复复制 SkillVersion 文本。装备牌通用使用规则由关键词维护，特殊例外写在具体卡的效果或 note。
-
-每种使用方法包含 `label`（可空的方法名称）、`timing`（出牌时机）、`target`（使用目标）、
-`effect`（作用效果）、`note`（该方法的补充说明），字段均可空。
-卡级 `rules.note` 与方法级 `note` 分别存整张卡和某种使用方法的说明；独立问答继续放 FAQ。
-坐骑距离修正应写清计算方向；含 X 时在效果或 note 中说明 X 的含义。
+卡牌 `effect` 是纯文本；没有独立效果时省略该字段。基本牌 / 锦囊牌规则只使用 `rules.use_methods`，方法的 `label` 用于“重铸”等具名方法。武器攻击范围放在外层 `attack_range`；坐骑距离效果写在效果文本中。空字段省略。
 
 ```yaml
 # 结构示例；占位文字不是已核对规则。
+id: card_change_me
+name: 卡牌名
+category_1: 游戏牌
+category_2: 锦囊牌
+category_3: 非延时锦囊
+deck_info: ''
 rules:
   use_methods:
-    - label: 使用方法一
-      timing: 按当前规则书填写
-      target: 按当前规则书填写
-      effect: 按当前规则书填写
-      note: ''
-    - label: 使用方法二
-      timing: ''
-      target: ''
-      effect: ''
-      note: ''
-  note: ''
+    - timing: 出牌阶段。
+      target: 一名其他角色。
+      effect: 按已核对规则填写。
+      # label: 重铸
 ```
 
-武器只增加 `rules: {attack_range: 'X', note: ''}`；坐骑只增加
-`rules: {distance_modifier: '按卡面填写并明确方向', note: ''}`；防具、宝物只增加 `rules: {note: ''}`。
-模板见 `data/_templates/card.yaml` 和 `data/_templates/marker.yaml`。
+## 数据迁移说明
 
-## 迁移与维护
+2026-10-10 将 81 张游戏牌补齐 `deck_info` 字段；原来未录入的牌堆资料保留为空，杀的已录入花色点数移入该字段。33 个非游戏牌条目（含指示物及其他自由分类卡牌）不增加 `deck_info`。卡面效果对象改为文本，空效果省略；技能关联不再放在 `effect`。
 
-`scripts/migrate_card_rules.py` 默认输出计划，`--write` 才写入；已有 rules 的记录跳过。
-本轮迁移 81 张游戏牌，保留 ID、分类、图片、拓展包、完整原文和技能引用；指示物文件保持原样。
-只拆原文中明确的“出牌阶段，对…使用。”句式，提取原文已有的攻击范围和纯 `+1/-1` 距离修正。
-不能明确拆分时保留全文；基本牌原本缺失的规则、武器原本缺失的范围、特殊坐骑原本缺失的修正
-均留空，后续按所用规则书核对。迁移不表示这些规则已与规则书复核。
+旧规则备注中，酒的两条规则说明迁至 FAQ；联军盛宴方法备注与已有完整效果重复，清除重复备注。迁移保留 ID、卡面文字、规则机制和原有牌堆点数信息，不代表依据规则书重新核对。
 
-录入页按类型显示对应字段：基本牌 / 锦囊牌默认一组使用说明，需要时再添加另一种方式；
-两组以上才显示删除按钮和方式名称（已有单组名称保留）。基本牌 / 锦囊牌的完整卡面原文放在可选折叠区，
-装备牌 / 指示物直接填写效果。尚未确定类型或自定义的游戏牌分类提供折叠的可选规则字段，不限制分类名。
-分类变化时不适用的规则隐藏并暂存，切回原类型恢复；保存前须明确确认舍弃这些规则，
-只提交当前类型的内容。未保存的隐藏内容仍进入浏览器草稿，失败回显保留实际提交的内容；
-草稿恢复不会覆盖当前页面的 CSRF token。JS / CSS 链接随内容变更版本，交互初始化失败会显示刷新提示。
-手工编辑 YAML / 非网页客户端改变一级分类时，仍须显式清空 rules，避免静默丢失原有规则。
-普通分类名不需登记到 constants，基本牌 / 锦囊牌 / 装备牌只是界面提供对应输入项的约定。
-
-SQLite schema 6 在 `cards` 中新增 `rules TEXT`（JSON 对象；指示物为 SQL NULL）。
-查询层解码为对象，新字段参与全文检索和正文实体链接；管理详情、Wiki 和 CLI 同步展示。
-更改 Python 模型后，已有本地管理进程需重新加载代码。最终纯前端可以直接读取同一规则对象。
+模板按类别拆分，见 `data/_templates/card_basic.yaml`、`card_non_delayed_trick.yaml`、`card_delayed_trick.yaml`、`card_weapon.yaml`、`card_armor.yaml`、`card_treasure.yaml`、`card_mount.yaml` 与 `marker.yaml`。

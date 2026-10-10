@@ -1,10 +1,5 @@
 id: skill_nie_pan_guozhan_qlhd_v1
 skill_id: skill_nie_pan
 mode: guozhan
-text: 限定技，当你处于濒死状态时，你可以弃置你所属区域里的所有牌，复原你的武将牌，摸三张牌，将体力回复至3点。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，当你处于濒死状态时，你可以弃置你所属区域里的所有牌，复原你的武将牌，摸三张牌，将体力回复至3点。

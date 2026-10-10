@@ -28,7 +28,7 @@ from .constants import (
     MODE_LABELS,
     mode_sort_key,
 )
-from .db import JSON_COLUMNS, SOURCE_KINDS, fts_query
+from .db import JSON_COLUMNS, fts_query
 
 #: 参与“按名称自动识别”的实体类型（与构建期 ``db.NAME_KINDS`` 保持一致）
 NAME_KINDS: tuple[str, ...] = ("general", "skill", "card", "keyword")
@@ -81,26 +81,6 @@ def row_to_dict(kind: str, row: sqlite3.Row) -> dict:
     return data
 
 
-def source_of(conn: sqlite3.Connection, key: str | None) -> dict | None:
-    """按 source_key 取回去重后的来源记录（只有 type + reference）。"""
-    if not key:
-        return None
-    row = conn.execute(
-        "SELECT type, reference FROM sources WHERE source_key = ?", (key,)
-    ).fetchone()
-    return dict(row) if row is not None else None
-
-
-def with_source(conn: sqlite3.Connection, data: dict, kind: str | None = None) -> dict:
-    """只给仍有**结构化来源**的实体（skill_version）补 source 字段。
-
-    FAQ 的 source 是普通文本列，随行一起取回；关键词没有来源字段。
-    """
-    if (kind or data.get("kind")) in SOURCE_KINDS:
-        data["source"] = source_of(conn, data.get("source_key"))
-    return data
-
-
 def fetch(conn: sqlite3.Connection, kind: str, entity_id: str | None) -> dict | None:
     if not entity_id:
         return None
@@ -108,12 +88,12 @@ def fetch(conn: sqlite3.Connection, kind: str, entity_id: str | None) -> dict | 
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (entity_id,)).fetchone()
     if row is None:
         return None
-    return with_source(conn, row_to_dict(kind, row), kind)
+    return row_to_dict(kind, row)
 
 
 def _fetch_all(conn: sqlite3.Connection, kind: str, sql: str, params: Iterable = ()) -> list[dict]:
     return [
-        with_source(conn, row_to_dict(kind, row), kind)
+        row_to_dict(kind, row)
         for row in conn.execute(sql, tuple(params))
     ]
 
@@ -295,7 +275,7 @@ def resolve(
     table = KIND_BY_NAME[kind].table
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (text,)).fetchone()
     if row is not None:
-        return with_source(conn, row_to_dict(kind, row), kind), []
+        return row_to_dict(kind, row), []
 
     rows = list(
         conn.execute(
@@ -327,22 +307,6 @@ def resolve(
 
 
 # ---------------------------------------------------------------- 技能版本
-
-
-def _history_chains(versions: list[dict]) -> list[list[str]]:
-    """按 previous_version_id 串出的版本演进链。"""
-    by_id = {v["id"]: v for v in versions}
-    referenced = {v["previous_version_id"] for v in versions if v.get("previous_version_id")}
-    chain_starts = [v for v in versions if v["id"] not in referenced]
-    chains: list[list[str]] = []
-    for start in sorted(chain_starts, key=lambda v: (v["id"],)):
-        chain: list[str] = []
-        cursor: str | None = start["id"]
-        while cursor and cursor in by_id and cursor not in chain:
-            chain.append(cursor)
-            cursor = by_id[cursor].get("previous_version_id")
-        chains.append(chain)
-    return [c for c in chains if len(c) > 1] + [c for c in chains if len(c) == 1]
 
 
 def _versions_of_skill(conn: sqlite3.Connection, skill_id: str) -> list[dict]:
@@ -397,11 +361,6 @@ def skill_report(conn: sqlite3.Connection, query: str) -> dict | None:
         for mode in modes_present
     ]
 
-    for version in versions:
-        version["previous_version"] = fetch(
-            conn, "skill_version", version.get("previous_version_id")
-        )
-
     product_ids = {v["product_id"] for v in versions if v.get("product_id")}
     products = {pid: fetch(conn, "product", pid) for pid in product_ids}
 
@@ -410,7 +369,6 @@ def skill_report(conn: sqlite3.Connection, query: str) -> dict | None:
         "definition": entity,
         "versions": versions,
         "modes": groups,
-        "history_chains": _history_chains(versions),
         "products": products,
     }
 
@@ -454,7 +412,7 @@ def general_variants(conn: sqlite3.Connection, general_id: str) -> list[dict]:
     return _fetch_all(
         conn,
         "general_variant",
-        "SELECT * FROM general_variants WHERE general_id = ? ORDER BY variant, id",
+        "SELECT * FROM general_variants WHERE general_id = ? ORDER BY product_id, mode, id",
         (general_id,),
     )
 
@@ -466,7 +424,9 @@ def general_report(conn: sqlite3.Connection, query: str) -> dict | None:
 
     variants = []
     for variant in general_variants(conn, entity["id"]):
-        variants.append({**variant, "skills": variant_skills(conn, variant)})
+        product = fetch(conn, "product", variant.get("product_id")) or {}
+        variants.append({**variant, "product_name": product.get("name") or "",
+                         "skills": variant_skills(conn, variant)})
 
     return {
         "kind": "general",
@@ -476,66 +436,24 @@ def general_report(conn: sqlite3.Connection, query: str) -> dict | None:
     }
 
 
-def _card_effect_skills(conn: sqlite3.Connection, card: dict) -> list[dict]:
-    """把 ``cards.effect_skills``（JSON 字符串）解析成卡牌效果里的技能条目。
-
-    每条形如 ``{"skill_id", "version_id", "version", "pinned", "skill"}``：
-
-    - ``skills`` / ``skill_versions`` 里解析不出的引用保留原样、实体为 ``None``；
-    - 没有显式 ``version_id`` 时按 ``common`` 选**唯一一条**版本，退不到就再看该技能
-      是否只有唯一一条版本；仍然不唯一就算“没有文本”（绝不静默挑一个）。
-    """
-    raw = card.get("effect_skills")
-    refs: list[dict] = []
-    if isinstance(raw, str):
-        try:
-            parsed = json.loads(raw or "[]")
-        except json.JSONDecodeError:
-            parsed = []
-        if isinstance(parsed, list):
-            refs = [ref for ref in parsed if isinstance(ref, dict)]
-    elif isinstance(raw, list):  # 已经是 JSON 列（row_to_dict 解析过的场景）
-        refs = [ref for ref in raw if isinstance(ref, dict)]
-
-    entries = []
-    for ref in refs:
-        skill_id = str(ref.get("skill_id") or "").strip()
-        version_id = str(ref.get("version_id") or "").strip() or None
-        if not skill_id:
-            continue
-        versions = _versions_of_skill(conn, skill_id)
-        version, pinned = _match_version(versions, "common", version_id)
-        if version is None and not pinned and len(versions) == 1:
-            version = versions[0]
-        entries.append(
-            {
-                "skill_id": skill_id,
-                "version_id": version_id,
-                "version": version,
-                "pinned": pinned,
-                "skill": fetch(conn, "skill", skill_id),
-            }
-        )
-    return entries
-
-
 def card_report(conn: sqlite3.Connection, query: str) -> dict | None:
     entity, _candidates = resolve(conn, "card", query)
     if entity is None:
         return None
-    text = entity.get("effect_text") or ""
+    text = entity.get("effect") or ""
     rules = entity.get("rules") or {}
     related_text = "\n".join(
-        [text, rules.get("attack_range", ""), rules.get("distance_modifier", ""), rules.get("note", "")]
+        [text, entity.get("attack_range") or "", entity.get("deck_info") or "", entity.get("note") or ""]
         + [value for method in rules.get("use_methods", []) for value in method.values()]
     )
     return {
         "kind": "card",
         "card": entity,
-        "effect": {
-            "text": text,
-            "skills": _card_effect_skills(conn, entity),
-        },
+        "effect": text,
+        "attack_range": entity.get("attack_range") or "",
+        "deck_info": entity.get("deck_info"),
+        "note": entity.get("note") or "",
+        "rules": entity.get("rules"),
         # 卡牌效果文本里出现的技能名 / 关键词按名称自动识别（不含卡自己）
         **_mentioned_entities(conn, related_text, exclude=("card", entity["id"])),
     }
@@ -612,7 +530,7 @@ def product_report(conn: sqlite3.Connection, query: str) -> dict | None:
     variants = _fetch_all(
         conn,
         "general_variant",
-        "SELECT * FROM general_variants WHERE product_id = ? ORDER BY general_id, variant, id",
+        "SELECT * FROM general_variants WHERE product_id = ? ORDER BY general_id, product_id, mode, id",
         (entity["id"],),
     )
     for variant in variants:

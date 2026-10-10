@@ -1,10 +1,5 @@
 id: skill_qiao_bian_guozhan_qlhd_v1
 skill_id: skill_qiao_bian
 mode: guozhan
-text: 你可以弃置一张手牌，然后跳过除准备阶段和结束阶段外的一个阶段，若你以此法：跳过摸牌阶段，你可以获得一至两名角色的各一张手牌；跳过出牌阶段，你可以移动场上的一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 你可以弃置一张手牌，然后跳过除准备阶段和结束阶段外的一个阶段，若你以此法：跳过摸牌阶段，你可以获得一至两名角色的各一张手牌；跳过出牌阶段，你可以移动场上的一张牌。

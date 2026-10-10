@@ -1,10 +1,5 @@
 id: skill_cai_yuan_guozhan_qlhd_v1
 skill_id: skill_cai_yuan
 mode: guozhan
-text: 锁定技，若你的武将牌均明置：回合开始时，你摸两张牌；当你受到伤害时，令此伤害-1并暗置此武将牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，若你的武将牌均明置：回合开始时，你摸两张牌；当你受到伤害时，令此伤害-1并暗置此武将牌。

@@ -261,7 +261,6 @@ def main() -> int:
             {
                 "id": variant_id,
                 "general_id": general_id,
-                "variant": args.variant_label,
                 "title": row["title"],
                 "general_number": None,
                 "mode": "identity",

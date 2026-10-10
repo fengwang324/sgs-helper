@@ -1,10 +1,5 @@
 id: skill_hu_yuan_guozhan_qlhd_v1
 skill_id: skill_hu_yuan
 mode: guozhan
-text: 当与你势力相同的角色成为【杀】的目标时，你可以将一张牌当【调虎离山】对非当前回合的其他势力角色使用。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当与你势力相同的角色成为【杀】的目标时，你可以将一张牌当【调虎离山】对非当前回合的其他势力角色使用。

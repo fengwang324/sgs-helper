@@ -1,6 +1,5 @@
 id: variant_g_wei_072
 general_id: general_g_wei_072
-variant: 群狼环鼎
 title: 得时识风
 general_number: G.WEI 072
 illustrator: 凝聚永恒
@@ -13,5 +12,5 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_n11d7f74b
-    version_id: skill_n11d7f74b_guozhan_v1
+- skill_id: skill_n11d7f74b
+  version_id: skill_n11d7f74b_guozhan_v1

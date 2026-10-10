@@ -1,10 +1,5 @@
 id: skill_yue_jian_guozhan_qlhd_v1
 skill_id: skill_yue_jian
 mode: guozhan
-text: 锁定技，与你势力相同的角色手牌上限+X(X为其已损失体力值)
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，与你势力相同的角色手牌上限+X（X为其已损失体力值）。

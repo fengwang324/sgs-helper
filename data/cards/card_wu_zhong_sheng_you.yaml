@@ -4,15 +4,12 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 无中生有
 image: card_wu_zhong_sheng_you_qlhd_heart_7.jpg
-card_set: null
-effect:
-  text: 出牌阶段，对你使用。摸两张牌。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: 出牌阶段
-      target: 你
-      effect: 摸两张牌。
-      note: ''
-  note: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        你
+      effect: |-
+        摸两张牌。
+deck_info: ""

@@ -1,6 +1,5 @@
 id: variant_g_qun_050
 general_id: general_g_qun_050
-variant: 群狼环鼎
 title: 豺牙落涧
 general_number: G.QUN 050
 illustrator: YanBai
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_zhi_dao
-    version_id: skill_zhi_dao_guozhan_qlhd_v1
-  - skill_id: skill_ji_li
-    version_id: skill_ji_li_guozhan_qlhd_v1
+- skill_id: skill_zhi_dao
+  version_id: skill_zhi_dao_guozhan_qlhd_v1
+- skill_id: skill_ji_li
+  version_id: skill_ji_li_guozhan_qlhd_v1

@@ -1,6 +1,5 @@
 id: variant_g_wu_011
 general_id: general_g_wu_011
-variant: 群狼环鼎
 title: 矫情之花
 general_number: G.WU 011
 illustrator: 绘聚艺堂
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_tian_xiang
-    version_id: skill_tian_xiang_guozhan_qlhd_v1
-  - skill_id: skill_hong_yan
-    version_id: skill_hong_yan_guozhan_qlhd_v1
+- skill_id: skill_tian_xiang
+  version_id: skill_tian_xiang_guozhan_qlhd_v1
+- skill_id: skill_hong_yan
+  version_id: skill_hong_yan_guozhan_qlhd_v1

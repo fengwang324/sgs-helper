@@ -1,6 +1,5 @@
 id: variant_g_qun_023
 general_id: general_g_qun_023
-variant: 群狼环鼎
 title: 北地枪王
 general_number: G.QUN 023
 illustrator: 青岛磐蒲
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 君临天下·权
 zhulianbihe:
-  - 贾诩
+- 贾诩
 skills:
-  - skill_id: skill_fu_di
-    version_id: skill_fu_di_guozhan_qlhd_v1
-  - skill_id: skill_cong_jian
-    version_id: skill_cong_jian_guozhan_qlhd_v1
+- skill_id: skill_fu_di
+  version_id: skill_fu_di_guozhan_qlhd_v1
+- skill_id: skill_cong_jian
+  version_id: skill_cong_jian_guozhan_qlhd_v1

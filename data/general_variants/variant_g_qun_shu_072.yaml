@@ -1,6 +1,5 @@
 id: variant_g_qun_shu_072
 general_id: general_g_qun_shu_072
-variant: 群狼环鼎
 title: 居外而安
 general_number: G.QUN&SHU 072
 illustrator: 绘聚艺堂
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_wen_ji
-    version_id: skill_wen_ji_guozhan_qlhd_v1
-  - skill_id: skill_tun_jiang
-    version_id: skill_tun_jiang_guozhan_qlhd_v1
+- skill_id: skill_wen_ji
+  version_id: skill_wen_ji_guozhan_qlhd_v1
+- skill_id: skill_tun_jiang
+  version_id: skill_tun_jiang_guozhan_qlhd_v1

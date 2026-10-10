@@ -1,10 +1,5 @@
 id: skill_zhuo_sheng_guozhan_qlhd_v1
 skill_id: skill_zhuo_sheng
 mode: guozhan
-text: 当你得到牌后，你可以令你本回合使用的下张牌造成的伤害+1（不可叠加）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你得到牌后，你可以令你本回合使用的下张牌造成的伤害+1（不可叠加）。

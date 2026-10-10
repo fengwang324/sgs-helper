@@ -1,6 +1,5 @@
 id: variant_g_wei_shu_079
 general_id: general_g_wei_shu_079
-variant: 群狼环鼎
 title: 怠军反复
 general_number: G.WEI&SHU 079
 illustrator: 张帅&zoo
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_qiu_an
-    version_id: skill_qiu_an_guozhan_qlhd_v1
-  - skill_id: skill_liang_fan
-    version_id: skill_liang_fan_guozhan_qlhd_v1
+- skill_id: skill_qiu_an
+  version_id: skill_qiu_an_guozhan_qlhd_v1
+- skill_id: skill_liang_fan
+  version_id: skill_liang_fan_guozhan_qlhd_v1

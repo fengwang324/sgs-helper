@@ -25,12 +25,6 @@ from sgs_helper.repo import connect  # noqa: E402
 
 DATA_DIR = ROOT / "data"
 
-#: 精简后的来源：只有 type + reference（展示名由渲染层推导）
-SOURCE_YAML = """source:
-  type: community_db
-  reference: ""
-"""
-
 # ---------------------------------------------------------------- 合成数据集
 # 设计要点：
 # - variant_demo_alpha_guozhan 的技能**不写 version_id**，靠 mode 回退匹配国战版本；
@@ -66,7 +60,6 @@ name: 演示武将乙
 """,
     "general_variants/demo_alpha_guozhan.yaml": """id: variant_demo_alpha_guozhan
 general_id: general_demo_alpha
-variant: 国战版
 title: 演示称号甲
 general_number: G.WEI 001
 illustrator: 演示画师
@@ -84,7 +77,7 @@ skills:
 """,
     "general_variants/demo_alpha_identity.yaml": """id: variant_demo_alpha_identity
 general_id: general_demo_alpha
-variant: 标准版
+title: 演示标准称号
 mode: identity
 faction: 群
 hp: 3
@@ -95,7 +88,7 @@ skills:
 """,
     "general_variants/demo_beta_identity.yaml": """id: variant_demo_beta_identity
 general_id: general_demo_beta
-variant: 标准版
+title: 演示乙称号
 mode: identity
 faction: 蜀
 hp: 3
@@ -110,36 +103,31 @@ name: 演示技能
     "skills/demo_other.yaml": """id: skill_demo_other
 name: 另一个演示技能
 """,
-    "skill_versions/demo_other_v1.yaml": f"""id: skill_demo_other_v1
+    "skill_versions/demo_other_v1.yaml": """id: skill_demo_other_v1
 skill_id: skill_demo_other
 mode: guozhan
 text: 另一个技能的演示文本
-version_label: 演示初版
 product_id: product_demo_a
-{SOURCE_YAML}""",
-    "skill_versions/demo_guozhan_v1.yaml": f"""id: skill_demo_guozhan_v1
+""",
+    "skill_versions/demo_guozhan_v1.yaml": """id: skill_demo_guozhan_v1
 skill_id: skill_demo
 mode: guozhan
 text: 国战版演示技能文本
-version_label: 国战初版
 product_id: product_demo_a
-previous_version_id: null
-{SOURCE_YAML}""",
-    "skill_versions/demo_identity_v1.yaml": f"""id: skill_demo_identity_v1
+product_id: product_demo_a
+""",
+    "skill_versions/demo_identity_v1.yaml": """id: skill_demo_identity_v1
 skill_id: skill_demo
 mode: identity
 text: 身份局一代演示技能文本
-version_label: 身份局初版
 product_id: product_demo_b
-{SOURCE_YAML}""",
-    "skill_versions/demo_identity_v2.yaml": f"""id: skill_demo_identity_v2
+""",
+    "skill_versions/demo_identity_v2.yaml": """id: skill_demo_identity_v2
 skill_id: skill_demo
 mode: identity
 text: 身份局二代演示技能文本
-version_label: 平衡调整后
 product_id: null
-previous_version_id: skill_demo_identity_v1
-{SOURCE_YAML}""",
+""",
     "cards/demo_card.yaml": """id: card_demo
 category_1: 游戏牌
 category_2: 基本牌
@@ -147,9 +135,11 @@ category_3: 杀
 name: 演示卡牌
 image: ""
 card_set: null
-effect:
-  text: ""
-  skills: []
+effect: ''
+attack_range: ''
+deck_info: ''
+note: ''
+rules: {}
 """,
     "cards/demo_trick.yaml": """id: card_demo_trick
 category_1: 游戏牌
@@ -158,22 +148,22 @@ category_3: 非延时锦囊
 name: 演示锦囊
 image: ""
 card_set: 演示牌堆
-effect:
-  text: 演示效果：与演示技能相关。
-  skills:
-    - skill_id: skill_demo
-      version_id: skill_demo_guozhan_v1
+effect: 演示效果：与演示技能相关。
+attack_range: ''
+deck_info: 演示牌堆中一张
+note: ''
+rules:
+  use_methods:
+    - timing: 出牌阶段
+      target: 一名其他角色
+      effect: 造成一点伤害
 """,
     "faq/demo_1.yaml": """id: faq_demo_1
 question: 演示问题：演示技能的结算？
 answer: 演示答案：演示技能与演示卡牌一起结算。
 variant: 群狼环鼎
 source: |-
-  - type: community_db
-    title: 演示来源
-    reference: ""
-    author: ""
-    displayed_date: null
+  演示来源文本（保留原始FAQ来源文本形状）
 """,
     "keywords/demo.yaml": """id: keyword_demo
 name: 演示关键词

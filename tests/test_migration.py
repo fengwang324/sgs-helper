@@ -9,16 +9,17 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
+from collections import Counter
 from pathlib import Path
 
 import pytest
 import yaml
 
 from sgs_helper.constants import KIND_BY_NAME, KIND_ORDER
-from sgs_helper.db import COLUMNS, SOURCE_KINDS, TRACE_COLUMNS, build_database
+from sgs_helper.db import COLUMNS, TRACE_COLUMNS, build_database
 from sgs_helper.schema import MODEL_BY_KIND
+from sgs_helper.loader import load_data_dir
 
 from conftest import error_text
 
@@ -56,6 +57,12 @@ REMOVED_FIELDS = {
     "quantity",
     "bottom_right_mark",
     "card_number",
+    "version_label",
+    "previous_version_id",
+    "source_key",
+    "effect_text",
+    "effect_skills",
+    "distance_modifier",
 }
 
 #: 已删除的实体类型
@@ -89,33 +96,30 @@ def test_no_removed_fields_left_in_yaml(data_dir: Path) -> None:
                         offenders.append(f"{path.relative_to(data_dir)}: source.{sub}")
     assert files > 1000, f"data/ 下的 YAML 数量异常：{files}"
     assert not offenders, "以下文件仍含已删除字段：\n" + "\n".join(offenders[:20])
+    for path in sorted((data_dir / "general_variants").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert "variant" not in doc, f"{path} 仍含已删除的 GeneralVariant.variant"
+    for path in sorted((data_dir / "skill_versions").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert not {"source", "version_label", "previous_version_id"} & set(doc), str(path)
 
 
 def test_general_set_directory_is_gone(data_dir: Path) -> None:
     assert not (data_dir / "general_sets").exists()
 
 
-def test_source_shape_depends_on_kind(data_dir: Path) -> None:
-    """来源的形状按实体分开：SkillVersion 结构化、FAQ 多行文本、关键词完全没有来源。"""
-    structured = 0
+def test_skill_version_source_is_removed_and_faq_source_text_is_preserved(data_dir: Path) -> None:
     text_sources = 0
     for path in _yaml_files(data_dir):
         dirname = path.parent.name
         doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         source = doc.get("source") if isinstance(doc, dict) else None
-        if dirname == "keywords":
-            assert "source" not in doc, f"{path} 的关键词不该有来源字段"
-            continue
         if dirname == "faq":
             assert isinstance(source, str) and source.strip(), f"{path} 的 source 不是多行文本"
             text_sources += 1
             continue
-        if dirname == "skill_versions":
-            assert set(source) == {"type", "reference"}, f"{path} 的 source 不是精简结构：{source}"
-            structured += 1
-            continue
         assert source is None, f"{path} 不该保存 source"
-    assert structured > 0 and text_sources > 0
+    assert text_sources > 0
 
 
 def test_entity_card_kinds_have_no_source(data_dir: Path) -> None:
@@ -194,14 +198,13 @@ def test_sqlite_tables_match_models(migration_db: Path) -> None:
         for kind in REMOVED_KINDS:
             assert KIND_BY_NAME.get(kind) is None
         assert "general_sets" not in tables
-        assert "variant_skills" in tables and "sources" in tables and "search_index" in tables
+        assert "variant_skills" in tables and "search_index" in tables
+        assert "sources" not in tables
 
         for kind in KIND_ORDER:
             table = KIND_BY_NAME[kind].table
             columns = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
             expected = ["id", *COLUMNS[kind]]
-            if kind in SOURCE_KINDS:
-                expected.append("source_key")
             expected.extend(TRACE_COLUMNS)
             assert columns == expected, f"{table} 的列与模型不一致：{columns} != {expected}"
             assert not REMOVED_FIELDS & set(columns), f"{table} 残留旧列：{REMOVED_FIELDS & set(columns)}"
@@ -209,14 +212,14 @@ def test_sqlite_tables_match_models(migration_db: Path) -> None:
         conn.close()
 
 
-def test_sources_and_search_index_are_slim(migration_db: Path) -> None:
+def test_sources_table_is_removed_and_search_index_is_slim(migration_db: Path) -> None:
     conn = sqlite3.connect(migration_db)
     try:
-        assert [r[1] for r in conn.execute("PRAGMA table_info(sources)")] == [
-            "source_key", "type", "reference"]
         assert [r[1] for r in conn.execute("PRAGMA table_info(search_index)")] == [
             "kind", "entity_id", "name", "body"]
-        assert conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 2
+        assert not conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='sources'"
+        ).fetchone()
     finally:
         conn.close()
 
@@ -255,41 +258,29 @@ def test_search_still_finds_skill_text_without_normalized_text(migration_db: Pat
 
 
 def test_entity_counts_are_stable(migration_db: Path) -> None:
+    # 资料持续手工录入和去重；建库应逐类保留当前 YAML 的记录，而不是固定旧快照的数量。
+    raws, issues = load_data_dir(Path(__file__).resolve().parents[1] / "data")
+    assert not issues
+    expected = Counter(raw.kind for raw in raws)
     conn = sqlite3.connect(migration_db)
     try:
         counts = {
             kind: conn.execute(f"SELECT COUNT(*) FROM {KIND_BY_NAME[kind].table}").fetchone()[0]
             for kind in KIND_ORDER
         }
-        assert counts == {
-            "product": 1,
-            "general": 163,
-            "general_variant": 163,
-            "skill": 297,
-            "skill_version": 297,
-            "card": 82,
-            "faq": 85,
-            "keyword": 117,
-        }
+        assert counts == {kind: expected[kind] for kind in KIND_ORDER}
     finally:
         conn.close()
 
 
 def test_models_reject_removed_fields() -> None:
-    """写错字段名必须报错，不能静默丢弃。
-
-    ``source_key`` 列只为**结构化来源**的实体生成（现在只剩 SkillVersion）：
-    FAQ 的 source 是普通文本列，关键词没有来源字段。
-    """
+    """写错字段名必须报错；FAQ 保留文本 source，其它模型都没有 source。"""
     for kind, model in MODEL_BY_KIND.items():
         assert "notes" not in model.model_fields, f"{kind} 仍保留 notes"
         if kind == "faq":
             assert model.model_fields["source"].annotation is str
-            continue
-        if kind == "keyword":
+        else:
             assert "source" not in model.model_fields
-            continue
-        assert "source" not in model.model_fields or kind in SOURCE_KINDS
 
 
 # ---------------------------------------------------------------- 卡牌（单层）
@@ -334,17 +325,24 @@ def test_indicator_cards_are_allowed(data_dir: Path) -> None:
     for doc in indicators:
         assert isinstance(doc.get("category_2", ""), str)
         assert isinstance(doc.get("category_3", ""), str)
+        for field in ("rules", "card_set", "deck_info", "attack_range"):
+            assert not doc.get(field), f"{doc['id']} 不应填写指示物字段 {field}"
 
 
-def test_card_effect_skills_are_linked(migration_db: Path) -> None:
+def test_game_cards_explicitly_keep_deck_info(data_dir: Path) -> None:
+    for path in sorted((data_dir / "cards").glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if doc.get("category_1") == "游戏牌":
+            assert "deck_info" in doc, f"{path} 缺少显式 deck_info"
+
+
+def test_card_effect_is_plain_text(migration_db: Path) -> None:
     conn = sqlite3.connect(migration_db)
     try:
         raw = conn.execute(
-            "SELECT effect_skills FROM cards WHERE id = 'card_ding_lan_ye_ming_zhu'"
+            "SELECT effect FROM cards WHERE id = 'card_ding_lan_ye_ming_zhu'"
         ).fetchone()[0]
-        assert json.loads(raw) == [
-            {"skill_id": "skill_zhi_heng", "version_id": "skill_zhi_heng_guozhan_qlhd_v1"}
-        ]
+        assert isinstance(raw, str) and raw
     finally:
         conn.close()
 
@@ -360,20 +358,17 @@ def test_card_set_must_be_declared_by_a_product(data_dir: Path) -> None:
             assert doc["card_set"] in declared, f"{path} 的拓展包没在任何产品里声明"
 
 
-def test_pending_basic_cards_have_no_image(data_dir: Path) -> None:
-    """火杀 / 雷杀 / 掠闪 是用户要求先记录、卡图后续补的；其余卡必须有真实卡图。"""
+def test_recorded_card_images_exist(data_dir: Path) -> None:
+    """卡图可以继续补录；已记录的任何卡图都必须对应真实文件。"""
     images = {p.name for p in (data_dir / "card_images").iterdir() if p.is_file()}
-    pending = {"火杀", "雷杀", "掠闪"}
-    seen: set[str] = set()
+    recorded = 0
     for path in sorted((data_dir / "cards").glob("*.yaml")):
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        if doc["name"] in pending:
-            seen.add(doc["name"])
-            assert doc["image"] == "", f"{doc['id']} 的卡图应当先留空"
+        if not doc.get("image"):
             continue
-        assert doc["image"], f"{doc['id']} 没有卡图"
+        recorded += 1
         assert doc["image"] in images, f"{doc['id']} 的卡图 {doc['image']} 不存在"
-    assert seen == pending
+    assert recorded > 0
 
 
 def test_cards_no_longer_carry_review_flags(data_dir: Path) -> None:

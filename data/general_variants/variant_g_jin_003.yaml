@@ -1,18 +1,18 @@
 id: variant_g_jin_003
 general_id: general_g_jin_003
-variant: 群狼环鼎
-title: 睚督顺目
+title: 睚眦侧目
 general_number: G.JIN 003
 illustrator: 拉布拉卡
 image: g_jin_003.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
-gender: unknown
+hp: 2
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 紫气东来
+zhulianbihe: []
 skills:
-  - skill_id: skill_yi_mie
-    version_id: skill_yi_mie_guozhan_qlhd_v1
-  - skill_id: skill_rong_lve
-    version_id: skill_rong_lve_guozhan_qlhd_v1
+- skill_id: skill_yi_mie
+  version_id: skill_yi_mie_guozhan_qlhd_v1
+- skill_id: skill_n6fadbbd7
+  version_id: skill_n6fadbbd7_guozhan_v1

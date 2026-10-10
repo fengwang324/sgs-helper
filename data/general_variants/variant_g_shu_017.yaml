@@ -1,6 +1,5 @@
 id: variant_g_shu_017
 general_id: general_g_shu_017
-variant: 群狼环鼎
 title: 难为完臣
 general_number: G.SHU 017
 illustrator: YanBai
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 不臣篇·上
 zhulianbihe: []
 skills:
-  - skill_id: skill_qian_ce
-    version_id: skill_qian_ce_guozhan_qlhd_v1
-  - skill_id: skill_ju_jian
-    version_id: skill_ju_jian_guozhan_qlhd_v1
+- skill_id: skill_qian_ce
+  version_id: skill_qian_ce_guozhan_qlhd_v1
+- skill_id: skill_ju_jian
+  version_id: skill_ju_jian_guozhan_qlhd_v1

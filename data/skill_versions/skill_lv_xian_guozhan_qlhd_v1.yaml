@@ -1,10 +1,5 @@
 id: skill_lv_xian_guozhan_qlhd_v1
 skill_id: skill_lv_xian
 mode: guozhan
-text: 主将技，当你每回合首次受到伤害后，你可以摸上回合（不能为你的回合）你失去数量的牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 主将技，当你每回合首次受到伤害后，你可以摸上回合（不能为你的回合）你失去数量的牌。

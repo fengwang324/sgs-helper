@@ -1,6 +1,5 @@
 id: variant_g_qun_022
 general_id: general_g_qun_022
-variant: 群狼环鼎
 title: 犯祚倾祸
 general_number: G.QUN 022
 illustrator: 旭
@@ -12,7 +11,7 @@ gender: unknown
 product_id: qlhd
 general_set: null
 zhulianbihe:
-  - 贾诩
+- 贾诩
 skills:
-  - skill_id: skill_xiong_suan
-    version_id: skill_xiong_suan_guozhan_qlhd_v1
+- skill_id: skill_xiong_suan
+  version_id: skill_xiong_suan_guozhan_qlhd_v1

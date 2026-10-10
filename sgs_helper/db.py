@@ -8,7 +8,7 @@
 
 模型精简后这里承担两件“构建期自动推导”的事：
 
-- 卡牌是一层的 :class:`Card`：同一规则卡不因为花色 / 点数不同拆成多条，分类（category_1/2/3）与拓展包（card_set）落库，效果文本与关联技能拆成 ``effect_text`` / ``effect_skills``；
+- 卡牌是一层的 :class:`Card`：分类与拓展包落库，效果、攻击范围与牌堆信息直接保存；
 - FAQ / 技能文本等正文里的**关联实体**按名称自动识别，拼进 ``search_index.body``，
   不再要求人工维护 ``related_*``；
 - 检索用的规范化正文（原 ``normalized_text``）只在这里生成，不写回 YAML。
@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import hashlib
 import json
 import re
 import sqlite3
@@ -35,23 +34,23 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "6"
+SCHEMA_VERSION = "7"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
     "product": ("name", "release_year", "mode", "general_sets", "card_sets"),
     "general": ("name",),
     "general_variant": (
-        "general_id", "variant", "title", "general_number", "illustrator", "image",
+        "general_id", "title", "general_number", "illustrator", "image",
         "mode", "faction", "hp", "gender", "product_id", "general_set", "zhulianbihe",
     ),
     "skill": ("name",),
     "skill_version": (
-        "skill_id", "mode", "text", "version_label", "product_id", "previous_version_id",
+        "skill_id", "mode", "text", "product_id",
     ),
     "card": (
         "category_1", "category_2", "category_3", "name", "image", "card_set",
-        "effect_text", "effect_skills", "rules",
+        "effect", "attack_range", "deck_info", "note", "rules",
     ),
     "faq": ("question", "answer", "variant", "source"),
     "keyword": ("name", "definition", "variant"),
@@ -62,12 +61,6 @@ JSON_COLUMNS: frozenset[str] = frozenset({"general_sets", "card_sets", "zhulianb
 
 _INT_COLUMNS = frozenset({"release_year", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
-
-#: 还会保存结构化来源的实体（其余实体的来源由 product_id 定位，FAQ 的来源是文本列）
-SOURCE_KINDS: frozenset[str] = frozenset({"skill_version"})
-
-#: source_key 列（只有 SOURCE_KINDS 有）
-SOURCE_TRACE_COLUMN = "source_key"
 
 #: 每个实体表都会追加的可追溯性列
 TRACE_COLUMNS: tuple[str, ...] = ("yaml_file", "yaml_line")
@@ -83,7 +76,6 @@ INDEXES: tuple[tuple[str, str], ...] = (
     ("idx_variant_skills_variant", "variant_skills(variant_id)"),
     ("idx_variant_skills_skill", "variant_skills(skill_id)"),
     ("idx_skill_versions_skill", "skill_versions(skill_id, mode)"),
-    ("idx_skill_versions_prev", "skill_versions(previous_version_id)"),
     ("idx_cards_category", "cards(category_1, category_2)"),
     ("idx_cards_card_set", "cards(card_set)"),
     ("idx_faqs_variant", "faqs(variant)"),
@@ -137,16 +129,6 @@ class BuildResult:
 # ---------------------------------------------------------------- 工具函数
 
 
-def source_key(source: Any) -> str | None:
-    """把精简后的 source 结构（type + reference）规范化为可去重的 key。"""
-    if source is None:
-        return None
-    payload = "|".join(
-        [str(getattr(source, "type", "")), str(getattr(source, "reference", ""))]
-    )
-    return "src_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
-
-
 def cjk_spaced(text: str) -> str:
     """把 CJK 字符逐个空格隔开，让 FTS5 的 unicode61 分词器也能按字匹配。
 
@@ -190,15 +172,12 @@ def _column_type(column: str) -> str:
 def _column_value(entity: Any, column: str) -> Any:
     if column == "rules":
         rules = getattr(entity, "rules", None)
-        return json.dumps(rules.model_dump(mode="json"), ensure_ascii=False) if rules else None
-    if column == "effect_text":
-        return str(getattr(getattr(entity, "effect", None), "text", "") or "")
-    if column == "effect_skills":
-        skills = getattr(getattr(entity, "effect", None), "skills", None) or []
-        return json.dumps(
-            [{"skill_id": ref.skill_id, "version_id": ref.version_id} for ref in skills],
-            ensure_ascii=False,
-        )
+        if rules is None:
+            return None
+        return json.dumps({"use_methods": [
+            {key: value for key, value in method.model_dump(mode="json").items() if value}
+            for method in rules.use_methods
+        ]}, ensure_ascii=False)
     value = getattr(entity, column, None)
     if column in JSON_COLUMNS:
         return json.dumps(list(value or []), ensure_ascii=False)
@@ -212,8 +191,6 @@ def _column_value(entity: Any, column: str) -> Any:
 
 
 def _trace_columns(kind: str) -> tuple[str, ...]:
-    if kind in SOURCE_KINDS:
-        return (SOURCE_TRACE_COLUMN, *TRACE_COLUMNS)
     return TRACE_COLUMNS
 
 
@@ -266,12 +243,6 @@ def _create_schema(conn: sqlite3.Connection, with_fts: bool) -> bool:
         "  version_id TEXT,\n"
         "  position INTEGER NOT NULL,\n"
         "  PRIMARY KEY (variant_id, skill_id)\n"
-        ")"
-    )
-    conn.execute(
-        "CREATE TABLE sources (\n"
-        "  source_key TEXT PRIMARY KEY,\n"
-        "  type TEXT, reference TEXT\n"
         ")"
     )
     conn.execute(
@@ -343,9 +314,11 @@ def _search_row(
     elif kind == "general_variant":
         general = bundle.get("general", entity.general_id)
         general_name = str(getattr(general, "name", entity.general_id))
-        name = f"{general_name}（{entity.variant}）"
+        product = bundle.get("product", entity.product_id) if entity.product_id else None
+        product_name = str(getattr(product, "name", "") or "")
+        name = f"{general_name}（{product_name}）" if product_name else general_name
         parts += [
-            entity.variant, entity.title, entity.faction, entity.general_set or "",
+            product_name, entity.title, entity.faction, entity.general_set or "",
             general_name, "、".join(entity.zhulianbihe or []),
         ]
         parts.append(MODE_LABELS.get(entity.mode, entity.mode or ""))
@@ -355,35 +328,34 @@ def _search_row(
     elif kind == "skill":
         for version in bundle.all("skill_version").values():
             if version.skill_id == entity.id:
+                product = bundle.get("product", version.product_id) if version.product_id else None
                 parts += [
-                    version.text, version.version_label,
+                    version.text, str(getattr(product, "name", "") or ""),
                     MODE_LABELS.get(version.mode, version.mode),
                 ]
     elif kind == "skill_version":
         skill = bundle.get("skill", entity.skill_id)
         skill_name = str(getattr(skill, "name", entity.skill_id))
-        name = f"{skill_name} {entity.version_label}".strip()
+        product = bundle.get("product", entity.product_id) if entity.product_id else None
+        product_name = str(getattr(product, "name", "") or "")
+        name = f"{skill_name} {product_name}".strip()
         parts += [
-            entity.text, entity.version_label,
+            entity.text, product_name,
             MODE_LABELS.get(entity.mode, entity.mode), entity.skill_id,
         ]
         parts += mention_names(entity.text)
     elif kind == "card":
-        effect = getattr(entity, "effect", None)
-        text = str(getattr(effect, "text", "") or "")
+        text = entity.effect
         parts += [
             entity.category_1, entity.category_2, entity.category_3,
-            entity.name, entity.card_set or "", text,
+            entity.name, entity.card_set or "", text, entity.attack_range,
+            entity.deck_info or "", entity.note,
         ]
-        parts.append(
-            _names_of(bundle, "skill", [ref.skill_id for ref in (effect.skills if effect else [])])
-        )
         parts += mention_names(text)
         rules = getattr(entity, "rules", None)
         if rules:
             rule_text = " ".join(
-                [rules.attack_range, rules.distance_modifier, rules.note]
-                + [value for method in rules.use_methods for value in method.model_dump().values()]
+                [value for method in rules.use_methods for value in method.model_dump().values()]
             )
             parts.append(rule_text)
             parts += mention_names(rule_text)
@@ -416,32 +388,10 @@ def _insert_entities(conn: sqlite3.Connection, bundle: DataBundle) -> dict[str, 
             origin = bundle.origin_of(kind, entity_id) or Origin("?", 0, "")
             values = [entity.id]
             values += [_column_value(entity, column) for column in COLUMNS[kind]]
-            if SOURCE_TRACE_COLUMN in trace:
-                values.append(source_key(getattr(entity, "source", None)))
             values += [f"data/{origin.path}", origin.line]
             rows.append(values)
         conn.executemany(sql, rows)
     return counts
-
-
-def _insert_sources(conn: sqlite3.Connection, bundle: DataBundle) -> int:
-    rows: dict[str, tuple] = {}
-    for kind in SOURCE_KINDS:
-        for entity in bundle.all(kind).values():
-            source = getattr(entity, "source", None)
-            key = source_key(source)
-            if key is None or key in rows:
-                continue
-            rows[key] = (
-                key,
-                str(getattr(source, "type", "")),
-                str(getattr(source, "reference", "")),
-            )
-    conn.executemany(
-        "INSERT INTO sources (source_key, type, reference) VALUES (?, ?, ?)",
-        list(rows.values()),
-    )
-    return len(rows)
 
 
 def _insert_relations(conn: sqlite3.Connection, bundle: DataBundle) -> None:
@@ -569,7 +519,7 @@ def build_database(
     try:
         fts_ok = _create_schema(conn, with_fts)
         counts = _insert_entities(conn, bundle)
-        source_count = _insert_sources(conn, bundle)
+        source_count = 0
         _insert_relations(conn, bundle)
         _insert_search_index(conn, bundle)
         _write_meta(conn, bundle, data_dir, manifest, fts_ok, result, counts, source_count)

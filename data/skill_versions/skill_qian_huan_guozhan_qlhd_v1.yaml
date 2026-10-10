@@ -1,10 +1,5 @@
 id: skill_qian_huan_guozhan_qlhd_v1
 skill_id: skill_qian_huan
 mode: guozhan
-text: 当一名势力与你相同的角色受到伤害后，若其存活，你可以将一张花色与你武将牌上的牌均不同的牌置于你的武将牌上。当一名势力与你相同的角色成为基本牌或锦囊牌的唯一目标时，你可以移去一张“千幻”牌，然后取消之。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当一名势力与你相同的角色受到伤害后，若其存活，你可以将一张花色与你武将牌上的牌均不同的牌置于你的武将牌上。当一名势力与你相同的角色成为基本牌或锦囊牌的唯一目标时，你可以移去一张“千幻”牌，然后取消之。

@@ -1,10 +1,5 @@
 id: skill_jie_ming_guozhan_qlhd_v1
 skill_id: skill_jie_ming
 mode: guozhan
-text: 当你受到伤害后，你可以令一名角色将手牌摸至X张（×为其体力上限且至多为5）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你受到伤害后，你可以令一名角色将手牌摸至X张（×为其体力上限且至多为5）。

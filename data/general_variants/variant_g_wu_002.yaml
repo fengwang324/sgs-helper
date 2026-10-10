@@ -1,6 +1,5 @@
 id: variant_g_wu_002
 general_id: general_g_wu_002
-variant: 群狼环鼎
 title: 锦帆游侠
 general_number: G.WU 002
 illustrator: 巴萨小马
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 国战标准
 zhulianbihe: []
 skills:
-  - skill_id: skill_qi_xi
-    version_id: skill_qi_xi_guozhan_qlhd_v1
-  - skill_id: skill_fen_wei
-    version_id: skill_fen_wei_guozhan_qlhd_v1
+- skill_id: skill_qi_xi
+  version_id: skill_qi_xi_guozhan_qlhd_v1
+- skill_id: skill_fen_wei
+  version_id: skill_fen_wei_guozhan_qlhd_v1

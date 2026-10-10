@@ -1,10 +1,5 @@
 id: skill_duan_chang_guozhan_qlhd_v1
 skill_id: skill_duan_chang
 mode: guozhan
-text: 锁定技，当你死亡时，你令杀死你的角色失去你选择的其一张武将牌的所有技能。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，当你死亡时，你令杀死你的角色失去你选择的其一张武将牌的所有技能。

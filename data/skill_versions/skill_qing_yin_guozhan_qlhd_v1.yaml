@@ -1,10 +1,5 @@
 id: skill_qing_yin_guozhan_qlhd_v1
 skill_id: skill_qing_yin
 mode: guozhan
-text: 限定技，出牌阶段，你可以令所有势力与你相同的角色各将体力值回复至X点，然后你移除此武将牌（X为其体力上限）。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 限定技，出牌阶段，你可以令所有势力与你相同的角色各将体力值回复至X点，然后你移除此武将牌（X为其体力上限）。

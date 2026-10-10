@@ -1,10 +1,5 @@
 id: skill_huo_shui_guozhan_qlhd_v1
 skill_id: skill_huo_shui
 mode: guozhan
-text: 锁定技，其他角色于你的回合内不能明置其武将牌；势力与你不同且有暗置的武将牌的角色于你的回合内不能使用或打出【闪】响应你的牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，其他角色于你的回合内不能明置其武将牌；势力与你不同且有暗置的武将牌的角色于你的回合内不能使用或打出【闪】响应你的牌。

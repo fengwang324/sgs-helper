@@ -1,6 +1,5 @@
 id: variant_g_shu_078
 general_id: general_g_shu_078
-variant: 群狼环鼎
 title: 九酝鸿胪
 general_number: G.SHU 078
 illustrator: 铁杵文化
@@ -13,7 +12,7 @@ product_id: qlhd
 general_set: 纵横捭阖
 zhulianbihe: []
 skills:
-  - skill_id: skill_qi_ao
-    version_id: skill_qi_ao_guozhan_qlhd_v1
-  - skill_id: skill_cheng_shang
-    version_id: skill_cheng_shang_guozhan_qlhd_v1
+- skill_id: skill_qi_ao
+  version_id: skill_qi_ao_guozhan_qlhd_v1
+- skill_id: skill_cheng_shang
+  version_id: skill_cheng_shang_guozhan_qlhd_v1

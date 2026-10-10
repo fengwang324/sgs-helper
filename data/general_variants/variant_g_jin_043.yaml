@@ -1,16 +1,16 @@
 id: variant_g_jin_043
 general_id: general_g_jin_043
-variant: 群狼环鼎
-title: 衔铺的貔猫
+title: 衔锋的貔貅
 general_number: G.JIN 043
 illustrator: 张油菜
 image: g_jin_043.jpg
 mode: guozhan
 faction: 晋
-hp: 1.5
-gender: unknown
+hp: 2
+gender: male
 product_id: qlhd
-general_set: null
+general_set: 紫凤衔佩
+zhulianbihe: []
 skills:
-  - skill_id: skill_guo_rui
-    version_id: skill_guo_rui_guozhan_qlhd_v1
+- skill_id: skill_guo_rui
+  version_id: skill_guo_rui_guozhan_qlhd_v1

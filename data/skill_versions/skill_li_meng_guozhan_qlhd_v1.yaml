@@ -1,10 +1,5 @@
 id: skill_li_meng_guozhan_qlhd_v1
 skill_id: skill_li_meng
 mode: guozhan
-text: 结束阶段，你可以弃置一张非基本牌并选择场上两张珠联璧合的武将牌，若不为同一名角色的武将，则这两名角色依次对对方造成1点伤害。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 结束阶段，你可以弃置一张非基本牌并选择场上两张珠联璧合的武将牌，若不为同一名角色的武将，则这两名角色依次对对方造成1点伤害。

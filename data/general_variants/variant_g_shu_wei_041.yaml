@@ -1,6 +1,5 @@
 id: variant_g_shu_wei_041
 general_id: general_g_shu_wei_041
-variant: 群狼环鼎
 title: 棘途壮志
 general_number: G.SHU&WEI 041
 illustrator: 小牛
@@ -12,7 +11,7 @@ gender: male
 product_id: qlhd
 general_set: 不臣篇·下
 zhulianbihe:
-  - 姜维
+- 姜维
 skills:
-  - skill_id: skill_bao_lie
-    version_id: skill_bao_lie_guozhan_qlhd_v1
+- skill_id: skill_bao_lie
+  version_id: skill_bao_lie_guozhan_qlhd_v1

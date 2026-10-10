@@ -5,10 +5,10 @@ category_3: 坐骑
 name: 六龙骖驾
 image: card_liu_long_can_jia_qlhd_heart_13.jpg
 card_set: 君主游戏牌
-effect:
-  text: |-
-    ◆锁定技，当此牌进入你的装备区时，弃置你装备区里其他坐骑牌。只要此牌在你的装备区里，你的装备区便不能放入其他坐骑牌。
-  skills: []
-rules:
-  distance_modifier: ''
-  note: ''
+effect: |-
+  ①锁定技，你至其他角色的距离-1。
+  ②锁定技，其他角色至你的距离+1。
+  ③锁定技，当【六龙骖驾】移至你的装备区后，你弃置你的装备区里所有其他坐骑牌。
+  ④锁定技，所有角色不能将坐骑牌置入你的装备区。
+  ⑤锁定技，你不能使用坐骑牌。
+deck_info: ""

@@ -92,8 +92,6 @@
         <span class="wiki-version__label">{{ v.label }}</span>
         <span class="wiki-tag">{{ v.mode_label }}</span>
         {% if v.product %}<span class="wiki-tag">{{ v.product }}</span>{% endif %}
-        {% if v.source %}<span class="wiki-tag">{{ v.source }}</span>{% endif %}
-        {% if v.previous_label %}<span class="wiki-tag" title="上一版">↳ {{ v.previous_label }}</span>{% endif %}
       </div>
       <div class="wiki-prose">{% for seg in v.segments %}{% if seg.text is defined %}{{ seg.text }}{% else %}<a class="wiki-mention" href="{{ url_for_entity(seg.kind, seg.id) }}">{{ seg.label }}</a>{% endif %}{% endfor %}</div>
     </div>

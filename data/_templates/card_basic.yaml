@@ -1,0 +1,15 @@
+# 模板：基本牌。牌堆信息只按已录入的实物卡牌资料填写。
+id: card_change_me
+category_1: 游戏牌
+category_2: 基本牌
+category_3: 杀  # 杀 / 闪 / 桃 / 酒
+name: 卡牌名
+image: ""
+card_set: null
+deck_info: ''
+rules:
+  use_methods:
+    - timing: ''
+      target: ''
+      effect: ''
+      # label: 重铸  # 有具名使用方法时填写

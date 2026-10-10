@@ -81,17 +81,16 @@ def test_build_script_creates_database(tmp_path: Path) -> None:
     assert db_path.exists()
 
 
-def test_build_script_refuses_invalid_data(tmp_path: Path, data_dir: Path) -> None:
-    """卡牌效果里的技能引用也是硬引用：改了就让 build 拒绝。"""
+def test_build_script_refuses_removed_card_fields(tmp_path: Path, data_dir: Path) -> None:
     broken = tmp_path / "data"
     shutil.copytree(data_dir, broken)
-    target = _find_yaml(broken / "cards", "skill_id: skill_zhi_heng")
-    replace_in(target, "skill_id: skill_zhi_heng", "skill_id: skill_not_exist")
+    target = _find_yaml(broken / "cards", "id: card_ding_lan_ye_ming_zhu")
+    target.write_text(target.read_text(encoding="utf-8") + "effect_skills: []\n", encoding="utf-8")
     result = run_script(
         "scripts/build_db.py", "--data-dir", str(broken), "--db", str(tmp_path / "x.db")
     )
     assert result.returncode == 2
-    assert "skill_not_exist" in result.stderr
+    assert "effect_skills" in result.stderr
 
 
 # ---------------------------------------------------------------- query
@@ -116,10 +115,10 @@ def test_spec_queries_work(cli_db: Path, command: str, query: str) -> None:
     assert "Traceback" not in result.stderr
 
 
-def test_query_skill_shows_versions_and_source(cli_db: Path) -> None:
+def test_query_skill_shows_versions_and_product(cli_db: Path) -> None:
     result = run_script("scripts/query.py", "--db", str(cli_db), "skill", "集智")
     assert result.returncode == 0
-    for token in ["技能文本", "来源", "国战", "群狼环鼎"]:
+    for token in ["技能文本", "国战", "群狼环鼎"]:
         assert token in result.stdout
 
 
@@ -160,15 +159,15 @@ def test_query_general_shows_binding_and_fallback(synth: Path, tmp_path: Path) -
     )
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
-    by_variant = {v["variant"]: v["skills"][0] for v in payload["variants"]}
+    by_title = {v["title"]: v["skills"][0] for v in payload["variants"]}
 
-    assert by_variant["国战版"]["version_id"] is None
-    assert by_variant["国战版"]["pinned"] is False
-    assert by_variant["国战版"]["version"]["id"] == "skill_demo_guozhan_v1"
+    assert by_title["演示称号甲"]["version_id"] is None
+    assert by_title["演示称号甲"]["pinned"] is False
+    assert by_title["演示称号甲"]["version"]["id"] == "skill_demo_guozhan_v1"
 
-    assert by_variant["标准版"]["version_id"] == "skill_demo_identity_v1"
-    assert by_variant["标准版"]["pinned"] is True
-    assert by_variant["标准版"]["version"]["id"] == "skill_demo_identity_v1"
+    assert by_title["演示标准称号"]["version_id"] == "skill_demo_identity_v1"
+    assert by_title["演示标准称号"]["pinned"] is True
+    assert by_title["演示标准称号"]["version"]["id"] == "skill_demo_identity_v1"
 
 
 def test_query_stats(cli_db: Path) -> None:
@@ -198,9 +197,8 @@ def test_query_card_shows_categories_and_effect_skill(cli_db: Path) -> None:
         "分类：游戏牌 / 装备牌 / 宝物",
         "拓展包：九变篇",
         "卡图：card_ding_lan_ye_ming_zhu_qlhd_diamond_6.jpg",
-        "关联技能（1 个）",
+        "效果",
         "制衡",
-        "技能文本",
     ]:
         assert token in result.stdout
 
@@ -210,7 +208,7 @@ def test_query_card_is_single_layer(cli_db: Path) -> None:
     result = run_script("scripts/query.py", "--db", str(cli_db), "card", "杀")
     assert result.returncode == 0
     assert "分类：游戏牌 / 基本牌 / 杀" in result.stdout
-    assert "关联技能（0 个）" in result.stdout
+    assert "效果：" in result.stdout
     assert "实体卡印刷" not in result.stdout
     assert "右下角角标" not in result.stdout
 
@@ -220,17 +218,15 @@ def test_query_card_json_is_single_layer(cli_db: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
     assert payload["kind"] == "card"
-    assert set(payload) == {
-        "kind",
-        "card",
-        "effect",
-        "generals",
-        "skills",
-        "cards",
-        "keywords",
-    }
+    assert set(payload) == {"kind", "card", "effect", "attack_range", "deck_info", "note", "rules", "generals", "skills", "cards", "keywords"}
     assert "printings" not in payload
     assert payload["card"]["name"] == "杀"
     assert payload["card"]["category_3"] == "杀"
     assert "card_id" not in payload["card"] and "suit" not in payload["card"]
-    assert payload["effect"] == {"text": "", "skills": []}
+    assert payload["effect"] == ""
+    assert payload["attack_range"] == ""
+    assert payload["deck_info"]
+    assert payload["note"] == ""
+    assert payload["rules"] == {"use_methods": [
+        {"timing": "出牌阶段限一次。", "target": "你的攻击范围内的一名其他角色。", "effect": "你对目标对应的角色造成1点伤害。"}
+    ]}

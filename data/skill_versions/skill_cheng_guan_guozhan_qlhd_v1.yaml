@@ -1,10 +1,5 @@
 id: skill_cheng_guan_guozhan_qlhd_v1
 skill_id: skill_cheng_guan
 mode: guozhan
-text: 当你受到伤害后，若这是你本回合首次受到伤害，则你可以与一名其他角色交换手牌，否则来源可以与你交换手牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你受到伤害后，若这是你本回合首次受到伤害，则你可以与一名其他角色交换手牌，否则来源可以与你交换手牌。

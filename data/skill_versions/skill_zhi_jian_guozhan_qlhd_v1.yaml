@@ -1,10 +1,5 @@
 id: skill_zhi_jian_guozhan_qlhd_v1
 skill_id: skill_zhi_jian
 mode: guozhan
-text: 出牌阶段，你可以将手牌中的一张装备牌放入一名其他角色的装备区里，然后你摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 出牌阶段，你可以将手牌中的一张装备牌放入一名其他角色的装备区里，然后你摸一张牌。

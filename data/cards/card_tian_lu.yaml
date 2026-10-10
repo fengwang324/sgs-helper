@@ -4,10 +4,7 @@ category_2: 装备牌
 category_3: 坐骑
 name: 天禄
 image: card_tian_lu_qlhd_club_3.jpg
-card_set: null
-effect:
-  text: ◆若场上没有与你势力相同的君主，你视为拥有你势力的君主技。
-  skills: []
-rules:
-  distance_modifier: ''
-  note: ''
+effect: |-
+  ①锁定技，你至其他角色的距离-3。
+  ②若场上没有与你势力相同的君主，你视为拥有你势力的君主技。
+deck_info: ""

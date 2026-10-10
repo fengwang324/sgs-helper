@@ -1,10 +1,5 @@
 id: skill_ba_zhen_guozhan_qlhd_v1
 skill_id: skill_ba_zhen
 mode: guozhan
-text: 锁定技，若你的装备区里没有防具牌，你视为装备着【八卦阵】。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 锁定技，若你的装备区里没有防具牌，你视为装备着【八卦阵】。

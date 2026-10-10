@@ -1,6 +1,5 @@
 id: variant_g_wei_015
 general_id: general_g_wei_015
-variant: 群狼环鼎
 title: 矫然的壮士
 general_number: G.WEI 015
 illustrator: amo
@@ -13,9 +12,9 @@ product_id: qlhd
 general_set: 君临天下·阵
 zhulianbihe: []
 skills:
-  - skill_id: skill_tun_tian
-    version_id: skill_tun_tian_guozhan_qlhd_v1
-  - skill_id: skill_ji_xi
-    version_id: skill_ji_xi_guozhan_qlhd_v1
-  - skill_id: skill_zi_liang
-    version_id: skill_zi_liang_guozhan_qlhd_v1
+- skill_id: skill_tun_tian
+  version_id: skill_tun_tian_guozhan_qlhd_v1
+- skill_id: skill_ji_xi
+  version_id: skill_ji_xi_guozhan_qlhd_v1
+- skill_id: skill_zi_liang
+  version_id: skill_zi_liang_guozhan_qlhd_v1

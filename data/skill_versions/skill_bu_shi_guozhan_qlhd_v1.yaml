@@ -1,10 +1,5 @@
 id: skill_bu_shi_guozhan_qlhd_v1
 skill_id: skill_bu_shi
 mode: guozhan
-text: 当你受到1点伤害后，你可以选择一名势力与你相同的角色，令其摸一张牌。当你对其他角色造成伤害后，你选择一名势力与其相同的角色，令其摸一张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 当你受到1点伤害后，你可以选择一名势力与你相同的角色，令其摸一张牌。当你对其他角色造成伤害后，你选择一名势力与其相同的角色，令其摸一张牌。

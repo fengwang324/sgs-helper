@@ -4,17 +4,20 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 铁索连环
 image: card_tie_suo_lian_huan_qlhd_club_12.jpg
-card_set: null
-effect:
-  text: |-
-    出牌阶段，指定一至两名角色。分别横置或重置其副的武将牌。（被横置副将武将牌的角色处于“连环状态”）重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
-  skills: []
 rules:
   use_methods:
-    - label: ''
-      timing: ''
-      target: ''
+    - timing: |-
+        出牌阶段
+      target: |-
+        至多两名角色
       effect: |-
-        出牌阶段，指定一至两名角色。分别横置或重置其副的武将牌。（被横置副将武将牌的角色处于“连环状态”）重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。
-      note: ''
-  note: ''
+        分别横置或重置其副将。（被横置副将武将牌的角色处于“连环状态”）
+    - label: |-
+        重铸
+      timing: |-
+        出牌阶段
+      target: |-
+        无（不视为使用牌）
+      effect: |-
+        将此牌置入弃牌堆，然后摸一张牌。
+deck_info: ""

@@ -1,6 +1,5 @@
 id: variant_g_shu_01
 general_id: general_g_shu_01
-variant: 群狼环鼎
 title: 乱世的枭雄
 general_number: G.SHU 01
 illustrator: 木美人
@@ -12,9 +11,9 @@ gender: male
 product_id: qlhd
 general_set: 国战标准
 zhulianbihe:
-  - 关羽
-  - 张飞
-  - 甘夫人
+- 关羽
+- 张飞
+- 甘夫人
 skills:
-  - skill_id: skill_ren_de
-    version_id: skill_ren_de_guozhan_qlhd_v1
+- skill_id: skill_ren_de
+  version_id: skill_ren_de_guozhan_qlhd_v1

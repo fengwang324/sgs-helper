@@ -1,10 +1,5 @@
 id: skill_jie_yue_guozhan_qlhd_v1
 skill_id: skill_jie_yue
 mode: guozhan
-text: 准备阶段，你可以选择一名不是魏势力的其他角色并交给其一张手牌，然后向其发起一个“军令”，若其执行，则你摸一张牌，否则此回合的摸牌阶段，你多摸三张牌。
-version_label: 群狼环鼎
 product_id: qlhd
-previous_version_id: null
-source:
-  type: physical_card
-  reference: ''
+text: 准备阶段，你可以选择一名不是魏势力的其他角色并交给其一张手牌，然后向其发起一个“军令”，若其执行，则你摸一张牌，否则此回合的摸牌阶段，你多摸三张牌。
