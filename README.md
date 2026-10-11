@@ -3,11 +3,11 @@
 面向线下三国杀（**国战**、**身份局**）的资料库：用 YAML 人工维护权威数据，
 一条命令生成 SQLite 运行时数据库，并提供校验、查询与测试。
 
-> 当前阶段的目标只有一个：把**资料库底座**做对。
-> 不做复杂前端、不做用户系统、不做云数据库、不接大模型问答、不做规则模拟器。
-> （唯一的例外是**只在本机跑**的资料网页：原来的管理页 `sgs_helper/admin/`
-> 把手工编辑 YAML 变成表单编辑 YAML，见 [docs/admin.md](docs/admin.md)；
-> 现在它上面又多了一层面向日常使用的**本地 Wiki** `/wiki/*`，见 [docs/wiki.md](docs/wiki.md)。）
+用户查阅入口是根目录 [index.html](index.html)：纯前端图鉴，可直接双击打开，或使用任意静态文件服务器。
+支持武将、技能、游戏牌、指示物、关键词与 FAQ；武将技能正文可点击查看关联技能/卡牌，引用技能以 `*` 补充展示。
+没有账号或后台服务依赖。使用与更新方法见 [docs/frontend.md](docs/frontend.md)。
+
+原录入管理页与服务端 Wiki 保留作历史工具，其文档见 [docs/admin.md](docs/admin.md)、[docs/wiki.md](docs/wiki.md)；不作为当前用户入口。
 
 ## 当前数据状态
 
@@ -31,7 +31,11 @@
 - 数据维护与核验方法见《日常操作手册》和 [docs/qlhd-import.md](docs/qlhd-import.md)。
 ---
 
-## 30 秒上手
+## 浏览资料
+
+双击根目录 `index.html`。部署到静态空间时，保留 `index.html`、`web/`、`data/card_images/` 的相对路径即可。
+
+## 维护数据
 
 ```bash
 # 在容器里（已挂载 /data）
@@ -41,7 +45,7 @@ pip install -r requirements.txt            # 或者：pip install -e ".[dev]"
 
 python scripts/validate_data.py            # 1. 校验 YAML
 python scripts/build_db.py                 # 2. 由 YAML 全量重建 build/sgs.db
-python -m pytest -q                        # 3. 测试
+python scripts/build_frontend.py           # 3. 更新静态页面的数据包
 
 python scripts/query.py skill 集智         # 4. 查询
 python scripts/query.py general 孔融
@@ -51,7 +55,7 @@ python scripts/query.py keyword 摸牌
 python scripts/query.py product 国战
 python scripts/query.py search 集智
 
-# 5. 可选：浏览器里维护资料（只写 YAML，SQLite 由 YAML 重建）
+# 历史录入工具（当前用户页面不依赖它）
 pip install -e ".[admin]"
 python scripts/admin.py --port 8000       # 打开 http://127.0.0.1:8000
 ```
@@ -89,8 +93,10 @@ sgs-helper/
 │       ├── yaml_writer.py    #   可读 YAML 读写（保留注释头/块状标量/原子落盘）
 │       ├── templates/        #   Jinja2 模板（wiki/ 子目录是 Wiki 专用）
 │       └── static/           #   style.css（管理页）+ wiki.css / wiki-upload.js（Wiki）
-├── scripts/                  # 薄包装：validate_data.py / build_db.py / query.py / admin.py
-├── tests/                    # pytest 测试
+├── index.html                # 用户图鉴入口（可直接打开）
+├── web/                      # 页面样式、交互、完整静态数据包
+├── scripts/                  # 校验 / SQLite重建 / 静态数据导出 / 查询 / 历史录入
+├── tests/                    # 数据层 pytest + 前端 Node 测试
 ├── build/                    # 生成物目录（sgs.db，**不进 Git**）
 ├── docs/                     # 设计说明、操作手册、路线图、更新记录（updates.md）
 ├── README.md  pyproject.toml  requirements*.txt  .gitignore
