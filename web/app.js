@@ -47,7 +47,7 @@
   function section(title,note){var s=el("section","section"),h=el("div","section-title");h.append(el("h2","",title));if(note)h.append(el("small","",note));s.append(h);return s;}
   function empty(title,description){var box=el("div","empty-state");add(box,el("h2","",title),el("p","",description),link("浏览全部武将","#/generals","button"));return box;}
   function generalTile(g,v){v=v||(model.variants.get(g.id)||[]).slice().sort(model.compareGeneralVariants)[0];var a=link("",route("general",g.id),"general-tile");
-    a.append(image(v&&v.image,g.name,true));var caption=el("div","tile-caption"),top=el("div","tile-top");top.append(el("h3","name",g.name));
+    a.append(image(v&&v.image,g.name,true));var caption=el("div","tile-caption"),top=el("div","tile-top"+(g.name.length>3||v&&model.factionParts(v.faction).length>1?" long-name":""));top.append(el("h3","name",g.name));
     if(v)top.append(factionMarks(v.faction,"faction-marks tile-faction"));
     caption.append(top);if(v&&v.title)caption.append(el("div","tile-title",v.title));
     a.append(caption);return a;}

@@ -8,3 +8,66 @@ dialog{width:min(700px,calc(100vw - 30px));max-height:85vh;border:1px solid #d5c
 /* Faction marks, inline rule bubbles, and rendered card suits */
 .tile-top{position:relative;display:flex;justify-content:center;min-height:29px}.tile-top .name{text-align:center;max-width:100%;overflow-wrap:anywhere}.tile-faction{position:absolute;right:0;top:3px}.faction-marks{display:inline-flex;align-items:center;justify-content:center;gap:3px}.faction-image{display:block;width:22px;height:22px;object-fit:contain}.detail-faction .faction-image{width:25px;height:25px}.identity-line .detail-faction{min-height:28px}.faction-filter{display:flex;gap:7px;flex-wrap:wrap}.faction-filter-button{min-width:43px;padding:7px 13px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink)}.faction-filter-button:hover,.faction-filter-button.selected{background:var(--red);border-color:var(--red);color:#fff8e6}.keyword-popover{position:relative;display:inline}.keyword-bubble{position:absolute;z-index:20;left:0;top:calc(100% + 7px);display:grid;gap:7px;width:min(340px,calc(100vw - 48px));max-height:55vh;overflow:auto;padding:12px 14px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);box-shadow:0 8px 25px #292b2730;color:var(--ink);white-space:normal;font-size:13px;line-height:1.65}.keyword-bubble[hidden]{display:none}.keyword-definition{display:block}.glossary-trigger{cursor:pointer}.recast-label{display:inline-flex;position:relative;margin-top:5px;color:var(--red);font-size:11px;border:1px solid #cda69c;border-radius:3px;padding:1px 7px;background:#fff8f4}.suit-icon{display:inline-block;width:.9em;height:.9em;margin:0 .04em;vertical-align:-.08em;fill:currentColor}.red-suit{color:#b12828}.black-suit{color:#252722}.outline-suit{fill:none;stroke:currentColor;stroke-width:1.35;stroke-linejoin:round;stroke-linecap:round}
 .general-tile .tile-title{text-align:center}
+
+/* The host normally supplies a shorter viewport. This optional inset is for
+   hosts which overlay their navigation instead; it defaults to no extra gap. */
+:root{--host-bottom-inset:0px}
+body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--host-bottom-inset))}
+.site-header{padding-top:max(25px,env(safe-area-inset-top,0px))}
+.general-tile .tile-top{padding:0 25px;min-height:30px}
+.general-tile .long-name{padding:25px 0 0}
+.general-tile .long-name .name{line-height:1.5}
+.tile-title{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.6;margin-top:3px}
+.card-tile .name{text-align:center;line-height:1.5;overflow-wrap:anywhere}
+.chip,.global-search button,.button,.faction-filter-button{min-height:44px}
+.chip{display:inline-flex;align-items:center}
+dialog{max-height:calc(100vh - 32px - var(--host-bottom-inset));max-height:calc(100dvh - 32px - var(--host-bottom-inset));overscroll-behavior:contain}
+.dialog-top{position:sticky;top:-25px;z-index:2;background:var(--panel);padding:3px 0}
+#close-dialog{width:44px;height:44px;padding:0;flex-shrink:0}
+.dialog-choice .button{white-space:normal;text-align:left;overflow-wrap:anywhere;max-width:100%}
+.global-search input{min-height:44px}
+@media(max-width:800px){
+  .site-header{padding:12px 16px;gap:12px;padding-top:max(12px,env(safe-area-inset-top,0px))}
+  .brand{gap:10px}.brand-seal{width:34px;height:34px;font-size:25px}
+  .brand-title{font-size:21px;line-height:1.35;letter-spacing:2px}
+  .brand-subtitle{font-size:10px;letter-spacing:1px}
+  .global-search input{padding:8px 11px}.global-search button{padding:8px 13px;min-width:60px}
+  .sidebar{padding:7px 12px}
+  #navigation{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;overflow:visible;white-space:normal}
+  .nav-item{margin:0;min-height:44px;justify-content:center;align-items:center;gap:5px;padding:5px 3px;font-size:13px}
+  .nav-count{font-size:10px}
+  #main-content{padding:18px 16px 32px}
+  .page-head{margin-bottom:16px}.page-head>.eyebrow{display:none}
+  h1{font-size:27px}.breadcrumb{margin-bottom:16px}
+  .toolbar{padding:10px;gap:8px;margin-bottom:16px}
+  .faction-filter{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;width:100%}
+  .faction-filter-button{min-width:0;padding:7px 0}
+  .result-note{margin-bottom:12px}
+  .skill-block{padding:15px 16px}.section{margin-top:22px}
+  .section-title{margin-bottom:12px}.skill-heading{flex-wrap:wrap;gap:2px 10px}
+  .faq-item summary{min-height:52px;padding:13px 0;overflow-wrap:anywhere}
+  .empty-state{padding:38px 16px}
+  .site-footer{padding:15px 16px;letter-spacing:0}
+  .dialog-top{top:-20px}
+}
+@media(max-width:580px){
+  .general-grid{gap:16px 12px}.tile-caption{padding:8px 0}
+  .name{font-size:19px}.tile-title{font-size:12px}
+  .portrait-column{max-width:140px;margin:0 auto 18px}
+  .general-heading{padding-bottom:16px}.general-title{letter-spacing:2px}
+  .identity-line{gap:6px;margin-top:9px}.general-meta{margin-top:10px;gap:5px 13px}
+  .card-detail>.card-image{max-width:150px;max-height:220px;margin-bottom:18px}
+  dialog{padding:16px;width:calc(100% - 24px)}.dialog-top{top:-16px}
+  .dialog-title{margin-bottom:12px}.text-section{padding-top:14px;margin-top:16px}
+  .dialog-card .card-image{max-height:150px;margin:0 auto 14px}
+  .prose{line-height:1.9}.section-title small{white-space:nowrap}
+  .toolbar select{font-size:16px;min-height:44px}
+}
+@media(max-width:350px){
+  #main-content{padding-left:12px;padding-right:12px}
+  .nav-item{flex-direction:column;gap:0;line-height:1.4}
+  .faction-filter{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .general-grid{gap:15px 10px}.name{font-size:17px}
+  .general-tile .tile-top{padding:0 24px}.general-tile .long-name{padding:25px 0 0}
+}
+@media(prefers-reduced-motion:reduce){.art-frame img{transition:none}.general-tile:hover img{transform:none}}
