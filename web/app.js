@@ -38,8 +38,11 @@
     caption.append(top);if(v)add(caption,el("div","tile-title",v.title||""),el("div","tile-number",(v.general_number||"")+" · "+(v.general_set||modes[v.mode]||"")));
     a.append(caption);return a;}
   function entry(kind,item){var a=link("",route(kind,item.id),"entry"),title=kind==="faq"?item.question:item.name;
+    if(kind==="card"&&isGame(item))return cardTile(item);
     if(kind==="card")a.append(el("div","entry-tag",[item.category_2,item.category_3].filter(Boolean).join(" · ")));
     add(a,el("h3","entry-title",title),el("p","entry-summary",kind==="skill"?(model.versions.get(item.id)||[]).map(function(v){return v.text;}).join("\n"):kind==="card"?cardText(item):kind==="faq"?item.answer:kind==="product"?[item.release_year,modes[item.mode],item.general_sets.join(" · ")].filter(Boolean).join(" · "):item.definition));return a;}
+  function cardTile(c){var a=link("",route("card",c.id),"general-tile card-tile"),caption=el("div","tile-caption");
+    add(a,image(c.image,c.name,true));add(caption,el("h3","name",c.name),el("div","tile-title",[c.category_2,c.category_3].filter(Boolean).join(" · ")));a.append(caption);return a;}
   function cardText(c){return [c.effect].concat(((c.rules||{}).use_methods||[]).map(function(m){return [m.label,m.timing,m.target,m.effect].filter(Boolean).join("；");})).filter(Boolean).join("\n");}
   function source(item,parent){if(!item.source)return;var s=el("details","source");add(s,el("summary","","查看来源"),el("div","prose",item.source));parent.append(s);}
   function faqItem(item){var box=el("details","faq-item");add(box,el("summary","",item.question),prose(item.answer));source(item,box);return box;}
@@ -53,7 +56,7 @@
     field("效果",c.effect);if(c.attack_range)field("攻击范围",c.attack_range);
     ((c.rules||{}).use_methods||[]).forEach(function(m,i){var s=el("section","text-section");s.append(el("h3","field-title",m.label||"使用方法"+(((c.rules||{}).use_methods||[]).length>1?" "+(i+1):"")));
       [["时机",m.timing],["目标",m.target],["效果",m.effect]].forEach(function(row){if(row[1]){s.append(el("div","muted",row[0]));s.append(prose(row[1],context,[c.id]));}});parent.append(s);});
-    if(isGame(c))field("牌堆信息",c.deck_info||"尚未录入。");field("备注",c.note);
+    field("备注",c.note);
   }
   function versionBlocks(skill,parent,context){var chosen=context&&model.resolveVersion(skill.id,context),rows=chosen?[chosen]:(model.versions.get(skill.id)||[]);
     if(!rows.length)parent.append(el("p","muted","技能说明尚未收录。"));
@@ -78,7 +81,7 @@
     if(v.zhulianbihe.length){var pairs=section("珠联璧合"),chips=el("div","chip-list");v.zhulianbihe.forEach(function(name){var gs=data.generals.filter(function(x){return x.name===name;});if(!gs.length)chips.append(el("span","tag",name));
       gs.forEach(function(x){var gv=(model.variants.get(x.id)||[])[0];chips.append(link(name+(gs.length>1?" · "+gv.general_number:""),route("general",x.id),"chip"));});});pairs.append(chips);body.append(pairs);}
     var own=model.ownSkills(v),skills=section("武将技能",own.length+" 项");own.forEach(function(row){skills.append(skillBlock(row,v,false));});body.append(skills);
-    var refs=model.references(v);if(refs.skills.length){var ref=section("关联技能");ref.append(el("p","annotation","* 为技能正文提到的其他技能，并非此武将自带技能。"));refs.skills.forEach(function(row){ref.append(skillBlock(row,v,true));});body.append(ref);}
+    var refs=model.references(v);if(refs.skills.length){var ref=section("关联技能");refs.skills.forEach(function(row){ref.append(skillBlock(row,v,true));});body.append(ref);}
     if(refs.cards.length){var cards=section("关联卡牌"),chips=el("div","chip-list");refs.cards.forEach(function(c){var a=link(c.name,route("card",c.id),"chip");a.addEventListener("click",function(e){if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();openReference([{kind:"card",id:c.id}],v);});chips.append(a);});cards.append(chips);body.append(cards);}
     var faqs=model.relatedFaq([g.name].concat(own.map(function(row){return row.skill.name;})));if(faqs.length){var f=section("相关 FAQ");faqs.forEach(function(q){f.append(faqItem(q));});body.append(f);}
     document.title=g.name+" · "+v.title+" · 国战图鉴";
@@ -90,28 +93,38 @@
     if(kind==="card"){var wrap=el("div","card-detail"),body=el("article");if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=item.name+"牌面";wrap.append(img);}cardBody(item,body);wrap.append(body);main.append(wrap);}
     if(kind==="keyword")main.append(prose(item.definition));if(kind==="faq"){main.append(prose(item.answer));source(item,main);}
     if(kind==="product"){main.append(el("p","muted",[item.release_year&&"发行年份 "+item.release_year,modes[item.mode]].filter(Boolean).join(" · ")));
-      var sets=section("武将牌组"),chips=el("div","chip-list");item.general_sets.forEach(function(name){chips.append(link(name,"#/generals?set="+encodeURIComponent(name),"chip"));});sets.append(chips);main.append(sets);
+      var sets=section("武将牌组"),chips=el("div","chip-list");item.general_sets.forEach(function(name){chips.append(el("span","tag",name));});sets.append(chips);main.append(sets);
       var cards=section("游戏牌拓展包"),cardSets=el("div","chip-list");item.card_sets.forEach(function(name){cardSets.append(el("span","tag",name));});cards.append(cardSets);main.append(cards);}
   }
-  function select(name,label,values,current){var s=el("select");s.name=name;s.setAttribute("aria-label",label);s.append(new Option("全部"+label,""));values.filter(Boolean).filter(function(x,i,a){return a.indexOf(x)===i;}).sort(function(a,b){return a.localeCompare(b,"zh-CN");}).forEach(function(x){s.append(new Option(x,x));});s.value=current||"";return s;}
-  function listing(key,params){var config=sections.find(function(x){return x[0]===key;});if(!config)return missing();heading(config[1],key==="generals"?"按势力、牌组与编号查找武将，查看完整技能及关联说明。":key==="faq"?"展开问题查看裁定与来源。":"查阅"+config[1]+"的完整说明。","群狼环鼎 / 资料索引");
+  function select(name,label,values,current,keepOrder){var s=el("select");s.name=name;s.setAttribute("aria-label",label);s.append(new Option("全部"+label,""));var options=values.filter(Boolean).filter(function(x,i,a){return a.indexOf(x)===i;});if(!keepOrder)options.sort(function(a,b){return a.localeCompare(b,"zh-CN-u-co-pinyin");});options.forEach(function(x){s.append(new Option(x,x));});s.value=current||"";return s;}
+  function listing(key,params){var config=sections.find(function(x){return x[0]===key;});if(!config)return missing();heading(config[1],"","群狼环鼎 / 资料索引");
     var kind={generals:"general",skills:"skill",cards:"card",markers:"card",keywords:"keyword",faq:"faq",products:"product"}[key],rows=kind==="general"?data.generals:kind==="skill"?data.skills:kind==="card"?data.cards.filter(function(c){return key==="cards"?isGame(c):!isGame(c);}):kind==="keyword"?data.keywords:kind==="product"?data.products:data.faq;
-    var form=el("form","toolbar"),q=el("input");q.type="search";q.name="q";q.placeholder=key==="generals"?"搜索姓名、编号、称号或技能…":"搜索"+config[1]+"…";q.setAttribute("aria-label","筛选"+config[1]);q.value=params.get("q")||"";form.append(q);
-    if(kind==="general"){form.append(select("faction","势力",data.general_variants.map(function(v){return v.faction;}),params.get("faction")));form.append(select("set","牌组",data.general_variants.map(function(v){return v.general_set;}),params.get("set")));}
-    if(kind==="card")form.append(select("type","类型",rows.map(function(c){return c.category_3||c.category_2;}),params.get("type")));
-    var submit=el("button","button primary","筛选");submit.type="submit";form.append(submit);if(params.toString())form.append(link("清除","#/"+key,"button"));
-    form.addEventListener("submit",function(e){e.preventDefault();var p=new URLSearchParams();new FormData(form).forEach(function(value,name){if(value)p.set(name,value);});location.hash="#/"+key+(p.toString()?"?"+p.toString():"");});main.append(form);
-    var filtered=rows.filter(function(item){if(!model.matchesQuery(model.searchable(kind,item),params.get("q")))return false;
-      if(kind==="general")return (model.variants.get(item.id)||[]).some(function(v){return (!params.get("faction")||v.faction===params.get("faction"))&&(!params.get("set")||v.general_set===params.get("set"));});
-      return kind!=="card"||!params.get("type")||(item.category_3||item.category_2)===params.get("type");});
+    if(kind==="general"||key==="cards"){
+      var form=el("form","toolbar");
+      if(kind==="general")form.append(select("faction","势力",data.general_variants.map(function(v){return v.faction;}),params.get("faction")));
+      if(key==="cards"){
+        var category=select("category","分类",model.cardCategories,params.get("category"),true),types=select("type","类型",[],params.get("type"),true);
+        function refreshTypes(){var current=types.value||params.get("type")||"",values=category.value?(model.cardTypes[category.value]||[]):model.cardCategories.flatMap(function(c){return model.cardTypes[c];});
+          var next=select("type","类型",values,current,true);types.replaceChildren.apply(types,Array.from(next.childNodes));types.value=values.includes(current)?current:"";}
+        refreshTypes();category.addEventListener("change",refreshTypes);add(form,category,types);
+      }
+      var submit=el("button","button primary","筛选");submit.type="submit";form.append(submit);if(params.toString())form.append(link("清除","#/"+key,"button"));
+      form.addEventListener("submit",function(e){e.preventDefault();var p=new URLSearchParams();new FormData(form).forEach(function(value,name){if(value)p.set(name,value);});location.hash="#/"+key+(p.toString()?"?"+p.toString():"");});main.append(form);
+    }
+    var filtered=rows.filter(function(item){
+      if(kind==="general")return (model.variants.get(item.id)||[]).some(function(v){return !params.get("faction")||v.faction===params.get("faction");});
+      return key!=="cards"||((!params.get("category")||item.category_2===params.get("category"))&&(!params.get("type")||item.category_3===params.get("type")));});
     if(kind==="general")filtered.sort(function(a,b){var va=(model.variants.get(a.id)||[])[0],vb=(model.variants.get(b.id)||[])[0];return (va.general_number||"").localeCompare(vb.general_number||"","zh-CN",{numeric:true});});
+    else if(key==="cards")filtered.sort(model.compareCards);
+    else if(["markers","keywords","faq"].includes(key))filtered.sort(model.compareEntries);
     main.append(el("p","result-note","共 "+filtered.length+" 条"+(filtered.length!==rows.length?" / 全部 "+rows.length+" 条":"")));
     if(!filtered.length){main.append(empty("没有找到匹配的条目","可以缩短搜索词，或清除当前筛选条件。"));return;}
-    var grid=el("div",kind==="general"?"general-grid":kind==="faq"?"faq-list":"entry-grid");filtered.forEach(function(item){grid.append(kind==="general"?generalTile(item):kind==="faq"?faqItem(item):entry(kind,item));});main.append(grid);
+    var grid=el("div",kind==="general"||key==="cards"?"general-grid":kind==="faq"?"faq-list":"entry-grid");filtered.forEach(function(item){grid.append(kind==="general"?generalTile(item):kind==="faq"?faqItem(item):entry(kind,item));});main.append(grid);
   }
   function search(params){var q=params.get("q")||"";heading("检索资料",q?"搜索「"+q+"」":"输入姓名、技能、卡名或规则关键词。","全库检索");var total=0;
     if(q.trim())["general","skill","card","keyword","faq","product"].forEach(function(kind){var rows=Array.from(model.index[kind].values()).filter(function(item){return model.matchesQuery(model.searchable(kind,item),q);});if(!rows.length)return;total+=rows.length;
-      var s=section(labels[kind],rows.length+" 条"),grid=el("div",kind==="general"?"general-grid":"entry-grid");rows.forEach(function(item){grid.append(kind==="general"?generalTile(item):entry(kind,item));});s.append(grid);main.append(s);});
+      if(kind==="card")rows.sort(function(a,b){return isGame(a)&&isGame(b)?model.compareCards(a,b):isGame(a)?-1:isGame(b)?1:model.compareEntries(a,b);});else if(kind==="faq"||kind==="keyword")rows.sort(model.compareEntries);
+      var s=section(labels[kind],rows.length+" 条"),grid=el("div",kind==="general"||kind==="card"?"general-grid":"entry-grid");rows.forEach(function(item){grid.append(kind==="general"?generalTile(item):entry(kind,item));});s.append(grid);main.append(s);});
     if(!total)main.append(empty(q?"没有找到相关资料":"开始查阅","使用顶部搜索框检索全部资料。"));document.getElementById("search-input").value=q;
   }
   function missing(){heading("条目未找到","该条目可能已在复核中删除。");main.append(empty("返回资料索引","从索引或搜索查找当前保留的资料。"));}

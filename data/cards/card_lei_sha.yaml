@@ -3,6 +3,7 @@ category_1: 游戏牌
 category_2: 基本牌
 category_3: 杀
 name: 雷杀
+image: card_lei_sha_qlhd_spade_8.png
 rules:
   use_methods:
     - timing: |-

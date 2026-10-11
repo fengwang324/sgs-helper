@@ -6,6 +6,23 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
   var collections = {general: "generals", skill: "skills", card: "cards", faq: "faq", keyword: "keywords", product: "products"};
+  var alphabet = new Intl.Collator("zh-CN-u-co-pinyin", {numeric: true, sensitivity: "base"});
+  var cardCategories = ["基本牌", "锦囊牌", "装备牌"];
+  var cardTypes = {"基本牌": ["杀", "闪", "桃", "酒"], "锦囊牌": ["非延时锦囊", "延时锦囊"], "装备牌": ["武器", "防具", "坐骑", "宝物"]};
+  function titleKey(item) {
+    return String(item.name || item.question || "").replace(/^[^\p{L}\p{N}]+/u, "");
+  }
+  function compareEntries(a, b) {
+    return alphabet.compare(titleKey(a), titleKey(b)) || alphabet.compare(a.id, b.id);
+  }
+  function rank(values, value) { var position = values.indexOf(value); return position < 0 ? values.length : position; }
+  function compareCards(a, b) {
+    return rank(cardCategories, a.category_2) - rank(cardCategories, b.category_2)
+      || alphabet.compare(a.category_2 || "", b.category_2 || "")
+      || rank(cardTypes[a.category_2] || [], a.category_3) - rank(cardTypes[b.category_2] || [], b.category_3)
+      || alphabet.compare(a.category_3 || "", b.category_3 || "")
+      || compareEntries(a, b);
+  }
   function createModel(data) {
     var index = {};
     Object.keys(collections).forEach(function (kind) {
@@ -130,9 +147,9 @@
       return (data.faq || []).filter(function (faq) {
         var text = faq.question + " " + faq.answer;
         return namesToFind.some(function (name) { return name.length > 1 && text.includes(name); });
-      });
+      }).sort(compareEntries);
     }
-    return {data: data, index: index, variants: variants, versions: versions, versionById: versionById, resolveVersion: resolveVersion, findMentions: findMentions, ownSkills: ownSkills, references: references, matchesQuery: matchesQuery, searchable: searchable, relatedFaq: relatedFaq};
+    return {data: data, index: index, variants: variants, versions: versions, versionById: versionById, resolveVersion: resolveVersion, findMentions: findMentions, ownSkills: ownSkills, references: references, matchesQuery: matchesQuery, searchable: searchable, relatedFaq: relatedFaq, compareEntries: compareEntries, compareCards: compareCards, cardCategories: cardCategories, cardTypes: cardTypes};
   }
   return {createModel: createModel};
 });

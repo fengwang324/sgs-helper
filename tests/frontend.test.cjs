@@ -121,3 +121,22 @@ test("rule descriptions about the chained state do not grant the 连环 skill", 
   assert.equal(model.findMentions("获得“连环”")[0].targets[0].id, "skill_lian_huan");
   assert.equal(model.findMentions("发动连环")[0].targets[0].id, "skill_lian_huan");
 });
+
+test("alphabetical indexes use Chinese pinyin and ignore opening punctuation", () => {
+  const model = createModel({});
+  const rows = [{id:"j",question:"【酒】的效果是什么？"},{id:"h",question:"火杀如何结算？"},{id:"a",question:"暗将如何明置？"}];
+  assert.deepEqual(rows.sort(model.compareEntries).map((r) => r.id), ["a","h","j"]);
+});
+
+test("game cards group by category and type before alphabetical names", () => {
+  const model = createModel({});
+  const rows = [
+    {id:"w",name:"八卦阵",category_2:"装备牌",category_3:"防具"},
+    {id:"d",name:"兵粮寸断",category_2:"锦囊牌",category_3:"延时锦囊"},
+    {id:"n",name:"无中生有",category_2:"锦囊牌",category_3:"非延时锦囊"},
+    {id:"s",name:"闪",category_2:"基本牌",category_3:"闪"},
+    {id:"l",name:"雷杀",category_2:"基本牌",category_3:"杀"},
+    {id:"h",name:"火杀",category_2:"基本牌",category_3:"杀"},
+  ];
+  assert.deepEqual(rows.sort(model.compareCards).map((r) => r.id), ["h","l","s","n","d","w"]);
+});
