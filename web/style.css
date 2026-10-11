@@ -71,3 +71,16 @@ dialog{max-height:calc(100vh - 32px - var(--host-bottom-inset));max-height:calc(
   .general-tile .tile-top{padding:0 24px}.general-tile .long-name{padding:25px 0 0}
 }
 @media(prefers-reduced-motion:reduce){.art-frame img{transition:none}.general-tile:hover img{transform:none}}
+
+.keyword-bubble{position:fixed;top:auto;left:auto;z-index:30;width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:10px 14px 14px;overscroll-behavior:contain}
+.bubble-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:-10px;margin:-1px -4px 0 0;background:var(--panel)}
+.bubble-close{border:0;background:transparent;color:var(--muted);font-size:25px;line-height:1;width:44px;height:44px;flex-shrink:0;padding:0}
+.inline-ref{white-space:nowrap}
+.card-detail>.card-image{width:220px;aspect-ratio:3/4;object-fit:contain}
+.dialog-card .card-image{width:112.5px;height:150px;object-fit:contain}
+dialog{bottom:var(--host-bottom-inset)}
+@media(max-width:580px){
+  form.toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  form.toolbar select{width:100%;min-width:0}
+  form.toolbar>.primary:last-child{grid-column:1/-1}
+}

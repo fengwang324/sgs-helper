@@ -4,6 +4,8 @@
   var main = document.getElementById("main-content"), dialog = document.getElementById("reference-dialog");
   var dialogContent = document.getElementById("reference-content");
   var popover = null;
+  var viewStates = new Map(), activeRoute = null, restoringView = false, bubbleId = 0;
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   var labels = {general:"武将",skill:"技能",card:"卡牌",faq:"FAQ",keyword:"关键词",product:"产品"};
   var modes = {guozhan:"国战",identity:"身份局",common:"通用",ol:"OL",mobile:"移动版",other:"其他"};
   var sections = [
@@ -21,9 +23,25 @@
   function keywordRows(item) {
     return model.keywordDefinitionRows(item,data.keywords);
   }
+  function closeKeywordBubble(){if(!popover)return;popover.bubble.hidden=true;popover.trigger.setAttribute("aria-expanded","false");popover=null;}
+  function updateKeywordBubble(){if(!popover)return;var rect=popover.trigger.getBoundingClientRect(),bounds=dialog.open&&dialog.contains(popover.trigger)?dialog.getBoundingClientRect():{top:0,bottom:window.innerHeight};if(rect.bottom<=bounds.top||rect.top>=bounds.bottom)closeKeywordBubble();else positionKeywordBubble(popover.trigger,popover.bubble);}
+  function positionKeywordBubble(trigger,bubble){
+    var viewport=window.visualViewport,gap=12,leftEdge=viewport?viewport.offsetLeft:0,topEdge=viewport?viewport.offsetTop:0;
+    var width=Math.min(document.documentElement.clientWidth,viewport?viewport.width:window.innerWidth);
+    var inset=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--host-bottom-inset"))||0;
+    var height=Math.max(48,(viewport?viewport.height:window.innerHeight)-inset),rect=trigger.getBoundingClientRect();
+    bubble.style.width=Math.min(340,width-gap*2)+"px";bubble.style.maxHeight=Math.max(24,height-gap*2)+"px";
+    var bounds=bubble.getBoundingClientRect(),left=Math.max(leftEdge+gap,Math.min(rect.left,leftEdge+width-gap-bounds.width));
+    var below=rect.bottom+7,above=rect.top-7-bounds.height;
+    var top=below+bounds.height<=topEdge+height-gap?below:above>=topEdge+gap?above:topEdge+gap;
+    bubble.style.left=left+"px";bubble.style.top=top+"px";
+  }
   function showKeywordBubble(trigger,item,label) {
-    var host=el("span","keyword-popover");host.append(trigger);var bubble=el("span","keyword-bubble");bubble.setAttribute("role","status");bubble.hidden=true;bubble.append(el("strong","",label||item.name));
-    var rows=keywordRows(item);if(item.id==="keyword_104"&&label)rows=rows.filter(function(row){return row.indexOf(label+"：")===0;});rows.forEach(function(row){bubble.append(el("span","keyword-definition",row));});host.append(bubble);trigger.setAttribute("aria-expanded","false");trigger.setAttribute("aria-haspopup","true");trigger.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(popover&&popover.host===host){bubble.hidden=true;trigger.setAttribute("aria-expanded","false");popover=null;}else{if(popover){popover.bubble.hidden=true;popover.trigger.setAttribute("aria-expanded","false");}popover={host:host,bubble:bubble,trigger:trigger};bubble.hidden=false;trigger.setAttribute("aria-expanded","true");}});return host;
+    var host=el("span","keyword-popover");host.append(trigger);var bubble=el("span","keyword-bubble");bubble.hidden=true;bubble.id="keyword-bubble-"+(++bubbleId);
+    bubble.setAttribute("role","region");bubble.setAttribute("aria-label",(label||item.name)+"说明");
+    var top=el("span","bubble-top");top.append(el("strong","",label||item.name));var close=button("×",function(e){e.stopPropagation();closeKeywordBubble();trigger.focus({preventScroll:true});},"bubble-close");close.setAttribute("aria-label","关闭关键词说明");top.append(close);bubble.append(top);
+    var rows=keywordRows(item);if(item.id==="keyword_104"&&label)rows=rows.filter(function(row){return row.indexOf(label+"：")===0;});rows.forEach(function(row){bubble.append(el("span","keyword-definition",row));});host.append(bubble);trigger.setAttribute("aria-expanded","false");trigger.setAttribute("aria-controls",bubble.id);
+    trigger.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(popover&&popover.host===host){closeKeywordBubble();}else{closeKeywordBubble();popover={host:host,bubble:bubble,trigger:trigger};bubble.hidden=false;trigger.setAttribute("aria-expanded","true");positionKeywordBubble(trigger,bubble);}});return host;
   }
   function suitIcon(char){var base={"❤":"♥","♡":"♥","♢":"♦","♤":"♠","♧":"♣"}[char]||char;var svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("role","img");svg.setAttribute("aria-label",base==="♥"?"红桃":base==="♦"?"方块":base==="♠"?"黑桃":"梅花");svg.classList.add("suit-icon",base==="♥"||base==="♦"?"red-suit":"black-suit");if(char==="♡"||char==="♢"||char==="♤"||char==="♧")svg.classList.add("outline-suit");var path=document.createElementNS("http://www.w3.org/2000/svg","path");
     var shapes={"♥":"M8 14C6 11.8 1.5 8.5 1.5 5.3A3.2 3.2 0 0 1 8 4a3.2 3.2 0 0 1 6.5 1.3C14.5 8.5 10 11.8 8 14Z","♦":"M8 1 14 8 8 15 2 8Z","♠":"M8 1C6 4 1.5 6.2 1.5 9.1A3.1 3.1 0 0 0 7 11l-1 3h4l-1-3a3.1 3.1 0 0 0 5.5-1.9C14.5 6.2 10 4 8 1Z","♣":"M8 1a3 3 0 0 0-2 5.2A3 3 0 1 0 9 11l-1 3h4l-1-3a3 3 0 1 0-1-4.8A3 3 0 0 0 8 1Z"};path.setAttribute("d",shapes[base]);svg.append(path);return svg;
@@ -61,8 +79,8 @@
   function recastTag(c){if(!isRecast(c))return null;var item=data.keywords.find(function(k){return k.id==="keyword_064";});if(!item)return null;var b=button("可重铸",function(){},"recast-label");return showKeywordBubble(b,item,"重铸");}
   function cardText(c){return [c.effect].concat(((c.rules||{}).use_methods||[]).map(function(m){return [m.label,m.timing,m.target,m.effect].filter(Boolean).join("；");})).filter(Boolean).join("\n");}
   function source(item,parent){if(!item.source)return;var s=el("details","source");add(s,el("summary","","查看来源"),el("div","prose",item.source));parent.append(s);}
-  function faqItem(item){var box=el("details","faq-item");add(box,el("summary","",item.question),prose(item.answer));source(item,box);return box;}
-  function keywordItem(item){var box=el("details","faq-item keyword-item");box.append(el("summary","",item.name));keywordRows(item).forEach(function(row){box.append(prose(row));});return box;}
+  function faqItem(item){var box=el("details","faq-item");box.dataset.entryId="faq:"+item.id;add(box,el("summary","",item.question),prose(item.answer));source(item,box);return box;}
+  function keywordItem(item){var box=el("details","faq-item keyword-item");box.dataset.entryId="keyword:"+item.id;box.append(el("summary","",item.name));keywordRows(item).forEach(function(row){box.append(prose(row));});return box;}
   function skillBlock(row,context,referenced){var box=el("article","skill-block"+(referenced?" referenced":"")),h=el("div","skill-heading");
     h.append(link((referenced?"* ":"")+row.skill.name,route("skill",row.skill.id),""));if(referenced)h.append(el("small","muted","见「"+row.from+"」"));
     h.firstChild.className="entry-title";box.append(h);
@@ -81,13 +99,14 @@
       box.append(el("div","version-label",[modes[v.mode]||v.mode,product&&product.name].filter(Boolean).join(" · ")));box.append(prose(v.text,context||v,[skill.id]));parent.append(box);});
   }
   function openReference(targets,context){
+    closeKeywordBubble();
     dialogContent.replaceChildren();dialogContent.className="";if(targets.length>1){add(dialogContent,el("h2","dialog-title",targets[0].name),el("p","annotation","找到多个同名条目，请选择要查看的说明。"));
       dialogContent.firstChild.id="reference-title";var choices=el("div","dialog-choice");targets.forEach(function(t){var item=model.index[t.kind].get(t.id);choices.append(button(labels[t.kind]+" · "+item.name+" · "+t.id,function(){openReference([t],context);}));});dialogContent.append(choices);
     }else{var target=targets[0],item=model.index[target.kind].get(target.id),h=el("h2","dialog-title",item.name);h.id="reference-title";dialogContent.append(h);
       if(target.kind==="skill")versionBlocks(item,dialogContent,context);
       if(target.kind==="card"){dialogContent.className="dialog-card";if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=item.name+"牌面";dialogContent.append(img);}cardBody(item,dialogContent,context);}else dialogContent.className="";
       var foot=el("div","dialog-links");var a=link("查看完整"+labels[target.kind]+"条目 →",route(target.kind,target.id),"inline-ref");a.addEventListener("click",function(){dialog.close();});foot.append(a);dialogContent.append(foot);
-    }if(!dialog.open)dialog.showModal();else document.getElementById("close-dialog").focus();
+    }if(!dialog.open)dialog.showModal();else document.getElementById("close-dialog").focus();dialog.scrollTop=0;
   }
   function generalDetail(id,params){var g=model.index.general.get(id);if(!g)return missing();var variants=model.variants.get(id)||[],v=variants.find(function(row){return row.id===params.get("version");})||variants[0];if(!v)return missing();
     breadcrumb(sections[0],g.name);var layout=el("div","detail-layout"),portrait=el("aside","portrait-column"),body=el("article");portrait.append(image(v.image,g.name,false));add(layout,portrait,body);main.append(layout);
@@ -144,17 +163,26 @@
     if(!total)main.append(empty(q?"没有找到相关资料":"开始查阅","使用顶部搜索框检索全部资料。"));document.getElementById("search-input").value=q;
   }
   function missing(){heading("条目未找到","该条目可能已在复核中删除。");main.append(empty("返回资料索引","从索引或搜索查找当前保留的资料。"));}
-  function render(){if(location.hash==="#main-content"){main.focus();return;}if(dialog.open)dialog.close();main.replaceChildren();document.title="国战图鉴 · 群狼环鼎";
+  function rememberView(){if(!activeRoute||restoringView)return;viewStates.set(activeRoute,{y:window.scrollY,open:Array.from(main.querySelectorAll("details[data-entry-id][open]")).map(function(e){return e.dataset.entryId;})});}
+  function render(){if(location.hash==="#main-content"){main.focus();return;}rememberView();restoringView=true;closeKeywordBubble();if(dialog.open)dialog.close();main.replaceChildren();document.title="国战图鉴 · 群狼环鼎";
     var raw=location.hash.slice(1)||"/generals",parts=raw.split("?"),path=parts[0].split("/").filter(Boolean),params=new URLSearchParams(parts.slice(1).join("?")),key=path[0]||"generals",id;try{id=decodeURIComponent(path[1]||"");}catch(e){id="";}
     var active=key==="general"?"generals":key==="skill"?"skills":key==="card"?(model.index.card.get(id)&&!isGame(model.index.card.get(id))?"markers":"cards"):key==="keyword"?"keywords":key==="product"?"products":key;
     document.getElementById("navigation").replaceChildren();sections.forEach(function(s){var a=link("","#/"+s[0],"nav-item");add(a,el("span","",s[1]),el("span","nav-count",s[2]));if(active===s[0])a.setAttribute("aria-current","page");document.getElementById("navigation").append(a);});
     if(key==="general"&&id)generalDetail(id,params);else if(["skill","card","keyword","faq","product"].includes(key)&&id)detail(key,id);else if(key==="search")search(params);else listing(key,params);
-    window.scrollTo(0,0);main.focus({preventScroll:true});
+    activeRoute=location.hash||"#/generals";var state=viewStates.get(activeRoute);
+    if(state)main.querySelectorAll("details[data-entry-id]").forEach(function(box){box.open=state.open.includes(box.dataset.entryId);});
+    main.focus({preventScroll:true});
+    window.scrollTo(0,state?state.y:0);restoringView=false;rememberView();
   }
   document.getElementById("close-dialog").addEventListener("click",function(){dialog.close();});
   dialog.addEventListener("click",function(e){if(e.target===dialog){var r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
-  document.addEventListener("click",function(e){if(popover&&!popover.host.contains(e.target)){popover.bubble.hidden=true;popover.trigger.setAttribute("aria-expanded","false");popover=null;}});
+  document.addEventListener("click",function(e){if(popover&&!popover.host.contains(e.target))closeKeywordBubble();});
+  window.addEventListener("scroll",function(){rememberView();updateKeywordBubble();},{passive:true});
+  window.addEventListener("resize",closeKeywordBubble,{passive:true});
+  dialog.addEventListener("scroll",updateKeywordBubble,{passive:true});
+  dialog.addEventListener("close",closeKeywordBubble);
+  if(window.visualViewport){window.visualViewport.addEventListener("resize",closeKeywordBubble,{passive:true});window.visualViewport.addEventListener("scroll",closeKeywordBubble,{passive:true});}
   document.getElementById("global-search").addEventListener("submit",function(e){e.preventDefault();var q=document.getElementById("search-input").value.trim();location.hash="#/search?q="+encodeURIComponent(q);});
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&popover){popover.bubble.hidden=true;popover.trigger.setAttribute("aria-expanded","false");popover=null;}if(e.key==="/"&&!dialog.open&&!["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName)){e.preventDefault();document.getElementById("search-input").focus();}});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&popover){e.preventDefault();closeKeywordBubble();}if(e.key==="/"&&!dialog.open&&!["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName)){e.preventDefault();document.getElementById("search-input").focus();}});
   window.addEventListener("hashchange",render);render();
 })();
