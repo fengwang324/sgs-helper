@@ -11,17 +11,17 @@
 
 ## 当前数据状态
 
-**当前 YAML 数据共 1,227 条**：
+**当前 YAML 数据共 1,091 条**：
 
 | 类型 | 数量与说明 |
 | --- | --- |
 | 技能本体 / 技能文本 | `skills` 291 / `skill_versions` 291；文本按模式与产品维护，SkillVersion 不另存来源、版本标签或前序版本链 |
-| FAQ / 裁定 | 87；答案为真实文本，`source` 是逐条列出来源属性的多行文本 |
-| 规则关键词 | 117；关键词不录来源字段 |
+| FAQ / 裁定 | 25；正文及来源以用户复核 JSON 为准，来源允许简短名称或多行明细 |
+| 规则关键词 | 43；关键词不录来源字段 |
 | 武将 / 武将玩法记录 | `generals` 163 / `general_variants` 163；国战数据。编号或称号不同的武将分别保留，不按同名合并 |
 | 产品 / 卡牌 | 产品 1、卡牌 114；其中 81 张游戏牌、33 张指示物 / 配件等非游戏牌条目 |
 
-2026-10-10 实测：schema 7 严格校验 0 错误 / 0 警告，数据库可由全部 YAML 重建。验证详情见 [更新记录](docs/updates.md)。
+2026-10-11 实测：schema 7 严格校验 0 错误 / 0 警告，数据库可由全部 YAML 重建。验证详情见 [更新记录](docs/updates.md)。
 
 - `FAQ.source` 是多行文本；`Keyword` 与 `SkillVersion` 没有来源字段。
 - 武将个体与玩法记录分两层：`General` 存个体 ID / 名称；`GeneralVariant` 保存称号、编号、模式、势力、体力、产品与技能关系，不再有 `variant` 标签。
@@ -47,7 +47,7 @@ python scripts/query.py skill 集智         # 4. 查询
 python scripts/query.py general 孔融
 python scripts/query.py card 杀
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死
+python scripts/query.py keyword 摸牌
 python scripts/query.py product 国战
 python scripts/query.py search 集智
 
@@ -353,7 +353,7 @@ python scripts/query.py skill skill_ji_zhi --json
 python scripts/query.py general 孔融            # 含“获得技能后的完整技能说明”
 python scripts/query.py card 定澜夜明珠         # 分类 / 卡图 / 拓展包 / 效果 / 牌堆 / 攻击范围 / 备注
 python scripts/query.py faq 伤害
-python scripts/query.py keyword 濒死
+python scripts/query.py keyword 摸牌
 python scripts/query.py product 国战
 python scripts/query.py search 集智             # 跨类型检索
 python scripts/query.py stats                   # 数据库构建元信息

@@ -1,23 +1,9 @@
 id: faq_082
-question: 濒死救援从濒死者自己开始吗？
+question: |-
+  濒死救援从濒死者自己开始吗？
 answer: |-
   通常从当前回合角色开始，按逆时针方向依次响应，不是固定先让濒死者自己出桃。濒死者恰好是当前回合角色时，才通常首先轮到自己。
   流程为：先处理“进入濒死时”的合法技能；若尚未脱离濒死，再依上述顺序救援，直到实际体力达到一点或以上。某救援者回复了一点但仍未救活时，该救援者可继续在相应响应机会提供合法救援，再往后进行；已经经过的其他角色不会因为每张桃都重新从头获得机会。无人能继续响应而仍未救活时，进入死亡处理。
   酒只能由濒死者自己使用来救自己。鏖战时桃只能当酒，其他角色不能用桃救该濒死者；仍可按合法技能的时机提供救援。
 variant: 群狼环鼎
-source: |-
-  - type: wiki
-    title: 2014规则集3.0：濒死事件
-    reference: https://gltjk.com/sanguosha/rules/flow/neardeath.html
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第8页：基本牌的通用使用规则
-    reference: 核对资料/手册原图/P08.jpg
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第4页：游戏结束、珠联璧合、鏖战、标记使用
-    reference: 核对资料/手册原图/P04.jpg
-    author: ''
-    displayed_date: null
+source: 2014规则集

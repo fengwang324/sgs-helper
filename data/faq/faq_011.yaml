@@ -1,18 +1,9 @@
 id: faq_011
-question: 全暗角色能直接跟队友一起获胜吗？
+question: |-
+  全暗角色能直接跟队友一起获胜吗？
 answer: |-
   两张武将均暗置的角色不能仅凭暗置牌面与获胜势力相同而获得势力胜利。正常势力胜利要求存活角色已归于同一势力，未确定势力的角色不能直接算作该势力成员。
   另须检查暗置的野心家主将：若该角色仅明置了副将，正因暂按副将势力计算而准备结束游戏，须先明置野心家主将、暴露野心，不能以副将势力直接混入胜利。
   暴露野心后，如满足条件则处理拉拢人心；之后重新检查胜利条件。
 variant: 群狼环鼎
-source: |-
-  - type: official_rule
-    title: 用户提供规则手册第4页：游戏结束、珠联璧合、鏖战、标记使用
-    reference: 核对资料/手册原图/P04.jpg
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第16页：野心家武将、暴露野心、拉拢人心
-    reference: 核对资料/手册原图/P16.jpg
-    author: ''
-    displayed_date: null
+source: 规则手册

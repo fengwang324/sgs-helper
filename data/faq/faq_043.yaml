@@ -1,5 +1,6 @@
 id: faq_043
-question: 火杀连环传导造成伤害，能触发奇珍夺取吗？
+question: |-
+  火杀连环传导造成伤害，能触发奇珍夺取吗？
 answer: |-
   按所引九变篇讲解及通用连环渠道解释，可以，但传导到的角色须实际受到这张属性杀渠道的伤害，并且伤害后装备区仍有奇珍牌。
   属性杀触发连环后，传导伤害保留原伤害的来源、渠道和属性。因此，原伤害来源对每名实际受到这类传导伤害的角色，分别取得一次可获得其装备区一张奇珍牌的机会。
@@ -7,21 +8,6 @@ answer: |-
   手册没有单列传导例子，这一适用范围依据玩家讲解和通用伤害渠道规则。
 variant: 群狼环鼎
 source: |-
-  - type: official_rule
-    title: 用户提供规则手册第19页：紫凤衔佩、九变篇、奇珍、掠闪
-    reference: 核对资料/手册原图/P19.jpg
-    author: ''
-    displayed_date: null
-  - type: wiki
-    title: 2014规则集3.0：伤害事件
-    reference: https://gltjk.com/sanguosha/rules/flow/damage.html
-    author: ''
-    displayed_date: null
-  - type: wiki
-    title: 2014规则集3.0：武将牌操作与连环
-    reference: https://gltjk.com/sanguosha/rules/glossary/herocard.html
-    author: ''
-    displayed_date: null
   - type: bilibili_up
     title: 【构逆】国战终于有新牌扩了噜!! 《九变篇》超模装备争夺战，人人变更副将，《群狼环鼎》（三之三）
     reference: https://www.bilibili.com/opus/1233608692979466248/

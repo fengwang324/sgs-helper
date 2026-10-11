@@ -103,7 +103,7 @@ def test_build_script_refuses_removed_card_fields(tmp_path: Path, data_dir: Path
         ("general", "诸葛亮"),
         ("card", "杀"),
         ("faq", "伤害"),
-        ("keyword", "濒死"),
+        ("keyword", "摸牌"),
         ("product", "群狼环鼎"),
         ("search", "集智"),
     ],

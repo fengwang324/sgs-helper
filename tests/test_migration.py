@@ -250,7 +250,7 @@ def test_search_still_finds_skill_text_without_normalized_text(migration_db: Pat
         names = [r[0] for r in conn.execute("SELECT name FROM skills")]
         faq_body = conn.execute(
             "SELECT body FROM search_index WHERE kind = 'faq' AND entity_id = ?",
-            ("faq_056",),
+            ("faq_043",),
         ).fetchone()[0]
         assert any(name in faq_body for name in names if len(str(name)) >= 2)
     finally:

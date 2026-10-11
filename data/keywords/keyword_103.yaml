@@ -1,4 +1,5 @@
 id: keyword_103
 name: 限定技
-definition: 整局游戏只能使用一次的技能。
+definition: |-
+  整局游戏只能使用一次的技能。
 variant: 群狼环鼎

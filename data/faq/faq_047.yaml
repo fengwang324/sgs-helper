@@ -1,21 +1,12 @@
 id: faq_047
-question: 未确定势力使用遁甲天书，副将按什么条件筛选？
+question: |-
+  未确定势力使用遁甲天书，副将按什么条件筛选？
 answer: |-
   按所引玩家 FAQ，未确定势力的角色通过遁甲天书变更副将时，逐张翻武将牌，取第一张非野心家武将作新副将，不能先指定一个势力再任意挑选。
   该解释还要求：角色此后按新副将势力确定身份，仍检查人数过半及君主规则；之后明置普通主将也不改回主将牌面势力，主将是野心家武将并明置时才转为野心家。
   这套全暗角色处理未在现有手册中写明，来源是玩家解释，不能表述为手册已经确认的规则。
 variant: 群狼环鼎
 source: |-
-  - type: official_rule
-    title: 用户提供规则手册第13页：变更副将、扩展珠联关系
-    reference: 核对资料/手册原图/P13.jpg
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第16页：野心家武将、暴露野心、拉拢人心
-    reference: 核对资料/手册原图/P16.jpg
-    author: ''
-    displayed_date: null
   - type: bilibili_up
     title: 三国杀国战群狼环鼎規則FAQ
     reference: https://www.bilibili.com/opus/1255489386701652032/

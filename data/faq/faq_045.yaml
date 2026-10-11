@@ -1,5 +1,6 @@
 id: faq_045
-question: 分道扬镳与同势力君主同时存在，谁优先？
+question: |-
+  分道扬镳与同势力君主同时存在，谁优先？
 answer: |-
   现有来源没有给出“分道扬镳改变势力”与“同势力君主存活时有君无野”的明确冲突裁定，不能据此断言一定是哪一项优先。
   已能确认的基础效果是：出牌阶段对一名其他同势力角色使用；你摸六张牌并交给目标三张，然后你变为野心家。没有合法的其他同势力目标时不能按这一用途使用；重铸则是弃置此牌、摸一张牌，不执行变为野心家的效果。
@@ -7,16 +8,6 @@ answer: |-
   这些特殊对局情形须先取得明确裁定或全桌约定；不能把候选处理当作官方结论。
 variant: 群狼环鼎
 source: |-
-  - type: official_rule
-    title: 本地仓库实卡照片：分道扬镳
-    reference: 核对资料/实卡照片/card_fen_dao_yang_biao_qlhd_heart_2.jpg
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第11页：君主、阵法召唤、围攻与队列
-    reference: 核对资料/手册原图/P11.jpg
-    author: ''
-    displayed_date: null
   - type: bilibili_up
     title: 【构逆】国战终于有新牌扩了噜!! 《九变篇》超模装备争夺战，人人变更副将，《群狼环鼎》（三之三）
     reference: https://www.bilibili.com/opus/1233608692979466248/

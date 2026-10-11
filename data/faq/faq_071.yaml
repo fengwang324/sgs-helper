@@ -1,18 +1,7 @@
 id: faq_071
-question: 用闪响应杀属于使用，还是一定属于打出？
+question: |-
+  用闪响应杀属于使用，还是一定属于打出？
 answer: |-
-  通常抵消杀时的闪是“使用”，即使它发生在别人的回合、用于响应，也不改称“打出”。
-  使用者声明使用闪，令以自己为目标的杀被抵消；相关技能写“使用闪时／后”，按这一操作判断。
-  “响应”描述为什么作出操作，不自动决定是使用还是打出。决斗中响应所需的杀属于打出，与普通以闪抵消杀的使用不同；有技能明确要求打出某牌时，则按该技能的文字处理。
+  通常抵消杀时的闪是“使用”。
 variant: 群狼环鼎
-source: |-
-  - type: official_rule
-    title: 用户提供规则手册第6页：区域、技能标签、使用与打出
-    reference: 核对资料/手册原图/P06.jpg
-    author: ''
-    displayed_date: null
-  - type: official_rule
-    title: 用户提供规则手册第8页：基本牌的通用使用规则
-    reference: 核对资料/手册原图/P08.jpg
-    author: ''
-    displayed_date: null
+source: 规则手册
