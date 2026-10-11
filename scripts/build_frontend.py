@@ -20,9 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from sgs_helper.db import SCHEMA_VERSION  # noqa: E402
 from sgs_helper.validate import ValidationResult, validate_data_dir  # noqa: E402
 
-SCHEMA_VERSION = 7
 EXPORT_KINDS: tuple[tuple[str, str], ...] = (
     ("product", "products"),
     ("general", "generals"),
@@ -51,7 +51,7 @@ def catalog_from_result(result: ValidationResult) -> dict[str, Any]:
     bundle = result.bundle
     counts = result.counts()
     catalog: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": int(SCHEMA_VERSION),
         "counts": {
             plural: counts[kind]
             for kind, plural in EXPORT_KINDS

@@ -1,5 +1,5 @@
 {
-  "schema_version": 7,
+  "schema_version": 8,
   "counts": {
     "products": 1,
     "generals": 163,
@@ -5925,14 +5925,14 @@
       "id": "skill_ao_cai_guozhan_qlhd_v1",
       "skill_id": "skill_ao_cai",
       "mode": "guozhan",
-      "text": "当你于回合外需要使用或打出基本牌时你可以观看牌堆顶的两张牌，若其中有此牌，你可以使用或打出之。",
+      "text": "当你于回合外需要使用或打出基本牌时，你可以观看牌堆顶的两张牌，若其中有此牌，你可以使用或打出之。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_bao_lie_guozhan_qlhd_v1",
       "skill_id": "skill_bao_lie",
       "mode": "guozhan",
-      "text": "锁定技，出牌阶段开始时，你选择所有攻击范围内含有你的其他势力角色，令这些角色各需对你使用一张【杀】，否则你弃置其一张牌：你对体力值不小于你的其他角色使用【杀】无次数和距离限制。",
+      "text": "锁定技，出牌阶段开始时，你选择所有攻击范围内含有你的其他势力角色，令这些角色各需对你使用一张【杀】，否则你弃置其一张牌；你对体力值不小于你的其他角色使用【杀】无次数和距离限制。",
       "product_id": "qlhd"
     },
     {
@@ -5953,7 +5953,7 @@
       "id": "skill_bei_ge_guozhan_qlhd_v1",
       "skill_id": "skill_bei_ge",
       "mode": "guozhan",
-      "text": "当一名角色受到【杀】造成的伤害后，你可以弃置一一张牌，然后令其进行判定，若其摸两张结果为：其回复1点体力；牌；，伤害来源弃置两张牌；，伤害来源叠置其武将牌。",
+      "text": "当一名角色受到【杀】造成的伤害后，你可以弃置一张牌，然后令其进行判定，若结果为：♥，其回复1点体力；♦，其摸两张牌；♣，伤害来源弃置两张牌；♠，伤害来源叠置其武将牌。",
       "product_id": "qlhd"
     },
     {
@@ -5967,7 +5967,7 @@
       "id": "skill_bing_xin_guozhan_qlhd_v1",
       "skill_id": "skill_bing_xin",
       "mode": "guozhan",
-      "text": "每回合每种牌名限一次，当你需要使用一张基本牌时，你可以展示所有手牌（无牌则跳过）若颜色均相同且数量等于你的体力值，你可以摸一张牌，然后视为使用此基本牌。",
+      "text": "每回合每种牌名限一次，当你需要使用一张基本牌时，你可以展示所有手牌（无牌则跳过），若颜色均相同且数量等于你的体力值，你可以摸一张牌，然后视为使用此基本牌。",
       "product_id": "qlhd"
     },
     {
@@ -5988,14 +5988,14 @@
       "id": "skill_bo_yan_guozhan_qlhd_v1",
       "skill_id": "skill_bo_yan",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以选择一名其他角色，令其将手牌摸至体力上限且其本回合内不能使用或打出手牌结算完成后你可以令其获得纵横“驳言”直到其下回合结束。",
+      "text": "出牌阶段限一次，你可以选择一名其他角色，令其将手牌摸至体力上限且其本回合内不能使用或打出手牌。结算完成后你可以令其获得纵横“驳言”直到其下回合结束。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_bu_qu_guozhan_qlhd_v1",
       "skill_id": "skill_bu_qu",
       "mode": "guozhan",
-      "text": "务堂品房务济成品房机房制育机伦创品济堂务运品闲数：均不同，你将体力回复至1点：存在相同，你移去此牌。",
+      "text": "锁定技，当你处于濒死状态时，你将牌堆顶的一张牌置于你的武将牌上，称为“创”，然后若此牌的点数与你所有其他“创”的点数均不同，你将体力回复至1点；存在相同，你移去此牌。",
       "product_id": "qlhd"
     },
     {
@@ -6233,7 +6233,7 @@
       "id": "skill_fang_zhu_guozhan_qlhd_v1",
       "skill_id": "skill_fang_zhu",
       "mode": "guozhan",
-      "text": "当你受到伤害后，你可以令一名其他角色选择一项：1.摸X张牌，然后将其武将牌叠置；2.弃置X张牌，然后其失去1点体力。（X为你已损失的体力值）。",
+      "text": "当你受到伤害后，你可以令一名其他角色选择一项：1.摸X张牌，然后将其武将牌叠置；2.弃置X张牌，然后其失去1点体力（X为你已损失的体力值）。",
       "product_id": "qlhd"
     },
     {
@@ -6254,7 +6254,7 @@
       "id": "skill_fan_kui_guozhan_qlhd_v1",
       "skill_id": "skill_fan_kui",
       "mode": "guozhan",
-      "text": "当你受到伤害后，你可以获得伤害来源的张牌。",
+      "text": "当你受到伤害后，你可以获得伤害来源的一张牌。",
       "product_id": "qlhd"
     },
     {
@@ -6268,7 +6268,7 @@
       "id": "skill_feng_lve_guozhan_qlhd_v1",
       "skill_id": "skill_feng_lve",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以与一名角色拼点。若你赢，该角色交给你其区域内的两张牌：若其赢，你交给其一张牌。结算完成后你可以令其获得纵横“锋略”直到其下回合结束。",
+      "text": "出牌阶段限一次，你可以与一名角色拼点。若你赢，该角色交给你其区域内的两张牌；若其赢，你交给其一张牌。结算完成后你可以令其获得纵横“锋略”直到其下回合结束。",
       "product_id": "qlhd"
     },
     {
@@ -6289,7 +6289,7 @@
       "id": "skill_feng_yang_guozhan_qlhd_v1",
       "skill_id": "skill_feng_yang",
       "mode": "guozhan",
-      "text": "阵法技，势力与你不同的角色不能弃置或获得与你处于同一队列角色的装备区里的牌。不臣。",
+      "text": "阵法技，势力与你不同的角色不能弃置或获得与你处于同一队列角色的装备区里的牌。",
       "product_id": "qlhd"
     },
     {
@@ -6380,7 +6380,7 @@
       "id": "skill_gui_cai_guozhan_qlhd_v1",
       "skill_id": "skill_gui_cai",
       "mode": "guozhan",
-      "text": "当一名角色的判定牌生效前，你可以打出张牌代替之。G.WE1002。",
+      "text": "当一名角色的判定牌生效前，你可以打出一张牌代替之。",
       "product_id": "qlhd"
     },
     {
@@ -6422,7 +6422,7 @@
       "id": "skill_guo_wu_guozhan_qlhd_v1",
       "skill_id": "skill_guo_wu",
       "mode": "guozhan",
-      "text": "出牌阶段开始时，你可以展示全部手牌，根据你展示的类别数，你获得对应效果：至少一类，从弃牌堆获得一张【杀】：至少两类，此阶段使用牌无距离限制：至少三类，此阶段使用【杀】可以多指定两名角色为目标（此效果每回合限一次）。",
+      "text": "出牌阶段开始时，你可以展示全部手牌，根据你展示的类别数，你获得对应效果：至少一类，从弃牌堆获得一张【杀】；至少两类，此阶段使用牌无距离限制；至少三类，此阶段使用【杀】可以多指定两名角色为目标（此效果每回合限一次）。",
       "product_id": "qlhd"
     },
     {
@@ -6457,7 +6457,7 @@
       "id": "skill_he_yi_guozhan_qlhd_v1",
       "skill_id": "skill_he_yi",
       "mode": "guozhan",
-      "text": "阵法技，与你处于同一队列的角色均视为拥有“慷气”。",
+      "text": "阵法技，与你处于同一队列的角色均视为拥有“慷忾”。",
       "product_id": "qlhd"
     },
     {
@@ -6478,7 +6478,7 @@
       "id": "skill_huai_yi_guozhan_qlhd_v1",
       "skill_id": "skill_huai_yi",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以展示所有手牌若其中存在颜色不同的牌，则你弃置其中任意一种颜色的所有牌，然后获得至多X名角色的各一张牌（X为你此次弃置的牌数）将此次获得的装备牌置于武将牌上，称为“异”。",
+      "text": "出牌阶段限一次，你可以展示所有手牌，若其中存在颜色不同的牌，则你弃置其中任意一种颜色的所有牌，然后获得至多X名角色的各一张牌（X为你此次弃置的牌数）。将此次获得的装备牌置于武将牌上，称为“异”。",
       "product_id": "qlhd"
     },
     {
@@ -6499,7 +6499,7 @@
       "id": "skill_hun_shang_guozhan_qlhd_v1",
       "skill_id": "skill_hun_shang",
       "mode": "guozhan",
-      "text": "副将技，你计算体力上限时减少1个单独的阴阳鱼准备阶段，若你的体力值为1，则你于此回合内视为拥有“英姿”和“英魂”。",
+      "text": "副将技，你计算体力上限时减少1个单独的阴阳鱼。准备阶段，若你的体力值为1，则你于此回合内视为拥有“英姿”和“英魂”。",
       "product_id": "qlhd"
     },
     {
@@ -6541,7 +6541,7 @@
       "id": "skill_jiang_lve_guozhan_qlhd_v1",
       "skill_id": "skill_jiang_lve",
       "mode": "guozhan",
-      "text": "限定技，出牌阶段，你可以发起一个“军令”势力与你相同的其他角色（未确定势力的角色若明置武将牌所确定的势力与你相同，则其此时可以明置武将牌）均可以执行此军令。你和每名执行此军令的角色各加1点体力上限，回复1点体力，然后你摸X张牌（X为以此法回复体力的角色数）。",
+      "text": "限定技，出牌阶段，你可以发起一个“军令”，势力与你相同的其他角色（未确定势力的角色若明置武将牌所确定的势力与你相同，则其此时可以明置武将牌）均可以执行此军令。你和每名执行此军令的角色各加1点体力上限，回复1点体力，然后你摸X张牌（X为以此法回复体力的角色数）。",
       "product_id": "qlhd"
     },
     {
@@ -6590,7 +6590,7 @@
       "id": "skill_jie_ming_guozhan_qlhd_v1",
       "skill_id": "skill_jie_ming",
       "mode": "guozhan",
-      "text": "当你受到伤害后，你可以令一名角色将手牌摸至X张（×为其体力上限且至多为5）。",
+      "text": "当你受到伤害后，你可以令一名角色将手牌摸至X张（X为其体力上限且至多为5）。",
       "product_id": "qlhd"
     },
     {
@@ -6646,7 +6646,7 @@
       "id": "skill_ji_li_2_guozhan_qlhd_v1",
       "skill_id": "skill_ji_li_2",
       "mode": "guozhan",
-      "text": "当你于一回合内使用或打出第×张牌时，你可以摸×张牌（×为你的攻击范围）。",
+      "text": "当你于一回合内使用或打出第X张牌时，你可以摸X张牌（X为你的攻击范围）。",
       "product_id": "qlhd"
     },
     {
@@ -6667,7 +6667,7 @@
       "id": "skill_ji_zhao_guozhan_qlhd_v1",
       "skill_id": "skill_ji_zhao",
       "mode": "guozhan",
-      "text": "限定技，当你处于濒死状态时，你可以将手牌摸至X张，然后你将体力回复至2点，失去“授钱”，获得“仁德”（X为你的体力上限）。",
+      "text": "限定技，当你处于濒死状态时，你可以将手牌摸至X张，然后你将体力回复至2点，失去“授钺”，获得“仁德”（X为你的体力上限）。",
       "product_id": "qlhd"
     },
     {
@@ -6681,7 +6681,7 @@
       "id": "skill_jue_jian_guozhan_qlhd_v1",
       "skill_id": "skill_jue_jian",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以向一名其他角色发起次“军令”（你抽取两张军令并选择一张，另一张对目标不可见），若其不执行，其须执行未被你选择的军令。",
+      "text": "出牌阶段限一次，你可以向一名其他角色发起一次“军令”（你抽取两张军令并选择一张，另一张对目标不可见），若其不执行，其须执行未被你选择的军令。",
       "product_id": "qlhd"
     },
     {
@@ -6758,14 +6758,14 @@
       "id": "skill_kuang_cai_guozhan_qlhd_v1",
       "skill_id": "skill_kuang_cai",
       "mode": "guozhan",
-      "text": "锁定技，你于回合内使用牌无距离和次数限制：弃牌阶段开始时，若你本回合使用过牌且未造成过伤害，本回合你的手牌上限-1；若你本回合未使用过牌，本回合你的手牌上限+1。",
+      "text": "锁定技，你于回合内使用牌无距离和次数限制，弃牌阶段开始时，若你本回合使用过牌且未造成过伤害，本回合你的手牌上限-1；若你本回合未使用过牌，本回合你的手牌上限+1。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_kuang_fu_guozhan_qlhd_v1",
       "skill_id": "skill_kuang_fu",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，当你使用【杀】指定目标后，你可以获得目标角色装备区里的张牌，然后若此【杀】未造成伤害，则你弃置两张手牌。",
+      "text": "出牌阶段限一次，当你使用【杀】指定目标后，你可以获得目标角色装备区里的一张牌，然后若此【杀】未造成伤害，则你弃置两张手牌。",
       "product_id": "qlhd"
     },
     {
@@ -6856,7 +6856,7 @@
       "id": "skill_liu_li_guozhan_qlhd_v1",
       "skill_id": "skill_liu_li",
       "mode": "guozhan",
-      "text": "当你成为【杀】的目标时，你可以弃置张牌并将此【杀】转移给你攻击范围内的一名其他角色（不能是使用此【杀】的角色）。",
+      "text": "当你成为【杀】的目标时，你可以弃置一张牌并将此【杀】转移给你攻击范围内的一名其他角色（不能是使用此【杀】的角色）。",
       "product_id": "qlhd"
     },
     {
@@ -6961,7 +6961,7 @@
       "id": "skill_mi_dao_guozhan_qlhd_v1",
       "skill_id": "skill_mi_dao",
       "mode": "guozhan",
-      "text": "每名势力与你相同的角色的出牌阶段限一次，当其使用【杀】或伤害类锦囊牌指定目标时，其可以交给你一张手牌，令你声明种花色和一种属性，然后其此次使用牌的花色与造成伤害的属性视为与你声明的相同。",
+      "text": "每名势力与你相同的其他角色的出牌阶段限一次，当其使用【杀】或伤害类锦囊牌指定目标时，其可以交给你一张手牌，令你声明一种花色和一种属性，然后其此次使用牌的花色与造成伤害的属性视为与你声明的相同。",
       "product_id": "qlhd"
     },
     {
@@ -7031,7 +7031,7 @@
       "id": "skill_nei_ji_guozhan_qlhd_v1",
       "skill_id": "skill_nei_ji",
       "mode": "guozhan",
-      "text": "出牌阶段开始时，你可以与一名其他势力角色同时展示两张手牌，然后弃置展示的【杀】，若合计弃置的数量大于1，你与其各摸三张牌：否则未弃置的角色视为对弃置的使用一张【决斗】。",
+      "text": "出牌阶段开始时，你可以与一名其他势力角色同时展示两张手牌，然后弃置展示的【杀】，若合计弃置的数量大于1，你与其各摸三张牌；否则未弃置的角色视为对弃置的使用一张【决斗】。",
       "product_id": "qlhd"
     },
     {
@@ -7129,7 +7129,7 @@
       "id": "skill_qing_cheng_guozhan_qlhd_v1",
       "skill_id": "skill_qing_cheng",
       "mode": "guozhan",
-      "text": "出牌阶段，你可以弃置一张黑色牌并选择一名武将牌均明置的其他角色，然后你暗置其张武将牌，若你弃置的牌是装备牌，则你1可以选择另一名其他角色重复此操作。",
+      "text": "出牌阶段，你可以弃置一张黑色牌并选择一名武将牌均明置的其他角色，然后你暗置其一张武将牌，若你弃置的牌是装备牌，则你可以选择另一名其他角色重复此操作。",
       "product_id": "qlhd"
     },
     {
@@ -7150,14 +7150,14 @@
       "id": "skill_qiu_an_guozhan_qlhd_v1",
       "skill_id": "skill_qiu_an",
       "mode": "guozhan",
-      "text": "当你受到伤害时，若你的武将牌上没有牌你可以将造成此伤害的牌置于你的武将牌上，称为“函”，然后防止此伤害。",
+      "text": "当你受到伤害时，若你的武将牌上没有牌，你可以将造成此伤害的牌置于你的武将牌上，称为“函”，然后防止此伤害。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_qi_ao_guozhan_qlhd_v1",
       "skill_id": "skill_qi_ao",
       "mode": "guozhan",
-      "text": "每名角色的回合限两次，当你成为其他势力的角色使用牌的目标后，你可以弃置其一张牌，若如此做，你弃置张牌。",
+      "text": "每名角色的回合限两次，当你成为其他势力的角色使用牌的目标后，你可以弃置其一张牌，若如此做，你弃置一张牌。",
       "product_id": "qlhd"
     },
     {
@@ -7220,7 +7220,7 @@
       "id": "skill_san_chen_guozhan_qlhd_v1",
       "skill_id": "skill_san_chen",
       "mode": "guozhan",
-      "text": "出牌阶段对每名角色限一次，若你的武将牌均明置，你可以令一名角色摸三张牌然后弃置三张牌若因此弃置了类别相同的牌，你暗置此武将牌。",
+      "text": "出牌阶段对每名角色限一次，若你的武将牌均明置，你可以令一名角色摸三张牌，然后弃置三张牌，若因此弃置了类别相同的牌，你暗置此武将牌。",
       "product_id": "qlhd"
     },
     {
@@ -7353,7 +7353,7 @@
       "id": "skill_shu_shen_guozhan_qlhd_v1",
       "skill_id": "skill_shu_shen",
       "mode": "guozhan",
-      "text": "每回合各限一次，当你回复体力时，你可以令名其他角色摸两张牌：当你获得两张或更多牌时，你可以令一名其他角色回复1点体力。",
+      "text": "每回合各限一次，当你回复体力时，你可以令一名其他角色摸两张牌；当你获得两张或更多牌时，你可以令一名其他角色回复1点体力。",
       "product_id": "qlhd"
     },
     {
@@ -7402,7 +7402,7 @@
       "id": "skill_tian_yi_guozhan_qlhd_v1",
       "skill_id": "skill_tian_yi",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以与一名角色拼点：若你赢，于此阶段内你可以多使用张【杀】、使用【杀】无距离限制且可以多选择一个目标；若你没赢，于此阶段内你不能使用【杀】。",
+      "text": "出牌阶段限一次，你可以与一名角色拼点：若你赢，于此阶段内你可以多使用一张【杀】、使用【杀】无距离限制且可以多选择一个目标；若你没赢，于此阶段内你不能使用【杀】。",
       "product_id": "qlhd"
     },
     {
@@ -7430,7 +7430,7 @@
       "id": "skill_tong_ling_guozhan_qlhd_v1",
       "skill_id": "skill_tong_ling",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，当你对势力与你不同的角色造成伤害后，你可以选择一名势力与你相同的角色，令其可以对受到此伤害的角色使用一张牌当此牌结算结束后，若此牌造成过伤害，则你与其各摸两张牌，否则受到你伤害的角色获得你对其造成伤害的牌。",
+      "text": "出牌阶段限一次，当你对势力与你不同的角色造成伤害后，你可以选择一名势力与你相同的角色，令其可以对受到此伤害的角色使用一张牌，当此牌结算结束后，若此牌造成过伤害，则你与其各摸两张牌，否则受到你伤害的角色获得你对其造成伤害的牌。",
       "product_id": "qlhd"
     },
     {
@@ -7500,7 +7500,7 @@
       "id": "skill_wei_meng_guozhan_qlhd_v1",
       "skill_id": "skill_wei_meng",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以获得一名其他角色至多×张手牌，若如此做，你交给其等量的牌（X为你的体力值）结算完成后你可以令其获得纵横“危盟”直到其下回合结束。",
+      "text": "出牌阶段限一次，你可以获得一名其他角色至多X张手牌，若如此做，你交给其等量的牌（X为你的体力值）。结算完成后你可以令其获得纵横“危盟”直到其下回合结束。",
       "product_id": "qlhd"
     },
     {
@@ -7521,21 +7521,21 @@
       "id": "skill_wen_ji_guozhan_qlhd_v1",
       "skill_id": "skill_wen_ji",
       "mode": "guozhan",
-      "text": "出牌阶段开始时，你可以令一名其他角色交给你一张牌，然后若其势力与你相同或未确定势力，则你于此回合内使用此牌无距离和次数限制且不能被响应，否则你交给其张其它牌。",
+      "text": "出牌阶段开始时，你可以令一名其他角色交给你一张牌，然后若其势力与你相同或未确定势力，则你于此回合内使用此牌无距离和次数限制且不能被响应，否则你交给其一张其他牌。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_wu_sheng_guozhan_qlhd_v1",
       "skill_id": "skill_wu_sheng",
       "mode": "guozhan",
-      "text": "你可以将一张红色牌当【杀】使用或打出：你使用♦【杀】无距离限制。",
+      "text": "你可以将一张红色牌当【杀】使用或打出；你使用♦【杀】无距离限制。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_wu_shuang_guozhan_qlhd_v1",
       "skill_id": "skill_wu_shuang",
       "mode": "guozhan",
-      "text": "锁定技，你的【杀】需要两张【闪】才能抵消；与你【决斗】的角色每次需要打出两张【杀】：你使用非转化的【决斗】能选择至多三名角色为目标。",
+      "text": "锁定技，你的【杀】需要两张【闪】才能抵消；与你【决斗】的角色每次需要打出两张【杀】；你使用非转化的【决斗】能选择至多三名角色为目标。",
       "product_id": "qlhd"
     },
     {
@@ -7633,21 +7633,21 @@
       "id": "skill_xuan_lve_guozhan_qlhd_v1",
       "skill_id": "skill_xuan_lve",
       "mode": "guozhan",
-      "text": "当你失去装备区里的牌或于弃牌阶段弃置过至少两张牌后，你可以弃置一名其他角色的-张牌。",
+      "text": "当你失去装备区里的牌或于弃牌阶段弃置过至少两张牌后，你可以弃置一名其他角色的一张牌。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_xun_ji_guozhan_qlhd_v1",
       "skill_id": "skill_xun_ji",
       "mode": "guozhan",
-      "text": "你使用【杀】可以多指定至多两名目标，结算后若对所有目标均造成伤害，此【杀】不计次数。无血刃，扬越为墟。",
+      "text": "你使用【杀】可以多指定至多两名目标，结算后若对所有目标均造成伤害，此【杀】不计次数。",
       "product_id": "qlhd"
     },
     {
       "id": "skill_xun_xun_guozhan_qlhd_v1",
       "skill_id": "skill_xun_xun",
       "mode": "guozhan",
-      "text": "摸牌阶段开始时，你可以观看牌堆顶的四张牌，将其中两张牌以任意顺序置于牌堆顶其余以任意顺序置于牌堆底。",
+      "text": "摸牌阶段开始时，你可以观看牌堆顶的四张牌，将其中两张牌以任意顺序置于牌堆顶，其余以任意顺序置于牌堆底。",
       "product_id": "qlhd"
     },
     {
@@ -7668,7 +7668,7 @@
       "id": "skill_ying_hun_guozhan_qlhd_v1",
       "skill_id": "skill_ying_hun",
       "mode": "guozhan",
-      "text": "准备阶段，你可以令一名其他角色：摸X张牌，然后弃置一张牌；或摸一张牌，然后弃置X张牌。（X为你已损失的体力值）。",
+      "text": "准备阶段，你可以令一名其他角色：摸X张牌，然后弃置一张牌；或摸一张牌，然后弃置X张牌（X为你已损失的体力值）。",
       "product_id": "qlhd"
     },
     {
@@ -7696,7 +7696,7 @@
       "id": "skill_ying_zi_guozhan_qlhd_v1",
       "skill_id": "skill_ying_zi",
       "mode": "guozhan",
-      "text": "锁定技，摸牌阶段，你多摸一张牌：你的手牌上限为X（×为你的体力上限）。",
+      "text": "锁定技，摸牌阶段，你多摸一张牌；你的手牌上限为X（X为你的体力上限）。",
       "product_id": "qlhd"
     },
     {
@@ -7836,7 +7836,7 @@
       "id": "skill_zhen_te_guozhan_qlhd_v1",
       "skill_id": "skill_zhen_te",
       "mode": "guozhan",
-      "text": "每回合限一次，当你成为其他角色使用黑色普通锦囊牌或黑色基本牌的目标后，你可以令使用者选择一项：1.本回合其不能使用与之颜色相同的牌：2.此牌对你无效。",
+      "text": "每回合限一次，当你成为其他角色使用黑色普通锦囊牌或黑色基本牌的目标后，你可以令使用者选择一项：1.本回合其不能使用与之颜色相同的牌；2.此牌对你无效。",
       "product_id": "qlhd"
     },
     {
@@ -7850,7 +7850,7 @@
       "id": "skill_zhi_dao_guozhan_qlhd_v1",
       "skill_id": "skill_zhi_dao",
       "mode": "guozhan",
-      "text": "锁定技，出牌阶段开始时，你选择一名其他角色，直到回合结束，你计算与其的距离视为且你不能使用牌指定除你与其外的角色为目标然后当你于此出牌阶段内第一次对其造成伤害后，你获得其区域里的一张牌。",
+      "text": "锁定技，出牌阶段开始时，你选择一名其他角色，直到回合结束，你计算与其的距离视为1且你不能使用牌指定除你与其外的角色为目标，然后当你于此出牌阶段内第一次对其造成伤害后，你获得其区域里的一张牌。",
       "product_id": "qlhd"
     },
     {
@@ -7878,7 +7878,7 @@
       "id": "skill_zhi_wei_guozhan_qlhd_v1",
       "skill_id": "skill_zhi_wei",
       "mode": "guozhan",
-      "text": "当你明置此武将牌时，你可以选择一名其他角色。该角色造成伤害后，你摸一张牌：该角色受到伤害后，你弃置一张手牌：弃牌阶段结束时，该角色获得你此阶段弃置的牌：其死亡时，若你所有武将牌均明置，你暗置此武将牌；若其未死亡，此武将牌不能被暗置。",
+      "text": "当你明置此武将牌时，你可以选择一名其他角色。该角色造成伤害后，你摸一张牌；该角色受到伤害后，你弃置一张手牌；弃牌阶段结束时，该角色获得你此阶段弃置的牌；其死亡时，若你所有武将牌均明置，你暗置此武将牌；若其未死亡，此武将牌不能被暗置。",
       "product_id": "qlhd"
     },
     {
@@ -7906,7 +7906,7 @@
       "id": "skill_zhuo_sheng_guozhan_qlhd_v1",
       "skill_id": "skill_zhuo_sheng",
       "mode": "guozhan",
-      "text": "当你得到牌后，你可以令你本回合使用的下张牌造成的伤害+1（不可叠加）。",
+      "text": "当你得到牌后，你可以令你本回合使用的下一张牌造成的伤害+1（不可叠加）。",
       "product_id": "qlhd"
     },
     {
@@ -7927,7 +7927,7 @@
       "id": "skill_zhu_wei_guozhan_qlhd_v1",
       "skill_id": "skill_zhu_wei",
       "mode": "guozhan",
-      "text": "出牌阶段限一次，你可以弃置两张牌并选择一名角色，若该角色死亡可以令场上形成新的围攻，你对其造成2点伤害，否则你摸张牌。",
+      "text": "出牌阶段限一次，你可以弃置两张牌并选择一名角色，若该角色死亡可以令场上形成新的围攻，你对其造成2点伤害，否则你摸一张牌。",
       "product_id": "qlhd"
     },
     {
@@ -7948,7 +7948,7 @@
       "id": "skill_zong_yu_guozhan_qlhd_v1",
       "skill_id": "skill_zong_yu",
       "mode": "guozhan",
-      "text": "当【六龙骖驾】进入其他角色的装备区后，若你装备区里有坐骑牌，则你可以与其交换装备区里所有的坐骑牌。当你使用一张坐骑牌时，若弃牌堆中或场上存在【六龙骖驾】，则你可以将此次使用的坐骑牌放入弃牌堆，然后将该【六龙骏驾】放入你的装备区。",
+      "text": "当【六龙骖驾】进入其他角色的装备区后，若你装备区里有坐骑牌，则你可以与其交换装备区里所有的坐骑牌。当你使用一张坐骑牌时，若弃牌堆中或场上存在【六龙骖驾】，则你可以将此次使用的坐骑牌放入弃牌堆，然后将该【六龙骖驾】放入你的装备区。",
       "product_id": "qlhd"
     }
   ],
@@ -7965,6 +7965,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -7979,6 +7980,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -7993,6 +7995,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8007,12 +8010,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "距离为1的一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "距离为1的一名其他角色。",
             "effect": "将【兵粮寸断】置于该角色的判定区里，若判定结果不为♣，跳过其摸牌阶段。"
           }
         ]
@@ -8030,13 +8034,14 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有没有势力的角色",
-            "effect": "每名角色依次选择一项：1.明置一张武将牌，摸一张牌；2.弃置一张装备牌；3.失去1点体力。（若【敕令】因使用以外的效果进入弃牌堆前，则改为将此牌移出游戏，然后在此回合结束前，没有势力的角色依次选择执行敕令的效果。）"
+            "timing": "出牌阶段。",
+            "target": "所有没有势力的角色。",
+            "effect": "每名角色依次选择一项：1.明置一张武将牌，摸一张牌；2.弃置一张装备牌；3.失去1点体力。（若【敕令】因使用以外的效果进入弃牌堆前，则改为将此牌移出游戏，然后在此回合结束前，没有势力的角色依次选择执行敕令的效果。）。"
           }
         ]
       }
@@ -8053,6 +8058,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8067,6 +8073,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8081,6 +8088,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8095,6 +8103,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8109,6 +8118,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8132,6 +8142,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8146,6 +8157,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8160,12 +8172,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名确定势力的角色",
+            "timing": "出牌阶段。",
+            "target": "一名确定势力的角色。",
             "effect": "目标可以变更副将，然后你对目标造成1点伤害。"
           }
         ]
@@ -8183,6 +8196,7 @@
       "attack_range": "4",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8197,6 +8211,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8211,19 +8226,14 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": true,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名与你势力相同的其他角色",
-            "effect": "你摸六张牌并交给目标三张牌，然后你成为野心家。重铸：出牌阶段，你可以将此牌置入弃牌堆，然后摸一张牌。"
-          },
-          {
-            "label": "重铸",
-            "timing": "出牌阶段",
-            "target": "无（不视为使用牌）",
-            "effect": "将此牌置入弃牌堆，然后摸一张牌。"
+            "timing": "出牌阶段。",
+            "target": "一名与你势力相同的其他角色。",
+            "effect": "你摸六张牌并交给目标三张牌，然后你成为野心家。"
           }
         ]
       }
@@ -8240,12 +8250,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有角色",
+            "timing": "出牌阶段。",
+            "target": "所有角色。",
             "effect": "每名目标依次选择并使用弃牌堆中的一张奇珍牌，没有则改为摸一张牌。"
           }
         ]
@@ -8263,6 +8274,7 @@
       "attack_range": "3",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8277,6 +8289,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8300,12 +8313,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "你",
+            "timing": "出牌阶段。",
+            "target": "你。",
             "effect": "你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。"
           }
         ]
@@ -8323,6 +8337,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8337,12 +8352,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "体力值不是最少的一名角色",
+            "timing": "出牌阶段。",
+            "target": "体力值不是最少的一名角色。",
             "effect": "除其外的每名角色各可以选择一项：1. 弃置一张手牌，视为对其使用一张【杀】；2. 弃置其一张牌。魏：魏势力角色选择1时无需弃牌，选择2时可获得其弃置的牌。"
           }
         ]
@@ -8360,12 +8376,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
             "timing": "出牌阶段。",
-            "target": "一名有手牌的角色",
+            "target": "一名有手牌的角色。",
             "effect": "目标对应的角色展示一张手牌。你可以弃置一张与所展示牌相同花色的手牌，使【火攻】对其造成1点火焰伤害。"
           }
         ]
@@ -8383,6 +8400,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8397,6 +8415,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8420,6 +8439,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8443,6 +8463,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8457,12 +8478,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "装备区里有武器牌的一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "装备区里有武器牌的一名其他角色。",
             "effect": "该角色需对其攻击范围内，由你指定的另一名角色使用一张【杀】，否则将装备区里的武器牌交给你。"
           }
         ]
@@ -8480,6 +8502,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8494,6 +8517,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8523,6 +8547,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8537,12 +8562,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "一名其他角色。",
             "effect": "由该角色开始，你与其轮流打出一张【杀】，首先不出【杀】的一方受到另一方造成的1点伤害。"
           }
         ]
@@ -8560,6 +8586,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8574,12 +8601,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "任意一名角色",
+            "timing": "出牌阶段。",
+            "target": "任意一名角色。",
             "effect": "这些角色各选择一项：1. 视为使用一张【杀】；2. 摸一张牌。蜀：蜀势力角色选择1时此【杀】伤害+1，选择2时改为摸两张牌。"
           }
         ]
@@ -8597,6 +8625,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8620,12 +8649,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "一名其他角色。",
             "effect": "【乐不思蜀】需横置于该角色的判定区里，若判定结果不为♥，跳过其出牌阶段。"
           }
         ]
@@ -8643,13 +8673,14 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
             "timing": "出牌阶段。",
             "target": "有势力的你和除你的势力外的一个势力的所有角色。",
-            "effect": "出牌阶段，对你和你选择的一个其他势力的所有角色使用，你选择一项：1. 回复X点体力；2. 摸X张牌。然后其他每名目标角色各摸一张牌且重置其武将牌。（X为该势力存活角色数）"
+            "effect": "出牌阶段，对你和你选择的一个其他势力的所有角色使用，你选择一项：1. 回复X点体力；2. 摸X张牌。然后其他每名目标角色各摸一张牌且重置其武将牌。（X为该势力存活角色数）。"
           }
         ]
       }
@@ -8666,6 +8697,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8680,19 +8712,14 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": true,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有的大势力角色或所有的小势力角色",
+            "timing": "出牌阶段。",
+            "target": "所有的大势力角色或所有的小势力角色。",
             "effect": "若目标角色处于连环状态，则其摸一张牌；不处于连环状态，则其横置。"
-          },
-          {
-            "label": "重铸",
-            "timing": "出牌阶段",
-            "target": "无（不视为使用牌）",
-            "effect": "将此牌放入弃牌堆，然后摸一张牌。"
           }
         ]
       }
@@ -8709,6 +8736,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -8732,6 +8760,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8746,6 +8775,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8760,6 +8790,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8774,6 +8805,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8788,6 +8820,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8802,6 +8835,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8816,6 +8850,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8830,6 +8865,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8844,6 +8880,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8858,6 +8895,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8872,6 +8910,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8886,6 +8925,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8900,6 +8940,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8914,6 +8955,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8928,6 +8970,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8942,6 +8985,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8956,6 +9000,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8970,6 +9015,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8984,6 +9030,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -8998,6 +9045,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9012,6 +9060,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9026,6 +9075,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9040,6 +9090,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9054,6 +9105,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9068,6 +9120,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9082,6 +9135,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9096,6 +9150,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9110,12 +9165,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有其他角色",
+            "timing": "出牌阶段。",
+            "target": "所有其他角色。",
             "effect": "每名目标角色需打出一张【杀】，否则受到1点伤害。"
           }
         ]
@@ -9133,6 +9189,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9147,6 +9204,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9161,6 +9219,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9175,6 +9234,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9189,6 +9249,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9203,6 +9264,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9217,6 +9279,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9231,6 +9294,7 @@
       "attack_range": "",
       "deck_info": null,
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9245,12 +9309,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "至多两名其他角色",
+            "timing": "出牌阶段。",
+            "target": "至多两名其他角色。",
             "effect": "目标依次展示手牌，然后你获得目标所有因此展示的装备牌。"
           }
         ]
@@ -9268,6 +9333,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9282,6 +9348,7 @@
       "attack_range": "3",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9296,6 +9363,7 @@
       "attack_range": "5",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9310,6 +9378,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9324,6 +9393,7 @@
       "attack_range": "3",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9338,6 +9408,7 @@
       "attack_range": "",
       "deck_info": "国战标准版：红桃10×1、Q×1；方块10×1、J×1、Q×1；黑桃5×1、7×1、8×2、9×1、10×1、J×1；梅花2×1、3×1、4×1、5×1、8×1、9×1、10×1、J×2，共21张。九变篇：方块9×1；黑桃4×1、5×1；梅花4×1、5×1、6×1、7×1、10×1，共8张。",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -9361,6 +9432,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -9384,6 +9456,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -9407,6 +9480,7 @@
       "attack_range": "X（X为你的已损失体力值）",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9421,12 +9495,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名装备区里有牌的其他角色",
+            "timing": "出牌阶段。",
+            "target": "一名装备区里有牌的其他角色。",
             "effect": "目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。"
           }
         ]
@@ -9444,12 +9519,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "距离为1且区域内有牌的一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "距离为1且区域内有牌的一名其他角色。",
             "effect": "获得目标对应的角色的区域里的一张牌。"
           }
         ]
@@ -9467,6 +9543,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9481,6 +9558,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -9510,12 +9588,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有角色",
+            "timing": "出牌阶段。",
+            "target": "所有角色。",
             "effect": "每名目标角色回复1点体力。\n【桃园结义】对对应的角色未受伤的目标无效。"
           }
         ]
@@ -9533,6 +9612,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9547,6 +9627,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9561,19 +9642,14 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": true,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "至多两名角色",
-            "effect": "分别横置或重置其副将。（被横置副将武将牌的角色处于“连环状态”）"
-          },
-          {
-            "label": "重铸",
-            "timing": "出牌阶段",
-            "target": "无（不视为使用牌）",
-            "effect": "将此牌置入弃牌堆，然后摸一张牌。"
+            "timing": "出牌阶段。",
+            "target": "至多两名角色。",
+            "effect": "分别横置或重置其副将。（被横置副将武将牌的角色处于“连环状态”）。"
           }
         ]
       }
@@ -9590,12 +9666,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "一名其他角色",
+            "timing": "出牌阶段。",
+            "target": "一名其他角色。",
             "effect": "你选择弃牌堆中一张奇珍牌，目标使用之；目标本回合视为在你攻击范围内。"
           }
         ]
@@ -9613,12 +9690,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有其他角色",
+            "timing": "出牌阶段。",
+            "target": "所有其他角色。",
             "effect": "每名目标角色需打出一张【闪】，否则受到1点伤害。"
           }
         ]
@@ -9636,12 +9714,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有角色",
+            "timing": "出牌阶段。",
+            "target": "所有角色。",
             "effect": "每名角色各展示所有手牌，然后你选择一项：1.令其弃置两张类别不同的手牌；2.弃置其一张手牌。群：群势力角色选择完成后若没有手牌，则将手牌摸至当前体力值。"
           }
         ]
@@ -9659,12 +9738,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "所有角色",
+            "timing": "出牌阶段。",
+            "target": "所有角色。",
             "effect": "你从牌堆亮出等同于现存角色数量的牌，每名目标角色选择并获得其中的一张。"
           }
         ]
@@ -9682,6 +9762,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9696,6 +9777,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
@@ -9719,12 +9801,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "你",
+            "timing": "出牌阶段。",
+            "target": "你。",
             "effect": "摸两张牌。"
           }
         ]
@@ -9742,6 +9825,7 @@
       "attack_range": "3",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9756,6 +9840,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9770,12 +9855,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "你和与你势力相同的角色",
+            "timing": "出牌阶段。",
+            "target": "你和与你势力相同的角色。",
             "effect": "每名目标角色各摸两张牌，然后弃置两张牌。"
           }
         ]
@@ -9793,12 +9879,13 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": {
         "use_methods": [
           {
             "label": "",
-            "timing": "出牌阶段",
-            "target": "有明置武将牌且与你势力不同的一名角色",
+            "timing": "出牌阶段。",
+            "target": "有明置武将牌且与你势力不同的一名角色。",
             "effect": "该角色摸一张牌，然后你摸三张牌。"
           }
         ]
@@ -9816,6 +9903,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9830,6 +9918,7 @@
       "attack_range": "3",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9844,6 +9933,7 @@
       "attack_range": "2",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9858,6 +9948,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9868,10 +9959,11 @@
       "name": "诏书",
       "image": "card_zhao_shu_qlhd_club_3.jpg",
       "card_set": "不臣篇",
-      "effect": "●当【决令】移出游戏后，将【诏书】置入牌堆底。●当你使用【诏书】后，将此牌放置在你的武将牌上，势力与你相同的角色出牌阶段限一次，该角色可以将一张手牌（小势力角色改为至多两张手牌）置于【诏书】上；出牌阶段限一次，若【诏书】上有四张花色均不同的牌，你可以将【诏书】上所有的牌放入弃牌堆，然后随机获得一张势力锦囊。\"破除浊流，书论伊尹，再四稽之，勿负朕意！\"——刘协",
+      "effect": "●当【决令】移出游戏后，将【诏书】置入牌堆底。●当你使用【诏书】后，将此牌放置在你的武将牌上，势力与你相同的角色出牌阶段限一次，该角色可以将一张手牌（小势力角色改为至多两张手牌）置于【诏书】上；出牌阶段限一次，若【诏书】上有四张花色均不同的牌，你可以将【诏书】上所有的牌放入弃牌堆，然后随机获得一张势力锦囊。\n“破除浊流，书论伊尹，再四稽之，勿负朕意！”\n——刘协",
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9886,6 +9978,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": true,
       "rules": {
         "use_methods": [
           {
@@ -9893,12 +9986,6 @@
             "timing": "出牌阶段。",
             "target": "一名有手牌或暗置的武将牌的其他角色。",
             "effect": "观看其一张暗置的武将牌或其手牌。"
-          },
-          {
-            "label": "重铸",
-            "timing": "出牌阶段",
-            "target": "无（不视为使用牌）",
-            "effect": "将此牌置入弃牌堆，然后摸一张牌。"
           }
         ]
       }
@@ -9915,6 +10002,7 @@
       "attack_range": "1",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9929,6 +10017,7 @@
       "attack_range": "4",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     },
     {
@@ -9943,6 +10032,7 @@
       "attack_range": "",
       "deck_info": "",
       "note": "",
+      "recast": false,
       "rules": null
     }
   ],
@@ -10181,7 +10271,7 @@
     {
       "id": "keyword_029",
       "name": "队列",
-      "definition": "连续相邻的若干名（至少2名）势力相同的角色称为同一“队列”。",
+      "definition": "按座次连续相邻、势力相同的至少两名角色，组成同一队列。",
       "variant": "群狼环鼎"
     },
     {
@@ -10193,7 +10283,7 @@
     {
       "id": "keyword_031",
       "name": "阵法技",
-      "definition": "武将牌上标有阵法类别的技能，可以依据各自的队列、围攻等条件产生效果；拥有阵法技的角色可在自己的出牌阶段发起阵法召唤。\n技能须有效并满足其自身条件；召唤不是所有阵法技统一的生效开关。当前手册没有旧版“至少四名存活角色”的统一门槛，三人局也须按实际队列、围攻关系判断。",
+      "definition": "武将牌上标有阵法类别的技能，可以依据各自的队列、围攻等条件产生效果；拥有阵法技的角色可在自己的出牌阶段发起阵法召唤。\n技能有效且满足其自身条件时，按技能描述产生效果，无须先进行阵法召唤。",
       "variant": "群狼环鼎"
     },
     {

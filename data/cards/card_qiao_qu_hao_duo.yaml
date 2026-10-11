@@ -8,9 +8,9 @@ card_set: 九变篇
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        至多两名其他角色
+        至多两名其他角色。
       effect: |-
         目标依次展示手牌，然后你获得目标所有因此展示的装备牌。
 deck_info: ""

@@ -221,6 +221,7 @@ def test_query_card_json_is_single_layer(cli_db: Path) -> None:
     assert set(payload) == {"kind", "card", "effect", "attack_range", "deck_info", "note", "rules", "generals", "skills", "cards", "keywords"}
     assert "printings" not in payload
     assert payload["card"]["name"] == "杀"
+    assert payload["card"]["recast"] is False
     assert payload["card"]["category_3"] == "杀"
     assert "card_id" not in payload["card"] and "suit" not in payload["card"]
     assert payload["effect"] == ""
@@ -230,3 +231,13 @@ def test_query_card_json_is_single_layer(cli_db: Path) -> None:
     assert payload["rules"] == {"use_methods": [
         {"timing": "出牌阶段限一次。", "target": "你的攻击范围内的一名其他角色。", "effect": "你对目标对应的角色造成1点伤害。"}
     ]}
+
+
+def test_query_cli_round_trips_recast_flag(synth: Path, tmp_path: Path) -> None:
+    source = synth / "cards" / "demo_trick.yaml"
+    source.write_text(source.read_text(encoding="utf-8") + "recast: true\n", encoding="utf-8")
+    db_path = _synth_db(synth, tmp_path)
+    result = run_script("scripts/query.py", "--db", str(db_path), "--json", "card", "演示锦囊")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["card"]["recast"] is True

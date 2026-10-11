@@ -7,9 +7,9 @@ image: card_le_bu_si_shu_qlhd_heart_6.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        一名其他角色
+        一名其他角色。
       effect: |-
         【乐不思蜀】需横置于该角色的判定区里，若判定结果不为♥，跳过其出牌阶段。
 deck_info: ""

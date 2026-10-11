@@ -8,9 +8,9 @@ card_set: 九变篇
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        一名确定势力的角色
+        一名确定势力的角色。
       effect: |-
         目标可以变更副将，然后你对目标造成1点伤害。
 deck_info: ""

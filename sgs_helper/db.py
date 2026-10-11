@@ -34,7 +34,7 @@ from .loader import DataBundle, Origin, manifest_digest
 from .validate import ValidationResult, validate_data_dir
 
 #: 生成物结构版本；改动表结构时递增，便于以后做迁移提示
-SCHEMA_VERSION = "7"
+SCHEMA_VERSION = "8"
 
 #: 每种实体的标量/多值列（``id`` 恒为主键，不在此列出）
 COLUMNS: dict[str, tuple[str, ...]] = {
@@ -50,7 +50,7 @@ COLUMNS: dict[str, tuple[str, ...]] = {
     ),
     "card": (
         "category_1", "category_2", "category_3", "name", "image", "card_set",
-        "effect", "attack_range", "deck_info", "note", "rules",
+        "effect", "attack_range", "deck_info", "note", "recast", "rules",
     ),
     "faq": ("question", "answer", "variant", "source"),
     "keyword": ("name", "definition", "variant"),
@@ -61,6 +61,7 @@ JSON_COLUMNS: frozenset[str] = frozenset({"general_sets", "card_sets", "zhulianb
 
 _INT_COLUMNS = frozenset({"release_year", "yaml_line"})
 _REAL_COLUMNS = frozenset({"hp"})
+_BOOL_COLUMNS = frozenset({"recast"})
 
 #: 每个实体表都会追加的可追溯性列
 TRACE_COLUMNS: tuple[str, ...] = ("yaml_file", "yaml_line")
@@ -162,6 +163,8 @@ def fts_query(text: str) -> str | None:
 
 
 def _column_type(column: str) -> str:
+    if column in _BOOL_COLUMNS:
+        return "INTEGER"
     if column in _INT_COLUMNS:
         return "INTEGER"
     if column in _REAL_COLUMNS:

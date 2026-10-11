@@ -8,9 +8,9 @@ card_set: 九变篇
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        所有角色
+        所有角色。
       effect: |-
         每名目标依次选择并使用弃牌堆中的一张奇珍牌，没有则改为摸一张牌。
 deck_info: ""

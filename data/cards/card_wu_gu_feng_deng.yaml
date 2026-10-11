@@ -7,9 +7,9 @@ image: card_wu_gu_feng_deng_qlhd_heart_3.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        所有角色
+        所有角色。
       effect: |-
         你从牌堆亮出等同于现存角色数量的牌，每名目标角色选择并获得其中的一张。
 deck_info: ""

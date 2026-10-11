@@ -2,9 +2,9 @@
 
 YAML 是唯一权威源。修改 `sgs_helper/schema.py` 与 `sgs_helper/db.py` 后，运行 `python scripts/build_db.py` 全量重建；不要直接修改数据库。
 
-- schema 版本：`7`
-- 生成时间：`2026-10-11T22:01:27+08:00`
-- YAML 清单指纹：`c7e994a8ed3aef8fbb84f4efb47039e7e615bd4238062bb701fca50104768b00`
+- schema 版本：`8`
+- 生成时间：`2026-10-12T00:05:23+08:00`
+- YAML 清单指纹：`312d8dbd34dd7329042430053d14f35f9322fd7585be92464d03859bc6a340fd`
 - 全文检索 FTS5：启用
 
 ## 实体数量
@@ -29,6 +29,7 @@ YAML 是唯一权威源。修改 `sgs_helper/schema.py` 与 `sgs_helper/db.py` �
 - `cards.deck_info` 是游戏牌的牌堆数量、花色及点数文本；空字符串表示待录入，指示物为 SQL NULL。
 - `cards.rules` 是基本牌 / 锦囊牌的使用方法 JSON，只含 `use_methods`，各方法允许 `label`、`timing`、`target`、`effect`；空字段省略。装备和指示物为 SQL NULL。
 - `cards.note` 是可选资料备注，补充裁定归 FAQ；卡牌没有技能引用。
+- `cards.recast` 为布尔标记，SQLite使用INTEGER；通用说明归重铸关键词，不复制成每张牌的使用方法。
 - `card_set` 只用于游戏牌，关联方式为 `Card.card_set ∈ Product.card_sets`；指示物为 SQL NULL。
 - `general_sets`、`card_sets`、`zhulianbihe` 是 JSON 数组；同一规则卡不因花色和点数拆成多个记录。
 - FAQ 的 `source` 仍是多行文本；没有独立 `sources` 表。
@@ -50,6 +51,7 @@ CREATE TABLE cards (
   attack_range TEXT,
   deck_info TEXT,
   note TEXT,
+  recast INTEGER,
   rules TEXT,
   yaml_file TEXT,
   yaml_line INTEGER

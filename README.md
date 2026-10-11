@@ -21,7 +21,7 @@
 | 武将 / 武将玩法记录 | `generals` 163 / `general_variants` 163；国战数据。编号或称号不同的武将分别保留，不按同名合并 |
 | 产品 / 卡牌 | 产品 1、卡牌 114；其中 81 张游戏牌、33 张指示物 / 配件等非游戏牌条目 |
 
-2026-10-11 实测：schema 7 严格校验 0 错误 / 0 警告，数据库可由全部 YAML 重建。验证详情见 [更新记录](docs/updates.md)。
+2026-10-12 实测：schema 8 严格校验 0 错误 / 0 警告，数据库可由全部 YAML 重建。验证详情见 [更新记录](docs/updates.md)。
 
 - `FAQ.source` 是多行文本；`Keyword` 与 `SkillVersion` 没有来源字段。
 - 武将个体与玩法记录分两层：`General` 存个体 ID / 名称；`GeneralVariant` 保存称号、编号、模式、势力、体力、产品与技能关系，不再有 `variant` 标签。

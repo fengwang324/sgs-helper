@@ -7,9 +7,9 @@ image: card_wu_zhong_sheng_you_qlhd_heart_7.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        你
+        你。
       effect: |-
         摸两张牌。
 deck_info: ""

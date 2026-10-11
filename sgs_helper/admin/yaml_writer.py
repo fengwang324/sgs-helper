@@ -202,7 +202,7 @@ def entity_to_yaml_dict(kind: str, entity: Any) -> dict:
         ordered = {
             key: value
             for key, value in ordered.items()
-            if value not in (None, "", [], {})
+            if value not in (None, "", [], {}) and not (key == "recast" and value is False)
         }
         if data.get("category_1") == "游戏牌":
             ordered["deck_info"] = BlockStr(data.get("deck_info") or "")

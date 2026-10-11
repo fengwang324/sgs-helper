@@ -4,6 +4,7 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 知己知彼
 image: card_zhi_ji_zhi_bi_qlhd_club_3.jpg
+recast: true
 rules:
   use_methods:
     - timing: |-
@@ -12,12 +13,4 @@ rules:
         一名有手牌或暗置的武将牌的其他角色。
       effect: |-
         观看其一张暗置的武将牌或其手牌。
-    - label: |-
-        重铸
-      timing: |-
-        出牌阶段
-      target: |-
-        无（不视为使用牌）
-      effect: |-
-        将此牌置入弃牌堆，然后摸一张牌。
 deck_info: ""

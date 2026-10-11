@@ -2,4 +2,4 @@ id: skill_san_chen_guozhan_qlhd_v1
 skill_id: skill_san_chen
 mode: guozhan
 product_id: qlhd
-text: 出牌阶段对每名角色限一次，若你的武将牌均明置，你可以令一名角色摸三张牌然后弃置三张牌若因此弃置了类别相同的牌，你暗置此武将牌。
+text: 出牌阶段对每名角色限一次，若你的武将牌均明置，你可以令一名角色摸三张牌，然后弃置三张牌，若因此弃置了类别相同的牌，你暗置此武将牌。

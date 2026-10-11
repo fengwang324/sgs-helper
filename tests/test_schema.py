@@ -133,6 +133,7 @@ def test_card_is_single_layer() -> None:
         "attack_range",
         "deck_info",
         "note",
+        "recast",
         "rules",
     }
     card = _card()
@@ -182,6 +183,13 @@ def test_card_effect_and_attack_range_are_text() -> None:
         _card(effect={"text": "旧嵌套结构", "skills": []})
 
 
+def test_card_recast_is_a_default_false_game_card_flag() -> None:
+    assert _card().recast is False
+    assert _card(recast=True).recast is True
+    with pytest.raises(ValidationError):
+        _card(recast="not a boolean")
+
+
 def test_card_rules_are_use_methods_without_note() -> None:
     card = _card(rules={"use_methods": [{"label": "使用", "timing": "出牌阶段", "target": "一名角色", "effect": "造成伤害"}]})
     assert card.rules.use_methods[0].label == "使用"
@@ -192,7 +200,7 @@ def test_card_rules_are_use_methods_without_note() -> None:
 
 
 def test_indicator_rejects_game_card_fields() -> None:
-    for field, value in (("rules", {"use_methods": []}), ("card_set", "牌堆"), ("deck_info", "1张"), ("attack_range", "5")):
+    for field, value in (("rules", {"use_methods": []}), ("card_set", "牌堆"), ("deck_info", "1张"), ("attack_range", "5"), ("recast", True)):
         with pytest.raises(ValidationError):
             _card(category_1="指示物", **{field: value})
 

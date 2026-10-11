@@ -227,6 +227,8 @@ def render_card(report: dict) -> str:
         lines.append(f"  拓展包：{card.get('card_set') or '未填'}")
     lines.append(f"  卡图：{card.get('image') or '未填'}")
     lines.append(f"  源文件：{fmt_location(card)}")
+    if card.get("recast"):
+        lines.append("  可重铸：是")
     if card.get("attack_range"):
         lines += _block("攻击范围", card["attack_range"], indent="  ")
     for index, method in enumerate((card.get("rules") or {}).get("use_methods", []), 1):

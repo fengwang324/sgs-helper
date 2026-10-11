@@ -7,6 +7,28 @@
   "use strict";
   var collections = {general: "generals", skill: "skills", card: "cards", faq: "faq", keyword: "keywords", product: "products"};
   var alphabet = new Intl.Collator("zh-CN-u-co-pinyin", {numeric: true, sensitivity: "base"});
+  var recastCardIds = new Set(["card_fen_dao_yang_biao", "card_lu_li_tong_xin", "card_tie_suo_lian_huan", "card_zhi_ji_zhi_bi"]);
+  function cardSuitTokens(text) {
+    text = String(text || ""); var out = [], symbols = "♥❤♡♦♢♠♤♣♧";
+    for (var i = 0; i < text.length; i++) if (symbols.includes(text[i])) {
+      var end = i + 1; if (text[end] === "\uFE0E" || text[end] === "\uFE0F") end++;
+      out.push({start: i, end: end, suit: text[i]}); i = end - 1;
+    }
+    return out;
+  }
+  function isRecastCard(item) { return !!item && recastCardIds.has(item.id); }
+  function keywordDefinitionRows(item, keywords) {
+    if (!item) return [];
+    var rows = (item.definition || "").split("\n").filter(Boolean);
+    if (item.id === "keyword_104") return rows.filter(function (row) { return /^(主将技|副将技)：/.test(row); });
+    if (item.id === "keyword_031") {
+      var byName = new Map((keywords || []).map(function (keyword) { return [keyword.name, keyword]; }));
+      ["队列", "围攻", "阵法召唤"].forEach(function (name) {
+        var related = byName.get(name); if (related && related.definition) rows.push(name + "：" + related.definition);
+      });
+    }
+    return rows;
+  }
   var cardCategories = ["基本牌", "锦囊牌", "装备牌"];
   var cardTypes = {"基本牌": ["杀", "闪", "桃", "酒"], "锦囊牌": ["非延时锦囊", "延时锦囊"], "装备牌": ["武器", "防具", "坐骑", "宝物"]};
   function titleKey(item) {
@@ -16,6 +38,16 @@
     return alphabet.compare(titleKey(a), titleKey(b)) || alphabet.compare(a.id, b.id);
   }
   function rank(values, value) { var position = values.indexOf(value); return position < 0 ? values.length : position; }
+  function factionParts(value) { return String(value || "").split(/[\/／&、]/).map(function (part) { return part.trim(); }).filter(Boolean); }
+  function matchesFaction(value, selected) { return !selected || factionParts(value).includes(selected); }
+  function numberTail(value) { var match = String(value || "").match(/(\d+)\s*$/); return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER; }
+  function compareGeneralVariants(a, b) {
+    var aDouble = factionParts(a.faction).length > 1, bDouble = factionParts(b.faction).length > 1;
+    return Number(aDouble) - Number(bDouble)
+      || (aDouble && bDouble ? numberTail(a.general_number) - numberTail(b.general_number) : 0)
+      || alphabet.compare(a.general_number || "", b.general_number || "")
+      || alphabet.compare(a.id || "", b.id || "");
+  }
   function compareCards(a, b) {
     return rank(cardCategories, a.category_2) - rank(cardCategories, b.category_2)
       || alphabet.compare(a.category_2 || "", b.category_2 || "")
@@ -149,7 +181,12 @@
         return namesToFind.some(function (name) { return name.length > 1 && text.includes(name); });
       }).sort(compareEntries);
     }
-    return {data: data, index: index, variants: variants, versions: versions, versionById: versionById, resolveVersion: resolveVersion, findMentions: findMentions, ownSkills: ownSkills, references: references, matchesQuery: matchesQuery, searchable: searchable, relatedFaq: relatedFaq, compareEntries: compareEntries, compareCards: compareCards, cardCategories: cardCategories, cardTypes: cardTypes};
+    function compareGenerals(a, b) {
+      var av = (variants.get(a.id) || []).slice().sort(compareGeneralVariants)[0] || {};
+      var bv = (variants.get(b.id) || []).slice().sort(compareGeneralVariants)[0] || {};
+      return compareGeneralVariants(av, bv) || alphabet.compare(a.name || "", b.name || "") || alphabet.compare(a.id, b.id);
+    }
+    return {data: data, index: index, variants: variants, versions: versions, versionById: versionById, resolveVersion: resolveVersion, findMentions: findMentions, ownSkills: ownSkills, references: references, matchesQuery: matchesQuery, searchable: searchable, relatedFaq: relatedFaq, compareEntries: compareEntries, compareCards: compareCards, compareGenerals: compareGenerals, compareGeneralVariants: compareGeneralVariants, factionParts: factionParts, matchesFaction: matchesFaction, cardSuitTokens: cardSuitTokens, isRecastCard: isRecastCard, keywordDefinitionRows: keywordDefinitionRows, cardCategories: cardCategories, cardTypes: cardTypes};
   }
   return {createModel: createModel};
 });

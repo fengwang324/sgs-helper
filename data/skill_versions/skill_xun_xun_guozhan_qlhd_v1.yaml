@@ -2,4 +2,4 @@ id: skill_xun_xun_guozhan_qlhd_v1
 skill_id: skill_xun_xun
 mode: guozhan
 product_id: qlhd
-text: 摸牌阶段开始时，你可以观看牌堆顶的四张牌，将其中两张牌以任意顺序置于牌堆顶其余以任意顺序置于牌堆底。
+text: 摸牌阶段开始时，你可以观看牌堆顶的四张牌，将其中两张牌以任意顺序置于牌堆顶，其余以任意顺序置于牌堆底。

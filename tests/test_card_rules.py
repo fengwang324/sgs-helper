@@ -59,10 +59,17 @@ def test_card_yaml_writer_keeps_blank_deck_and_text_effect():
     payload = entity_to_yaml_dict("card", card)
     assert payload["deck_info"] == ""
     assert payload["effect"] == "原文效果"
+    assert "recast" not in payload
     assert not isinstance(payload["effect"], dict)
     assert "skills" not in payload
     assert "rules" not in payload
     assert "category_2" not in payload or payload["category_2"] == "锦囊牌"
+
+
+def test_card_yaml_writer_round_trips_recast_flag():
+    card = Card.model_validate(card_node(recast=True))
+    payload = entity_to_yaml_dict("card", card)
+    assert payload["recast"] is True
 
 
 def test_markers_stay_free_and_have_no_game_fields():
@@ -75,6 +82,8 @@ def test_markers_stay_free_and_have_no_game_fields():
         Card.model_validate({**node, "deck_info": "♠7"})
     with pytest.raises(ValidationError):
         Card.model_validate({**node, "card_set": "九变篇"})
+    with pytest.raises(ValidationError):
+        Card.model_validate({**node, "recast": True})
 
 
 def test_migration_keeps_original_and_splits_explicit_usage():

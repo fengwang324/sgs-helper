@@ -7,9 +7,9 @@ image: card_shun_shou_qian_yang_qlhd_spade_3.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        距离为1且区域内有牌的一名其他角色
+        距离为1且区域内有牌的一名其他角色。
       effect: |-
         获得目标对应的角色的区域里的一张牌。
 deck_info: ""

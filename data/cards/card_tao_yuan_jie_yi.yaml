@@ -7,9 +7,9 @@ image: card_tao_yuan_jie_yi_qlhd_heart_1.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        所有角色
+        所有角色。
       effect: |-
         每名目标角色回复1点体力。
         【桃园结义】对对应的角色未受伤的目标无效。

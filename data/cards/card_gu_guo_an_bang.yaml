@@ -8,9 +8,9 @@ card_set: 不臣篇
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        你
+        你。
       effect: |-
         你摸八张牌，然后弃置至少六张手牌。吴：你可以将这六张牌交给吴势力角色，每名角色限两张。
 deck_info: ""

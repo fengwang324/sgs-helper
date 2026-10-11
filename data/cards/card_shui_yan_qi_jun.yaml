@@ -7,9 +7,9 @@ image: card_shui_yan_qi_jun_qlhd_heart_13.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        一名装备区里有牌的其他角色
+        一名装备区里有牌的其他角色。
       effect: |-
         目标角色选择一项：弃置装备区里的所有牌，或受到1点雷电伤害。
 deck_info: ""

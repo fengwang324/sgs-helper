@@ -126,6 +126,7 @@ def test_cards_table_matches_single_layer_model(synth_db: Path) -> None:
         "attack_range",
         "deck_info",
         "note",
+        "recast",
         "rules",
         "yaml_file",
         "yaml_line",
@@ -136,13 +137,14 @@ def test_card_effect_is_text_and_rules_use_methods_are_json(synth_db: Path) -> N
     conn = sqlite3.connect(synth_db)
     try:
         raw = conn.execute(
-            "SELECT effect, attack_range, deck_info, note, rules FROM cards WHERE id = 'card_demo_trick'"
+            "SELECT effect, attack_range, deck_info, note, recast, rules FROM cards WHERE id = 'card_demo_trick'"
         ).fetchone()
     finally:
         conn.close()
-    text, attack_range, deck_info, note, rules = raw
+    text, attack_range, deck_info, note, recast, rules = raw
     assert text == "演示效果：与演示技能相关。"
     assert (attack_range, deck_info, note) == ("", "演示牌堆中一张", "")
+    assert recast == 0
     assert json.loads(rules) == {"use_methods": [
         {"timing": "出牌阶段", "target": "一名其他角色", "effect": "造成一点伤害"}
     ]}
@@ -250,7 +252,7 @@ def test_meta_records_traceability(synth: Path, tmp_path: Path) -> None:
     db_path = tmp_path / "sgs.db"
     build_database(synth, db_path)
     meta = get_meta(sqlite3.connect(db_path))
-    assert meta["schema_version"] == "7"
+    assert meta["schema_version"] == "8"
     assert meta["yaml_manifest_sha256"] == manifest_digest(synth)
     assert meta["count.skill_version"] == "4"
     assert meta["count.card"] == "2"

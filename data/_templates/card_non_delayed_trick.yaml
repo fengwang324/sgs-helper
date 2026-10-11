@@ -7,9 +7,10 @@ name: 卡牌名
 image: ""
 card_set: null
 deck_info: ''
+# recast: true  # 可重铸时填写；通用说明由“重铸”关键词维护。
 rules:
   use_methods:
     - timing: ''
       target: ''
       effect: ''
-      # label: 重铸  # 有具名使用方法时填写
+      # label: 使用方法名  # 仅有其他独立使用方法时填写。

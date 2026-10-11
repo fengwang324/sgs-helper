@@ -8,6 +8,8 @@ from .schema import Card
 def rule_sections(card: Card) -> list[dict]:
     """把牌堆资料、武器范围、使用方法和备注转换成展示区块。"""
     sections: list[dict] = []
+    if card.recast:
+        sections.append({"title": "重铸", "fields": [{"label": "可重铸", "text": "是"}]})
     attributes = [
         {"label": label, "text": value}
         for label, value in (

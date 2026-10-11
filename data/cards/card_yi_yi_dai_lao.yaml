@@ -7,9 +7,9 @@ image: card_yi_yi_dai_lao_qlhd_heart_11.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        你和与你势力相同的角色
+        你和与你势力相同的角色。
       effect: |-
         每名目标角色各摸两张牌，然后弃置两张牌。
 deck_info: ""

@@ -2,4 +2,4 @@ id: skill_ying_hun_guozhan_qlhd_v1
 skill_id: skill_ying_hun
 mode: guozhan
 product_id: qlhd
-text: 准备阶段，你可以令一名其他角色：摸X张牌，然后弃置一张牌；或摸一张牌，然后弃置X张牌。（X为你已损失的体力值）。
+text: 准备阶段，你可以令一名其他角色：摸X张牌，然后弃置一张牌；或摸一张牌，然后弃置X张牌（X为你已损失的体力值）。

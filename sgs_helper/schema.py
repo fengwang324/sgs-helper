@@ -235,6 +235,8 @@ class Card(StrictModel):
     deck_info: str | None = None
     #: 可选的资料备注；补充裁定归 FAQ。
     note: str = ""
+    #: 卡面标注此牌可重铸；仅游戏牌可以为 true。
+    recast: bool = False
     #: 基本牌 / 锦囊牌的使用方法；装备及指示物不填写。
     rules: GameCardRules | None = None
 
@@ -251,6 +253,8 @@ class Card(StrictModel):
             if self.deck_info is None:
                 self.deck_info = ""
         else:
+            if self.recast:
+                raise ValueError("recast 是游戏牌专用字段；指示物及其他自由分类不能重铸")
             if self.deck_info is not None:
                 raise ValueError("deck_info 是游戏牌专用字段；指示物不填写牌堆信息")
             if self.card_set:

@@ -7,9 +7,9 @@ image: card_nan_man_ru_qin_qlhd_spade_13.jpg
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        所有其他角色
+        所有其他角色。
       effect: |-
         每名目标角色需打出一张【杀】，否则受到1点伤害。
 deck_info: ""

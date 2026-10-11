@@ -394,7 +394,7 @@ def test_stats_reports_meta(synth_conn) -> None:
     payload = stats(synth_conn)
     assert payload["counts"]["skill_version"] == 4
     assert payload["counts"]["card"] == 2
-    assert payload["meta"]["schema_version"] == "7"
+    assert payload["meta"]["schema_version"] == "8"
 
 
 def test_json_serializable(synth_conn) -> None:

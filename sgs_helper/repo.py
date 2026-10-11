@@ -67,6 +67,8 @@ def get_meta(conn: sqlite3.Connection) -> dict[str, str]:
 
 def row_to_dict(kind: str, row: sqlite3.Row) -> dict:
     data = dict(row)
+    if kind == "card" and "recast" in data:
+        data["recast"] = bool(data["recast"])
     if kind == "card" and isinstance(data.get("rules"), str):
         data["rules"] = json.loads(data["rules"])
     for column in JSON_COLUMNS:

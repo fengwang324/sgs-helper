@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from sgs_helper.validate import validate_data_dir
+from sgs_helper.db import SCHEMA_VERSION
 from scripts.build_frontend import InvalidDataError, export_catalog
 
 
@@ -26,7 +27,7 @@ def test_exports_complete_current_catalog(data_dir: Path, tmp_path: Path) -> Non
     catalog = json.loads((output / "catalog.json").read_text(encoding="utf-8"))
 
     assert exported.counts() == result.counts()
-    assert catalog["schema_version"] == 7
+    assert catalog["schema_version"] == int(SCHEMA_VERSION)
     assert catalog["counts"] == {
         "products": 1,
         "generals": 163,
@@ -66,6 +67,9 @@ def test_exports_complete_current_catalog(data_dir: Path, tmp_path: Path) -> Non
     assert len(cards_by_id) == 114
     for card_id, card in cards_by_id.items():
         assert card["image"] == result.bundle.get("card", card_id).image
+    assert all(cards_by_id[card_id]["recast"] is True for card_id in (
+        "card_fen_dao_yang_biao", "card_lu_li_tong_xin", "card_tie_suo_lian_huan", "card_zhi_ji_zhi_bi"
+    ))
 
     assert _read_js_catalog(output / "catalog.js") == catalog
 

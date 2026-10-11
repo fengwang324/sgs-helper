@@ -4,20 +4,13 @@ category_2: 锦囊牌
 category_3: 非延时锦囊
 name: 勠力同心
 image: card_lu_li_tong_xin_qlhd_club_10.jpg
+recast: true
 rules:
   use_methods:
     - timing: |-
-        出牌阶段
+        出牌阶段。
       target: |-
-        所有的大势力角色或所有的小势力角色
+        所有的大势力角色或所有的小势力角色。
       effect: |-
         若目标角色处于连环状态，则其摸一张牌；不处于连环状态，则其横置。
-    - label: |-
-        重铸
-      timing: |-
-        出牌阶段
-      target: |-
-        无（不视为使用牌）
-      effect: |-
-        将此牌放入弃牌堆，然后摸一张牌。
 deck_info: ""
