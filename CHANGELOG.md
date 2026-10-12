@@ -1,5 +1,9 @@
 # 更新记录
 
+## 2026-10-12 GitHub Pages发布准备
+
+按用户授权将仓库改为公开并发布main网页。添加`.nojekyll`以直接发布静态文件，在README记录网址及main根目录发布方式。已有18项前端检查全部通过，277张卡图、静态数据包与初始资源完整；本次不改规则正文、数据或页面交互。远端可见性、Pages配置及线上访问验收随后记录。
+
 ## 2026-10-12 清理旧开发分支
 
 按用户要求删除不再使用的`codex/mobile-portrait`、`feature/local-wiki`、`feature/local-admin`远端分支，以及存在的两个本地旧分支。删除前逐一确认其提交均可由main或codex/data-maintenance的历史访问，独有未保留提交为0；没有删除提交历史或进行强制推送。本地与远端现在只保留main（纯前端网页）和codex/data-maintenance（完整资料及维护工具快照）。页面代码与数据不变。

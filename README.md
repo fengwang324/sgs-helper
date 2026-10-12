@@ -4,6 +4,8 @@
 
 ## 使用
 
+在线地址：[国战图鉴](https://fengwang324.github.io/sgs-helper/)。GitHub Pages发布源为`main`根目录，后续推送main会自动更新网站；`.nojekyll`使现有HTML、JavaScript、样式和图片按静态文件发布。
+
 用浏览器打开根目录`index.html`，或把以下内容整体放入静态网站/页面资源包，保持相对路径：
 
 ```text
