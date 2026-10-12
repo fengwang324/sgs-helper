@@ -1,5 +1,9 @@
 # 更新记录
 
+## 2026-10-12 清理旧开发分支
+
+按用户要求删除不再使用的`codex/mobile-portrait`、`feature/local-wiki`、`feature/local-admin`远端分支，以及存在的两个本地旧分支。删除前逐一确认其提交均可由main或codex/data-maintenance的历史访问，独有未保留提交为0；没有删除提交历史或进行强制推送。本地与远端现在只保留main（纯前端网页）和codex/data-maintenance（完整资料及维护工具快照）。页面代码与数据不变。
+
 ## 2026-10-12 main精简为纯前端网页
 
 **目标**：主分支只交付用户图鉴，移除历史编辑网页、Python数据库工具和源YAML。
