@@ -3,7 +3,7 @@
 YAML 是唯一权威源。修改 `sgs_helper/schema.py` 与 `sgs_helper/db.py` 后，运行 `python scripts/build_db.py` 全量重建；不要直接修改数据库。
 
 - schema 版本：`8`
-- 生成时间：`2026-10-12T00:05:23+08:00`
+- 生成时间：`2026-10-12T09:40:45+08:00`
 - YAML 清单指纹：`0213d9673028456b0200a4cc2ef1eb23f72647e8988bbaced75b192d2678cd93`
 - 全文检索 FTS5：启用
 
