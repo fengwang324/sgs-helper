@@ -102,10 +102,10 @@
     closeKeywordBubble();
     dialogContent.replaceChildren();dialogContent.className="";if(targets.length>1){add(dialogContent,el("h2","dialog-title",targets[0].name),el("p","annotation","找到多个同名条目，请选择要查看的说明。"));
       dialogContent.firstChild.id="reference-title";var choices=el("div","dialog-choice");targets.forEach(function(t){var item=model.index[t.kind].get(t.id);choices.append(button(labels[t.kind]+" · "+item.name+" · "+t.id,function(){openReference([t],context);}));});dialogContent.append(choices);
-    }else{var target=targets[0],item=model.index[target.kind].get(target.id),h=el("h2","dialog-title",item.name);h.id="reference-title";dialogContent.append(h);
+    }else{var target=targets[0],item=model.index[target.kind].get(target.id),name=item.name,h=el("h2","dialog-title",name);h.id="reference-title";dialogContent.append(h);
       if(target.kind==="skill")versionBlocks(item,dialogContent,context);
-      if(target.kind==="card"){dialogContent.className="dialog-card";if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=item.name+"牌面";dialogContent.append(img);}cardBody(item,dialogContent,context);}else dialogContent.className="";
-      var foot=el("div","dialog-links");var a=link("查看完整"+labels[target.kind]+"条目 →",route(target.kind,target.id),"inline-ref");a.addEventListener("click",function(){dialog.close();});foot.append(a);dialogContent.append(foot);
+      if(target.kind==="card"){dialogContent.className="dialog-card";if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=name+"牌面";dialogContent.append(img);}cardBody(item,dialogContent,context);}else dialogContent.className="";
+      var foot=el("div","dialog-links"),label=target.kind==="card"&&!isGame(item)?"指示物":labels[target.kind];var a=link("查看完整"+label+"条目 →",route(target.kind,target.id),"inline-ref");a.addEventListener("click",function(){dialog.close();});foot.append(a);dialogContent.append(foot);
     }if(!dialog.open)dialog.showModal();else document.getElementById("close-dialog").focus();dialog.scrollTop=0;
   }
   function generalDetail(id,params){var g=model.index.general.get(id);if(!g)return missing();var variants=model.variants.get(id)||[],v=variants.find(function(row){return row.id===params.get("version");})||variants[0];if(!v)return missing();
@@ -118,15 +118,18 @@
       gs.forEach(function(x){var gv=(model.variants.get(x.id)||[])[0];chips.append(link(name+(gs.length>1?" · "+gv.general_number:""),route("general",x.id),"chip"));});});pairs.append(chips);body.append(pairs);}
     var own=model.ownSkills(v),skills=section("武将技能",own.length+" 项");own.forEach(function(row){skills.append(skillBlock(row,v,false));});body.append(skills);
     var refs=model.references(v);if(refs.skills.length){var ref=section("关联技能");refs.skills.forEach(function(row){ref.append(skillBlock(row,v,true));});body.append(ref);}
-    if(refs.cards.length){var cards=section("关联卡牌"),chips=el("div","chip-list");refs.cards.forEach(function(c){var a=link(c.name,route("card",c.id),"chip");a.addEventListener("click",function(e){if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();openReference([{kind:"card",id:c.id}],v);});chips.append(a);});cards.append(chips);body.append(cards);}
+    function cardReferences(title,items){if(!items.length)return;var cards=section(title),chips=el("div","chip-list");items.forEach(function(c){var a=link(c.name,route("card",c.id),"chip");a.addEventListener("click",function(e){if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();openReference([{kind:"card",id:c.id}],v);});chips.append(a);});cards.append(chips);body.append(cards);}
+    cardReferences("关联指示物",refs.cards.filter(function(c){return !isGame(c);}));
+    cardReferences("关联卡牌",refs.cards.filter(isGame));
     var faqs=model.relatedFaq([g.name].concat(own.map(function(row){return row.skill.name;})));if(faqs.length){var f=section("相关 FAQ");faqs.forEach(function(q){f.append(faqItem(q));});body.append(f);}
     document.title=g.name+" · "+v.title+" · 国战图鉴";
   }
   function detail(kind,id){var item=model.index[kind]&&model.index[kind].get(id);if(!item)return missing();var nav=kind==="skill"?sections[1]:kind==="card"?(isGame(item)?sections[2]:sections[3]):kind==="keyword"?sections[4]:kind==="product"?sections[6]:sections[5];
-    breadcrumb(nav,item.name||"裁定");heading(item.name||item.question,"",labels[kind]);document.title=(item.name||item.question)+" · 国战图鉴";
+    var name=item.name;
+    breadcrumb(nav,name||"裁定");heading(name||item.question,"",kind==="card"&&!isGame(item)?"指示物":labels[kind]);document.title=(name||item.question)+" · 国战图鉴";
     if(kind==="skill"){versionBlocks(item,main);var owners=[];data.general_variants.forEach(function(v){if(v.skills.some(function(r){return r.skill_id===id;}))owners.push(v);});owners.sort(model.compareGeneralVariants);if(owners.length){var s=section("拥有此技能的武将"),grid=el("div","general-grid");owners.forEach(function(v){grid.append(generalTile(model.index.general.get(v.general_id),v));});s.append(grid);main.append(s);}
       var qs=model.relatedFaq([item.name]);if(qs.length){var f=section("相关 FAQ");qs.forEach(function(q){f.append(faqItem(q));});main.append(f);}}
-    if(kind==="card"){var wrap=el("div","card-detail"),body=el("article");if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=item.name+"牌面";wrap.append(img);}cardBody(item,body);wrap.append(body);main.append(wrap);}
+    if(kind==="card"){var wrap=el("div","card-detail"),body=el("article");if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=name+"牌面";wrap.append(img);}cardBody(item,body);wrap.append(body);main.append(wrap);}
     if(kind==="keyword")keywordRows(item).forEach(function(row){main.append(prose(row));});if(kind==="faq"){main.append(prose(item.answer));source(item,main);}
     if(kind==="product"){main.append(el("p","muted",[item.release_year&&"发行年份 "+item.release_year,modes[item.mode]].filter(Boolean).join(" · ")));
       var sets=section("武将牌组"),chips=el("div","chip-list");item.general_sets.forEach(function(name){chips.append(el("span","tag",name));});sets.append(chips);main.append(sets);

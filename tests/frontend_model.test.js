@@ -53,3 +53,43 @@ test("glossary rows split main and deputy general skills and extend formation ru
   }
 });
 
+test("all five ruler opening skills link to their existing indicator and deduplicate repeated mentions", () => {
+  const rulers = [
+    ["general_g_em_001", "五虎将大旗", "card_n40e425c9"],
+    ["general_g_em_002", "黄巾天兵符", "card_n271a9ca0"],
+    ["general_g_em_003", "缘江烽火图", "card_ndb7ea177"],
+    ["general_g_em_004", "五子良将纛", "card_naf71007c"],
+    ["general_g_em_005", "八荒死士令", "card_n91452981"],
+  ];
+  for (const [generalId, name, id] of rulers) {
+    const variant = model.variants.get(generalId)[0];
+    const first = model.ownSkills(variant)[0];
+    const mentions = model.findMentions(first.version.text, variant, [first.skill.id], ["card"]);
+    assert.ok(mentions.length > 0, name);
+    for (const mention of mentions) {
+      assert.equal(mention.label, name);
+      assert.deepEqual(mention.targets.map((target) => target.id), [id]);
+    }
+    const references = model.references(variant).cards;
+    assert.deepEqual(references.filter((card) => card.category_1 === "指示物").map((card) => card.id), [id]);
+    const item = model.index.card.get(id);
+    assert.equal(item.name, name);
+    assert.equal(model.matchesQuery(model.searchable("card", item), name), true);
+    assert.equal(model.matchesQuery(model.searchable("card", item), item.name), true);
+    // Any equipment already named in the skill still resolves to the same record.
+    for (const skill of model.ownSkills(variant)) {
+      for (const card of catalog.cards.filter((card) => card.category_2 === "装备牌")) {
+        if (skill.version.text.includes("【" + card.name + "】")) {
+          assert.ok(references.some((reference) => reference.id === card.id), card.name);
+        }
+      }
+    }
+  }
+});
+
+test("ruler indicators are not assigned implicitly and missing records are not invented", () => {
+  const ordinaryLiuBei = model.variants.get("general_g_shu_01")[0];
+  assert.equal(model.references(ordinaryLiuBei).cards.some((card) => card.id === "card_n40e425c9"), false);
+  const empty = createModel({});
+  assert.deepEqual(empty.findMentions("五虎将大旗、缘江烽火图、八荒死士令", {}, [], ["card"]), []);
+});
