@@ -1,27 +1,24 @@
-# ---- Python ----
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-.pytest_cache/
-# pytest 的 tmp_path 根目录：Windows 上会落在当前目录，跑完测试会留下
-pytest-of-*/
-/tmp*/
-.mypy_cache/
-.ruff_cache/
+# Frontend development
+node_modules/
+dist/
+coverage/
+
+# Local, untracked artifacts from the former data workspace
 .venv/
 venv/
-env/
-
-# ---- 生成物：SQLite 数据库随时可由 data/ 下的 YAML 完整重建，不进 Git ----
+__pycache__/
+.pytest_cache/
+*.py[cod]
 build/
+/tmp*/
 *.db
 *.db-journal
 *.db-wal
 *.sqlite
 *.sqlite3
+*.egg-info/
 
-# ---- 编辑器 / 系统 ----
+# Editor / system
 .idea/
 .vscode/
 .DS_Store

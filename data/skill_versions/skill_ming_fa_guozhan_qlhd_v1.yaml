@@ -1,5 +1,0 @@
-id: skill_ming_fa_guozhan_qlhd_v1
-skill_id: skill_ming_fa
-mode: guozhan
-product_id: qlhd
-text: 出牌阶段限一次，你可以选择一名其他势力的角色，该角色下个回合结束时，若其手牌数不小于你，你将手牌摸至其手牌数（至多摸五张），若其手牌数小于你，你对其造成1点伤害并获得其一张手牌。

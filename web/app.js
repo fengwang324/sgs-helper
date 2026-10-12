@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   var data = window.SGS_CATALOG, model = window.SGS_MODEL.createModel(data);
+  var cardImageRoot = "web/assets/cards/";
   var main = document.getElementById("main-content"), dialog = document.getElementById("reference-dialog");
   var dialogContent = document.getElementById("reference-content");
   var popover = null;
@@ -49,7 +50,7 @@
   function suitPositions(text){return model.cardSuitTokens(text);}
   function keywordPositions(text){var out=[],glossaryIds={"keyword_102":["锁定技"],"keyword_103":["限定技"],"keyword_031":["阵法技"],"keyword_104":["主将技","副将技"]};Object.keys(glossaryIds).forEach(function(id){var item=data.keywords.find(function(keyword){return keyword.id===id;});if(!item)return;glossaryIds[id].forEach(function(label){var from=0,at;while((at=text.indexOf(label,from))!==-1){out.push({start:at,end:at+label.length,item:item,label:label});from=at+label.length;}});});return out;}
   function image(file,name,lazy){var frame=el("div","art-frame");if(!file){frame.append(el("span","placeholder-art",name));return frame;}
-    var img=el("img");img.src="data/card_images/"+encodeURIComponent(file);img.alt=name+"牌面";if(lazy)img.loading="lazy";img.decoding="async";
+    var img=el("img");img.src=cardImageRoot+encodeURIComponent(file);img.alt=name+"牌面";if(lazy)img.loading="lazy";img.decoding="async";
     img.addEventListener("error",function(){frame.replaceChildren(el("span","placeholder-art",name));});frame.append(img);return frame;}
   function prose(text,context,exclude){text=String(text||"");var p=el("div","prose"),position=0;
     var candidates=model.findMentions(text,context,exclude,["skill","card"]).map(function(m){return {start:m.start,end:m.end,targets:m.targets,label:m.label,type:"reference"};})
@@ -104,7 +105,7 @@
       dialogContent.firstChild.id="reference-title";var choices=el("div","dialog-choice");targets.forEach(function(t){var item=model.index[t.kind].get(t.id);choices.append(button(labels[t.kind]+" · "+item.name+" · "+t.id,function(){openReference([t],context);}));});dialogContent.append(choices);
     }else{var target=targets[0],item=model.index[target.kind].get(target.id),name=item.name,h=el("h2","dialog-title",name);h.id="reference-title";dialogContent.append(h);
       if(target.kind==="skill")versionBlocks(item,dialogContent,context);
-      if(target.kind==="card"){dialogContent.className="dialog-card";if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=name+"牌面";dialogContent.append(img);}cardBody(item,dialogContent,context);}else dialogContent.className="";
+      if(target.kind==="card"){dialogContent.className="dialog-card";if(item.image){var img=el("img","card-image");img.src=cardImageRoot+encodeURIComponent(item.image);img.alt=name+"牌面";dialogContent.append(img);}cardBody(item,dialogContent,context);}else dialogContent.className="";
       var foot=el("div","dialog-links"),label=target.kind==="card"&&!isGame(item)?"指示物":labels[target.kind];var a=link("查看完整"+label+"条目 →",route(target.kind,target.id),"inline-ref");a.addEventListener("click",function(){dialog.close();});foot.append(a);dialogContent.append(foot);
     }if(!dialog.open)dialog.showModal();else document.getElementById("close-dialog").focus();dialog.scrollTop=0;
   }
@@ -129,7 +130,7 @@
     breadcrumb(nav,name||"裁定");heading(name||item.question,"",kind==="card"&&!isGame(item)?"指示物":labels[kind]);document.title=(name||item.question)+" · 国战图鉴";
     if(kind==="skill"){versionBlocks(item,main);var owners=[];data.general_variants.forEach(function(v){if(v.skills.some(function(r){return r.skill_id===id;}))owners.push(v);});owners.sort(model.compareGeneralVariants);if(owners.length){var s=section("拥有此技能的武将"),grid=el("div","general-grid");owners.forEach(function(v){grid.append(generalTile(model.index.general.get(v.general_id),v));});s.append(grid);main.append(s);}
       var qs=model.relatedFaq([item.name]);if(qs.length){var f=section("相关 FAQ");qs.forEach(function(q){f.append(faqItem(q));});main.append(f);}}
-    if(kind==="card"){var wrap=el("div","card-detail"),body=el("article");if(item.image){var img=el("img","card-image");img.src="data/card_images/"+encodeURIComponent(item.image);img.alt=name+"牌面";wrap.append(img);}cardBody(item,body);wrap.append(body);main.append(wrap);}
+    if(kind==="card"){var wrap=el("div","card-detail"),body=el("article");if(item.image){var img=el("img","card-image");img.src=cardImageRoot+encodeURIComponent(item.image);img.alt=name+"牌面";wrap.append(img);}cardBody(item,body);wrap.append(body);main.append(wrap);}
     if(kind==="keyword")keywordRows(item).forEach(function(row){main.append(prose(row));});if(kind==="faq"){main.append(prose(item.answer));source(item,main);}
     if(kind==="product"){main.append(el("p","muted",[item.release_year&&"发行年份 "+item.release_year,modes[item.mode]].filter(Boolean).join(" · ")));
       var sets=section("武将牌组"),chips=el("div","chip-list");item.general_sets.forEach(function(name){chips.append(el("span","tag",name));});sets.append(chips);main.append(sets);

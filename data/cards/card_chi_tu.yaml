@@ -1,9 +1,0 @@
-id: card_chi_tu
-category_1: 游戏牌
-category_2: 装备牌
-category_3: 坐骑
-name: 赤兔
-image: card_chi_tu_qlhd_heart_5.jpg
-effect: |-
-  锁定技，你至其他角色的距离-1。
-deck_info: ""

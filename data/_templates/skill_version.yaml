@@ -1,7 +1,0 @@
-# 模板：SkillVersion（某模式 / 某产品下的技能文本）。
-id: skill_change_me_guozhan_qlhd_v1
-skill_id: skill_change_me
-mode: guozhan
-product_id: product_change_me  # 不绑定具体产品时写 null
-text: >
-  技能原文……

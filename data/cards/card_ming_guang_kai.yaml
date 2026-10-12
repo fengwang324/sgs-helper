@@ -1,9 +1,0 @@
-id: card_ming_guang_kai
-category_1: 游戏牌
-category_2: 装备牌
-category_3: 防具
-name: 明光铠
-image: card_ming_guang_kai_qlhd_spade_2.jpg
-effect: |-
-  锁定技，当你成为【火烧连营】、【火攻】或火【杀】的目标时，取消之；若你是小势力角色，你不会被横置。
-deck_info: ""

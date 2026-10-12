@@ -1,5 +1,0 @@
-id: skill_shi_cai_guozhan_qlhd_v1
-skill_id: skill_shi_cai
-mode: guozhan
-product_id: qlhd
-text: 锁定技，当你受到伤害后，若此伤害值：为1，则你摸一张牌；大于1，则你弃置两张牌。

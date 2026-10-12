@@ -1,0 +1,8 @@
+{
+  "name": "sgs-catalogue",
+  "private": true,
+  "description": "群狼环鼎国战资料纯前端图鉴",
+  "scripts": {
+    "test": "node --test tests/frontend.test.cjs tests/frontend_model.test.js tests/static_assets.test.cjs"
+  }
+}

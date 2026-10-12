@@ -1,9 +1,0 @@
-id: card_bai_yin_shi_zi
-category_1: 游戏牌
-category_2: 装备牌
-category_3: 防具
-name: 白银狮子
-image: card_bai_yin_shi_zi_qlhd_club_1.jpg
-effect: |-
-  锁定技，当你受到伤害时，若该伤害多于1点，则防止多余的伤害；当你失去装备区里的【白银狮子】时，你回复1点体力。
-deck_info: ""

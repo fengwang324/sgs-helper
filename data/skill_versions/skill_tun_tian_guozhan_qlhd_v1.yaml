@@ -1,5 +1,0 @@
-id: skill_tun_tian_guozhan_qlhd_v1
-skill_id: skill_tun_tian
-mode: guozhan
-product_id: qlhd
-text: 当你于回合外失去牌后，你可以进行判定，若结果不为♥，你可以将弃牌堆里的此判定牌置于武将牌上，称为“田”。你计算与其他角色的距离-X（X为“田”的数量）。
