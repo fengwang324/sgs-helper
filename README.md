@@ -9,6 +9,8 @@
 
 原录入管理页与服务端 Wiki 保留作历史工具，其文档见 [docs/admin.md](docs/admin.md)、[docs/wiki.md](docs/wiki.md)；不作为当前用户入口。
 
+当前 `main` 已包含最新数据库、手机竖屏图鉴和君主指示物互动。`codex/mobile-portrait` 保留此前开发快照，方便回溯；后续正常修改以 `main` 为基础建立短期分支。三种用途的分支/拆仓讨论见 [仓库划分建议](docs/repository-layout.md)，拆仓尚未执行。
+
 ## 当前数据状态
 
 **当前 YAML 数据共 1,091 条**：
